@@ -37,7 +37,7 @@ export function Navbar() {
             ))}
             <a
               href="#"
-              className="rounded-full bg-sky-700 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-sky-800 hover:shadow-lg hover:shadow-sky-700/20"
+              className="rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30 hover:scale-[1.02]"
             >
               Empieza gratis
             </a>
@@ -76,7 +76,7 @@ export function Navbar() {
               <a
                 href="#"
                 onClick={() => setOpen(false)}
-                className="mt-1 rounded-full bg-sky-700 px-5 py-3 text-center text-sm font-semibold text-white transition-all hover:bg-sky-800"
+                className="mt-1 rounded-full bg-[#1E6B9A] px-5 py-3 text-center text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30"
               >
                 Empieza gratis
               </a>

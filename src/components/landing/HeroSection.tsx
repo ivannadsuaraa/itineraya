@@ -1,5 +1,12 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera } from "lucide-react";
+
+const itineraryDays = [
+  { icon: MapPin, label: "Templo Uluwatu", time: "09:00" },
+  { icon: Sun, label: "Playa Nusa Dua", time: "12:00" },
+  { icon: Utensils, label: "Cena en Jimbaran", time: "19:00" },
+  { icon: Camera, label: "Arrozales Jatiluwih", time: "10:00" },
+];
 
 export function HeroSection() {
   return (
@@ -65,7 +72,7 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="mt-6 max-w-lg text-lg leading-relaxed text-sky-600"
             >
-              Itineraya transforma tus sueu00f1os de viaje en itinerarios personalizados. Dinos tu destino y deja que la IA haga el resto.
+              Itineraya transforma tus sueños de viaje en itinerarios personalizados. Dinos tu destino y deja que la IA haga el resto.
             </motion.p>
 
             <motion.div
@@ -76,25 +83,25 @@ export function HeroSection() {
             >
               <a
                 href="#"
-                className="group inline-flex items-center gap-2 rounded-full bg-sky-700 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-sky-700/20 transition-all hover:bg-sky-800 hover:shadow-xl hover:shadow-sky-700/30"
+                className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
               >
                 Empieza gratis
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
               </a>
               <a
                 href="#how-it-works"
                 className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/60 px-7 py-3.5 text-base font-medium text-sky-700 backdrop-blur-sm transition-all hover:bg-sky-50"
               >
-                Cu00f3mo funciona
+                Cómo funciona
               </a>
             </motion.div>
           </div>
 
-          {/* Visual */}
+          {/* Visual - Bali Itinerary Card */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.9, delay: 0.3 }}
             className="relative hidden lg:block"
           >
             <div className="relative mx-auto w-full max-w-md">
@@ -102,24 +109,66 @@ export function HeroSection() {
               <div className="absolute inset-0 -m-8 rounded-[2.5rem] border-2 border-dashed border-sky-200 opacity-60" />
               <div className="absolute inset-0 -m-16 rounded-[3.5rem] border border-sky-100 opacity-40" />
 
-              <div className="relative overflow-hidden rounded-3xl bg-white shadow-[0_24px_64px_rgba(46,107,138,0.12)] ring-1 ring-sky-100">
-                <img
-                  src="/images/phone-mockup.jpg"
-                  alt="Itineraya app preview"
-                  className="h-auto w-full object-cover"
-                  width={800}
-                  height={800}
-                />
-                {/* Floating badge */}
-                <div className="absolute bottom-6 left-6 right-6 rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur-md ring-1 ring-sky-100">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-100">
-                      <Sparkles className="h-5 w-5 text-sky-600" />
-                    </div>
+              {/* Main card */}
+              <div className="relative overflow-hidden rounded-3xl bg-white shadow-[0_24px_64px_rgba(30,107,154,0.14)] ring-1 ring-sky-100">
+                {/* Card header with image */}
+                <div className="relative h-44 overflow-hidden">
+                  <img
+                    src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80"
+                    alt="Bali"
+                    className="h-full w-full object-cover"
+                    width={800}
+                    height={300}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  <div className="absolute bottom-4 left-6">
+                    <p className="text-xs font-medium text-white/80 uppercase tracking-wider">Itinerario generado</p>
+                    <p className="text-xl font-bold text-white">Bali, Indonesia</p>
+                  </div>
+                  <div className="absolute top-4 right-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-sky-800 backdrop-blur-sm">
+                    7 días
+                  </div>
+                </div>
+
+                {/* Card body */}
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-sky-900">Itinerario listo</p>
-                      <p className="text-xs text-sky-500">Roma u00b7 5 du00edas u00b7 12 actividades</p>
+                      <p className="text-sm text-sky-500">Presupuesto estimado</p>
+                      <p className="text-lg font-bold text-sky-900">$1,200 USD</p>
                     </div>
+                    <div className="flex -space-x-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-xs font-bold text-sky-600 ring-2 ring-white">
+                        🏖️
+                      </div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-600 ring-2 ring-white">
+                        🌿
+                      </div>
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-600 ring-2 ring-white">
+                        🍜
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Activity list */}
+                  <div className="mt-5 space-y-3">
+                    {itineraryDays.map((day, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-xl bg-sky-50/60 px-4 py-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600">
+                          <day.icon className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-sky-900 truncate">{day.label}</p>
+                        </div>
+                        <span className="text-xs font-medium text-sky-400">{day.time}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* AI badge */}
+                  <div className="mt-5 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50/50 px-4 py-3">
+                    <Sparkles className="h-4 w-4 text-sky-500" />
+                    <p className="text-xs text-sky-600">Generado por IA en <span className="font-bold text-sky-700">12 segundos</span></p>
                   </div>
                 </div>
               </div>
