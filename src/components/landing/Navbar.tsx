@@ -7,7 +7,7 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
 
   const navLinks = [
-    { label: "Cóómo funciona", href: "#how-it-works" },
+    { label: "Cómo funciona", href: "#how-it-works" },
     { label: "Características", href: "#features" },
   ];
 
