@@ -7,6 +7,7 @@ import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -53,13 +54,13 @@ function LandingPage() {
             Unu00eate a miles de viajeros que ya planifican con Itineraya. Tu pru00f3xima aventura empieza con un click.
           </p>
           <div className="mt-8">
-            <a
-              href="#"
+            <Link
+              to="/auth"
               className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
             >
               Empieza gratis
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-            </a>
+            </Link>
           </div>
         </motion.div>
       </section>
