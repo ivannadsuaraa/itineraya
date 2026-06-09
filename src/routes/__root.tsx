@@ -77,11 +77,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Itineraya — Viajes personalizados con IA" },
+      { name: "description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial." },
+      { name: "author", content: "Itineraya" },
+      { property: "og:title", content: "Itineraya — Viajes personalizados con IA" },
+      { property: "og:description", content: "Itinerarios de viaje personalizados con inteligencia artificial." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -114,8 +114,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <head>
+        <meta charSet="utf-8" />
         <HeadContent />
       </head>
       <body>
