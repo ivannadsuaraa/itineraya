@@ -12,9 +12,9 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Itineraya u2013 Viajes personalizados con IA" },
+      { title: "Itineraya – Viajes personalizados con IA" },
       { name: "description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos." },
-      { property: "og:title", content: "Itineraya u2013 Viajes personalizados con IA" },
+      { property: "og:title", content: "Itineraya – Viajes personalizados con IA" },
       { property: "og:description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -48,10 +48,10 @@ function LandingPage() {
           className="relative mx-auto max-w-3xl px-4 text-center sm:px-6"
         >
           <h2 className="font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            Listo para tu próximo viaje?
+            ¿Listo para tu próximo viaje?
           </h2>
           <p className="mt-4 text-lg text-sky-600">
-            Unête a miles de viajeros que ya planifican con Itineraya. Tu próxima aventura empieza con un click.
+            Únete a miles de viajeros que ya planifican con Itineraya. Tu próxima aventura empieza con un clic.
           </p>
           <div className="mt-8">
             <Link

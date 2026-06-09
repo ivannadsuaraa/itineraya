@@ -6,13 +6,13 @@ const steps = [
     number: "01",
     icon: MapPin,
     title: "Elige tu destino",
-    description: "Céntanos adónde quieres ir. Puede ser una ciudad, un pís o simplemente u2018playa en veranou2019.",
+    description: "Cuéntanos adónde quieres ir. Puede ser una ciudad, un país o simplemente ‘playa en verano’.",
   },
   {
     number: "02",
     icon: CalendarDays,
     title: "Personaliza los detalles",
-    description: "Ajusta fechas, presupuesto, estilo de viaje y preferencias. Límite de actividades o relax total.",
+    description: "Ajusta fechas, presupuesto, estilo de viaje y preferencias. Límite de actividades o relajación total.",
   },
   {
     number: "03",
@@ -48,7 +48,7 @@ export function HowItWorksSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            C00f3mo funciona 🗺️
+            Cómo funciona 🗺️
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
             De la idea al viaje en 3 pasos

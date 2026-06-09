@@ -17,7 +17,7 @@ const features = [
   {
     icon: Map,
     title: "Mapas interactivos",
-    description: "Visualiza tu rutía día a día con mapas integrados, indicaciones y estimaciones de tiempo entre paradas.",
+    description: "Visualiza tu ruta día a día con mapas integrados, indicaciones y estimaciones de tiempo entre paradas.",
   },
   {
     icon: Sun,
@@ -73,7 +73,7 @@ export function FeaturesSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            Caracter00edsticas ✨
+            Características ✨
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
             Todo lo que necesitas para viajar sin preocupaciones
