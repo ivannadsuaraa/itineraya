@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera } from "lucide-react";
 
 const itineraryDays = [
