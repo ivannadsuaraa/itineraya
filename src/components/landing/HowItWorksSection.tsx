@@ -6,19 +6,19 @@ const steps = [
     number: "01",
     icon: MapPin,
     title: "Elige tu destino",
-    description: "Cu00e9ntanos adu00f3nde quieres ir. Puede ser una ciudad, un pu00eds o simplemente u2018playa en veranou2019.",
+    description: "Céntanos adónde quieres ir. Puede ser una ciudad, un pís o simplemente u2018playa en veranou2019.",
   },
   {
     number: "02",
     icon: CalendarDays,
     title: "Personaliza los detalles",
-    description: "Ajusta fechas, presupuesto, estilo de viaje y preferencias. Lu00edmite de actividades o relax total.",
+    description: "Ajusta fechas, presupuesto, estilo de viaje y preferencias. Límite de actividades o relax total.",
   },
   {
     number: "03",
     icon: Compass,
     title: "Recibe tu itinerario",
-    description: "La IA genera un plan du00eda a du00eda con mapas, horarios, reservas y recomendaciones locales.",
+    description: "La IA genera un plan día a día con mapas, horarios, reservas y recomendaciones locales.",
   },
 ];
 
@@ -54,7 +54,7 @@ export function HowItWorksSection() {
             De la idea al viaje en 3 pasos
           </h2>
           <p className="mt-4 text-lg text-sky-600">
-            Sin hojas de cu00e1lculo ni noches buscando. Planifica tu aventura en minutos.
+            Sin hojas de cálculo ni noches buscando. Planifica tu aventura en minutos.
           </p>
         </motion.div>
 

@@ -11,18 +11,18 @@ import {
 const features = [
   {
     icon: Sparkles,
-    title: "IA de u00faltima generaciu00f3n",
-    description: "Nuestro motor de IA analiza miles de datos en tiempo real para crear itinerarios u00fanicos adaptados a ti.",
+    title: "IA de última generación",
+    description: "Nuestro motor de IA analiza miles de datos en tiempo real para crear itinerarios únicos adaptados a ti.",
   },
   {
     icon: Map,
     title: "Mapas interactivos",
-    description: "Visualiza tu rutu00eda du00eda a du00eda con mapas integrados, indicaciones y estimaciones de tiempo entre paradas.",
+    description: "Visualiza tu rutía día a día con mapas integrados, indicaciones y estimaciones de tiempo entre paradas.",
   },
   {
     icon: Sun,
-    title: "Planes por estaciu00f3n",
-    description: "Obtu00e9n recomendaciones segu00fan la u00e9poca del au00f1o: festivales, eventos y actividades de temporada.",
+    title: "Planes por estación",
+    description: "Obtén recomendaciones según la época del año: festivales, eventos y actividades de temporada.",
   },
   {
     icon: Wallet,
@@ -79,7 +79,7 @@ export function FeaturesSection() {
             Todo lo que necesitas para viajar sin preocupaciones
           </h2>
           <p className="mt-4 text-lg text-sky-600">
-            Tecnologu00eda de punta con la calidez de un agente de viajes personal.
+            Tecnología de punta con la calidez de un agente de viajes personal.
           </p>
         </motion.div>
 
