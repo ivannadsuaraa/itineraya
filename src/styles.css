@@ -45,6 +45,9 @@
   --color-sky-800: var(--sky-800);
   --color-sky-900: var(--sky-900);
 
+  --color-white: #ffffff;
+  --color-black: #000000;
+
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
 }
