@@ -3,6 +3,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
@@ -28,6 +29,7 @@ function LandingPage() {
       <HeroSection />
       <HowItWorksSection />
       <FeaturesSection />
+      <TestimonialsSection />
 
       {/* Final CTA */}
       <section className="relative overflow-hidden py-20 sm:py-28">
@@ -53,7 +55,7 @@ function LandingPage() {
           <div className="mt-8">
             <a
               href="#"
-              className="group inline-flex items-center gap-2 rounded-full bg-sky-700 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-sky-700/20 transition-all hover:bg-sky-800 hover:shadow-xl hover:shadow-sky-700/30"
+              className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
             >
               Empieza gratis
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
