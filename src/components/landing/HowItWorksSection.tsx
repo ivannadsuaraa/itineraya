@@ -48,7 +48,7 @@ export function HowItWorksSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            Cu00f3mo funciona
+            C00f3mo funciona 🗺️
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
             De la idea al viaje en 3 pasos
