@@ -47,12 +47,12 @@ function AuthPage() {
         });
         if (error) throw error;
         toast.success("¡Cuenta creada! Bienvenido a Itineraya ✈️");
-        navigate({ to: "/" });
+        navigate({ to: "/onboarding" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("¡Bienvenido de vuelta!");
-        navigate({ to: "/" });
+        navigate({ to: "/onboarding" });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Algo salió mal";
@@ -66,7 +66,7 @@ function AuthPage() {
     setGoogleLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/onboarding`,
       });
       if (result.error) {
         toast.error("No se pudo iniciar sesión con Google");
@@ -74,7 +74,7 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/" });
+      navigate({ to: "/onboarding" });
     } catch {
       toast.error("No se pudo iniciar sesión con Google");
       setGoogleLoading(false);
