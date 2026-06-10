@@ -81,10 +81,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial." },
       { name: "author", content: "Itineraya" },
       { property: "og:title", content: "Itineraya — Viajes personalizados con IA" },
-      { property: "og:description", content: "Itinerarios de viaje personalizados con inteligencia artificial." },
+      { property: "og:description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Itineraya — Viajes personalizados con IA" },
+      { name: "twitter:description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/483670f7-8552-4c01-a5d0-618d1a114587/id-preview-add5baa3--bcf6de48-357f-4f1d-8196-5975495c7700.lovable.app-1781112543022.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/483670f7-8552-4c01-a5d0-618d1a114587/id-preview-add5baa3--bcf6de48-357f-4f1d-8196-5975495c7700.lovable.app-1781112543022.png" },
     ],
     links: [
       {
