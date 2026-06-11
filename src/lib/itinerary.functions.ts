@@ -67,22 +67,22 @@ Budget: ${trip.budget ?? "unspecified"}
 Style: ${trip.trip_style ?? "unspecified"}
 Avoid: ${trip.avoid?.trim() || "nothing in particular"}
 
-Devuelve SOLO JSON válido sin markdown con esta forma EXACTA:
+Return ONLY valid JSON without markdown, with this EXACT shape (write user-facing strings — summary/title/subtitle/place/description — in ${langName}):
 {
-  "summary": "1-2 frases inspiradoras",
+  "summary": "1-2 inspiring sentences",
   "days": [
     {
       "day": 1,
-      "title": "Título corto del día",
-      "subtitle": "Resumen de 1 frase",
-      "image_query": "2-3 palabras en inglés para foto representativa",
+      "title": "Short day title",
+      "subtitle": "1-sentence recap",
+      "image_query": "2-3 English words for a representative photo",
       "activities": [
         {
           "time": "09:00",
           "emoji": "🛬",
-          "title": "Llegada al aeropuerto",
-          "place": "Aeropuerto de [nombre real]",
-          "description": "1-2 líneas con un consejo útil o detalle del lugar.",
+          "title": "Airport arrival",
+          "place": "[real airport name]",
+          "description": "1-2 lines with a useful tip or detail.",
           "category": "transport"
         }
       ]
@@ -90,17 +90,17 @@ Devuelve SOLO JSON válido sin markdown con esta forma EXACTA:
   ]
 }
 
-REQUISITOS OBLIGATORIOS:
-- Genera ${dayCount} días.
-- MÍNIMO 5-6 actividades por día con horas distribuidas (mañana, mediodía, tarde, noche).
-- "time": SIEMPRE en formato 24h HH:MM (ej "09:00", "13:30", "20:00"). NUNCA uses "Mañana/Tarde/Noche".
-- "emoji": UN emoji representativo de la actividad (🛬 vuelo, 🏨 hotel, 🍜🍣🍝🥐 comida, 🌅 mirador, 🏛️ museo, 🚶 paseo, 🚲 bici, 🍹 copas, 🎭 show, 🏖️ playa, etc).
-- "title": nombre corto de la actividad (3-6 palabras).
-- "place": NOMBRE REAL del establecimiento o lugar concreto (hotel real, restaurante real, museo, mirador, etc) en ${trip.destination}. NO inventes nombres genéricos.
-- "description": 1-2 líneas con consejo útil, qué pedir/ver/hacer.
-- "category": EXACTAMENTE uno de: "hotel", "restaurant", "activity", "transport", "sight", "nightlife", "shopping", "other".
+MANDATORY REQUIREMENTS:
+- Generate ${dayCount} days.
+- MINIMUM 5-6 activities per day spread across morning, midday, afternoon and evening.
+- "time": ALWAYS 24h HH:MM (e.g. "09:00", "13:30", "20:00"). NEVER use "Morning/Afternoon/Evening".
+- "emoji": ONE emoji representing the activity (🛬 flight, 🏨 hotel, 🍜🍣🍝🥐 food, 🌅 viewpoint, 🏛️ museum, 🚶 walk, 🚲 bike, 🍹 drinks, 🎭 show, 🏖️ beach, etc).
+- "title": short activity name (3-6 words) in ${langName}.
+- "place": REAL name of the venue or specific spot (real hotel, real restaurant, museum, viewpoint, etc) in ${trip.destination}. NEVER invent generic names.
+- "description": 1-2 lines in ${langName} with a useful tip — what to order/see/do.
+- "category": EXACTLY one of: "hotel", "restaurant", "activity", "transport", "sight", "nightlife", "shopping", "other".
 
-Devuelve JSON puro, sin markdown ni backticks.`;
+Return pure JSON, no markdown, no backticks.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -114,7 +114,7 @@ Devuelve JSON puro, sin markdown ni backticks.`;
           {
             role: "system",
             content:
-              "Eres un planificador de viajes. Devuelves ÚNICAMENTE JSON válido sin markdown, sin explicaciones, sin texto adicional.",
+              "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
           },
           { role: "user", content: prompt },
         ],
