@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X, Plane } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsLoggedIn(!!data.user);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const navLinks = [
     { label: "Cómo funciona", href: "#how-it-works" },
@@ -20,7 +32,7 @@ export function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <nav className="mt-4 flex items-center justify-between rounded-full bg-white/80 px-6 py-3 shadow-[0_4px_24px_rgba(46,107,138,0.08)] backdrop-blur-md">
-          <Link to="/" className="flex items-center gap-2 text-sky-800">
+          <Link to={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-2 text-sky-800">
             <Plane className="h-5 w-5 rotate-[-45deg]" />
             <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
           </Link>
