@@ -61,9 +61,22 @@ function TripPage() {
   } | null>(null);
   const [view, setView] = useState<"cards" | "text">("cards");
   const [msgIdx, setMsgIdx] = useState(0);
+  const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
 
-  // Rotate loading messages
+  // Load plan
   useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      setPlan((((profile as { plan?: string } | null)?.plan ?? "free") as "free" | "viajero" | "explorador"));
+    })();
+  }, []);
     if (!loading) return;
     const t = setInterval(() => setMsgIdx((i) => (i + 1) % LOADING_MESSAGES.length), 1800);
     return () => clearInterval(t);
