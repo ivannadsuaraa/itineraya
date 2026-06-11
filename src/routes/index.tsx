@@ -8,6 +8,7 @@ import { FooterSection } from "@/components/landing/FooterSection";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
