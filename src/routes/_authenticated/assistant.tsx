@@ -4,11 +4,12 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { motion } from "framer-motion";
 import { Compass, Plane, ArrowLeft, Send, Loader2, Sparkles, Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
-  head: () => ({ meta: [{ title: "Asistente de viaje IA – Itineraya" }] }),
+  head: () => ({ meta: [{ title: "AI travel assistant – Itineraya" }] }),
   component: AssistantPage,
 });
 
@@ -73,6 +74,7 @@ function AssistantPage() {
 }
 
 function UpgradeGate({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
@@ -86,25 +88,25 @@ function UpgradeGate({ onBack }: { onBack: () => void }) {
           onClick={onBack}
           className="absolute top-6 left-6 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md hover:bg-white"
         >
-          <ArrowLeft className="h-4 w-4" /> Atrás
+          <ArrowLeft className="h-4 w-4" /> {t("assistant.back")}
         </button>
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
             <Lock className="h-7 w-7 text-white" />
           </div>
-          <h1 className="mt-6 font-display text-3xl font-bold text-sky-900">
-            Desbloquea tu asistente de viaje IA
-          </h1>
+          <h1 className="mt-6 font-display text-3xl font-bold text-sky-900">{t("assistant.upgradeTitle")}</h1>
           <p className="mt-3 text-sky-700">
-            El asistente de viaje con IA está disponible en los planes <span className="font-semibold">Viajero</span> y{" "}
-            <span className="font-semibold">Explorador</span>. Actualiza tu plan para obtener
-            recomendaciones personalizadas de tu próximo destino.
+            {t("assistant.upgradeBodyPre")}
+            <span className="font-semibold">{t("assistant.upgradeBodyViajero")}</span>
+            {t("assistant.upgradeBodyAnd")}
+            <span className="font-semibold">{t("assistant.upgradeBodyExplorador")}</span>
+            {t("assistant.upgradeBodyPost")}
           </p>
           <Link
             to="/pricing"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E]"
           >
-            <Sparkles className="h-4 w-4" /> Ver planes
+            <Sparkles className="h-4 w-4" /> {t("assistant.upgradeCta")}
           </Link>
         </motion.div>
       </div>
@@ -123,6 +125,7 @@ function ChatSurface({
   setTripId: (id: string | null) => void;
   activeTrip: Trip | null;
 }) {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -149,12 +152,12 @@ function ChatSurface({
         {
           type: "text",
           text: activeTrip
-            ? `¡Hola! ✈️ Soy tu asistente de viaje para **${activeTrip.destination}**. ¿En qué puedo ayudarte? Puedo sugerirte lugares, restaurantes, rutas o consejos prácticos.`
-            : "¡Hola! ✈️ Soy tu asistente de viaje de Itineraya. Crea un viaje para que pueda ayudarte con recomendaciones personalizadas.",
+            ? t("assistant.greetingWithTrip", { destination: activeTrip.destination })
+            : t("assistant.greetingNoTrip"),
         },
       ],
     }),
-    [activeTrip],
+    [activeTrip, t],
   );
 
   const transport = useMemo(
@@ -170,7 +173,7 @@ function ChatSurface({
     id: tripId ?? "no-trip",
     messages: [greeting],
     transport,
-    onError: (err) => toast.error(err.message || "Error al contactar con el asistente"),
+    onError: (err) => toast.error(err.message || t("assistant.error")),
   });
 
   const isLoading = status === "submitted" || status === "streaming";
@@ -202,7 +205,7 @@ function ChatSurface({
             <Link
               to="/dashboard"
               className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
-              aria-label="Volver"
+              aria-label={t("assistant.ariaBack")}
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -210,11 +213,9 @@ function ChatSurface({
               <Compass className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-base font-bold text-sky-900 truncate">
-                Asistente de viaje
-              </h1>
+              <h1 className="font-display text-base font-bold text-sky-900 truncate">{t("assistant.headerTitle")}</h1>
               <p className="text-xs text-sky-600 truncate">
-                {activeTrip ? activeTrip.destination : "Sin viaje seleccionado"}
+                {activeTrip ? activeTrip.destination : t("assistant.noTripSelected")}
               </p>
             </div>
           </div>
@@ -224,9 +225,9 @@ function ChatSurface({
               onChange={(e) => setTripId(e.target.value || null)}
               className="max-w-[180px] truncate rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-sky-800 outline-none focus:border-[#1E6B9A]"
             >
-              {trips.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.destination}
+              {trips.map((tr) => (
+                <option key={tr.id} value={tr.id}>
+                  {tr.destination}
                 </option>
               ))}
             </select>
@@ -254,10 +255,7 @@ function ChatSurface({
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-xl"
-      >
+      <form onSubmit={handleSubmit} className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-end gap-2 px-4 py-3">
           <textarea
             value={input}
@@ -268,7 +266,11 @@ function ChatSurface({
                 handleSubmit(e as unknown as React.FormEvent);
               }
             }}
-            placeholder={activeTrip ? `Pregunta algo sobre ${activeTrip.destination}…` : "Escribe un mensaje…"}
+            placeholder={
+              activeTrip
+                ? t("assistant.phWithTrip", { destination: activeTrip.destination })
+                : t("assistant.phEmpty")
+            }
             rows={1}
             className="flex-1 resize-none rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10"
           />
@@ -287,17 +289,13 @@ function ChatSurface({
 
 function MessageBubble({ message }: { message: UIMessage }) {
   const isUser = message.role === "user";
-  const text = message.parts
-    .map((p) => (p.type === "text" ? p.text : ""))
-    .join("");
+  const text = message.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
 
   return (
     <div className={`flex items-start gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm ${
-          isUser
-            ? "bg-sky-100 text-sky-700"
-            : "bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white"
+          isUser ? "bg-sky-100 text-sky-700" : "bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white"
         }`}
       >
         {isUser ? <Plane className="h-4 w-4 -rotate-45" /> : <Compass className="h-4 w-4" />}

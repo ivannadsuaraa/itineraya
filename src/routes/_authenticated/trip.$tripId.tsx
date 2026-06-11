@@ -15,6 +15,7 @@ import {
   Calendar as CalendarIcon,
   Wand2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
@@ -22,7 +23,7 @@ import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
-  head: () => ({ meta: [{ title: "Tu itinerario – Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
   component: TripPage,
 });
 
@@ -54,59 +55,43 @@ type Day = {
 };
 type Itinerary = { summary?: string; days: Day[] };
 
-const LOADING_MESSAGES = [
-  "Preparando tu aventura…",
-  "Buscando los mejores planes…",
-  "Eligiendo rincones especiales…",
-  "Casi listo…",
-];
-
 function googleMapsUrl(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
+
+type BookingInfo = { kind: "book" | "view"; brand: string; url: string };
 
 function bookingForCategory(
   category: ActivityCategory | undefined,
   placeOrTitle: string,
   destination: string,
-): { label: string; url: string; brand: string } | null {
+): BookingInfo | null {
   const q = `${placeOrTitle} ${destination}`.trim();
   switch (category) {
     case "hotel":
-      return {
-        label: "Reservar",
-        brand: "Booking",
-        url: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(q)}`,
-      };
+      return { kind: "book", brand: "Booking", url: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(q)}` };
     case "restaurant":
-      return {
-        label: "Reservar",
-        brand: "TheFork",
-        url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}`,
-      };
+      return { kind: "book", brand: "TheFork", url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}` };
     case "nightlife":
-      return {
-        label: "Ver",
-        brand: "TripAdvisor",
-        url: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`,
-      };
+      return { kind: "view", brand: "TripAdvisor", url: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}` };
     case "activity":
     case "sight":
-      return {
-        label: "Reservar",
-        brand: "GetYourGuide",
-        url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}`,
-      };
+      return { kind: "book", brand: "GetYourGuide", url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}` };
     default:
       return null;
   }
 }
 
-
 function TripPage() {
+  const { t } = useTranslation();
   const { tripId } = Route.useParams();
   const navigate = useNavigate();
   const generate = useServerFn(generateItinerary);
+
+  const LOADING_MESSAGES = useMemo(
+    () => [t("trip.loading1"), t("trip.loading2"), t("trip.loading3"), t("trip.loading4")],
+    [t],
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +107,6 @@ function TripPage() {
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
 
-  // Load plan
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
@@ -136,12 +120,11 @@ function TripPage() {
     })();
   }, []);
 
-  // Rotate loading messages
   useEffect(() => {
     if (!loading) return;
-    const t = setInterval(() => setMsgIdx((i) => (i + 1) % LOADING_MESSAGES.length), 1800);
-    return () => clearInterval(t);
-  }, [loading]);
+    const tm = setInterval(() => setMsgIdx((i) => (i + 1) % LOADING_MESSAGES.length), 1800);
+    return () => clearInterval(tm);
+  }, [loading, LOADING_MESSAGES.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,7 +138,7 @@ function TripPage() {
           .eq("id", tripId)
           .maybeSingle();
         if (e1) throw e1;
-        if (!data) throw new Error("Viaje no encontrado");
+        if (!data) throw new Error(t("trip.notFound"));
 
         if (data.status === "ready" && data.itinerary) {
           if (!cancelled) {
@@ -176,30 +159,28 @@ function TripPage() {
         });
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Algo salió mal");
+        setError(err instanceof Error ? err.message : t("trip.somethingWrong"));
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [tripId, generate]);
+    return () => { cancelled = true; };
+  }, [tripId, generate, t]);
 
-  if (loading) return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} />;
+  if (loading) return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} subtitle={t("trip.loadingSubtitle")} />;
 
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] flex items-center justify-center p-6">
         <div className="max-w-md rounded-3xl bg-white/80 p-8 text-center shadow-xl backdrop-blur-xl">
-          <h1 className="font-display text-xl font-bold text-sky-900">No pudimos crear tu itinerario</h1>
+          <h1 className="font-display text-xl font-bold text-sky-900">{t("trip.errorTitle")}</h1>
           <p className="mt-2 text-sm text-sky-700">{error}</p>
           <div className="mt-6 flex gap-2 justify-center">
             <button
               onClick={() => navigate({ to: "/dashboard" })}
               className="rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white"
             >
-              Volver
+              {t("trip.errorBack")}
             </button>
           </div>
         </div>
@@ -208,12 +189,10 @@ function TripPage() {
   }
 
   if (!trip?.itinerary) return null;
-
   const itin = trip.itinerary;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      {/* Top bar */}
       <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <Link
@@ -221,7 +200,7 @@ function TripPage() {
             className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            Dashboard
+            {t("trip.backDashboard")}
           </Link>
           <div className="flex items-center gap-2">
             <div className="flex rounded-full bg-sky-50 p-1">
@@ -231,7 +210,7 @@ function TripPage() {
                   view === "cards" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
                 }`}
               >
-                <LayoutGrid className="h-3.5 w-3.5" /> Tarjetas
+                <LayoutGrid className="h-3.5 w-3.5" /> {t("trip.viewCards")}
               </button>
               <button
                 onClick={() => setView("text")}
@@ -239,7 +218,7 @@ function TripPage() {
                   view === "text" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
                 }`}
               >
-                <FileText className="h-3.5 w-3.5" /> Texto
+                <FileText className="h-3.5 w-3.5" /> {t("trip.viewText")}
               </button>
             </div>
             {plan && plan !== "free" ? (
@@ -247,22 +226,21 @@ function TripPage() {
                 onClick={() => setAssistantOpen(true)}
                 className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-2 text-xs font-semibold text-white shadow-md shadow-[#1E6B9A]/25 transition hover:shadow-lg"
               >
-                <Wand2 className="h-3.5 w-3.5" /> Editar con asistente
+                <Wand2 className="h-3.5 w-3.5" /> {t("trip.editAssistant")}
               </button>
             ) : plan === "free" ? (
               <Link
                 to="/pricing"
                 className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
-                title="Disponible en planes Viajero y Explorador"
+                title={t("trip.editAssistantLocked")}
               >
-                <Wand2 className="h-3.5 w-3.5" /> Editar con asistente
+                <Wand2 className="h-3.5 w-3.5" /> {t("trip.editAssistant")}
               </Link>
             ) : null}
           </div>
         </div>
       </div>
 
-      {/* Hero */}
       <div className="relative h-64 w-full overflow-hidden md:h-80">
         {trip.hero_image_url ? (
           <img src={trip.hero_image_url} alt={trip.destination} className="h-full w-full object-cover" />
@@ -272,7 +250,7 @@ function TripPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
           <div className="mx-auto max-w-4xl text-white">
-            <p className="text-xs font-semibold uppercase tracking-widest opacity-90">Tu itinerario</p>
+            <p className="text-xs font-semibold uppercase tracking-widest opacity-90">{t("trip.heroTag")}</p>
             <h1 className="mt-1 font-display text-3xl font-bold drop-shadow-md md:text-4xl">{trip.destination}</h1>
             {itin.summary && <p className="mt-2 max-w-2xl text-sm opacity-90 md:text-base">{itin.summary}</p>}
           </div>
@@ -282,29 +260,17 @@ function TripPage() {
       <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
         <AnimatePresence mode="wait">
           {view === "cards" ? (
-            <motion.div
-              key="cards"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="space-y-6"
-            >
+            <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               {itin.days.map((day) => (
                 <DayCard key={day.day} day={day} destination={trip.destination} />
               ))}
             </motion.div>
           ) : (
-            <motion.div
-              key="text"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8"
-            >
+            <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
               {itin.days.map((day) => (
                 <div key={day.day} className="mb-6 last:mb-0">
                   <h2 className="font-display text-lg font-bold text-sky-900">
-                    Día {day.day}: {day.title}
+                    {t("trip.dayHeading", { n: day.day, title: day.title })}
                   </h2>
                   {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
                   <ul className="mt-3 space-y-2">
@@ -338,6 +304,7 @@ function TripPage() {
 }
 
 function DayCard({ day, destination }: { day: Day; destination: string }) {
+  const { t } = useTranslation();
   const [busy, setBusy] = useState<null | "download" | "share">(null);
 
   const buildPostcard = async (): Promise<string> => {
@@ -363,11 +330,11 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
       const dataUrl = await buildPostcard();
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = `${destination.replace(/\s+/g, "-").toLowerCase()}-dia-${day.day}.png`;
+      a.download = `${destination.replace(/\s+/g, "-").toLowerCase()}-day-${day.day}.png`;
       a.click();
-      toast.success("Postal descargada ✨");
+      toast.success(t("trip.postcardDownloaded"));
     } catch {
-      toast.error("No se pudo generar la postal");
+      toast.error(t("trip.postcardFail"));
     } finally {
       setBusy(null);
     }
@@ -378,26 +345,24 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
     try {
       const dataUrl = await buildPostcard();
       const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], `dia-${day.day}.png`, { type: "image/png" });
+      const file = new File([blob], `day-${day.day}.png`, { type: "image/png" });
       const navAny = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      const shareTitle = t("trip.shareTitle", { n: day.day, destination });
+      const shareText = t("trip.shareText", { title: day.title, destination });
       if (navAny.canShare && navAny.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `Día ${day.day} en ${destination}`,
-          text: `${day.title} – mi viaje a ${destination} con Itineraya`,
-        });
+        await navigator.share({ files: [file], title: shareTitle, text: shareText });
       } else if (navigator.share) {
         await navigator.share({
-          title: `Día ${day.day} en ${destination}`,
+          title: shareTitle,
           text: `${day.title} – ${day.activities.map((a) => `${a.time}: ${a.title}`).join(" • ")}`,
           url: window.location.href,
         });
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        toast.success("Enlace copiado");
+        toast.success(t("trip.linkCopied"));
       }
     } catch (err) {
-      if (err instanceof Error && err.name !== "AbortError") toast.error("No se pudo compartir");
+      if (err instanceof Error && err.name !== "AbortError") toast.error(t("trip.shareFail"));
     } finally {
       setBusy(null);
     }
@@ -412,7 +377,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
               <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                Día {day.day}
+                {t("trip.dayLabel", { n: day.day })}
               </span>
               <h3 className="mt-2 font-display text-2xl font-bold drop-shadow">{day.title}</h3>
               {day.subtitle && <p className="text-sm opacity-90">{day.subtitle}</p>}
@@ -422,7 +387,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
         {!day.image_url && (
           <div className="p-6 pb-2">
             <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E6B9A]">
-              Día {day.day}
+              {t("trip.dayLabel", { n: day.day })}
             </span>
             <h3 className="mt-2 font-display text-2xl font-bold text-sky-900">{day.title}</h3>
             {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
@@ -450,7 +415,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-sky-800 shadow-sm ring-1 ring-sky-200 transition hover:bg-sky-50 disabled:opacity-60"
         >
           {busy === "download" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          Descargar postal
+          {t("trip.downloadPostcard")}
         </button>
         <button
           onClick={share}
@@ -458,7 +423,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-4 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#15577E] disabled:opacity-60"
         >
           {busy === "share" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-          Compartir
+          {t("trip.share")}
         </button>
       </div>
     </div>
@@ -466,8 +431,10 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
 }
 
 function ActivityRow({ activity, destination }: { activity: Activity; destination: string }) {
+  const { t } = useTranslation();
   const placeQuery = `${activity.place || activity.title}, ${destination}`;
   const booking = bookingForCategory(activity.category, activity.place || activity.title, destination);
+  const bookingLabel = booking?.kind === "view" ? t("trip.viewVerb") : t("trip.book");
   return (
     <div className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
       <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
@@ -492,10 +459,10 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 transition hover:bg-sky-50"
-            title="Abrir en Google Maps"
+            title={t("trip.mapsTitle")}
           >
             <MapPin className="h-3.5 w-3.5" />
-            Maps
+            {t("trip.maps")}
           </a>
           {booking && (
             <a
@@ -503,10 +470,10 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#15577E]"
-              title={`${booking.label} en ${booking.brand}`}
+              title={t("trip.bookOn", { label: bookingLabel, brand: booking.brand })}
             >
               <Sparkles className="h-3.5 w-3.5" />
-              {booking.label} · {booking.brand}
+              {bookingLabel} · {booking.brand}
             </a>
           )}
         </div>
@@ -515,19 +482,13 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
   );
 }
 
-function LoadingScreen({ msg }: { msg: string }) {
+function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
   const dots = useMemo(() => Array.from({ length: 12 }), []);
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6">
       <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }}
-        />
+        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }} />
+        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }} />
       </div>
 
       <div className="relative flex flex-col items-center text-center">
@@ -568,9 +529,7 @@ function LoadingScreen({ msg }: { msg: string }) {
             {msg}
           </motion.h2>
         </AnimatePresence>
-        <p className="mt-2 max-w-xs text-sm text-sky-600">
-          Nuestra IA está diseñando un itinerario único para ti
-        </p>
+        <p className="mt-2 max-w-xs text-sm text-sky-600">{subtitle}</p>
       </div>
     </div>
   );
