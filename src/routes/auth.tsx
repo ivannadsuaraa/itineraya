@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plane, Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { checkEmailExists } from "@/lib/auth.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -32,6 +34,8 @@ function AuthPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [existingEmail, setExistingEmail] = useState<string | null>(null);
+  const checkEmail = useServerFn(checkEmailExists);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -48,8 +52,15 @@ function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setExistingEmail(null);
     try {
       if (mode === "signup") {
+        const { exists } = await checkEmail({ data: { email } });
+        if (exists) {
+          setExistingEmail(email);
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -223,6 +234,27 @@ function AuthPage() {
                     className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                   />
                 </Field>
+                {existingEmail && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl bg-red-50 p-4 text-center"
+                  >
+                    <p className="text-sm font-semibold text-red-700">
+                      Este email ya está registrado
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("login");
+                        setExistingEmail(null);
+                      }}
+                      className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#15577E]"
+                    >
+                      Iniciar sesión
+                    </button>
+                  </motion.div>
+                )}
                 <div className="space-y-2">
                   <Field
                     icon={<Lock className="h-4 w-4" />}
