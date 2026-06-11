@@ -80,20 +80,26 @@ Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura, conser
       "image_query": "2-3 palabras en inglés",
       "image_url": "URL o null (mantén la existente si no cambias el día)",
       "activities": [
-        { "time": "Mañana|Tarde|Noche", "title": "string", "description": "string" }
+        {
+          "time": "09:00",
+          "emoji": "🛬",
+          "title": "string",
+          "place": "Nombre real del lugar",
+          "description": "1-2 líneas con consejo útil",
+          "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other"
+        }
       ]
     }
   ],
   "change_summary": "1-2 frases en español describiendo qué cambiaste"
-}`;
+}
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: "Devuelves ÚNICAMENTE JSON válido, sin markdown ni texto extra." },
+REQUISITOS:
+- Mantén MÍNIMO 5-6 actividades por día.
+- "time" SIEMPRE en formato 24h HH:MM (nunca "Mañana/Tarde/Noche").
+- "emoji" representativo de la actividad.
+- "place" con nombre REAL (hotel/restaurante/museo) en ${trip.destination}.
+- "category" exactamente uno de los valores listados.`;
           { role: "user", content: prompt },
         ],
         response_format: { type: "json_object" },
