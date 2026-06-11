@@ -7,7 +7,14 @@ const Input = z.object({
   instruction: z.string().min(1).max(2000),
 });
 
-type Activity = { time: string; title: string; description: string };
+type Activity = {
+  time: string;
+  emoji?: string;
+  title: string;
+  place?: string;
+  description: string;
+  category?: "hotel" | "restaurant" | "activity" | "transport" | "sight" | "nightlife" | "shopping" | "other";
+};
 type Day = {
   day: number;
   title: string;
