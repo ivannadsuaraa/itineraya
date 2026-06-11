@@ -70,8 +70,19 @@ function AuthPage() {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
+      // OAuth broker (/~oauth/*) only exists on Lovable infrastructure.
+      // On custom domains hosted elsewhere (e.g. Vercel), force the callback
+      // through the lovable.app domain, then bounce the user back.
+      const host = window.location.hostname;
+      const isLovableHost = host.endsWith(".lovable.app") || host === "localhost" || host.startsWith("127.");
+      const lovableOrigin = "https://itineraya.lovable.app";
+      const currentOrigin = window.location.origin;
+      const redirectUri = isLovableHost
+        ? currentOrigin
+        : `${lovableOrigin}/auth?return_to=${encodeURIComponent(currentOrigin + "/dashboard")}`;
+
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: redirectUri,
       });
       if (result.error) {
         toast.error("No se pudo iniciar sesión con Google");
