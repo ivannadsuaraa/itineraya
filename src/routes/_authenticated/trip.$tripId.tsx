@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,15 +11,14 @@ import {
   Loader2,
   Plane,
   Sparkles,
-  Sun,
-  Sunset,
-  Moon,
+  MapPin,
+  Calendar as CalendarIcon,
   Wand2,
 } from "lucide-react";
-import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
+import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
@@ -27,7 +26,24 @@ export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   component: TripPage,
 });
 
-type Activity = { time: string; title: string; description: string };
+type ActivityCategory =
+  | "hotel"
+  | "restaurant"
+  | "activity"
+  | "transport"
+  | "sight"
+  | "nightlife"
+  | "shopping"
+  | "other";
+
+type Activity = {
+  time: string;
+  emoji?: string;
+  title: string;
+  place?: string;
+  description: string;
+  category?: ActivityCategory;
+};
 type Day = {
   day: number;
   title: string;
@@ -44,6 +60,48 @@ const LOADING_MESSAGES = [
   "Eligiendo rincones especiales…",
   "Casi listo…",
 ];
+
+function googleMapsUrl(query: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function bookingForCategory(
+  category: ActivityCategory | undefined,
+  placeOrTitle: string,
+  destination: string,
+): { label: string; url: string; brand: string } | null {
+  const q = `${placeOrTitle} ${destination}`.trim();
+  switch (category) {
+    case "hotel":
+      return {
+        label: "Reservar",
+        brand: "Booking",
+        url: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(q)}`,
+      };
+    case "restaurant":
+      return {
+        label: "Reservar",
+        brand: "TheFork",
+        url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}`,
+      };
+    case "nightlife":
+      return {
+        label: "Ver",
+        brand: "TripAdvisor",
+        url: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`,
+      };
+    case "activity":
+    case "sight":
+      return {
+        label: "Reservar",
+        brand: "GetYourGuide",
+        url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}`,
+      };
+    default:
+      return null;
+  }
+}
+
 
 function TripPage() {
   const { tripId } = Route.useParams();
