@@ -48,7 +48,7 @@ export const generateItinerary = createServerFn({ method: "POST" })
       return Math.min(d, 14);
     })();
 
-    const prompt = `Eres un experto planificador de viajes. Crea un itinerario detallado en español.
+    const prompt = `Eres un experto planificador de viajes. Crea un itinerario MUY detallado en español.
 
 Destino: ${trip.destination}
 Fechas: ${trip.start_date ?? "flexibles"} a ${trip.end_date ?? "flexibles"} (~${dayCount} días)
@@ -57,7 +57,7 @@ Presupuesto: ${trip.budget ?? "no especificado"}
 Estilo: ${trip.trip_style ?? "no especificado"}
 Evitar: ${trip.avoid?.trim() || "nada en particular"}
 
-Devuelve SOLO JSON válido sin markdown con esta forma exacta:
+Devuelve SOLO JSON válido sin markdown con esta forma EXACTA:
 {
   "summary": "1-2 frases inspiradoras",
   "days": [
@@ -67,13 +67,30 @@ Devuelve SOLO JSON válido sin markdown con esta forma exacta:
       "subtitle": "Resumen de 1 frase",
       "image_query": "2-3 palabras en inglés para foto representativa",
       "activities": [
-        { "time": "Mañana", "title": "Actividad", "description": "Detalle útil con consejos" }
+        {
+          "time": "09:00",
+          "emoji": "🛬",
+          "title": "Llegada al aeropuerto",
+          "place": "Aeropuerto de [nombre real]",
+          "description": "1-2 líneas con un consejo útil o detalle del lugar.",
+          "category": "transport"
+        }
       ]
     }
   ]
 }
 
-Genera ${dayCount} días. 3-5 actividades por día (Mañana, Tarde, Noche). NO uses markdown, devuelve JSON puro.`;
+REQUISITOS OBLIGATORIOS:
+- Genera ${dayCount} días.
+- MÍNIMO 5-6 actividades por día con horas distribuidas (mañana, mediodía, tarde, noche).
+- "time": SIEMPRE en formato 24h HH:MM (ej "09:00", "13:30", "20:00"). NUNCA uses "Mañana/Tarde/Noche".
+- "emoji": UN emoji representativo de la actividad (🛬 vuelo, 🏨 hotel, 🍜🍣🍝🥐 comida, 🌅 mirador, 🏛️ museo, 🚶 paseo, 🚲 bici, 🍹 copas, 🎭 show, 🏖️ playa, etc).
+- "title": nombre corto de la actividad (3-6 palabras).
+- "place": NOMBRE REAL del establecimiento o lugar concreto (hotel real, restaurante real, museo, mirador, etc) en ${trip.destination}. NO inventes nombres genéricos.
+- "description": 1-2 líneas con consejo útil, qué pedir/ver/hacer.
+- "category": EXACTAMENTE uno de: "hotel", "restaurant", "activity", "transport", "sight", "nightlife", "shopping", "other".
+
+Devuelve JSON puro, sin markdown ni backticks.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -108,16 +125,33 @@ Genera ${dayCount} días. 3-5 actividades por día (Mañana, Tarde, Noche). NO u
     const content = aiJson.choices?.[0]?.message?.content;
     if (!content) throw new Error("Respuesta vacía del modelo");
 
-    let parsed: { summary?: string; days: Array<{ day: number; title: string; subtitle?: string; image_query?: string; activities: Array<{ time: string; title: string; description: string }> }> };
+    type ParsedActivity = {
+      time: string;
+      emoji?: string;
+      title: string;
+      place?: string;
+      description: string;
+      category?: string;
+    };
+    type ParsedItin = {
+      summary?: string;
+      days: Array<{
+        day: number;
+        title: string;
+        subtitle?: string;
+        image_query?: string;
+        image_url?: string | null;
+        activities: ParsedActivity[];
+      }>;
+    };
+    let parsed: ParsedItin;
     try {
-      parsed = JSON.parse(content);
+      parsed = JSON.parse(content) as ParsedItin;
     } catch {
-      const cleaned = content
-        .replace(/```json\n?/gi, "")
-        .replace(/```/g, "")
-        .trim();
-      parsed = JSON.parse(cleaned);
+      const cleaned = content.replace(/```json\n?/gi, "").replace(/```/g, "").trim();
+      parsed = JSON.parse(cleaned) as ParsedItin;
     }
+
 
     // Hero image
     const hero = await unsplashImage(`${trip.destination} travel landscape`);

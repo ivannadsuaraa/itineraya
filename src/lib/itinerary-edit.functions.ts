@@ -7,7 +7,14 @@ const Input = z.object({
   instruction: z.string().min(1).max(2000),
 });
 
-type Activity = { time: string; title: string; description: string };
+type Activity = {
+  time: string;
+  emoji?: string;
+  title: string;
+  place?: string;
+  description: string;
+  category?: "hotel" | "restaurant" | "activity" | "transport" | "sight" | "nightlife" | "shopping" | "other";
+};
 type Day = {
   day: number;
   title: string;
@@ -73,12 +80,26 @@ Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura, conser
       "image_query": "2-3 palabras en inglés",
       "image_url": "URL o null (mantén la existente si no cambias el día)",
       "activities": [
-        { "time": "Mañana|Tarde|Noche", "title": "string", "description": "string" }
+        {
+          "time": "09:00",
+          "emoji": "🛬",
+          "title": "string",
+          "place": "Nombre real del lugar",
+          "description": "1-2 líneas con consejo útil",
+          "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other"
+        }
       ]
     }
   ],
   "change_summary": "1-2 frases en español describiendo qué cambiaste"
-}`;
+}
+
+REQUISITOS:
+- Mantén MÍNIMO 5-6 actividades por día.
+- "time" SIEMPRE en formato 24h HH:MM (nunca "Mañana/Tarde/Noche").
+- "emoji" representativo de la actividad.
+- "place" con nombre REAL (hotel/restaurante/museo) en ${trip.destination}.
+- "category" exactamente uno de los valores listados.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,15 +11,14 @@ import {
   Loader2,
   Plane,
   Sparkles,
-  Sun,
-  Sunset,
-  Moon,
+  MapPin,
+  Calendar as CalendarIcon,
   Wand2,
 } from "lucide-react";
-import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
+import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
@@ -27,7 +26,24 @@ export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   component: TripPage,
 });
 
-type Activity = { time: string; title: string; description: string };
+type ActivityCategory =
+  | "hotel"
+  | "restaurant"
+  | "activity"
+  | "transport"
+  | "sight"
+  | "nightlife"
+  | "shopping"
+  | "other";
+
+type Activity = {
+  time: string;
+  emoji?: string;
+  title: string;
+  place?: string;
+  description: string;
+  category?: ActivityCategory;
+};
 type Day = {
   day: number;
   title: string;
@@ -44,6 +60,48 @@ const LOADING_MESSAGES = [
   "Eligiendo rincones especiales…",
   "Casi listo…",
 ];
+
+function googleMapsUrl(query: string): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function bookingForCategory(
+  category: ActivityCategory | undefined,
+  placeOrTitle: string,
+  destination: string,
+): { label: string; url: string; brand: string } | null {
+  const q = `${placeOrTitle} ${destination}`.trim();
+  switch (category) {
+    case "hotel":
+      return {
+        label: "Reservar",
+        brand: "Booking",
+        url: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(q)}`,
+      };
+    case "restaurant":
+      return {
+        label: "Reservar",
+        brand: "TheFork",
+        url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}`,
+      };
+    case "nightlife":
+      return {
+        label: "Ver",
+        brand: "TripAdvisor",
+        url: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`,
+      };
+    case "activity":
+    case "sight":
+      return {
+        label: "Reservar",
+        brand: "GetYourGuide",
+        url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}`,
+      };
+    default:
+      return null;
+  }
+}
+
 
 function TripPage() {
   const { tripId } = Route.useParams();
@@ -252,8 +310,9 @@ function TripPage() {
                   <ul className="mt-3 space-y-2">
                     {day.activities.map((a, i) => (
                       <li key={i} className="text-sm text-sky-900">
-                        <span className="font-semibold text-[#1E6B9A]">{a.time}:</span>{" "}
-                        <span className="font-semibold">{a.title}.</span>{" "}
+                        <span className="mr-1">{a.emoji ?? "📍"}</span>
+                        <span className="font-semibold text-[#1E6B9A]">{a.time}</span>{" "}
+                        — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
                         <span className="text-sky-700">{a.description}</span>
                       </li>
                     ))}
@@ -278,43 +337,46 @@ function TripPage() {
   );
 }
 
-function timeIcon(time: string) {
-  const t = time.toLowerCase();
-  if (t.includes("noche")) return <Moon className="h-3.5 w-3.5" />;
-  if (t.includes("tarde")) return <Sunset className="h-3.5 w-3.5" />;
-  return <Sun className="h-3.5 w-3.5" />;
-}
-
 function DayCard({ day, destination }: { day: Day; destination: string }) {
-  const cardRef = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState<null | "download" | "share">(null);
 
+  const buildPostcard = async (): Promise<string> => {
+    return generatePostcardDataUrl({
+      destination,
+      dayNumber: day.day,
+      dayTitle: day.title,
+      subtitle: day.subtitle,
+      imageUrl: day.image_url ?? null,
+      activities: day.activities.map((a) => ({
+        time: a.time,
+        emoji: a.emoji,
+        title: a.title,
+        place: a.place,
+        description: a.description,
+      })),
+    });
+  };
+
   const download = async () => {
-    if (!cardRef.current) return;
     setBusy("download");
     try {
-      const dataUrl = await toPng(cardRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: "#ffffff",
-      });
+      const dataUrl = await buildPostcard();
       const a = document.createElement("a");
       a.href = dataUrl;
       a.download = `${destination.replace(/\s+/g, "-").toLowerCase()}-dia-${day.day}.png`;
       a.click();
-      toast.success("Imagen descargada ✨");
+      toast.success("Postal descargada ✨");
     } catch {
-      toast.error("No se pudo generar la imagen");
+      toast.error("No se pudo generar la postal");
     } finally {
       setBusy(null);
     }
   };
 
   const share = async () => {
-    if (!cardRef.current) return;
     setBusy("share");
     try {
-      const dataUrl = await toPng(cardRef.current, { cacheBust: true, pixelRatio: 2, backgroundColor: "#ffffff" });
+      const dataUrl = await buildPostcard();
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], `dia-${day.day}.png`, { type: "image/png" });
       const navAny = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
@@ -331,7 +393,6 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           url: window.location.href,
         });
       } else {
-        // Fallback: copy link
         await navigator.clipboard.writeText(window.location.href);
         toast.success("Enlace copiado");
       }
@@ -344,7 +405,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
 
   return (
     <div className="overflow-hidden rounded-3xl bg-white/85 shadow-xl backdrop-blur-xl ring-1 ring-white/60">
-      <div ref={cardRef} className="bg-white">
+      <div className="bg-white">
         {day.image_url && (
           <div className="relative h-48 w-full overflow-hidden md:h-56">
             <img src={day.image_url} alt={day.title} className="h-full w-full object-cover" crossOrigin="anonymous" />
@@ -370,18 +431,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
 
         <div className="space-y-3 p-5 md:p-6">
           {day.activities.map((a, i) => (
-            <div key={i} className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
-                {timeIcon(a.time)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[#1E6B9A]">
-                  {a.time}
-                </div>
-                <div className="font-semibold text-sky-900">{a.title}</div>
-                <div className="mt-0.5 text-sm text-sky-700">{a.description}</div>
-              </div>
-            </div>
+            <ActivityRow key={i} activity={a} destination={destination} />
           ))}
         </div>
 
@@ -400,7 +450,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-sky-800 shadow-sm ring-1 ring-sky-200 transition hover:bg-sky-50 disabled:opacity-60"
         >
           {busy === "download" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          Descargar
+          Descargar postal
         </button>
         <button
           onClick={share}
@@ -410,6 +460,56 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           {busy === "share" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
           Compartir
         </button>
+      </div>
+    </div>
+  );
+}
+
+function ActivityRow({ activity, destination }: { activity: Activity; destination: string }) {
+  const placeQuery = `${activity.place || activity.title}, ${destination}`;
+  const booking = bookingForCategory(activity.category, activity.place || activity.title, destination);
+  return (
+    <div className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
+      <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
+        <CalendarIcon className="h-3 w-3 opacity-70" />
+        <span className="mt-0.5 text-xs font-bold leading-none">{activity.time}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start gap-2">
+          <span className="text-lg leading-none">{activity.emoji ?? "📍"}</span>
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-sky-900">{activity.title}</div>
+            {activity.place && (
+              <div className="truncate text-xs font-medium text-sky-700/90">{activity.place}</div>
+            )}
+          </div>
+        </div>
+        <div className="mt-1 text-sm text-sky-700">{activity.description}</div>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          <a
+            href={googleMapsUrl(placeQuery)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 transition hover:bg-sky-50"
+            title="Abrir en Google Maps"
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            Maps
+          </a>
+          {booking && (
+            <a
+              href={booking.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#15577E]"
+              title={`${booking.label} en ${booking.brand}`}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {booking.label} · {booking.brand}
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
