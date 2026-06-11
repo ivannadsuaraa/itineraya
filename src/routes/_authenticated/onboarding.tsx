@@ -8,7 +8,6 @@ import {
   ArrowRight,
   CalendarIcon,
   Loader2,
-  Plane,
   Sparkles,
   User,
   Users,
@@ -23,6 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -170,11 +170,8 @@ function OnboardingPage() {
         </div>
 
         {/* Logo */}
-        <div className="mb-8 flex items-center justify-center gap-2 text-sky-900">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
-            <Plane className="h-4 w-4 rotate-[-45deg] text-white" />
-          </div>
-          <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
+        <div className="mb-8 flex items-center justify-center">
+          <BrandLogo size="md" />
         </div>
 
         {/* Progress */}

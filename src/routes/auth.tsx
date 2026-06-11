@@ -23,6 +23,23 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+async function routeAfterLogin(navigate: ReturnType<typeof useNavigate>, userId: string, return_to?: string) {
+  if (return_to && /^https?:\/\//.test(return_to)) {
+    window.location.replace(return_to);
+    return;
+  }
+  const { data } = await supabase
+    .from("profiles")
+    .select("welcome_completed")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!data?.welcome_completed) {
+    navigate({ to: "/welcome" });
+  } else {
+    navigate({ to: "/dashboard" });
+  }
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { mode: initialMode, return_to } = Route.useSearch();
@@ -35,16 +52,13 @@ function AuthPage() {
   const [signupSent, setSignupSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [existingEmail, setExistingEmail] = useState<string | null>(null);
+  const [verifyChecking, setVerifyChecking] = useState(false);
   const checkEmail = useServerFn(checkEmailExists);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        if (return_to && /^https?:\/\//.test(return_to)) {
-          window.location.replace(return_to);
-        } else {
-          navigate({ to: "/dashboard" });
-        }
+      if (data.session?.user) {
+        void routeAfterLogin(navigate, data.session.user.id, return_to);
       }
     });
   }, [navigate, return_to]);
@@ -73,16 +87,39 @@ function AuthPage() {
         setSignupSent(true);
         toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signIn, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("¡Bienvenido de vuelta!");
-        navigate({ to: "/dashboard" });
+        if (signIn.user) await routeAfterLogin(navigate, signIn.user.id, return_to);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Algo salió mal";
       toast.error(msg.includes("Invalid login") ? "Email o contraseña incorrectos" : msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAlreadyVerified = async () => {
+    if (!email || !password) {
+      toast.error("Introduce tu email y contraseña");
+      return;
+    }
+    setVerifyChecking(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("not confirmed") || error.message.toLowerCase().includes("email not confirmed")) {
+          toast.error("Aún no hemos detectado la verificación. Revisa tu correo.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+      toast.success("¡Email verificado!");
+      if (data.user) await routeAfterLogin(navigate, data.user.id, return_to);
+    } finally {
+      setVerifyChecking(false);
     }
   };
 
@@ -98,7 +135,8 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard" });
+      const { data } = await supabase.auth.getUser();
+      if (data.user) await routeAfterLogin(navigate, data.user.id, return_to);
     } catch {
       toast.error("No se pudo iniciar sesión con Google");
       setGoogleLoading(false);
@@ -134,12 +172,14 @@ function AuthPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8 flex flex-col items-center gap-2 text-sky-900"
+          className="mb-8"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
-            <Plane className="h-7 w-7 rotate-[-45deg] text-white" />
-          </div>
-          <span className="font-display text-2xl font-bold tracking-tight">Itineraya</span>
+          <Link to="/" className="flex flex-col items-center gap-2 text-sky-900">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
+              <Plane className="h-7 w-7 rotate-[-45deg] text-white" />
+            </div>
+            <span className="font-display text-2xl font-bold tracking-tight">Itineraya</span>
+          </Link>
         </motion.div>
 
         {/* Card */}
@@ -164,8 +204,16 @@ function AuthPage() {
               </p>
               <button
                 type="button"
+                onClick={handleAlreadyVerified}
+                disabled={verifyChecking}
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
+              >
+                {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ya he verificado mi email"}
+              </button>
+              <button
+                type="button"
                 onClick={() => { setSignupSent(false); setMode("login"); }}
-                className="mt-6 text-sm font-semibold text-[#1E6B9A] hover:underline"
+                className="mt-4 text-sm font-semibold text-[#1E6B9A] hover:underline"
               >
                 Volver a iniciar sesión
               </button>

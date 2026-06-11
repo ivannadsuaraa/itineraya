@@ -103,37 +103,46 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
           budget_range: string | null
           created_at: string
           full_name: string | null
           id: string
+          language: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations: string[] | null
           travel_style: string | null
           updated_at: string
+          welcome_completed: boolean
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
           budget_range?: string | null
           created_at?: string
           full_name?: string | null
           id: string
+          language?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations?: string[] | null
           travel_style?: string | null
           updated_at?: string
+          welcome_completed?: boolean
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
           budget_range?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          language?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations?: string[] | null
           travel_style?: string | null
           updated_at?: string
+          welcome_completed?: boolean
         }
         Relationships: []
       }
