@@ -84,6 +84,7 @@ export function HeroSection() {
             >
               <Link
                 to="/auth"
+                search={{ mode: "signup" }}
                 className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
               >
                 Empieza gratis
