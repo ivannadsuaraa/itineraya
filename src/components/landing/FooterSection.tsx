@@ -59,17 +59,17 @@ export function FooterSection() {
           {/* Bottom row */}
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row sm:w-full">
             <p className="text-sm text-sky-500">
-              &copy; {new Date().getFullYear()} Itineraya. Todos los derechos reservados.
+              &copy; {new Date().getFullYear()} Itineraya. {t("footer.rights")}
             </p>
             <div className="flex gap-6">
               <a href="#" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
-                Privacidad
+                {t("footer.privacy")}
               </a>
               <a href="#" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
-                Términos
+                {t("footer.terms")}
               </a>
               <a href="#" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
-                Contacto
+                {t("footer.contact")}
               </a>
             </div>
           </div>
