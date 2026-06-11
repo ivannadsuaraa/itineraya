@@ -172,12 +172,14 @@ function AuthPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8 flex flex-col items-center gap-2 text-sky-900"
+          className="mb-8"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
-            <Plane className="h-7 w-7 rotate-[-45deg] text-white" />
-          </div>
-          <span className="font-display text-2xl font-bold tracking-tight">Itineraya</span>
+          <Link to="/" className="flex flex-col items-center gap-2 text-sky-900">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
+              <Plane className="h-7 w-7 rotate-[-45deg] text-white" />
+            </div>
+            <span className="font-display text-2xl font-bold tracking-tight">Itineraya</span>
+          </Link>
         </motion.div>
 
         {/* Card */}
@@ -202,8 +204,16 @@ function AuthPage() {
               </p>
               <button
                 type="button"
+                onClick={handleAlreadyVerified}
+                disabled={verifyChecking}
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
+              >
+                {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ya he verificado mi email"}
+              </button>
+              <button
+                type="button"
                 onClick={() => { setSignupSent(false); setMode("login"); }}
-                className="mt-6 text-sm font-semibold text-[#1E6B9A] hover:underline"
+                className="mt-4 text-sm font-semibold text-[#1E6B9A] hover:underline"
               >
                 Volver a iniciar sesión
               </button>
