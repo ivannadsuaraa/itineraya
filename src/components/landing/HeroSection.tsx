@@ -40,7 +40,7 @@ export function HeroSection() {
               className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-1.5 text-sm font-medium text-sky-700"
             >
               <Sparkles className="h-4 w-4" />
-              <span>Impulsado por Inteligencia Artificial</span>
+              <span>{t("hero.badge")}</span>
             </motion.div>
 
             <motion.h1
@@ -49,9 +49,9 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mt-6 font-display text-4xl font-bold leading-[1.1] tracking-tight text-sky-900 sm:text-5xl lg:text-6xl"
             >
-              Tu viaje perfecto,{" "}
+              {t("hero.title1")}{" "}
               <span className="relative">
-                creado en segundos
+                {t("hero.title2")}
                 <svg
                   className="absolute -bottom-2 left-0 w-full"
                   viewBox="0 0 300 12"
@@ -74,7 +74,7 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="mt-6 max-w-lg text-lg leading-relaxed text-sky-600"
             >
-              Itineraya transforma tus sueños de viaje en itinerarios personalizados. Dinos tu destino y deja que la IA haga el resto.
+              {t("hero.subtitle")}
             </motion.p>
 
             <motion.div
@@ -88,14 +88,14 @@ export function HeroSection() {
                 search={{ mode: "signup" }}
                 className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
               >
-                Empieza gratis
+                {t("hero.ctaStart")}
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a
                 href="#how-it-works"
                 className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/60 px-7 py-3.5 text-base font-medium text-sky-700 backdrop-blur-sm transition-all hover:bg-sky-50"
               >
-                Cómo funciona
+                {t("hero.ctaHow")}
               </a>
             </motion.div>
           </div>
