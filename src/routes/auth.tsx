@@ -28,7 +28,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/" });
+      if (data.session) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
 
@@ -52,7 +52,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("¡Bienvenido de vuelta!");
-        navigate({ to: "/onboarding" });
+        navigate({ to: "/dashboard" });
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Algo salió mal";
@@ -66,7 +66,7 @@ function AuthPage() {
     setGoogleLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/onboarding`,
+        redirect_uri: `${window.location.origin}/dashboard`,
       });
       if (result.error) {
         toast.error("No se pudo iniciar sesión con Google");
@@ -74,7 +74,7 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/onboarding" });
+      navigate({ to: "/dashboard" });
     } catch {
       toast.error("No se pudo iniciar sesión con Google");
       setGoogleLoading(false);
