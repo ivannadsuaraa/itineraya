@@ -1,29 +1,6 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
-
-const testimonials = [
-  {
-    name: "María García",
-    role: "Viajera frecuente",
-    avatar: "M",
-    color: "bg-rose-100 text-rose-600",
-    text: "Planifiqué mi viaje a Bali en menos de 5 minutos. El itinerario fue perfecto, con actividades que nunca habría encontrado por mi cuenta.",
-  },
-  {
-    name: "Carlos Mendoza",
-    role: "Mochilero digital",
-    avatar: "C",
-    color: "bg-emerald-100 text-emerald-600",
-    text: "Increíble cómo la IA entiende exactamente lo que busco. Mi ruta por Japón fue una experiencia inolvidable, todo bien organizado.",
-  },
-  {
-    name: "Laura Fernández",
-    role: "Amante de la gastronomía",
-    avatar: "L",
-    color: "bg-amber-100 text-amber-600",
-    text: "Los restaurantes recomendados en mi viaje a Italia fueron espectaculares. Itineraya entiende lo que significa viajar con todos los sentidos.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const container = {
   hidden: {},
@@ -38,6 +15,12 @@ const item = {
 };
 
 export function TestimonialsSection() {
+  const { t } = useTranslation();
+  const testimonials = [
+    { name: "María García", role: t("testimonials.t1Role"), avatar: "M", color: "bg-rose-100 text-rose-600", text: t("testimonials.t1Text") },
+    { name: "Carlos Mendoza", role: t("testimonials.t2Role"), avatar: "C", color: "bg-emerald-100 text-emerald-600", text: t("testimonials.t2Text") },
+    { name: "Laura Fernández", role: t("testimonials.t3Role"), avatar: "L", color: "bg-amber-100 text-amber-600", text: t("testimonials.t3Text") },
+  ];
   return (
     <section id="testimonials" className="relative overflow-hidden bg-sky-50 py-20 sm:py-28">
       <div className="pointer-events-none absolute inset-0">
@@ -54,13 +37,13 @@ export function TestimonialsSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            Testimonios 💬
+            {t("testimonials.kicker")}
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            Lo que dicen nuestros viajeros
+            {t("testimonials.title")}
           </h2>
           <p className="mt-4 text-lg text-sky-600">
-            Miles de personas ya confían en Itineraya para planificar sus aventuras.
+            {t("testimonials.subtitle")}
           </p>
         </motion.div>
 

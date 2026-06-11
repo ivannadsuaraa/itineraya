@@ -8,6 +8,7 @@ import { FooterSection } from "@/components/landing/FooterSection";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -48,10 +50,10 @@ function LandingPage() {
           className="relative mx-auto max-w-3xl px-4 text-center sm:px-6"
         >
           <h2 className="font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            ¿Listo para tu próximo viaje?
+            {t("finalCta.title")}
           </h2>
           <p className="mt-4 text-lg text-sky-600">
-            Únete a miles de viajeros que ya planifican con Itineraya. Tu próxima aventura empieza con un clic.
+            {t("finalCta.subtitle")}
           </p>
           <div className="mt-8">
             <Link
@@ -59,7 +61,7 @@ function LandingPage() {
               search={{ mode: "signup" }}
               className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
             >
-              Empieza gratis
+              {t("hero.ctaStart")}
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </div>

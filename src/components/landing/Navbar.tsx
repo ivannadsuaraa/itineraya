@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X, Plane } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function Navbar() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -19,9 +22,9 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { label: "Cómo funciona", href: "#how-it-works" },
-    { label: "Características", href: "#features" },
-    { label: "Precios", href: "/pricing" },
+    { label: t("nav.howItWorks"), href: "#how-it-works" },
+    { label: t("nav.features"), href: "#features" },
+    { label: t("nav.pricing"), href: "/pricing" },
   ];
 
   return (
@@ -38,7 +41,7 @@ export function Navbar() {
             <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
           </Link>
 
-          <div className="hidden items-center gap-8 md:flex">
+          <div className="hidden items-center gap-6 md:flex">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -48,29 +51,33 @@ export function Navbar() {
                 {link.label}
               </a>
             ))}
+            <LanguageSwitcher />
             <Link
               to="/auth"
               search={{ mode: "login" }}
               className="text-sm font-semibold text-sky-700 transition-colors hover:text-sky-900"
             >
-              Iniciar sesión
+              {t("nav.login")}
             </Link>
             <Link
               to="/auth"
               search={{ mode: "signup" }}
               className="rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30 hover:scale-[1.02]"
             >
-              Empieza gratis
+              {t("nav.startFree")}
             </Link>
           </div>
 
-          <button
-            onClick={() => setOpen(!open)}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-sky-800 md:hidden"
-            aria-label="Toggle menu"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <LanguageSwitcher compact />
+            <button
+              onClick={() => setOpen(!open)}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-sky-800"
+              aria-label={t("nav.toggleMenu")}
+            >
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </nav>
       </div>
 
@@ -100,7 +107,7 @@ export function Navbar() {
                 onClick={() => setOpen(false)}
                 className="rounded-xl px-4 py-3 text-center text-sm font-semibold text-sky-700 hover:bg-sky-50"
               >
-                Iniciar sesión
+                {t("nav.login")}
               </Link>
               <Link
                 to="/auth"
@@ -108,7 +115,7 @@ export function Navbar() {
                 onClick={() => setOpen(false)}
                 className="mt-1 rounded-full bg-[#1E6B9A] px-5 py-3 text-center text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30"
               >
-                Empieza gratis
+                {t("nav.startFree")}
               </Link>
             </div>
           </motion.div>
