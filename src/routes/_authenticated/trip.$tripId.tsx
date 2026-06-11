@@ -77,6 +77,9 @@ function TripPage() {
       setPlan((((profile as { plan?: string } | null)?.plan ?? "free") as "free" | "viajero" | "explorador"));
     })();
   }, []);
+
+  // Rotate loading messages
+  useEffect(() => {
     if (!loading) return;
     const t = setInterval(() => setMsgIdx((i) => (i + 1) % LOADING_MESSAGES.length), 1800);
     return () => clearInterval(t);
