@@ -331,10 +331,12 @@ function Field({
   icon,
   label,
   children,
+  rightElement,
 }: {
   icon: React.ReactNode;
   label: string;
   children: React.ReactNode;
+  rightElement?: React.ReactNode;
 }) {
   return (
     <label className="block">
@@ -342,6 +344,7 @@ function Field({
       <div className="flex items-center gap-3 rounded-2xl border border-sky-200 bg-white/70 px-4 py-3 transition-all focus-within:border-[#1E6B9A] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1E6B9A]/10">
         <span className="text-sky-500">{icon}</span>
         {children}
+        {rightElement}
       </div>
     </label>
   );
