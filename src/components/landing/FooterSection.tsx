@@ -1,6 +1,8 @@
 import { Plane } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function FooterSection() {
+  const { t } = useTranslation();
   return (
     <footer className="border-t border-sky-100 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
