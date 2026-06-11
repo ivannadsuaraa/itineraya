@@ -23,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
