@@ -125,11 +125,11 @@ export function HeroSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   <div className="absolute bottom-4 left-6">
-                    <p className="text-xs font-medium text-white/80 uppercase tracking-wider">Itinerario generado</p>
+                    <p className="text-xs font-medium text-white/80 uppercase tracking-wider">{t("hero.cardLabel")}</p>
                     <p className="text-xl font-bold text-white">Bali, Indonesia</p>
                   </div>
                   <div className="absolute top-4 right-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-sky-800 backdrop-blur-sm">
-                    7 días
+                    {t("hero.cardDays", { count: 7 })}
                   </div>
                 </div>
 
@@ -137,7 +137,7 @@ export function HeroSection() {
                 <div className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-sky-500">Presupuesto estimado</p>
+                      <p className="text-sm text-sky-500">{t("hero.cardBudget")}</p>
                       <p className="text-lg font-bold text-sky-900">$1,200 USD</p>
                     </div>
                     <div className="flex -space-x-2">
@@ -171,7 +171,7 @@ export function HeroSection() {
                   {/* AI badge */}
                   <div className="mt-5 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50/50 px-4 py-3">
                     <Sparkles className="h-4 w-4 text-sky-500" />
-                    <p className="text-xs text-sky-600">Generado por IA en <span className="font-bold text-sky-700">12 segundos</span></p>
+                    <p className="text-xs text-sky-600">{t("hero.cardAI")} <span className="font-bold text-sky-700">{t("hero.cardAISeconds")}</span></p>
                   </div>
                 </div>
               </div>
