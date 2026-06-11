@@ -234,6 +234,27 @@ function AuthPage() {
                     className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                   />
                 </Field>
+                {existingEmail && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl bg-red-50 p-4 text-center"
+                  >
+                    <p className="text-sm font-semibold text-red-700">
+                      Este email ya está registrado
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("login");
+                        setExistingEmail(null);
+                      }}
+                      className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#15577E]"
+                    >
+                      Iniciar sesión
+                    </button>
+                  </motion.div>
+                )}
                 <div className="space-y-2">
                   <Field
                     icon={<Lock className="h-4 w-4" />}
