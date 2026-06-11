@@ -1,53 +1,10 @@
 import { motion } from "framer-motion";
-import {
-  Sparkles,
-  Map,
-  Sun,
-  Wallet,
-  Globe,
-  Share2,
-} from "lucide-react";
-
-const features = [
-  {
-    icon: Sparkles,
-    title: "IA de última generación",
-    description: "Nuestro motor de IA analiza miles de datos en tiempo real para crear itinerarios únicos adaptados a ti.",
-  },
-  {
-    icon: Map,
-    title: "Mapas interactivos",
-    description: "Visualiza tu ruta día a día con mapas integrados, indicaciones y estimaciones de tiempo entre paradas.",
-  },
-  {
-    icon: Sun,
-    title: "Planes por estación",
-    description: "Obtén recomendaciones según la época del año: festivales, eventos y actividades de temporada.",
-  },
-  {
-    icon: Wallet,
-    title: "Presupuesto inteligente",
-    description: "La IA equilibra calidad y coste, sugiriendo alternativas para que viajes como quieras sin sorpresas.",
-  },
-  {
-    icon: Globe,
-    title: "Destinos ilimitados",
-    description: "Desde ciudades emblemáticas hasta rincones escondidos. Funciona en cualquier parte del mundo.",
-  },
-  {
-    icon: Share2,
-    title: "Comparte y colabora",
-    description: "Comparte tu itinerario con amigos, deja que voten por actividades y planifiquen juntos.",
-  },
-];
+import { Sparkles, Map, Sun, Wallet, Globe, Share2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const container = {
   hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+  show: { transition: { staggerChildren: 0.1 } },
 };
 
 const item = {
@@ -56,9 +13,18 @@ const item = {
 };
 
 export function FeaturesSection() {
+  const { t } = useTranslation();
+  const features = [
+    { icon: Sparkles, title: t("features.aiTitle"), description: t("features.aiDesc") },
+    { icon: Map, title: t("features.mapTitle"), description: t("features.mapDesc") },
+    { icon: Sun, title: t("features.seasonTitle"), description: t("features.seasonDesc") },
+    { icon: Wallet, title: t("features.budgetTitle"), description: t("features.budgetDesc") },
+    { icon: Globe, title: t("features.worldTitle"), description: t("features.worldDesc") },
+    { icon: Share2, title: t("features.shareTitle"), description: t("features.shareDesc") },
+  ];
+
   return (
     <section id="features" className="relative overflow-hidden py-20 sm:py-28">
-      {/* Background decorations */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-1/4 right-0 h-[300px] w-[300px] rounded-full bg-sky-100/60 blur-3xl" />
         <div className="absolute bottom-1/4 left-0 h-[250px] w-[250px] rounded-full bg-sky-200/40 blur-3xl" />
@@ -73,14 +39,12 @@ export function FeaturesSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            Características ✨
+            {t("features.kicker")}
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            Todo lo que necesitas para viajar sin preocupaciones
+            {t("features.title")}
           </h2>
-          <p className="mt-4 text-lg text-sky-600">
-            Tecnología de punta con la calidez de un agente de viajes personal.
-          </p>
+          <p className="mt-4 text-lg text-sky-600">{t("features.subtitle")}</p>
         </motion.div>
 
         <motion.div
