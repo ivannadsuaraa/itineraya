@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { CheckCircle2, LogIn } from "lucide-react";
+import { CheckCircle2, LogIn, Plane } from "lucide-react";
 
 export const Route = createFileRoute("/email-confirmed")({
   ssr: false,
