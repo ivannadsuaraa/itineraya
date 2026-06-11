@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, enUS } from "date-fns/locale";
 import {
   ArrowLeft,
   ArrowRight,
@@ -17,6 +17,7 @@ import {
   Coins,
   Gem,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
-    meta: [{ title: "Cuéntanos sobre tu viaje – Itineraya" }],
+    meta: [{ title: "Tell us about your trip – Itineraya" }],
   }),
   component: OnboardingPage,
 });
@@ -47,6 +48,7 @@ interface FormData {
 const TOTAL_STEPS = 6;
 
 function OnboardingPage() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -57,22 +59,17 @@ function OnboardingPage() {
     avoid: "",
   });
 
+  const dateLocale = i18n.language.toLowerCase().startsWith("en") ? enUS : es;
+
   const canAdvance = () => {
     switch (step) {
-      case 0:
-        return data.destination.trim().length > 1;
-      case 1:
-        return !!data.startDate && !!data.endDate;
-      case 2:
-        return !!data.companion;
-      case 3:
-        return !!data.budget;
-      case 4:
-        return data.tripType.trim().length > 1;
-      case 5:
-        return true;
-      default:
-        return false;
+      case 0: return data.destination.trim().length > 1;
+      case 1: return !!data.startDate && !!data.endDate;
+      case 2: return !!data.companion;
+      case 3: return !!data.budget;
+      case 4: return data.tripType.trim().length > 1;
+      case 5: return true;
+      default: return false;
     }
   };
 
@@ -92,8 +89,9 @@ function OnboardingPage() {
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      if (!userId) throw new Error("No autenticado");
+      if (!userId) throw new Error(t("onboarding.notAuth"));
 
+      // Stored canonically in Spanish (for back-compat with the rest of the app).
       const budgetMap: Record<Budget, string> = {
         economico: "Económico",
         medio: "Medio",
@@ -106,7 +104,6 @@ function OnboardingPage() {
         familia: "En familia",
       };
 
-      // Best-effort: persist last-known preferences on profile
       await supabase
         .from("profiles")
         .update({
@@ -116,7 +113,6 @@ function OnboardingPage() {
         })
         .eq("id", userId);
 
-      // Create the trip row, then redirect to the trip page which triggers generation
       const { data: trip, error: tripErr } = await supabase
         .from("trips")
         .insert({
@@ -132,11 +128,11 @@ function OnboardingPage() {
         })
         .select("id")
         .single();
-      if (tripErr || !trip) throw tripErr ?? new Error("No se pudo guardar el viaje");
+      if (tripErr || !trip) throw tripErr ?? new Error(t("onboarding.saveFail"));
 
       navigate({ to: "/trip/$tripId", params: { tripId: trip.id } });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Algo salió mal";
+      const msg = err instanceof Error ? err.message : t("onboarding.somethingWrong");
       toast.error(msg);
       setLoading(false);
     }
@@ -144,7 +140,6 @@ function OnboardingPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      {/* Decorative blobs */}
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
@@ -157,7 +152,6 @@ function OnboardingPage() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-8">
-        {/* Back */}
         <div className="mb-4 self-start">
           <button
             type="button"
@@ -165,29 +159,22 @@ function OnboardingPage() {
             className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            Atrás
+            {t("onboarding.back")}
           </button>
         </div>
 
-        {/* Logo */}
         <div className="mb-8 flex items-center justify-center">
           <BrandLogo size="md" />
         </div>
 
-        {/* Progress */}
         <div className="mb-10">
           <div className="mb-3 flex items-center justify-between text-xs font-semibold text-sky-700">
-            <span>
-              Paso {step + 1} de {TOTAL_STEPS}
-            </span>
+            <span>{t("onboarding.stepIndicator", { n: step + 1, total: TOTAL_STEPS })}</span>
             <span>{Math.round(((step + 1) / TOTAL_STEPS) * 100)}%</span>
           </div>
           <div className="flex gap-2">
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-              <div
-                key={i}
-                className="h-1.5 flex-1 overflow-hidden rounded-full bg-sky-100"
-              >
+              <div key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-sky-100">
                 <motion.div
                   initial={false}
                   animate={{
@@ -202,7 +189,6 @@ function OnboardingPage() {
           </div>
         </div>
 
-        {/* Card */}
         <div className="relative flex-1">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -215,64 +201,56 @@ function OnboardingPage() {
               className="rounded-3xl bg-white/80 p-8 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 md:p-10"
             >
               {step === 0 && (
-                <StepShell
-                  emoji="🌍"
-                  title="¿A dónde quieres ir?"
-                  subtitle="Una ciudad, un país o una región. Lo que sueñes."
-                >
+                <StepShell emoji="🌍" title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
                   <input
                     autoFocus
                     type="text"
                     value={data.destination}
                     onChange={(e) => setData({ ...data, destination: e.target.value })}
                     onKeyDown={(e) => e.key === "Enter" && canAdvance() && next()}
-                    placeholder="Ej. Japón, Lisboa, Patagonia…"
+                    placeholder={t("onboarding.destPh")}
                     className="w-full rounded-2xl border border-sky-200 bg-white/70 px-5 py-4 text-lg text-sky-900 placeholder-sky-400 outline-none transition-all focus:border-[#1E6B9A] focus:bg-white focus:ring-4 focus:ring-[#1E6B9A]/10"
                   />
                 </StepShell>
               )}
 
               {step === 1 && (
-                <StepShell
-                  emoji="📅"
-                  title="¿Cuándo viajas?"
-                  subtitle="Elige las fechas de inicio y fin."
-                >
+                <StepShell emoji="📅" title={t("onboarding.datesTitle")} subtitle={t("onboarding.datesSubtitle")}>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <DateField
-                      label="Inicio"
+                      label={t("onboarding.dateStart")}
+                      pickLabel={t("onboarding.datePick")}
                       value={data.startDate}
                       onChange={(d) => setData({ ...data, startDate: d })}
+                      locale={dateLocale}
                     />
                     <DateField
-                      label="Fin"
+                      label={t("onboarding.dateEnd")}
+                      pickLabel={t("onboarding.datePick")}
                       value={data.endDate}
                       onChange={(d) => setData({ ...data, endDate: d })}
                       minDate={data.startDate}
+                      locale={dateLocale}
                     />
                   </div>
                 </StepShell>
               )}
 
               {step === 2 && (
-                <StepShell
-                  emoji="👥"
-                  title="¿Con quién vas?"
-                  subtitle="Adaptaremos el plan al grupo."
-                >
+                <StepShell emoji="👥" title={t("onboarding.compTitle")} subtitle={t("onboarding.compSubtitle")}>
                   <div className="grid grid-cols-2 gap-3">
                     {(
                       [
-                        { id: "solo", label: "Solo", icon: User },
-                        { id: "pareja", label: "En pareja", icon: Heart },
-                        { id: "amigos", label: "Con amigos", icon: Users },
-                        { id: "familia", label: "En familia", icon: Home },
+                        { id: "solo", label: t("onboarding.compSolo"), icon: User },
+                        { id: "pareja", label: t("onboarding.compPair"), icon: Heart },
+                        { id: "amigos", label: t("onboarding.compFriends"), icon: Users },
+                        { id: "familia", label: t("onboarding.compFamily"), icon: Home },
                       ] as const
                     ).map((opt) => (
                       <OptionCard
                         key={opt.id}
                         selected={data.companion === opt.id}
-                        onClick={() => setData({ ...data, companion: opt.id })}
+                        onClick={() => setData({ ...data, companion: opt.id as Companion })}
                         icon={<opt.icon className="h-6 w-6" />}
                         label={opt.label}
                       />
@@ -282,38 +260,19 @@ function OnboardingPage() {
               )}
 
               {step === 3 && (
-                <StepShell
-                  emoji="💰"
-                  title="¿Cuál es tu presupuesto?"
-                  subtitle="Sugeriremos opciones acordes."
-                >
+                <StepShell emoji="💰" title={t("onboarding.budgetTitle")} subtitle={t("onboarding.budgetSubtitle")}>
                   <div className="grid gap-3">
                     {(
                       [
-                        {
-                          id: "economico",
-                          label: "Económico",
-                          desc: "Mochilero, hostels, comida local",
-                          icon: Coins,
-                        },
-                        {
-                          id: "medio",
-                          label: "Medio",
-                          desc: "Hoteles cómodos, experiencias balanceadas",
-                          icon: Wallet,
-                        },
-                        {
-                          id: "sin-limite",
-                          label: "Sin límite",
-                          desc: "Lo mejor de cada destino",
-                          icon: Gem,
-                        },
+                        { id: "economico", label: t("onboarding.budgetEco"), desc: t("onboarding.budgetEcoDesc"), icon: Coins },
+                        { id: "medio", label: t("onboarding.budgetMid"), desc: t("onboarding.budgetMidDesc"), icon: Wallet },
+                        { id: "sin-limite", label: t("onboarding.budgetMax"), desc: t("onboarding.budgetMaxDesc"), icon: Gem },
                       ] as const
                     ).map((opt) => (
                       <OptionCard
                         key={opt.id}
                         selected={data.budget === opt.id}
-                        onClick={() => setData({ ...data, budget: opt.id })}
+                        onClick={() => setData({ ...data, budget: opt.id as Budget })}
                         icon={<opt.icon className="h-5 w-5" />}
                         label={opt.label}
                         description={opt.desc}
@@ -325,34 +284,26 @@ function OnboardingPage() {
               )}
 
               {step === 4 && (
-                <StepShell
-                  emoji="🎒"
-                  title="¿Qué tipo de viaje buscas?"
-                  subtitle="Aventura, cultura, relax, gastronomía…"
-                >
+                <StepShell emoji="🎒" title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleSubtitle")}>
                   <textarea
                     autoFocus
                     rows={4}
                     value={data.tripType}
                     onChange={(e) => setData({ ...data, tripType: e.target.value })}
-                    placeholder="Ej. Quiero descubrir templos y comida callejera, con algo de naturaleza."
+                    placeholder={t("onboarding.stylePh")}
                     className="w-full resize-none rounded-2xl border border-sky-200 bg-white/70 px-5 py-4 text-base text-sky-900 placeholder-sky-400 outline-none transition-all focus:border-[#1E6B9A] focus:bg-white focus:ring-4 focus:ring-[#1E6B9A]/10"
                   />
                 </StepShell>
               )}
 
               {step === 5 && (
-                <StepShell
-                  emoji="🚫"
-                  title="¿Algo que quieras evitar?"
-                  subtitle="Alergias, lugares masificados, vuelos largos… (opcional)"
-                >
+                <StepShell emoji="🚫" title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>
                   <textarea
                     autoFocus
                     rows={4}
                     value={data.avoid}
                     onChange={(e) => setData({ ...data, avoid: e.target.value })}
-                    placeholder="Ej. Evitar mariscos y trayectos de más de 4 horas."
+                    placeholder={t("onboarding.avoidPh")}
                     className="w-full resize-none rounded-2xl border border-sky-200 bg-white/70 px-5 py-4 text-base text-sky-900 placeholder-sky-400 outline-none transition-all focus:border-[#1E6B9A] focus:bg-white focus:ring-4 focus:ring-[#1E6B9A]/10"
                   />
                 </StepShell>
@@ -361,7 +312,6 @@ function OnboardingPage() {
           </AnimatePresence>
         </div>
 
-        {/* Footer nav */}
         <div className="mt-8 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -370,7 +320,7 @@ function OnboardingPage() {
             className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 shadow-sm backdrop-blur-md transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-0"
           >
             <ArrowLeft className="h-4 w-4" />
-            Atrás
+            {t("onboarding.back")}
           </button>
 
           {step < TOTAL_STEPS - 1 ? (
@@ -380,7 +330,7 @@ function OnboardingPage() {
               disabled={!canAdvance()}
               className="inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Siguiente
+              {t("onboarding.next")}
               <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
@@ -395,7 +345,7 @@ function OnboardingPage() {
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  Generar itinerario
+                  {t("onboarding.generate")}
                 </>
               )}
             </button>
@@ -472,14 +422,18 @@ function OptionCard({
 
 function DateField({
   label,
+  pickLabel,
   value,
   onChange,
   minDate,
+  locale,
 }: {
   label: string;
+  pickLabel: string;
   value?: Date;
   onChange: (d: Date | undefined) => void;
   minDate?: Date;
+  locale: typeof es;
 }) {
   return (
     <label className="block">
@@ -494,7 +448,7 @@ function DateField({
             )}
           >
             <CalendarIcon className="h-4 w-4 text-sky-500" />
-            {value ? format(value, "PPP", { locale: es }) : "Elegir fecha"}
+            {value ? format(value, "PPP", { locale }) : pickLabel}
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -504,7 +458,7 @@ function DateField({
             onSelect={onChange}
             disabled={minDate ? (d) => d < minDate : undefined}
             initialFocus
-            locale={es}
+            locale={locale}
             className={cn("p-3 pointer-events-auto")}
           />
         </PopoverContent>
