@@ -2,32 +2,25 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plane, ArrowRight, Loader2, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { LANGUAGE_OPTIONS } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/welcome")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Bienvenido a Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Welcome to Itineraya" }] }),
   component: WelcomePage,
 });
 
-const LANGUAGES = [
-  { code: "es", label: "Español", flag: "🇪🇸" },
-  { code: "en", label: "English", flag: "🇬🇧" },
-  { code: "fr", label: "Français", flag: "🇫🇷" },
-  { code: "de", label: "Deutsch", flag: "🇩🇪" },
-  { code: "it", label: "Italiano", flag: "🇮🇹" },
-  { code: "pt", label: "Português", flag: "🇵🇹" },
-];
-
 function WelcomePage() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [age, setAge] = useState(28);
-  const [language, setLanguage] = useState("es");
+  const [language, setLanguage] = useState<string>("es");
   const [saving, setSaving] = useState(false);
 
-  // Skip if already completed
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
@@ -62,10 +55,11 @@ function WelcomePage() {
       } catch {
         /* ignore */
       }
-      toast.success("¡Todo listo!");
+      await i18n.changeLanguage(language);
+      toast.success(t("welcome.saved"));
       navigate({ to: "/dashboard", replace: true });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "No se pudo guardar");
+      toast.error(e instanceof Error ? e.message : t("welcome.saveFail"));
       setSaving(false);
     }
   };
@@ -93,7 +87,6 @@ function WelcomePage() {
           <span className="font-display text-2xl font-bold tracking-tight">Itineraya</span>
         </Link>
 
-        {/* Progress */}
         <div className="mb-6 flex w-full max-w-xs items-center gap-2">
           {[0, 1].map((i) => (
             <div
@@ -119,13 +112,9 @@ function WelcomePage() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25 }}
               >
-                <p className="text-sm font-semibold text-sky-600">Paso 1 de 2</p>
-                <h1 className="font-display text-2xl font-bold text-sky-900">
-                  ¿Cuántos años tienes?
-                </h1>
-                <p className="mt-1 text-sm text-sky-600">
-                  Adaptaremos las recomendaciones a tu perfil.
-                </p>
+                <p className="text-sm font-semibold text-sky-600">{t("welcome.step", { n: 1 })}</p>
+                <h1 className="font-display text-2xl font-bold text-sky-900">{t("welcome.ageTitle")}</h1>
+                <p className="mt-1 text-sm text-sky-600">{t("welcome.ageSubtitle")}</p>
 
                 <div className="mt-10 text-center">
                   <motion.div
@@ -137,7 +126,7 @@ function WelcomePage() {
                     {ageLabel}
                   </motion.div>
                   <div className="mt-1 text-xs font-semibold uppercase tracking-wider text-sky-500">
-                    años
+                    {t("welcome.years")}
                   </div>
                 </div>
 
@@ -149,7 +138,7 @@ function WelcomePage() {
                     value={age}
                     onChange={(e) => setAge(Number(e.target.value))}
                     className="age-slider w-full"
-                    aria-label="Edad"
+                    aria-label={t("welcome.ageAria")}
                   />
                   <div className="mt-2 flex justify-between text-xs text-sky-500">
                     <span>1</span>
@@ -161,7 +150,7 @@ function WelcomePage() {
                   onClick={() => setStep(1)}
                   className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E]"
                 >
-                  Siguiente <ArrowRight className="h-4 w-4" />
+                  {t("welcome.next")} <ArrowRight className="h-4 w-4" />
                 </button>
               </motion.div>
             )}
@@ -174,14 +163,12 @@ function WelcomePage() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.25 }}
               >
-                <p className="text-sm font-semibold text-sky-600">Paso 2 de 2</p>
-                <h1 className="font-display text-2xl font-bold text-sky-900">
-                  ¿En qué idioma quieres usar Itineraya?
-                </h1>
-                <p className="mt-1 text-sm text-sky-600">Podrás cambiarlo más tarde.</p>
+                <p className="text-sm font-semibold text-sky-600">{t("welcome.step", { n: 2 })}</p>
+                <h1 className="font-display text-2xl font-bold text-sky-900">{t("welcome.langTitle")}</h1>
+                <p className="mt-1 text-sm text-sky-600">{t("welcome.langSubtitle")}</p>
 
                 <div className="mt-6 grid grid-cols-2 gap-3">
-                  {LANGUAGES.map((l) => {
+                  {LANGUAGE_OPTIONS.map((l) => {
                     const selected = language === l.code;
                     return (
                       <button
@@ -210,14 +197,14 @@ function WelcomePage() {
                     onClick={() => setStep(0)}
                     className="flex-1 rounded-full border border-sky-200 bg-white px-6 py-3.5 text-sm font-semibold text-sky-800 hover:bg-sky-50"
                   >
-                    Atrás
+                    {t("welcome.back")}
                   </button>
                   <button
                     onClick={finish}
                     disabled={saving}
                     className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
                   >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Empezar"}
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("welcome.start")}
                   </button>
                 </div>
               </motion.div>

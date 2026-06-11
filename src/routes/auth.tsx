@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plane, Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { checkEmailExists } from "@/lib/auth.functions";
@@ -16,8 +17,8 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Iniciar sesión – Itineraya" },
-      { name: "description", content: "Accede a Itineraya para crear itinerarios de viaje personalizados con IA." },
+      { title: "Sign in – Itineraya" },
+      { name: "description", content: "Access Itineraya to build AI-powered travel itineraries." },
     ],
   }),
   component: AuthPage,
@@ -41,6 +42,7 @@ async function routeAfterLogin(navigate: ReturnType<typeof useNavigate>, userId:
 }
 
 function AuthPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { mode: initialMode, return_to } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
@@ -85,16 +87,16 @@ function AuthPage() {
         });
         if (error) throw error;
         setSignupSent(true);
-        toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
+        toast.success(t("auth.accountCreated"));
       } else {
         const { data: signIn, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("¡Bienvenido de vuelta!");
+        toast.success(t("auth.welcomeBack"));
         if (signIn.user) await routeAfterLogin(navigate, signIn.user.id, return_to);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Algo salió mal";
-      toast.error(msg.includes("Invalid login") ? "Email o contraseña incorrectos" : msg);
+      const msg = err instanceof Error ? err.message : t("auth.somethingWrong");
+      toast.error(msg.includes("Invalid login") ? t("auth.invalidLogin") : msg);
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ function AuthPage() {
 
   const handleAlreadyVerified = async () => {
     if (!email || !password) {
-      toast.error("Introduce tu email y contraseña");
+      toast.error(t("auth.needCreds"));
       return;
     }
     setVerifyChecking(true);
@@ -110,13 +112,13 @@ function AuthPage() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         if (error.message.toLowerCase().includes("not confirmed") || error.message.toLowerCase().includes("email not confirmed")) {
-          toast.error("Aún no hemos detectado la verificación. Revisa tu correo.");
+          toast.error(t("auth.notVerifiedYet"));
         } else {
           toast.error(error.message);
         }
         return;
       }
-      toast.success("¡Email verificado!");
+      toast.success(t("auth.emailVerified"));
       if (data.user) await routeAfterLogin(navigate, data.user.id, return_to);
     } finally {
       setVerifyChecking(false);
@@ -130,7 +132,7 @@ function AuthPage() {
         redirect_uri: `${window.location.origin}/dashboard`,
       });
       if (result.error) {
-        toast.error("No se pudo iniciar sesión con Google");
+        toast.error(t("auth.googleFail"));
         setGoogleLoading(false);
         return;
       }
@@ -138,14 +140,13 @@ function AuthPage() {
       const { data } = await supabase.auth.getUser();
       if (data.user) await routeAfterLogin(navigate, data.user.id, return_to);
     } catch {
-      toast.error("No se pudo iniciar sesión con Google");
+      toast.error(t("auth.googleFail"));
       setGoogleLoading(false);
     }
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      {/* Decorative blobs */}
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
@@ -157,17 +158,15 @@ function AuthPage() {
         />
       </div>
 
-      {/* Back link */}
       <Link
         to="/"
         className="absolute top-6 left-6 z-10 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-sky-800 shadow-sm backdrop-blur-md transition hover:bg-white"
       >
         <ArrowLeft className="h-4 w-4" />
-        Inicio
+        {t("auth.back")}
       </Link>
 
       <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-12">
-        {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -182,7 +181,6 @@ function AuthPage() {
           </Link>
         </motion.div>
 
-        {/* Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -194,33 +192,33 @@ function AuthPage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
                 <Mail className="h-8 w-8 text-[#1E6B9A]" />
               </div>
-              <h1 className="font-display text-2xl font-bold text-sky-900">Revisa tu email</h1>
+              <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
               <p className="mt-3 text-sm text-sky-700">
-                Te hemos enviado un enlace de confirmación a <span className="font-semibold">{email}</span>.
-                Pulsa el botón <span className="font-semibold">"Verify Email"</span> para activar tu cuenta.
+                {t("auth.checkEmailDescPre")}
+                <span className="font-semibold">{email}</span>
+                {t("auth.checkEmailDescMid")}
+                <span className="font-semibold">{t("auth.checkEmailDescBtn")}</span>
+                {t("auth.checkEmailDescPost")}
               </p>
-              <p className="mt-2 text-xs text-sky-500">
-                ¿No lo ves? Revisa tu carpeta de spam.
-              </p>
+              <p className="mt-2 text-xs text-sky-500">{t("auth.checkSpam")}</p>
               <button
                 type="button"
                 onClick={handleAlreadyVerified}
                 disabled={verifyChecking}
                 className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
               >
-                {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ya he verificado mi email"}
+                {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.alreadyVerified")}
               </button>
               <button
                 type="button"
                 onClick={() => { setSignupSent(false); setMode("login"); }}
                 className="mt-4 text-sm font-semibold text-[#1E6B9A] hover:underline"
               >
-                Volver a iniciar sesión
+                {t("auth.backToLogin")}
               </button>
             </div>
           ) : (
           <>
-          {/* Tabs */}
           <div className="mb-6 flex rounded-full bg-sky-50/80 p-1">
             {(["login", "signup"] as const).map((m) => (
               <button
@@ -237,7 +235,7 @@ function AuthPage() {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                <span className="relative">{m === "login" ? "Iniciar sesión" : "Crear cuenta"}</span>
+                <span className="relative">{m === "login" ? t("auth.loginTab") : t("auth.signupTab")}</span>
               </button>
             ))}
           </div>
@@ -251,34 +249,32 @@ function AuthPage() {
               transition={{ duration: 0.2 }}
             >
               <h1 className="font-display text-2xl font-bold text-sky-900">
-                {mode === "login" ? "Bienvenido de vuelta ✈️" : "Empieza tu próxima aventura 🌍"}
+                {mode === "login" ? t("auth.loginTitle") : t("auth.signupTitle")}
               </h1>
               <p className="mt-1 text-sm text-sky-600">
-                {mode === "login"
-                  ? "Accede para seguir planificando viajes"
-                  : "Crea tu cuenta gratis en segundos"}
+                {mode === "login" ? t("auth.loginSubtitle") : t("auth.signupSubtitle")}
               </p>
 
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 {mode === "signup" && (
-                  <Field icon={<User className="h-4 w-4" />} label="Nombre completo">
+                  <Field icon={<User className="h-4 w-4" />} label={t("auth.fullName")}>
                     <input
                       type="text"
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="María García"
+                      placeholder={t("auth.fullNamePh")}
                       className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                     />
                   </Field>
                 )}
-                <Field icon={<Mail className="h-4 w-4" />} label="Email">
+                <Field icon={<Mail className="h-4 w-4" />} label={t("auth.email")}>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="tu@email.com"
+                    placeholder={t("auth.emailPh")}
                     className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                   />
                 </Field>
@@ -288,9 +284,7 @@ function AuthPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="rounded-2xl bg-red-50 p-4 text-center"
                   >
-                    <p className="text-sm font-semibold text-red-700">
-                      Este email ya está registrado
-                    </p>
+                    <p className="text-sm font-semibold text-red-700">{t("auth.emailExists")}</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -299,14 +293,14 @@ function AuthPage() {
                       }}
                       className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#15577E]"
                     >
-                      Iniciar sesión
+                      {t("auth.loginTab")}
                     </button>
                   </motion.div>
                 )}
                 <div className="space-y-2">
                   <Field
                     icon={<Lock className="h-4 w-4" />}
-                    label="Contraseña"
+                    label={t("auth.password")}
                     rightElement={
                       <button
                         type="button"
@@ -331,10 +325,10 @@ function AuthPage() {
                   {mode === "signup" && (
                     <div className="space-y-1 px-1">
                       {[
-                        { label: "Mínimo 6 caracteres", met: password.length >= 6 },
-                        { label: "Al menos una mayúscula", met: /[A-Z]/.test(password) },
-                        { label: "Al menos un número", met: /[0-9]/.test(password) },
-                        { label: "Al menos un símbolo especial", met: /[^A-Za-z0-9]/.test(password) },
+                        { label: t("auth.req6"), met: password.length >= 6 },
+                        { label: t("auth.reqUpper"), met: /[A-Z]/.test(password) },
+                        { label: t("auth.reqDigit"), met: /[0-9]/.test(password) },
+                        { label: t("auth.reqSymbol"), met: /[^A-Za-z0-9]/.test(password) },
                       ].map((req) => (
                         <div key={req.label} className="flex items-center gap-2 text-xs">
                           <div className={`h-1.5 w-1.5 rounded-full ${req.met ? "bg-green-500" : "bg-red-500"}`} />
@@ -353,21 +347,19 @@ function AuthPage() {
                   {loading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : mode === "login" ? (
-                    "Iniciar sesión"
+                    t("auth.loginBtn")
                   ) : (
-                    "Crear cuenta gratis"
+                    t("auth.signupBtn")
                   )}
                 </button>
               </form>
 
-              {/* Divider */}
               <div className="my-6 flex items-center gap-3">
                 <div className="h-px flex-1 bg-sky-200" />
-                <span className="text-xs font-medium uppercase tracking-wider text-sky-500">o</span>
+                <span className="text-xs font-medium uppercase tracking-wider text-sky-500">{t("auth.or")}</span>
                 <div className="h-px flex-1 bg-sky-200" />
               </div>
 
-              {/* Google */}
               <button
                 onClick={handleGoogle}
                 disabled={googleLoading}
@@ -378,19 +370,19 @@ function AuthPage() {
                 ) : (
                   <>
                     <GoogleIcon />
-                    Continuar con Google
+                    {t("auth.google")}
                   </>
                 )}
               </button>
 
               <p className="mt-6 text-center text-xs text-sky-600">
-                {mode === "login" ? "¿No tienes cuenta? " : "¿Ya tienes cuenta? "}
+                {mode === "login" ? t("auth.noAccount") : t("auth.yesAccount")}
                 <button
                   type="button"
                   onClick={() => setMode(mode === "login" ? "signup" : "login")}
                   className="font-semibold text-[#1E6B9A] hover:underline"
                 >
-                  {mode === "login" ? "Crear una" : "Inicia sesión"}
+                  {mode === "login" ? t("auth.createOne") : t("auth.loginOne")}
                 </button>
               </p>
             </motion.div>
@@ -399,9 +391,7 @@ function AuthPage() {
           )}
         </motion.div>
 
-        <p className="mt-6 text-center text-xs text-sky-600">
-          Al continuar, aceptas nuestros Términos y Política de privacidad.
-        </p>
+        <p className="mt-6 text-center text-xs text-sky-600">{t("auth.terms")}</p>
       </div>
     </div>
   );
