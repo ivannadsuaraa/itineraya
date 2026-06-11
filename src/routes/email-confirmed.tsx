@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { CheckCircle2, Plane } from "lucide-react";
+import { CheckCircle2, LogIn } from "lucide-react";
 
 export const Route = createFileRoute("/email-confirmed")({
   ssr: false,
@@ -43,11 +43,10 @@ function EmailConfirmedPage() {
           transition={{ duration: 0.5, delay: 0.15 }}
         >
           <h1 className="font-display text-3xl font-bold text-sky-900">
-            ¡Email confirmado!
+            ¡Email verificado!
           </h1>
           <p className="mt-3 text-sky-800/80">
-            Bienvenido a <strong>Itineraya</strong>. Tu cuenta está activa y lista
-            para crear itinerarios de viaje increíbles.
+            Tu cuenta en <strong>Itineraya</strong> está activa. Inicia sesión para empezar a crear itinerarios de viaje increíbles.
           </p>
         </motion.div>
 
@@ -58,11 +57,11 @@ function EmailConfirmedPage() {
           className="mt-8"
         >
           <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-7 py-3.5 font-semibold text-white shadow-lg shadow-[#1E6B9A]/30 transition hover:bg-[#185a83]"
+            to="/auth"
+            className="inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/30 transition hover:bg-[#185a83]"
           >
-            <Plane className="h-5 w-5 rotate-[-45deg]" />
-            Empezar a planificar mi viaje
+            <LogIn className="h-5 w-5" />
+            Iniciar sesión
           </Link>
         </motion.div>
       </div>
