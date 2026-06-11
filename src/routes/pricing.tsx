@@ -1,15 +1,29 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Check, ArrowLeft, Sparkles } from "lucide-react";
+import { Check, ArrowLeft, Sparkles, BadgeCheck, X, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { isPaymentsConfigured } from "@/lib/stripe";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "Planes y precios – Itineraya" },
-      { name: "description", content: "Elige el plan que mejor se adapta a tus viajes: Gratuito, Viajero o Explorador." },
+      {
+        name: "description",
+        content:
+          "Elige el plan que mejor se adapta a tus viajes: Gratuito, Viajero o Explorador.",
+      },
       { property: "og:title", content: "Planes y precios – Itineraya" },
-      { property: "og:description", content: "Elige el plan que mejor se adapta a tus viajes." },
+      {
+        property: "og:description",
+        content: "Elige el plan que mejor se adapta a tus viajes.",
+      },
     ],
   }),
   component: PricingPage,
@@ -23,8 +37,7 @@ type Plan = {
   period?: string;
   features: string[];
   cta: string;
-  ctaTo: "/auth" | "/pricing";
-  ctaMode?: "signup" | "login";
+  priceId?: "viajero_yearly" | "explorador_yearly";
   highlighted?: boolean;
 };
 
@@ -43,8 +56,6 @@ const plans: Plan[] = [
       "Exportar al calendario",
     ],
     cta: "Empieza gratis",
-    ctaTo: "/auth",
-    ctaMode: "signup",
   },
   {
     id: "viajero",
@@ -61,8 +72,7 @@ const plans: Plan[] = [
       "Asistente de viaje IA",
     ],
     cta: "Elegir plan",
-    ctaTo: "/auth",
-    ctaMode: "signup",
+    priceId: "viajero_yearly",
     highlighted: true,
   },
   {
@@ -78,14 +88,54 @@ const plans: Plan[] = [
       "Acceso prioritario a nuevas funciones",
     ],
     cta: "Elegir plan",
-    ctaTo: "/auth",
-    ctaMode: "signup",
+    priceId: "explorador_yearly",
   },
 ];
 
 function PricingPage() {
+  const navigate = useNavigate();
+  const { openCheckout, closeCheckout, checkoutElement, isOpen } = useStripeCheckout();
+  const { subscription, isActive, priceId: currentPriceId, loading } = useSubscription();
+  const [authedUserId, setAuthedUserId] = useState<string | null>(null);
+  const [starting, setStarting] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setAuthedUserId(data.user?.id ?? null));
+  }, []);
+
+  const planActiveFor = (plan: Plan): boolean => {
+    if (!isActive) return plan.id === "free" && !!authedUserId;
+    if (plan.id === "free") return false;
+    return currentPriceId === plan.priceId;
+  };
+
+  const handleSelect = (plan: Plan) => {
+    if (!plan.priceId) {
+      navigate({ to: "/auth", search: { mode: "signup" } });
+      return;
+    }
+    if (!authedUserId) {
+      navigate({
+        to: "/auth",
+        search: { mode: "signup", redirect: `/pricing?plan=${plan.id}` } as never,
+      });
+      return;
+    }
+    if (!isPaymentsConfigured()) {
+      toast.error("Los pagos aún no están configurados");
+      return;
+    }
+    setStarting(plan.id);
+    try {
+      openCheckout({ priceId: plan.priceId });
+    } finally {
+      setStarting(null);
+    }
+  };
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] pb-20">
+      <PaymentTestModeBanner />
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full opacity-40 blur-3xl"
@@ -99,11 +149,11 @@ function PricingPage() {
 
       <header className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
         <Link
-          to="/"
+          to={authedUserId ? "/dashboard" : "/"}
           className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
         >
           <ArrowLeft className="h-4 w-4" />
-          Inicio
+          {authedUserId ? "Dashboard" : "Inicio"}
         </Link>
         <BrandLogo size="md" />
       </header>
@@ -126,73 +176,124 @@ function PricingPage() {
         </motion.div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-3 md:items-stretch">
-          {plans.map((plan, i) => (
-            <motion.div
-              key={plan.id}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 * i }}
-              className="relative flex"
-            >
-              {plan.highlighted && (
-                <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
-                  <div className="inline-flex items-center gap-1 rounded-full bg-[#1E6B9A] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#1E6B9A]/30">
-                    <Sparkles className="h-3 w-3" />
-                    Más popular
-                  </div>
-                </div>
-              )}
-              <div
-                className={`flex w-full flex-col rounded-3xl p-7 backdrop-blur-xl ring-1 transition-all ${
-                  plan.highlighted
-                    ? "bg-white shadow-2xl shadow-[#1E6B9A]/25 ring-[#1E6B9A]/30 md:scale-[1.03]"
-                    : "bg-white/80 shadow-lg ring-white/60"
-                }`}
+          {plans.map((plan, i) => {
+            const current = planActiveFor(plan);
+            const isStarting = starting === plan.id;
+            return (
+              <motion.div
+                key={plan.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 * i }}
+                className="relative flex"
               >
-                <div>
-                  <h2 className="font-display text-xl font-bold text-sky-900">{plan.name}</h2>
-                  <p className="mt-1 text-sm text-sky-600">{plan.tagline}</p>
-                  <div className="mt-5 flex items-baseline gap-1">
-                    <span className="font-display text-4xl font-bold text-sky-900">{plan.price}</span>
-                    {plan.period && <span className="text-sm font-medium text-sky-600">{plan.period}</span>}
+                {plan.highlighted && !current && (
+                  <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
+                    <div className="inline-flex items-center gap-1 rounded-full bg-[#1E6B9A] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#1E6B9A]/30">
+                      <Sparkles className="h-3 w-3" />
+                      Más popular
+                    </div>
                   </div>
-                </div>
-
-                <ul className="mt-6 flex-1 space-y-3">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-sm text-sky-800">
-                      <span
-                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                          plan.highlighted ? "bg-[#1E6B9A] text-white" : "bg-sky-100 text-[#1E6B9A]"
-                        }`}
-                      >
-                        <Check className="h-3 w-3" strokeWidth={3} />
-                      </span>
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to="/auth"
-                  search={{ mode: "signup" }}
-                  className={`mt-7 block rounded-full px-5 py-3 text-center text-sm font-bold transition-all ${
-                    plan.highlighted
-                      ? "bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/25 hover:bg-[#15577E] hover:shadow-xl"
-                      : "bg-sky-50 text-[#1E6B9A] hover:bg-sky-100"
+                )}
+                {current && (
+                  <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
+                    <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-500/30">
+                      <BadgeCheck className="h-3 w-3" />
+                      Tu plan actual
+                    </div>
+                  </div>
+                )}
+                <div
+                  className={`flex w-full flex-col rounded-3xl p-7 backdrop-blur-xl ring-1 transition-all ${
+                    current
+                      ? "bg-white shadow-2xl shadow-emerald-500/20 ring-emerald-400/40 md:scale-[1.03]"
+                      : plan.highlighted
+                        ? "bg-white shadow-2xl shadow-[#1E6B9A]/25 ring-[#1E6B9A]/30 md:scale-[1.03]"
+                        : "bg-white/80 shadow-lg ring-white/60"
                   }`}
                 >
-                  {plan.cta}
-                </Link>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+                  <div>
+                    <h2 className="font-display text-xl font-bold text-sky-900">{plan.name}</h2>
+                    <p className="mt-1 text-sm text-sky-600">{plan.tagline}</p>
+                    <div className="mt-5 flex items-baseline gap-1">
+                      <span className="font-display text-4xl font-bold text-sky-900">
+                        {plan.price}
+                      </span>
+                      {plan.period && (
+                        <span className="text-sm font-medium text-sky-600">{plan.period}</span>
+                      )}
+                    </div>
+                  </div>
 
-        <p className="mt-10 text-center text-xs text-sky-600">
-          Los pagos estarán disponibles muy pronto. Mientras tanto, crea tu cuenta gratis y empieza a planificar.
-        </p>
+                  <ul className="mt-6 flex-1 space-y-3">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-3 text-sm text-sky-800">
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+                            current
+                              ? "bg-emerald-500 text-white"
+                              : plan.highlighted
+                                ? "bg-[#1E6B9A] text-white"
+                                : "bg-sky-100 text-[#1E6B9A]"
+                          }`}
+                        >
+                          <Check className="h-3 w-3" strokeWidth={3} />
+                        </span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {current ? (
+                    <div className="mt-7 rounded-full bg-emerald-50 px-5 py-3 text-center text-sm font-bold text-emerald-700 ring-1 ring-emerald-200">
+                      Activo
+                      {subscription?.current_period_end && plan.id !== "free" && (
+                        <span className="ml-1 font-normal text-emerald-600">
+                          · renueva el{" "}
+                          {new Date(subscription.current_period_end).toLocaleDateString("es-ES")}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(plan)}
+                      disabled={loading || isStarting}
+                      className={`mt-7 flex items-center justify-center gap-2 rounded-full px-5 py-3 text-center text-sm font-bold transition-all disabled:opacity-60 ${
+                        plan.highlighted
+                          ? "bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/25 hover:bg-[#15577E] hover:shadow-xl"
+                          : "bg-sky-50 text-[#1E6B9A] hover:bg-sky-100"
+                      }`}
+                    >
+                      {isStarting && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {plan.cta}
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </main>
+
+      {/* Embedded checkout modal */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-sky-950/60 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl rounded-3xl bg-white p-2 shadow-2xl">
+            <button
+              type="button"
+              onClick={closeCheckout}
+              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-sky-700 shadow-md ring-1 ring-sky-100 hover:bg-sky-50"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="max-h-[85vh] overflow-y-auto rounded-2xl">
+              {checkoutElement}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
