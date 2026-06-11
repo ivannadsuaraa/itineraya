@@ -13,6 +13,8 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    plugins: [nitro({ preset: "vercel" })],
+    // Apply the Vercel preset ONLY when building on Vercel (VERCEL env var is set).
+    // On Lovable, the default preset is used so server routes (emails, webhooks) keep working.
+    plugins: process.env.VERCEL ? [nitro({ preset: "vercel" })] : [],
   },
 });
