@@ -40,6 +40,16 @@ export const generateItinerary = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
+    // Load user language preference (es | en). Default es.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("language")
+      .eq("id", userId)
+      .maybeSingle();
+    const lang: "es" | "en" =
+      (profile?.language ?? "").toLowerCase().slice(0, 2) === "en" ? "en" : "es";
+    const langName = lang === "en" ? "English" : "Spanish";
+
     const dayCount = (() => {
       if (!trip.start_date || !trip.end_date) return 5;
       const a = new Date(trip.start_date).getTime();
@@ -48,14 +58,14 @@ export const generateItinerary = createServerFn({ method: "POST" })
       return Math.min(d, 14);
     })();
 
-    const prompt = `Eres un experto planificador de viajes. Crea un itinerario MUY detallado en español.
+    const prompt = `You are an expert travel planner. Create a VERY detailed itinerary written in ${langName}.
 
-Destino: ${trip.destination}
-Fechas: ${trip.start_date ?? "flexibles"} a ${trip.end_date ?? "flexibles"} (~${dayCount} días)
-Con quién: ${trip.companion ?? "no especificado"}
-Presupuesto: ${trip.budget ?? "no especificado"}
-Estilo: ${trip.trip_style ?? "no especificado"}
-Evitar: ${trip.avoid?.trim() || "nada en particular"}
+Destination: ${trip.destination}
+Dates: ${trip.start_date ?? "flexible"} to ${trip.end_date ?? "flexible"} (~${dayCount} days)
+Travelling with: ${trip.companion ?? "unspecified"}
+Budget: ${trip.budget ?? "unspecified"}
+Style: ${trip.trip_style ?? "unspecified"}
+Avoid: ${trip.avoid?.trim() || "nothing in particular"}
 
 Devuelve SOLO JSON válido sin markdown con esta forma EXACTA:
 {
