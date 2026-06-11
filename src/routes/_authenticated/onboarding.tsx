@@ -99,8 +99,15 @@ function OnboardingPage() {
         medio: "Medio",
         "sin-limite": "Sin límite",
       };
+      const companionMap: Record<Companion, string> = {
+        solo: "Solo",
+        pareja: "En pareja",
+        amigos: "Con amigos",
+        familia: "En familia",
+      };
 
-      const { error } = await supabase
+      // Best-effort: persist last-known preferences on profile
+      await supabase
         .from("profiles")
         .update({
           preferred_destinations: [data.destination],
@@ -108,14 +115,29 @@ function OnboardingPage() {
           travel_style: data.tripType,
         })
         .eq("id", userId);
-      if (error) throw error;
 
-      toast.success("¡Preferencias guardadas! Generando tu itinerario… ✈️");
-      navigate({ to: "/" });
+      // Create the trip row, then redirect to the trip page which triggers generation
+      const { data: trip, error: tripErr } = await supabase
+        .from("trips")
+        .insert({
+          user_id: userId,
+          destination: data.destination,
+          start_date: data.startDate ? data.startDate.toISOString().slice(0, 10) : null,
+          end_date: data.endDate ? data.endDate.toISOString().slice(0, 10) : null,
+          companion: data.companion ? companionMap[data.companion] : null,
+          budget: data.budget ? budgetMap[data.budget] : null,
+          trip_style: data.tripType,
+          avoid: data.avoid,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+      if (tripErr || !trip) throw tripErr ?? new Error("No se pudo guardar el viaje");
+
+      navigate({ to: "/trip/$tripId", params: { tripId: trip.id } });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Algo salió mal";
       toast.error(msg);
-    } finally {
       setLoading(false);
     }
   };
