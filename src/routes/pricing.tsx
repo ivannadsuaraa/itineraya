@@ -43,58 +43,59 @@ type Plan = {
   highlighted?: boolean;
 };
 
-const plans: Plan[] = [
-  {
-    id: "free",
-    name: "Gratuito",
-    tagline: "Para empezar tu primera aventura",
-    price: "0 €",
-    period: "siempre",
-    features: [
-      "1 itinerario gratis",
-      "1 sala colaborativa",
-      "Vista en texto",
-      "Contador hasta el viaje",
-      "Exportar al calendario",
-    ],
-    cta: "Empieza gratis",
-  },
-  {
-    id: "viajero",
-    name: "Viajero",
-    tagline: "Para quienes viajan a menudo",
-    price: "9,99 €",
-    period: "/año",
-    features: [
-      "10 itinerarios",
-      "Salas colaborativas ilimitadas",
-      "Vista en tarjetas visuales con fotos",
-      "Contador hasta el viaje",
-      "Exportar al calendario",
-      "Asistente de viaje IA",
-    ],
-    cta: "Elegir plan",
-    priceId: "viajero_yearly",
-    highlighted: true,
-  },
-  {
-    id: "explorador",
-    name: "Explorador",
-    tagline: "Sin límites, para los más aventureros",
-    price: "19,99 €",
-    period: "/año",
-    features: [
-      "Todo lo del plan Viajero",
-      "Itinerarios ilimitados",
-      "Exportar itinerario en PDF",
-      "Acceso prioritario a nuevas funciones",
-    ],
-    cta: "Elegir plan",
-    priceId: "explorador_yearly",
-  },
-];
-
 function PricingPage() {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === "es" ? "es-ES" : i18n.language;
+  const plans: Plan[] = [
+    {
+      id: "free",
+      name: t("pricing.free.name"),
+      tagline: t("pricing.free.tagline"),
+      price: "0 €",
+      period: t("pricing.free.period"),
+      features: [
+        t("pricing.free.f1"),
+        t("pricing.free.f2"),
+        t("pricing.free.f3"),
+        t("pricing.free.f4"),
+        t("pricing.free.f5"),
+      ],
+      cta: t("pricing.startFree"),
+    },
+    {
+      id: "viajero",
+      name: t("pricing.viajero.name"),
+      tagline: t("pricing.viajero.tagline"),
+      price: "9,99 €",
+      period: t("pricing.perYear"),
+      features: [
+        t("pricing.viajero.f1"),
+        t("pricing.viajero.f2"),
+        t("pricing.viajero.f3"),
+        t("pricing.viajero.f4"),
+        t("pricing.viajero.f5"),
+        t("pricing.viajero.f6"),
+      ],
+      cta: t("pricing.choose"),
+      priceId: "viajero_yearly",
+      highlighted: true,
+    },
+    {
+      id: "explorador",
+      name: t("pricing.explorador.name"),
+      tagline: t("pricing.explorador.tagline"),
+      price: "19,99 €",
+      period: t("pricing.perYear"),
+      features: [
+        t("pricing.explorador.f1"),
+        t("pricing.explorador.f2"),
+        t("pricing.explorador.f3"),
+        t("pricing.explorador.f4"),
+      ],
+      cta: t("pricing.choose"),
+      priceId: "explorador_yearly",
+    },
+  ];
   const navigate = useNavigate();
   const { openCheckout, closeCheckout, checkoutElement, isOpen } = useStripeCheckout();
   const { subscription, isActive, priceId: currentPriceId, loading } = useSubscription();
