@@ -100,6 +100,14 @@ REQUISITOS:
 - "emoji" representativo de la actividad.
 - "place" con nombre REAL (hotel/restaurante/museo) en ${trip.destination}.
 - "category" exactamente uno de los valores listados.`;
+
+    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: "Devuelves ÚNICAMENTE JSON válido, sin markdown ni texto extra." },
           { role: "user", content: prompt },
         ],
         response_format: { type: "json_object" },
