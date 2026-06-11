@@ -69,11 +69,20 @@ function DashboardPage() {
       </div>
 
       <header className="relative mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-        <div className="flex items-center gap-2 text-sky-900">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
-            <Plane className="h-4 w-4 -rotate-45 text-white" />
+        <div className="flex items-center gap-3">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Atrás
+          </Link>
+          <div className="flex items-center gap-2 text-sky-900">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
+              <Plane className="h-4 w-4 -rotate-45 text-white" />
+            </div>
+            <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
           </div>
-          <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
         </div>
         <button
           onClick={handleLogout}
