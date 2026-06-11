@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Plane, Plus, LogOut, MapPin, Calendar, Sparkles, Loader2 } from "lucide-react";
+import { Plane, Plus, LogOut, MapPin, Calendar, Sparkles, Loader2, ArrowLeft } from "lucide-react";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
