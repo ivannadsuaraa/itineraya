@@ -71,11 +71,17 @@ function AuthPage() {
     setExistingEmail(null);
     try {
       if (mode === "signup") {
-        const { exists } = await checkEmail({ data: { email } });
-        if (exists) {
-          setExistingEmail(email);
-          setLoading(false);
-          return;
+        try {
+          const { exists } = await checkEmail({ data: { email } });
+          if (exists) {
+            setExistingEmail(email);
+            setLoading(false);
+            return;
+          }
+        } catch (checkErr) {
+          // Non-blocking: if the existence check fails, fall through to signUp.
+          // Supabase will surface a clear error if the email is already registered.
+          console.warn("[auth] checkEmailExists failed, continuing with signUp", checkErr);
         }
         const { error } = await supabase.auth.signUp({
           email,
