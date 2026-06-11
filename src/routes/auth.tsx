@@ -10,6 +10,7 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({
     mode: s.mode === "signup" ? ("signup" as const) : ("login" as const),
+    return_to: typeof s.return_to === "string" ? s.return_to : undefined,
   }),
   head: () => ({
     meta: [
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { mode: initialMode } = Route.useSearch();
+  const { mode: initialMode, return_to } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,9 +34,15 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) {
+        if (return_to && /^https?:\/\//.test(return_to)) {
+          window.location.replace(return_to);
+        } else {
+          navigate({ to: "/dashboard" });
+        }
+      }
     });
-  }, [navigate]);
+  }, [navigate, return_to]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +77,19 @@ function AuthPage() {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
+      // OAuth broker (/~oauth/*) only exists on Lovable infrastructure.
+      // On custom domains hosted elsewhere (e.g. Vercel), force the callback
+      // through the lovable.app domain, then bounce the user back.
+      const host = window.location.hostname;
+      const isLovableHost = host.endsWith(".lovable.app") || host === "localhost" || host.startsWith("127.");
+      const lovableOrigin = "https://itineraya.lovable.app";
+      const currentOrigin = window.location.origin;
+      const redirectUri = isLovableHost
+        ? currentOrigin
+        : `${lovableOrigin}/auth?return_to=${encodeURIComponent(currentOrigin + "/dashboard")}`;
+
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: redirectUri,
       });
       if (result.error) {
         toast.error("No se pudo iniciar sesión con Google");
