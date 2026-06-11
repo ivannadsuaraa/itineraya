@@ -89,12 +89,12 @@ function DashboardPage() {
             <ArrowLeft className="h-4 w-4" />
             Atrás
           </Link>
-          <div className="flex items-center gap-2 text-sky-900">
+          <Link to="/dashboard" className="flex items-center gap-2 text-sky-900 transition hover:opacity-80">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
               <Plane className="h-4 w-4 -rotate-45 text-white" />
             </div>
             <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
-          </div>
+          </Link>
         </div>
         <div className="flex items-center gap-2">
           <Link
