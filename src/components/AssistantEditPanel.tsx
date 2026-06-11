@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Loader2, Compass, Plane, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { editItineraryWithAssistant } from "@/lib/itinerary-edit.functions";
 import { toast } from "sonner";
 
@@ -20,17 +21,26 @@ export function AssistantEditPanel({
   destination: string;
   onItineraryUpdated: (itinerary: unknown) => void;
 }) {
+  const { t } = useTranslation();
   const edit = useServerFn(editItineraryWithAssistant);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: "greeting",
       role: "assistant",
-      text: `¡Hola! Soy tu asistente de edición para tu viaje a **${destination}**. Dime qué cambios quieres y los aplico al itinerario. Por ejemplo: "cambia el día 3 por algo más tranquilo" o "quita las actividades de madrugada".`,
+      text: t("assistant.panelGreeting", { destination }),
     },
   ]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Refresh greeting if destination or language changes.
+  useEffect(() => {
+    setMessages((m) => {
+      if (m.length === 0 || m[0].id !== "greeting") return m;
+      return [{ ...m[0], text: t("assistant.panelGreeting", { destination }) }, ...m.slice(1)];
+    });
+  }, [destination, t]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -51,12 +61,12 @@ export function AssistantEditPanel({
         { id: crypto.randomUUID(), role: "assistant", text: res.change_summary },
       ]);
       onItineraryUpdated(res.itinerary);
-      toast.success("Itinerario actualizado ✨");
+      toast.success(t("assistant.panelUpdated"));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Algo salió mal";
+      const msg = err instanceof Error ? err.message : t("assistant.panelSomethingWrong");
       setMessages((m) => [
         ...m,
-        { id: crypto.randomUUID(), role: "assistant", text: `Ups, ${msg}` },
+        { id: crypto.randomUUID(), role: "assistant", text: t("assistant.panelOops", { msg }) },
       ]);
       toast.error(msg);
     } finally {
@@ -89,7 +99,7 @@ export function AssistantEditPanel({
                 </div>
                 <div className="min-w-0">
                   <h2 className="font-display text-base font-bold text-sky-900 truncate">
-                    Editar con asistente
+                    {t("assistant.panelTitle")}
                   </h2>
                   <p className="text-xs text-sky-600 truncate">{destination}</p>
                 </div>
@@ -97,7 +107,7 @@ export function AssistantEditPanel({
               <button
                 onClick={onClose}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
-                aria-label="Cerrar"
+                aria-label={t("assistant.panelClose")}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -115,7 +125,7 @@ export function AssistantEditPanel({
                     </div>
                     <div className="flex items-center gap-1.5 rounded-2xl bg-white/85 px-4 py-2.5 text-sm text-sky-700 shadow-sm">
                       <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-                      Reescribiendo tu itinerario…
+                      {t("assistant.panelTyping")}
                     </div>
                   </div>
                 )}
@@ -137,7 +147,7 @@ export function AssistantEditPanel({
                     }
                   }}
                   rows={1}
-                  placeholder="Ej: cambia el día 2 por algo más relajado"
+                  placeholder={t("assistant.panelPh")}
                   disabled={busy}
                   className="flex-1 resize-none rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10 disabled:opacity-60"
                 />
@@ -163,9 +173,7 @@ function Bubble({ message }: { message: Message }) {
     <div className={`flex items-start gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm ${
-          isUser
-            ? "bg-sky-100 text-sky-700"
-            : "bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white"
+          isUser ? "bg-sky-100 text-sky-700" : "bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white"
         }`}
       >
         {isUser ? <Plane className="h-4 w-4 -rotate-45" /> : <Compass className="h-4 w-4" />}

@@ -1,19 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { CheckCircle2, LogIn, Plane } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/email-confirmed")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Email confirmado – Itineraya" },
-      { name: "description", content: "Tu email ha sido confirmado. ¡Bienvenido a Itineraya!" },
+      { title: "Email confirmed – Itineraya" },
+      { name: "description", content: "Your email is confirmed. Welcome to Itineraya!" },
     ],
   }),
   component: EmailConfirmedPage,
 });
 
 function EmailConfirmedPage() {
+  const { t } = useTranslation();
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
@@ -49,11 +51,11 @@ function EmailConfirmedPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
         >
-          <h1 className="font-display text-3xl font-bold text-sky-900">
-            ¡Email verificado!
-          </h1>
+          <h1 className="font-display text-3xl font-bold text-sky-900">{t("emailConfirmed.title")}</h1>
           <p className="mt-3 text-sky-800/80">
-            Tu cuenta en <strong>Itineraya</strong> está activa. Inicia sesión para empezar a crear itinerarios de viaje increíbles.
+            {t("emailConfirmed.bodyPre")}
+            <strong>{t("emailConfirmed.bodyBrand")}</strong>
+            {t("emailConfirmed.bodyPost")}
           </p>
         </motion.div>
 
@@ -68,7 +70,7 @@ function EmailConfirmedPage() {
             className="inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/30 transition hover:bg-[#185a83]"
           >
             <LogIn className="h-5 w-5" />
-            Iniciar sesión
+            {t("emailConfirmed.cta")}
           </Link>
         </motion.div>
       </div>
