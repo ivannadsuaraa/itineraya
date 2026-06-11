@@ -47,6 +47,57 @@ export type Database = {
         }
         Relationships: []
       }
+      trips: {
+        Row: {
+          avoid: string | null
+          budget: string | null
+          companion: string | null
+          created_at: string
+          destination: string
+          end_date: string | null
+          hero_image_url: string | null
+          id: string
+          itinerary: Json | null
+          start_date: string | null
+          status: string
+          trip_style: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avoid?: string | null
+          budget?: string | null
+          companion?: string | null
+          created_at?: string
+          destination: string
+          end_date?: string | null
+          hero_image_url?: string | null
+          id?: string
+          itinerary?: Json | null
+          start_date?: string | null
+          status?: string
+          trip_style?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avoid?: string | null
+          budget?: string | null
+          companion?: string | null
+          created_at?: string
+          destination?: string
+          end_date?: string | null
+          hero_image_url?: string | null
+          id?: string
+          itinerary?: Json | null
+          start_date?: string | null
+          status?: string
+          trip_style?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
