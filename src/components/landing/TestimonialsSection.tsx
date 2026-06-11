@@ -1,29 +1,6 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
-
-const testimonials = [
-  {
-    name: "María García",
-    role: "Viajera frecuente",
-    avatar: "M",
-    color: "bg-rose-100 text-rose-600",
-    text: "Planifiqué mi viaje a Bali en menos de 5 minutos. El itinerario fue perfecto, con actividades que nunca habría encontrado por mi cuenta.",
-  },
-  {
-    name: "Carlos Mendoza",
-    role: "Mochilero digital",
-    avatar: "C",
-    color: "bg-emerald-100 text-emerald-600",
-    text: "Increíble cómo la IA entiende exactamente lo que busco. Mi ruta por Japón fue una experiencia inolvidable, todo bien organizado.",
-  },
-  {
-    name: "Laura Fernández",
-    role: "Amante de la gastronomía",
-    avatar: "L",
-    color: "bg-amber-100 text-amber-600",
-    text: "Los restaurantes recomendados en mi viaje a Italia fueron espectaculares. Itineraya entiende lo que significa viajar con todos los sentidos.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const container = {
   hidden: {},
