@@ -52,8 +52,15 @@ function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setExistingEmail(null);
     try {
       if (mode === "signup") {
+        const { exists } = await checkEmail({ data: { email } });
+        if (exists) {
+          setExistingEmail(email);
+          setLoading(false);
+          return;
+        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
