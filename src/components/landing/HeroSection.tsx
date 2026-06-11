@@ -1,15 +1,16 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera } from "lucide-react";
-
-const itineraryDays = [
-  { icon: MapPin, label: "Templo Uluwatu", time: "09:00" },
-  { icon: Sun, label: "Playa Nusa Dua", time: "12:00" },
-  { icon: Utensils, label: "Cena en Jimbaran", time: "19:00" },
-  { icon: Camera, label: "Arrozales Jatiluwih", time: "10:00" },
-];
+import { useTranslation } from "react-i18next";
 
 export function HeroSection() {
+  const { t } = useTranslation();
+  const itineraryDays = [
+    { icon: MapPin, label: "Templo Uluwatu", time: "09:00" },
+    { icon: Sun, label: "Playa Nusa Dua", time: "12:00" },
+    { icon: Utensils, label: "Cena en Jimbaran", time: "19:00" },
+    { icon: Camera, label: "Arrozales Jatiluwih", time: "10:00" },
+  ];
   return (
     <section className="relative overflow-hidden pt-32 pb-20 sm:pt-40 sm:pb-28 lg:pt-48 lg:pb-32">
       {/* Background blobs */}
