@@ -165,23 +165,41 @@ function TripPage() {
             <ArrowLeft className="h-4 w-4" />
             Dashboard
           </Link>
-          <div className="flex rounded-full bg-sky-50 p-1">
-            <button
-              onClick={() => setView("cards")}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                view === "cards" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
-              }`}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" /> Tarjetas
-            </button>
-            <button
-              onClick={() => setView("text")}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                view === "text" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
-              }`}
-            >
-              <FileText className="h-3.5 w-3.5" /> Texto
-            </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-full bg-sky-50 p-1">
+              <button
+                onClick={() => setView("cards")}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  view === "cards" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" /> Tarjetas
+              </button>
+              <button
+                onClick={() => setView("text")}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  view === "text" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" /> Texto
+              </button>
+            </div>
+            {plan && plan !== "free" ? (
+              <button
+                onClick={() => setAssistantOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-2 text-xs font-semibold text-white shadow-md shadow-[#1E6B9A]/25 transition hover:shadow-lg"
+              >
+                <Wand2 className="h-3.5 w-3.5" /> Editar con asistente
+              </button>
+            ) : plan === "free" ? (
+              <Link
+                to="/pricing"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
+                title="Disponible en planes Viajero y Explorador"
+              >
+                <Wand2 className="h-3.5 w-3.5" /> Editar con asistente
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>
