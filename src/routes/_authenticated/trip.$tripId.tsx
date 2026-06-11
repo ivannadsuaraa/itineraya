@@ -264,6 +264,16 @@ function TripPage() {
           )}
         </AnimatePresence>
       </div>
+
+      <AssistantEditPanel
+        open={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
+        onItineraryUpdated={(itinerary) =>
+          setTrip((prev) => (prev ? { ...prev, itinerary: itinerary as Itinerary } : prev))
+        }
+      />
     </div>
   );
 }
