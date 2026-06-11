@@ -273,6 +273,8 @@ function AuthPage() {
               </p>
             </motion.div>
           </AnimatePresence>
+          </>
+          )}
         </motion.div>
 
         <p className="mt-6 text-center text-xs text-sky-600">
