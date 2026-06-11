@@ -37,13 +37,13 @@ export function TestimonialsSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            Testimonios 💬
+            {t("testimonials.kicker")}
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            Lo que dicen nuestros viajeros
+            {t("testimonials.title")}
           </h2>
           <p className="mt-4 text-lg text-sky-600">
-            Miles de personas ya confían en Itineraya para planificar sus aventuras.
+            {t("testimonials.subtitle")}
           </p>
         </motion.div>
 
