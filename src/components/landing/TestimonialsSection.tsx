@@ -15,6 +15,12 @@ const item = {
 };
 
 export function TestimonialsSection() {
+  const { t } = useTranslation();
+  const testimonials = [
+    { name: "María García", role: t("testimonials.t1Role"), avatar: "M", color: "bg-rose-100 text-rose-600", text: t("testimonials.t1Text") },
+    { name: "Carlos Mendoza", role: t("testimonials.t2Role"), avatar: "C", color: "bg-emerald-100 text-emerald-600", text: t("testimonials.t2Text") },
+    { name: "Laura Fernández", role: t("testimonials.t3Role"), avatar: "L", color: "bg-amber-100 text-amber-600", text: t("testimonials.t3Text") },
+  ];
   return (
     <section id="testimonials" className="relative overflow-hidden bg-sky-50 py-20 sm:py-28">
       <div className="pointer-events-none absolute inset-0">
