@@ -14,10 +14,12 @@ import {
   Sun,
   Sunset,
   Moon,
+  Wand2,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
+import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
