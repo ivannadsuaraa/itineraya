@@ -33,6 +33,18 @@ function DashboardPage() {
       const meta = u.user?.user_metadata as { full_name?: string; name?: string } | undefined;
       setName(meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? "viajero");
 
+      if (u.user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("welcome_completed")
+          .eq("id", u.user.id)
+          .maybeSingle();
+        if (prof && !prof.welcome_completed) {
+          navigate({ to: "/welcome", replace: true });
+          return;
+        }
+      }
+
       const { data, error } = await supabase
         .from("trips")
         .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
@@ -44,7 +56,7 @@ function DashboardPage() {
       }
       setTrips(data ?? []);
     })();
-  }, []);
+  }, [navigate]);
 
   const upcoming = (trips ?? [])
     .filter((t) => t.start_date && new Date(t.start_date) >= new Date(new Date().toDateString()))
