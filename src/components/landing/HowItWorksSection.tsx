@@ -1,26 +1,6 @@
 import { motion } from "framer-motion";
 import { MapPin, CalendarDays, Compass } from "lucide-react";
-
-const steps = [
-  {
-    number: "01",
-    icon: MapPin,
-    title: "Elige tu destino",
-    description: "Cuéntanos adónde quieres ir. Puede ser una ciudad, un país o simplemente ‘playa en verano’.",
-  },
-  {
-    number: "02",
-    icon: CalendarDays,
-    title: "Personaliza los detalles",
-    description: "Ajusta fechas, presupuesto, estilo de viaje y preferencias. Límite de actividades o relajación total.",
-  },
-  {
-    number: "03",
-    icon: Compass,
-    title: "Recibe tu itinerario",
-    description: "La IA genera un plan día a día con mapas, horarios, reservas y recomendaciones locales.",
-  },
-];
+import { useTranslation } from "react-i18next";
 
 const container = {
   hidden: {},
@@ -37,6 +17,12 @@ const item = {
 };
 
 export function HowItWorksSection() {
+  const { t } = useTranslation();
+  const steps = [
+    { number: "01", icon: MapPin, title: t("how.step1Title"), description: t("how.step1Desc") },
+    { number: "02", icon: CalendarDays, title: t("how.step2Title"), description: t("how.step2Desc") },
+    { number: "03", icon: Compass, title: t("how.step3Title"), description: t("how.step3Desc") },
+  ];
   return (
     <section id="how-it-works" className="relative bg-sky-50 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -48,13 +34,13 @@ export function HowItWorksSection() {
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            Cómo funciona 🗺️
+            {t("how.kicker")}
           </span>
           <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            De la idea al viaje en 3 pasos
+            {t("how.title")}
           </h2>
           <p className="mt-4 text-lg text-sky-600">
-            Sin hojas de cálculo ni noches buscando. Planifica tu aventura en minutos.
+            {t("how.subtitle")}
           </p>
         </motion.div>
 
