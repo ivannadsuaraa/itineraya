@@ -92,6 +92,67 @@ REQUISITOS OBLIGATORIOS:
 
 Devuelve JSON puro, sin markdown ni backticks.`;
 
+    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          {
+            role: "system",
+            content:
+              "Eres un planificador de viajes. Devuelves ÚNICAMENTE JSON válido sin markdown, sin explicaciones, sin texto adicional.",
+          },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!aiRes.ok) {
+      const text = await aiRes.text();
+      if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
+      if (aiRes.status === 402) throw new Error("Créditos de IA agotados. Recarga tu plan.");
+      throw new Error(`Error IA ${aiRes.status}: ${text.slice(0, 200)}`);
+    }
+
+    const aiJson = (await aiRes.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = aiJson.choices?.[0]?.message?.content;
+    if (!content) throw new Error("Respuesta vacía del modelo");
+
+    type ParsedActivity = {
+      time: string;
+      emoji?: string;
+      title: string;
+      place?: string;
+      description: string;
+      category?: string;
+    };
+    type ParsedItin = {
+      summary?: string;
+      days: Array<{
+        day: number;
+        title: string;
+        subtitle?: string;
+        image_query?: string;
+        image_url?: string | null;
+        activities: ParsedActivity[];
+      }>;
+    };
+    let parsed: ParsedItin;
+    try {
+      parsed = JSON.parse(content) as ParsedItin;
+    } catch {
+      const cleaned = content.replace(/```json\n?/gi, "").replace(/```/g, "").trim();
+      parsed = JSON.parse(cleaned) as ParsedItin;
+    }
+
+
     // Hero image
     const hero = await unsplashImage(`${trip.destination} travel landscape`);
 
