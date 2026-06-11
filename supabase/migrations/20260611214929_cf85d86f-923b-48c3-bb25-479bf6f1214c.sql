@@ -1,0 +1,4 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS age INTEGER CHECK (age IS NULL OR (age >= 1 AND age <= 120)),
+  ADD COLUMN IF NOT EXISTS language TEXT,
+  ADD COLUMN IF NOT EXISTS welcome_completed BOOLEAN NOT NULL DEFAULT false;
