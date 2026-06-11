@@ -10,6 +10,7 @@ export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({
     mode: s.mode === "signup" ? ("signup" as const) : ("login" as const),
+    return_to: typeof s.return_to === "string" ? s.return_to : undefined,
   }),
   head: () => ({
     meta: [
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const { mode: initialMode } = Route.useSearch();
+  const { mode: initialMode, return_to } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,9 +34,15 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/dashboard" });
+      if (data.session) {
+        if (return_to && /^https?:\/\//.test(return_to)) {
+          window.location.replace(return_to);
+        } else {
+          navigate({ to: "/dashboard" });
+        }
+      }
     });
-  }, [navigate]);
+  }, [navigate, return_to]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
