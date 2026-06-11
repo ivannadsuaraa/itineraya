@@ -108,6 +108,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations: string[] | null
           travel_style: string | null
           updated_at: string
@@ -118,6 +119,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations?: string[] | null
           travel_style?: string | null
           updated_at?: string
@@ -128,6 +130,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations?: string[] | null
           travel_style?: string | null
           updated_at?: string
@@ -241,7 +244,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      subscription_plan: "free" | "viajero" | "explorador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -368,6 +371,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_plan: ["free", "viajero", "explorador"],
+    },
   },
 } as const
