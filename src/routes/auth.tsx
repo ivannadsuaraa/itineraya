@@ -25,6 +25,7 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [signupSent, setSignupSent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
