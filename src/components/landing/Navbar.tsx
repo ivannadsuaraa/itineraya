@@ -95,6 +95,15 @@ export function Navbar() {
               ))}
               <Link
                 to="/auth"
+                search={{ mode: "login" }}
+                onClick={() => setOpen(false)}
+                className="rounded-xl px-4 py-3 text-center text-sm font-semibold text-sky-700 hover:bg-sky-50"
+              >
+                Iniciar sesión
+              </Link>
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
                 onClick={() => setOpen(false)}
                 className="mt-1 rounded-full bg-[#1E6B9A] px-5 py-3 text-center text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30"
               >
