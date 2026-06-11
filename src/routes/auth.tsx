@@ -23,6 +23,23 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+async function routeAfterLogin(navigate: ReturnType<typeof useNavigate>, userId: string, return_to?: string) {
+  if (return_to && /^https?:\/\//.test(return_to)) {
+    window.location.replace(return_to);
+    return;
+  }
+  const { data } = await supabase
+    .from("profiles")
+    .select("welcome_completed")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!data?.welcome_completed) {
+    navigate({ to: "/welcome" });
+  } else {
+    navigate({ to: "/dashboard" });
+  }
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { mode: initialMode, return_to } = Route.useSearch();
@@ -35,16 +52,13 @@ function AuthPage() {
   const [signupSent, setSignupSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [existingEmail, setExistingEmail] = useState<string | null>(null);
+  const [verifyChecking, setVerifyChecking] = useState(false);
   const checkEmail = useServerFn(checkEmailExists);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        if (return_to && /^https?:\/\//.test(return_to)) {
-          window.location.replace(return_to);
-        } else {
-          navigate({ to: "/dashboard" });
-        }
+      if (data.session?.user) {
+        void routeAfterLogin(navigate, data.session.user.id, return_to);
       }
     });
   }, [navigate, return_to]);
