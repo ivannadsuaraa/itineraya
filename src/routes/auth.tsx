@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, Mail, Lock, User, Loader2, ArrowLeft } from "lucide-react";
+import { Plane, Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -222,17 +223,47 @@ function AuthPage() {
                     className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                   />
                 </Field>
-                <Field icon={<Lock className="h-4 w-4" />} label="Contraseña">
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
-                  />
-                </Field>
+                <div className="space-y-2">
+                  <Field
+                    icon={<Lock className="h-4 w-4" />}
+                    label="Contraseña"
+                    rightElement={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        className="text-sky-500 hover:text-sky-700 transition"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    }
+                  >
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
+                    />
+                  </Field>
+                  {mode === "signup" && (
+                    <div className="space-y-1 px-1">
+                      {[
+                        { label: "Mínimo 6 caracteres", met: password.length >= 6 },
+                        { label: "Al menos una mayúscula", met: /[A-Z]/.test(password) },
+                        { label: "Al menos un número", met: /[0-9]/.test(password) },
+                        { label: "Al menos un símbolo especial", met: /[^A-Za-z0-9]/.test(password) },
+                      ].map((req) => (
+                        <div key={req.label} className="flex items-center gap-2 text-xs">
+                          <div className={`h-1.5 w-1.5 rounded-full ${req.met ? "bg-green-500" : "bg-red-500"}`} />
+                          <span className={req.met ? "text-green-600" : "text-red-500"}>{req.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <button
                   type="submit"
@@ -300,10 +331,12 @@ function Field({
   icon,
   label,
   children,
+  rightElement,
 }: {
   icon: React.ReactNode;
   label: string;
   children: React.ReactNode;
+  rightElement?: React.ReactNode;
 }) {
   return (
     <label className="block">
@@ -311,6 +344,7 @@ function Field({
       <div className="flex items-center gap-3 rounded-2xl border border-sky-200 bg-white/70 px-4 py-3 transition-all focus-within:border-[#1E6B9A] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1E6B9A]/10">
         <span className="text-sky-500">{icon}</span>
         {children}
+        {rightElement}
       </div>
     </label>
   );
