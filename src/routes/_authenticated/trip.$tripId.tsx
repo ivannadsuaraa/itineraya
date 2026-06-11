@@ -14,10 +14,12 @@ import {
   Sun,
   Sunset,
   Moon,
+  Wand2,
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
+import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
@@ -59,6 +61,22 @@ function TripPage() {
   } | null>(null);
   const [view, setView] = useState<"cards" | "text">("cards");
   const [msgIdx, setMsgIdx] = useState(0);
+  const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+
+  // Load plan
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      setPlan((((profile as { plan?: string } | null)?.plan ?? "free") as "free" | "viajero" | "explorador"));
+    })();
+  }, []);
 
   // Rotate loading messages
   useEffect(() => {
@@ -147,23 +165,41 @@ function TripPage() {
             <ArrowLeft className="h-4 w-4" />
             Dashboard
           </Link>
-          <div className="flex rounded-full bg-sky-50 p-1">
-            <button
-              onClick={() => setView("cards")}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                view === "cards" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
-              }`}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" /> Tarjetas
-            </button>
-            <button
-              onClick={() => setView("text")}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                view === "text" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
-              }`}
-            >
-              <FileText className="h-3.5 w-3.5" /> Texto
-            </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-full bg-sky-50 p-1">
+              <button
+                onClick={() => setView("cards")}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  view === "cards" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" /> Tarjetas
+              </button>
+              <button
+                onClick={() => setView("text")}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                  view === "text" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" /> Texto
+              </button>
+            </div>
+            {plan && plan !== "free" ? (
+              <button
+                onClick={() => setAssistantOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-2 text-xs font-semibold text-white shadow-md shadow-[#1E6B9A]/25 transition hover:shadow-lg"
+              >
+                <Wand2 className="h-3.5 w-3.5" /> Editar con asistente
+              </button>
+            ) : plan === "free" ? (
+              <Link
+                to="/pricing"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
+                title="Disponible en planes Viajero y Explorador"
+              >
+                <Wand2 className="h-3.5 w-3.5" /> Editar con asistente
+              </Link>
+            ) : null}
           </div>
         </div>
       </div>
@@ -228,6 +264,16 @@ function TripPage() {
           )}
         </AnimatePresence>
       </div>
+
+      <AssistantEditPanel
+        open={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
+        onItineraryUpdated={(itinerary) =>
+          setTrip((prev) => (prev ? { ...prev, itinerary: itinerary as Itinerary } : prev))
+        }
+      />
     </div>
   );
 }
