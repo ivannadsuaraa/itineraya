@@ -1,0 +1,326 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import { motion } from "framer-motion";
+import { Compass, Plane, ArrowLeft, Send, Loader2, Sparkles, Lock } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/assistant")({
+  head: () => ({ meta: [{ title: "Asistente de viaje IA – Itineraya" }] }),
+  component: AssistantPage,
+});
+
+type Trip = {
+  id: string;
+  destination: string;
+  start_date: string | null;
+  end_date: string | null;
+  budget: string | null;
+  companion: string | null;
+  trip_style: string | null;
+};
+
+type Plan = "free" | "viajero" | "explorador";
+
+function AssistantPage() {
+  const navigate = useNavigate();
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [trips, setTrips] = useState<Trip[] | null>(null);
+  const [tripId, setTripId] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const [{ data: profile }, { data: tripRows }] = await Promise.all([
+        supabase.from("profiles").select("plan").eq("id", u.user.id).maybeSingle(),
+        supabase
+          .from("trips")
+          .select("id,destination,start_date,end_date,budget,companion,trip_style")
+          .order("created_at", { ascending: false }),
+      ]);
+      setPlan(((profile as { plan?: Plan } | null)?.plan ?? "free") as Plan);
+      const list = (tripRows ?? []) as Trip[];
+      setTrips(list);
+      if (list[0]) setTripId(list[0].id);
+    })();
+  }, []);
+
+  const activeTrip = useMemo(() => trips?.find((t) => t.id === tripId) ?? null, [trips, tripId]);
+
+  if (plan === null || trips === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+        <Loader2 className="h-6 w-6 animate-spin text-[#1E6B9A]" />
+      </div>
+    );
+  }
+
+  if (plan === "free") {
+    return <UpgradeGate onBack={() => navigate({ to: "/dashboard" })} />;
+  }
+
+  return (
+    <ChatSurface
+      trips={trips}
+      tripId={tripId}
+      setTripId={setTripId}
+      activeTrip={activeTrip}
+    />
+  );
+}
+
+function UpgradeGate({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full opacity-40 blur-3xl"
+          style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
+        />
+      </div>
+      <div className="relative mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center">
+        <button
+          onClick={onBack}
+          className="absolute top-6 left-6 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md hover:bg-white"
+        >
+          <ArrowLeft className="h-4 w-4" /> Atrás
+        </button>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
+            <Lock className="h-7 w-7 text-white" />
+          </div>
+          <h1 className="mt-6 font-display text-3xl font-bold text-sky-900">
+            Desbloquea tu asistente de viaje IA
+          </h1>
+          <p className="mt-3 text-sky-700">
+            El asistente de viaje con IA está disponible en los planes <span className="font-semibold">Viajero</span> y{" "}
+            <span className="font-semibold">Explorador</span>. Actualiza tu plan para obtener
+            recomendaciones personalizadas de tu próximo destino.
+          </p>
+          <Link
+            to="/pricing"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E]"
+          >
+            <Sparkles className="h-4 w-4" /> Ver planes
+          </Link>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function ChatSurface({
+  trips,
+  tripId,
+  setTripId,
+  activeTrip,
+}: {
+  trips: Trip[];
+  tripId: string | null;
+  setTripId: (id: string | null) => void;
+  activeTrip: Trip | null;
+}) {
+  const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const tripContext = useMemo(
+    () =>
+      activeTrip
+        ? {
+            destination: activeTrip.destination,
+            startDate: activeTrip.start_date,
+            endDate: activeTrip.end_date,
+            budget: activeTrip.budget,
+            companion: activeTrip.companion,
+            tripStyle: activeTrip.trip_style,
+          }
+        : null,
+    [activeTrip],
+  );
+
+  const greeting: UIMessage = useMemo(
+    () => ({
+      id: "greeting",
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: activeTrip
+            ? `¡Hola! ✈️ Soy tu asistente de viaje para **${activeTrip.destination}**. ¿En qué puedo ayudarte? Puedo sugerirte lugares, restaurantes, rutas o consejos prácticos.`
+            : "¡Hola! ✈️ Soy tu asistente de viaje de Itineraya. Crea un viaje para que pueda ayudarte con recomendaciones personalizadas.",
+        },
+      ],
+    }),
+    [activeTrip],
+  );
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: () => ({ tripContext }),
+      }),
+    [tripContext],
+  );
+
+  const { messages, sendMessage, status } = useChat({
+    id: tripId ?? "no-trip",
+    messages: [greeting],
+    transport,
+    onError: (err) => toast.error(err.message || "Error al contactar con el asistente"),
+  });
+
+  const isLoading = status === "submitted" || status === "streaming";
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, status]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = input.trim();
+    if (!text || isLoading) return;
+    setInput("");
+    await sendMessage({ text });
+  };
+
+  return (
+    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      <div className="pointer-events-none absolute inset-0">
+        <div
+          className="absolute -top-40 -right-40 h-[28rem] w-[28rem] rounded-full opacity-30 blur-3xl"
+          style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
+        />
+      </div>
+
+      <header className="relative z-10 border-b border-white/40 bg-white/60 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-5 py-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              to="/dashboard"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
+              aria-label="Volver"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] shadow-md shadow-[#1E6B9A]/30">
+              <Compass className="h-5 w-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-display text-base font-bold text-sky-900 truncate">
+                Asistente de viaje
+              </h1>
+              <p className="text-xs text-sky-600 truncate">
+                {activeTrip ? activeTrip.destination : "Sin viaje seleccionado"}
+              </p>
+            </div>
+          </div>
+          {trips.length > 0 && (
+            <select
+              value={tripId ?? ""}
+              onChange={(e) => setTripId(e.target.value || null)}
+              className="max-w-[180px] truncate rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-sky-800 outline-none focus:border-[#1E6B9A]"
+            >
+              {trips.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.destination}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </header>
+
+      <div ref={scrollRef} className="relative z-0 flex-1 overflow-y-auto">
+        <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 py-6">
+          {messages.map((m) => (
+            <MessageBubble key={m.id} message={m} />
+          ))}
+          {isLoading && (
+            <div className="flex items-center gap-2 text-sm text-sky-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white">
+                <Compass className="h-4 w-4" />
+              </div>
+              <div className="rounded-2xl bg-white/80 px-4 py-2 shadow-sm">
+                <span className="inline-flex gap-1">
+                  <Dot /> <Dot delay={0.15} /> <Dot delay={0.3} />
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-xl"
+      >
+        <div className="mx-auto flex max-w-3xl items-end gap-2 px-4 py-3">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e as unknown as React.FormEvent);
+              }
+            }}
+            placeholder={activeTrip ? `Pregunta algo sobre ${activeTrip.destination}…` : "Escribe un mensaje…"}
+            rows={1}
+            className="flex-1 resize-none rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10"
+          />
+          <button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function MessageBubble({ message }: { message: UIMessage }) {
+  const isUser = message.role === "user";
+  const text = message.parts
+    .map((p) => (p.type === "text" ? p.text : ""))
+    .join("");
+
+  return (
+    <div className={`flex items-start gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm ${
+          isUser
+            ? "bg-sky-100 text-sky-700"
+            : "bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white"
+        }`}
+      >
+        {isUser ? <Plane className="h-4 w-4 -rotate-45" /> : <Compass className="h-4 w-4" />}
+      </div>
+      <div
+        className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm whitespace-pre-wrap ${
+          isUser
+            ? "bg-[#1E6B9A] text-white rounded-tr-sm"
+            : "bg-white/85 text-sky-900 rounded-tl-sm ring-1 ring-white/60"
+        }`}
+      >
+        {text || <span className="opacity-60">…</span>}
+      </div>
+    </div>
+  );
+}
+
+function Dot({ delay = 0 }: { delay?: number }) {
+  return (
+    <motion.span
+      className="h-1.5 w-1.5 rounded-full bg-sky-500"
+      animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+      transition={{ duration: 0.9, repeat: Infinity, delay }}
+    />
+  );
+}
