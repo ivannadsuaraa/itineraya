@@ -77,17 +77,16 @@ function AuthPage() {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/dashboard`,
       });
-      if (error) {
+      if (result.error) {
         toast.error("No se pudo iniciar sesión con Google");
         setGoogleLoading(false);
+        return;
       }
-      // Supabase redirige al usuario; no hace falta navigate aquí.
+      if (result.redirected) return;
+      navigate({ to: "/dashboard" });
     } catch {
       toast.error("No se pudo iniciar sesión con Google");
       setGoogleLoading(false);
