@@ -47,8 +47,8 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("¡Cuenta creada! Bienvenido a Itineraya ✈️");
-        navigate({ to: "/onboarding" });
+        setSignupSent(true);
+        toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
