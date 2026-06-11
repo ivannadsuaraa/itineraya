@@ -157,6 +157,18 @@ function OnboardingPage() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-8">
+        {/* Back */}
+        <div className="mb-4 self-start">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/dashboard" })}
+            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Atrás
+          </button>
+        </div>
+
         {/* Logo */}
         <div className="mb-8 flex items-center justify-center gap-2 text-sky-900">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
