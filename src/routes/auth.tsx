@@ -42,7 +42,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/email-confirmed`,
             data: { full_name: fullName },
           },
         });
