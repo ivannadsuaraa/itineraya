@@ -87,16 +87,39 @@ function AuthPage() {
         setSignupSent(true);
         toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signIn, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("¡Bienvenido de vuelta!");
-        navigate({ to: "/dashboard" });
+        if (signIn.user) await routeAfterLogin(navigate, signIn.user.id, return_to);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Algo salió mal";
       toast.error(msg.includes("Invalid login") ? "Email o contraseña incorrectos" : msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAlreadyVerified = async () => {
+    if (!email || !password) {
+      toast.error("Introduce tu email y contraseña");
+      return;
+    }
+    setVerifyChecking(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("not confirmed") || error.message.toLowerCase().includes("email not confirmed")) {
+          toast.error("Aún no hemos detectado la verificación. Revisa tu correo.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+      toast.success("¡Email verificado!");
+      if (data.user) await routeAfterLogin(navigate, data.user.id, return_to);
+    } finally {
+      setVerifyChecking(false);
     }
   };
 
@@ -112,7 +135,8 @@ function AuthPage() {
         return;
       }
       if (result.redirected) return;
-      navigate({ to: "/dashboard" });
+      const { data } = await supabase.auth.getUser();
+      if (data.user) await routeAfterLogin(navigate, data.user.id, return_to);
     } catch {
       toast.error("No se pudo iniciar sesión con Google");
       setGoogleLoading(false);
