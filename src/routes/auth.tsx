@@ -25,6 +25,7 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [signupSent, setSignupSent] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -46,8 +47,8 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("¡Cuenta creada! Bienvenido a Itineraya ✈️");
-        navigate({ to: "/onboarding" });
+        setSignupSent(true);
+        toast.success("¡Cuenta creada! Revisa tu email para confirmar.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -125,6 +126,29 @@ function AuthPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="w-full rounded-3xl bg-white/80 p-8 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60"
         >
+          {signupSent ? (
+            <div className="text-center py-4">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+                <Mail className="h-8 w-8 text-[#1E6B9A]" />
+              </div>
+              <h1 className="font-display text-2xl font-bold text-sky-900">Revisa tu email</h1>
+              <p className="mt-3 text-sm text-sky-700">
+                Te hemos enviado un enlace de confirmación a <span className="font-semibold">{email}</span>.
+                Pulsa el botón <span className="font-semibold">"Verify Email"</span> para activar tu cuenta.
+              </p>
+              <p className="mt-2 text-xs text-sky-500">
+                ¿No lo ves? Revisa tu carpeta de spam.
+              </p>
+              <button
+                type="button"
+                onClick={() => { setSignupSent(false); setMode("login"); }}
+                className="mt-6 text-sm font-semibold text-[#1E6B9A] hover:underline"
+              >
+                Volver a iniciar sesión
+              </button>
+            </div>
+          ) : (
+          <>
           {/* Tabs */}
           <div className="mb-6 flex rounded-full bg-sky-50/80 p-1">
             {(["login", "signup"] as const).map((m) => (
@@ -249,6 +273,8 @@ function AuthPage() {
               </p>
             </motion.div>
           </AnimatePresence>
+          </>
+          )}
         </motion.div>
 
         <p className="mt-6 text-center text-xs text-sky-600">
