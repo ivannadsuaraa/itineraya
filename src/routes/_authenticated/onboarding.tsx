@@ -8,7 +8,6 @@ import {
   ArrowRight,
   CalendarIcon,
   Loader2,
-  Plane,
   Sparkles,
   User,
   Users,
