@@ -21,6 +21,7 @@ export function Navbar() {
   const navLinks = [
     { label: "Cómo funciona", href: "#how-it-works" },
     { label: "Características", href: "#features" },
+    { label: "Precios", href: "/pricing" },
   ];
 
   return (
