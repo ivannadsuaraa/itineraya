@@ -194,47 +194,54 @@ function TripPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
           <Link
             to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-white"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-sky-800 hover:bg-white sm:text-sm"
+            aria-label={t("trip.backDashboard")}
           >
             <ArrowLeft className="h-4 w-4" />
-            {t("trip.backDashboard")}
+            <span className="hidden sm:inline">{t("trip.backDashboard")}</span>
           </Link>
           <div className="flex items-center gap-2">
             <div className="flex rounded-full bg-sky-50 p-1">
               <button
                 onClick={() => setView("cards")}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
                   view === "cards" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
                 }`}
               >
-                <LayoutGrid className="h-3.5 w-3.5" /> {t("trip.viewCards")}
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline sm:inline">{t("trip.viewCards")}</span>
               </button>
               <button
                 onClick={() => setView("text")}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
                   view === "text" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
                 }`}
               >
-                <FileText className="h-3.5 w-3.5" /> {t("trip.viewText")}
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline sm:inline">{t("trip.viewText")}</span>
               </button>
             </div>
             {plan && plan !== "free" ? (
               <button
                 onClick={() => setAssistantOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-2 text-xs font-semibold text-white shadow-md shadow-[#1E6B9A]/25 transition hover:shadow-lg"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 text-xs font-semibold text-white shadow-md shadow-[#1E6B9A]/25 transition hover:shadow-lg"
+                aria-label={t("trip.editAssistant")}
               >
-                <Wand2 className="h-3.5 w-3.5" /> {t("trip.editAssistant")}
+                <Wand2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("trip.editAssistant")}</span>
               </button>
             ) : plan === "free" ? (
               <Link
                 to="/pricing"
-                className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-2 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/80 px-3 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
                 title={t("trip.editAssistantLocked")}
+                aria-label={t("trip.editAssistant")}
               >
-                <Wand2 className="h-3.5 w-3.5" /> {t("trip.editAssistant")}
+                <Wand2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("trip.editAssistant")}</span>
               </Link>
             ) : null}
           </div>
