@@ -200,21 +200,21 @@ function ChatSurface({
       </div>
 
       <header className="relative z-10 border-b border-white/40 bg-white/60 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-5 py-3">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-3 py-2 sm:px-5 sm:py-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <Link
               to="/dashboard"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
               aria-label={t("assistant.ariaBack")}
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] shadow-md shadow-[#1E6B9A]/30">
+            <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] shadow-md shadow-[#1E6B9A]/30 sm:flex">
               <Compass className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-base font-bold text-sky-900 truncate">{t("assistant.headerTitle")}</h1>
-              <p className="text-xs text-sky-600 truncate">
+              <h1 className="truncate font-display text-sm font-bold text-sky-900 sm:text-base">{t("assistant.headerTitle")}</h1>
+              <p className="truncate text-[11px] text-sky-600 sm:text-xs">
                 {activeTrip ? activeTrip.destination : t("assistant.noTripSelected")}
               </p>
             </div>
@@ -223,7 +223,7 @@ function ChatSurface({
             <select
               value={tripId ?? ""}
               onChange={(e) => setTripId(e.target.value || null)}
-              className="max-w-[180px] truncate rounded-full border border-sky-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-sky-800 outline-none focus:border-[#1E6B9A]"
+              className="max-w-[120px] shrink-0 truncate rounded-full border border-sky-200 bg-white/80 px-2.5 py-1.5 text-[11px] font-semibold text-sky-800 outline-none focus:border-[#1E6B9A] sm:max-w-[180px] sm:px-3 sm:text-xs"
             >
               {trips.map((tr) => (
                 <option key={tr.id} value={tr.id}>

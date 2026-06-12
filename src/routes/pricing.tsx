@@ -150,10 +150,10 @@ function PricingPage() {
         />
       </div>
 
-      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
+      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-5 sm:py-5">
         <Link
           to={authedUserId ? "/dashboard" : "/"}
-          className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white sm:text-sm"
         >
           <ArrowLeft className="h-4 w-4" />
           {authedUserId ? "Dashboard" : "Inicio"}
@@ -161,7 +161,7 @@ function PricingPage() {
         <BrandLogo size="md" />
       </header>
 
-      <main className="relative mx-auto max-w-6xl px-5">
+      <main className="relative mx-auto max-w-6xl px-4 sm:px-5">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -207,7 +207,7 @@ function PricingPage() {
                   </div>
                 )}
                 <div
-                  className={`flex w-full flex-col rounded-3xl p-7 backdrop-blur-xl ring-1 transition-all ${
+                  className={`flex w-full flex-col rounded-3xl p-5 backdrop-blur-xl ring-1 transition-all sm:p-7 ${
                     current
                       ? "bg-white shadow-2xl shadow-emerald-500/20 ring-emerald-400/40 md:scale-[1.03]"
                       : plan.highlighted

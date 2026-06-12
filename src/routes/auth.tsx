@@ -149,18 +149,18 @@ function AuthPage() {
 
       <Link
         to="/"
-        className="absolute top-6 left-6 z-10 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-sky-800 shadow-sm backdrop-blur-md transition hover:bg-white"
+        className="absolute top-4 left-4 z-10 inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-medium text-sky-800 shadow-sm backdrop-blur-md transition hover:bg-white sm:top-6 sm:left-6 sm:h-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
       >
         <ArrowLeft className="h-4 w-4" />
         {t("auth.back")}
       </Link>
 
-      <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-12">
+      <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 py-12 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
           <Link to="/" className="flex flex-col items-center gap-2 text-sky-900">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
@@ -174,7 +174,7 @@ function AuthPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-full rounded-3xl bg-white/80 p-8 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60"
+          className="w-full rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8"
         >
           {signupSent ? (
             <div className="text-center py-4">

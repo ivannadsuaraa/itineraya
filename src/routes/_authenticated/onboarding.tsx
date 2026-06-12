@@ -155,7 +155,7 @@ function OnboardingPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-8">
+      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-4 self-start">
           <button
             type="button"
@@ -202,7 +202,7 @@ function OnboardingPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: direction * -40 }}
               transition={{ duration: 0.3, ease: "easeOut" }}
-              className="rounded-3xl bg-white/80 p-8 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 md:p-10"
+              className="rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8 md:p-10"
             >
               {step === 0 && (
                 <StepShell emoji="🌍" title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
