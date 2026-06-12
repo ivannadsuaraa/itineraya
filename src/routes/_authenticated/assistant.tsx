@@ -53,7 +53,7 @@ function AssistantPage() {
 
   if (plan === null || trips === null) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
         <Loader2 className="h-6 w-6 animate-spin text-[#1E6B9A]" />
       </div>
     );
@@ -76,14 +76,14 @@ function AssistantPage() {
 function UpgradeGate({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation();
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full opacity-40 blur-3xl"
           style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
         />
       </div>
-      <div className="relative mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
+      <div className="relative mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center">
         <button
           onClick={onBack}
           className="absolute top-6 left-6 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md hover:bg-white"
