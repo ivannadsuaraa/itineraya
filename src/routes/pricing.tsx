@@ -207,7 +207,7 @@ function PricingPage() {
                   </div>
                 )}
                 <div
-                  className={`flex w-full flex-col rounded-3xl p-7 backdrop-blur-xl ring-1 transition-all ${
+                  className={`flex w-full flex-col rounded-3xl p-5 backdrop-blur-xl ring-1 transition-all sm:p-7 ${
                     current
                       ? "bg-white shadow-2xl shadow-emerald-500/20 ring-emerald-400/40 md:scale-[1.03]"
                       : plan.highlighted
