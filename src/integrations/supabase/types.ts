@@ -223,10 +223,12 @@ export type Database = {
       }
       trips: {
         Row: {
+          arrival_time: string | null
           avoid: string | null
           budget: string | null
           companion: string | null
           created_at: string
+          departure_time: string | null
           destination: string
           end_date: string | null
           hero_image_url: string | null
@@ -239,10 +241,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          arrival_time?: string | null
           avoid?: string | null
           budget?: string | null
           companion?: string | null
           created_at?: string
+          departure_time?: string | null
           destination: string
           end_date?: string | null
           hero_image_url?: string | null
@@ -255,10 +259,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          arrival_time?: string | null
           avoid?: string | null
           budget?: string | null
           companion?: string | null
           created_at?: string
+          departure_time?: string | null
           destination?: string
           end_date?: string | null
           hero_image_url?: string | null
