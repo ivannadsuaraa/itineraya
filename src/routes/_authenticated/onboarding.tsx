@@ -481,3 +481,25 @@ function DateField({
     </label>
   );
 }
+
+function TimeField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold text-sky-700">{label}</span>
+      <input
+        type="time"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border border-sky-200 bg-white/70 px-4 py-3.5 text-sm text-sky-900 outline-none transition-all focus:border-[#1E6B9A] focus:bg-white focus:ring-4 focus:ring-[#1E6B9A]/10"
+      />
+    </label>
+  );
+}
