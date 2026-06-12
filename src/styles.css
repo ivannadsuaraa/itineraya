@@ -104,13 +104,26 @@
     border-color: var(--color-border);
   }
 
+  html, body {
+    /* Forbid horizontal page scroll on every screen — decorative blobs and
+       wide hero visuals must never push the document wider than the viewport. */
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-body);
+    -webkit-text-size-adjust: 100%;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+  }
+
+  /* Prevent media from overflowing its container on small screens */
+  img, video, svg, canvas {
+    max-width: 100%;
   }
 }
