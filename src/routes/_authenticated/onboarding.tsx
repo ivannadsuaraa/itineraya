@@ -122,6 +122,8 @@ function OnboardingPage() {
           destination: data.destination,
           start_date: data.startDate ? data.startDate.toISOString().slice(0, 10) : null,
           end_date: data.endDate ? data.endDate.toISOString().slice(0, 10) : null,
+          arrival_time: data.arrivalTime || null,
+          departure_time: data.departureTime || null,
           companion: data.companion ? companionMap[data.companion] : null,
           budget: data.budget ? budgetMap[data.budget] : null,
           trip_style: data.tripType,
