@@ -234,7 +234,18 @@ function OnboardingPage() {
                       minDate={data.startDate}
                       locale={dateLocale}
                     />
+                    <TimeField
+                      label={t("onboarding.arrivalTime")}
+                      value={data.arrivalTime}
+                      onChange={(v) => setData({ ...data, arrivalTime: v })}
+                    />
+                    <TimeField
+                      label={t("onboarding.departureTime")}
+                      value={data.departureTime}
+                      onChange={(v) => setData({ ...data, departureTime: v })}
+                    />
                   </div>
+                  <p className="mt-3 text-xs text-sky-600">{t("onboarding.timeHint")}</p>
                 </StepShell>
               )}
 
