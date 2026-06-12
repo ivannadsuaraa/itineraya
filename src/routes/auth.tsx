@@ -51,9 +51,7 @@ function AuthPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [existingEmail, setExistingEmail] = useState<string | null>(null);
   const [verifyChecking, setVerifyChecking] = useState(false);
-  const checkEmail = useServerFn(checkEmailExists);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
