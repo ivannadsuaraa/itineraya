@@ -64,21 +64,8 @@ function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setExistingEmail(null);
     try {
       if (mode === "signup") {
-        try {
-          const { exists } = await checkEmail({ data: { email } });
-          if (exists) {
-            setExistingEmail(email);
-            setLoading(false);
-            return;
-          }
-        } catch (checkErr) {
-          // Non-blocking: if the existence check fails, fall through to signUp.
-          // Supabase will surface a clear error if the email is already registered.
-          console.warn("[auth] checkEmailExists failed, continuing with signUp", checkErr);
-        }
         const { error } = await supabase.auth.signUp({
           email,
           password,
