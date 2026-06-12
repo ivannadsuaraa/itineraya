@@ -1,0 +1,1 @@
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS arrival_time TIME, ADD COLUMN IF NOT EXISTS departure_time TIME;

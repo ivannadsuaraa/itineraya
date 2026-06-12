@@ -39,6 +39,8 @@ interface FormData {
   destination: string;
   startDate?: Date;
   endDate?: Date;
+  arrivalTime?: string;
+  departureTime?: string;
   companion?: Companion;
   budget?: Budget;
   tripType: string;
@@ -120,6 +122,8 @@ function OnboardingPage() {
           destination: data.destination,
           start_date: data.startDate ? data.startDate.toISOString().slice(0, 10) : null,
           end_date: data.endDate ? data.endDate.toISOString().slice(0, 10) : null,
+          arrival_time: data.arrivalTime || null,
+          departure_time: data.departureTime || null,
           companion: data.companion ? companionMap[data.companion] : null,
           budget: data.budget ? budgetMap[data.budget] : null,
           trip_style: data.tripType,
@@ -232,7 +236,18 @@ function OnboardingPage() {
                       minDate={data.startDate}
                       locale={dateLocale}
                     />
+                    <TimeField
+                      label={t("onboarding.arrivalTime")}
+                      value={data.arrivalTime}
+                      onChange={(v) => setData({ ...data, arrivalTime: v })}
+                    />
+                    <TimeField
+                      label={t("onboarding.departureTime")}
+                      value={data.departureTime}
+                      onChange={(v) => setData({ ...data, departureTime: v })}
+                    />
                   </div>
+                  <p className="mt-3 text-xs text-sky-600">{t("onboarding.timeHint")}</p>
                 </StepShell>
               )}
 
@@ -463,6 +478,28 @@ function DateField({
           />
         </PopoverContent>
       </Popover>
+    </label>
+  );
+}
+
+function TimeField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold text-sky-700">{label}</span>
+      <input
+        type="time"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-2xl border border-sky-200 bg-white/70 px-4 py-3.5 text-sm text-sky-900 outline-none transition-all focus:border-[#1E6B9A] focus:bg-white focus:ring-4 focus:ring-[#1E6B9A]/10"
+      />
     </label>
   );
 }

@@ -58,14 +58,43 @@ export const generateItinerary = createServerFn({ method: "POST" })
       return Math.min(d, 14);
     })();
 
+    const monthName = (() => {
+      if (!trip.start_date) return "unspecified";
+      const d = new Date(trip.start_date);
+      const names = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      return `${names[d.getMonth()]} (month ${d.getMonth() + 1})`;
+    })();
+
+    const arrivalTime = (trip as { arrival_time?: string | null }).arrival_time ?? null;
+    const departureTime = (trip as { departure_time?: string | null }).departure_time ?? null;
+
+    const arrivalLine = arrivalTime
+      ? `Day 1 arrival time: ${arrivalTime}. Do NOT schedule activities before this time on day 1. If arrival is late (after 20:00) plan only check-in and a light dinner nearby; if arrival is after 22:00 plan ONLY check-in / rest.`
+      : `Day 1 arrival: unknown — assume a normal morning start.`;
+    const departureLine = departureTime
+      ? `Last day (day ${dayCount}) departure time: ${departureTime}. Do NOT schedule activities after this time on the last day; leave at least 2-3h before departure for transfer to airport/station. If departure is early morning (before 10:00) plan ONLY transfer; if morning (before 13:00) keep it to breakfast + a single light activity.`
+      : `Last day departure: unknown — assume a normal evening end.`;
+
     const prompt = `You are an expert travel planner. Create a VERY detailed itinerary written in ${langName}.
 
 Destination: ${trip.destination}
 Dates: ${trip.start_date ?? "flexible"} to ${trip.end_date ?? "flexible"} (~${dayCount} days)
+Travel month: ${monthName}
+${arrivalLine}
+${departureLine}
 Travelling with: ${trip.companion ?? "unspecified"}
 Budget: ${trip.budget ?? "unspecified"}
 Style: ${trip.trip_style ?? "unspecified"}
 Avoid: ${trip.avoid?.trim() || "nothing in particular"}
+
+CLIMATE & SEASON AWARENESS (CRITICAL):
+- Consider the typical weather of ${trip.destination} in ${monthName} and adapt every activity to it.
+- Cold/winter conditions: prioritize indoor activities (museums, galleries, cafés, spas, covered markets, thermal baths), warm food, short outdoor walks. NEVER recommend beach, swimming, open-air pools, long hikes or rooftop bars when it would be cold or rainy.
+- Hot summer in hot destinations: schedule outdoor sightseeing early morning (08:00-11:00) and late afternoon/evening (17:00 onwards); reserve midday (12:00-16:00) for indoor activities, long lunches, siesta or pool/beach. Avoid long outdoor walks at noon.
+- Rainy season: favor covered options and have flexible indoor alternatives.
+- Mild seasons: balance freely.
+- Always mention practical clothing/weather tips in the description when relevant (e.g. "bring a coat", "go early to beat the heat").
+
 
 Return ONLY valid JSON without markdown, with this EXACT shape (write user-facing strings — summary/title/subtitle/place/description — in ${langName}):
 {
