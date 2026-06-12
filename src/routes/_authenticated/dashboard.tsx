@@ -88,36 +88,39 @@ function DashboardPage() {
         />
       </div>
 
-      <header className="relative mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
-        <div className="flex items-center gap-3">
+      <header className="relative mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white sm:text-sm"
+            aria-label={t("dashboard.back")}
           >
             <ArrowLeft className="h-4 w-4" />
-            {t("dashboard.back")}
+            <span className="hidden sm:inline">{t("dashboard.back")}</span>
           </Link>
-          <Link to="/dashboard" className="flex items-center gap-2 text-sky-900 transition hover:opacity-80">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
+          <Link to="/dashboard" className="flex min-w-0 items-center gap-2 text-sky-900 transition hover:opacity-80">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
               <Plane className="h-4 w-4 -rotate-45 text-white" />
             </div>
-            <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
+            <span className="truncate font-display text-base font-bold tracking-tight sm:text-lg">Itineraya</span>
           </Link>
         </div>
         <div className="flex items-center gap-2">
           <Link
             to="/assistant"
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-sky-800 backdrop-blur-md hover:bg-white"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-sky-800 backdrop-blur-md hover:bg-white"
+            aria-label={t("dashboard.assistant")}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            {t("dashboard.assistant")}
+            <span className="hidden sm:inline">{t("dashboard.assistant")}</span>
           </Link>
           <button
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-semibold text-sky-800 backdrop-blur-md hover:bg-white"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-sky-800 backdrop-blur-md hover:bg-white"
+            aria-label={t("dashboard.logout")}
           >
             <LogOut className="h-3.5 w-3.5" />
-            {t("dashboard.logout")}
+            <span className="hidden sm:inline">{t("dashboard.logout")}</span>
           </button>
         </div>
       </header>
