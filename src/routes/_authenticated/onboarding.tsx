@@ -39,6 +39,8 @@ interface FormData {
   destination: string;
   startDate?: Date;
   endDate?: Date;
+  arrivalTime?: string;
+  departureTime?: string;
   companion?: Companion;
   budget?: Budget;
   tripType: string;
