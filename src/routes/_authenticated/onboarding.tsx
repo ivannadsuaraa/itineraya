@@ -155,7 +155,7 @@ function OnboardingPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col px-6 py-8">
+      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-4 self-start">
           <button
             type="button"
