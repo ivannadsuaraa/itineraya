@@ -73,12 +73,16 @@ const text = {
   margin: '0 0 25px',
 }
 const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
+const button: React.CSSProperties = {
+  backgroundColor: '#2563eb',
+  background: '#2563eb',
   color: '#ffffff',
-  fontSize: '14px',
+  fontSize: '15px',
+  fontWeight: 'bold',
   borderRadius: '8px',
-  padding: '12px 20px',
+  padding: '14px 28px',
   textDecoration: 'none',
+  display: 'inline-block',
+  border: '1px solid #2563eb',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
