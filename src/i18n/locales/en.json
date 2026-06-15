@@ -5,6 +5,7 @@
     "pricing": "Pricing",
     "login": "Log in",
     "startFree": "Start free",
+    "myTrips": "My trips",
     "toggleMenu": "Toggle menu"
   },
   "hero": {
@@ -13,6 +14,7 @@
     "title2": "made in seconds",
     "subtitle": "Itineraya turns your travel dreams into personalized itineraries. Tell us your destination and let AI do the rest.",
     "ctaStart": "Start free",
+    "ctaMyTrips": "Go to my trips",
     "ctaHow": "How it works",
     "cardLabel": "Generated itinerary",
     "cardDays": "{{count}} days",
