@@ -254,7 +254,7 @@ function OnboardingPage() {
               transition={{ duration: 0.3, ease: "easeOut" }}
               className="rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8 md:p-10"
             >
-              {step === 0 && (
+              {currentStepId === "destination" && (
                 <StepShell emoji="🌍" title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
                   <input
                     autoFocus
@@ -268,7 +268,7 @@ function OnboardingPage() {
                 </StepShell>
               )}
 
-              {step === 1 && (
+              {currentStepId === "dates" && (
                 <StepShell emoji="📅" title={t("onboarding.datesTitle")} subtitle={t("onboarding.datesSubtitle")}>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <DateField
@@ -301,7 +301,7 @@ function OnboardingPage() {
                 </StepShell>
               )}
 
-              {step === 2 && (
+              {currentStepId === "companion" && (
                 <StepShell emoji="👥" title={t("onboarding.compTitle")} subtitle={t("onboarding.compSubtitle")}>
                   <div className="grid grid-cols-2 gap-3">
                     {(
@@ -324,7 +324,7 @@ function OnboardingPage() {
                 </StepShell>
               )}
 
-              {step === 3 && (
+              {currentStepId === "budget" && (
                 <StepShell emoji="💰" title={t("onboarding.budgetTitle")} subtitle={t("onboarding.budgetSubtitle")}>
                   <div className="grid gap-3">
                     {(
@@ -348,7 +348,7 @@ function OnboardingPage() {
                 </StepShell>
               )}
 
-              {step === 4 && (
+              {currentStepId === "tripType" && (
                 <StepShell emoji="🎒" title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleSubtitle")}>
                   <textarea
                     autoFocus
@@ -361,7 +361,7 @@ function OnboardingPage() {
                 </StepShell>
               )}
 
-              {step === 5 && (
+              {currentStepId === "avoid" && (
                 <StepShell emoji="🚫" title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>
                   <textarea
                     autoFocus
@@ -420,6 +420,7 @@ function OnboardingPage() {
     </div>
   );
 }
+
 
 function StepShell({
   emoji,
