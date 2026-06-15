@@ -306,9 +306,82 @@
     "panelOops": "Ups, {{msg}}",
     "panelSomethingWrong": "Algo salió mal"
   },
+  "newTrip": {
+    "back": "Atrás",
+    "title": "¿Cómo quieres empezar?",
+    "subtitle": "Elige cómo crear tu próximo viaje",
+    "knowTitle": "Ya sé dónde quiero ir",
+    "knowDesc": "Cuéntanos tu destino y creamos el itinerario.",
+    "inspireTitle": "Ayúdame a elegir destino",
+    "inspireDesc": "Responde unas preguntas y te recomendamos 3 destinos perfectos."
+  },
+  "inspire": {
+    "back": "Atrás",
+    "next": "Siguiente",
+    "stepIndicator": "Paso {{n}} de {{total}}",
+    "findDestinations": "Buscar destinos",
+    "loading": "Buscando los destinos perfectos…",
+    "loadingDesc": "Nuestra IA está analizando miles de opciones para ti",
+    "resultsTitle": "Tus 3 destinos recomendados",
+    "resultsDesc": "Ordenados por compatibilidad con tu perfil",
+    "createHere": "Crear itinerario aquí",
+    "error": "No pudimos generar recomendaciones",
+    "q": {
+      "tripType": {
+        "title": "¿Qué tipo de viaje buscas?",
+        "subtitle": "Puedes elegir varias opciones"
+      },
+      "region": {
+        "title": "¿Dónde te gustaría viajar?",
+        "subtitle": "Elige el alcance geográfico"
+      },
+      "budget": {
+        "title": "¿Cuánto presupuesto tienes?",
+        "subtitle": "Adaptaremos las recomendaciones"
+      },
+      "origin": {
+        "title": "¿Desde dónde sales?",
+        "subtitle": "Tu ciudad de origen",
+        "placeholder": "Ej. Madrid, Barcelona, Valencia…"
+      },
+      "duration": {
+        "title": "¿Cuántos días?",
+        "subtitle": "Duración aproximada del viaje"
+      }
+    },
+    "tripType": {
+      "newyear": "Nochevieja",
+      "beach": "Playa",
+      "adventure": "Aventura",
+      "romantic": "Romántico",
+      "family": "Familiar",
+      "food": "Gastronómico",
+      "nature": "Naturaleza",
+      "party": "Fiesta",
+      "culture": "Cultural",
+      "relax": "Relax"
+    },
+    "region": {
+      "spain": "Solo España",
+      "europe": "Europa",
+      "anywhere": "Cualquier lugar"
+    },
+    "budget": {
+      "low": "Económico",
+      "mid": "Medio",
+      "high": "Alto"
+    },
+    "duration": {
+      "weekend": "Fin de semana",
+      "short": "3-5 días",
+      "week": "1 semana",
+      "long": "Más"
+    }
+  },
   "language": {
     "label": "Idioma",
     "es": "Español",
     "en": "English"
   }
 }
+
