@@ -1,10 +1,24 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 
 export function HeroSection() {
   const { t } = useTranslation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session?.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) =>
+      setIsLoggedIn(!!session?.user),
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
   const itineraryDays = [
     { icon: MapPin, label: "Templo Uluwatu", time: "09:00" },
     { icon: Sun, label: "Playa Nusa Dua", time: "12:00" },
