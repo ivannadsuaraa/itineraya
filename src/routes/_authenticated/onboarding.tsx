@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
@@ -18,6 +18,7 @@ import {
   Gem,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 
+const searchSchema = z.object({ prefill: z.string().optional() });
+
 export const Route = createFileRoute("/_authenticated/onboarding")({
+  validateSearch: (s: Record<string, unknown>) => searchSchema.parse(s),
   head: () => ({
     meta: [{ title: "Tell us about your trip – Itineraya" }],
   }),
@@ -47,30 +51,76 @@ interface FormData {
   avoid: string;
 }
 
-const TOTAL_STEPS = 6;
+type PrefillShape = {
+  destination?: string;
+  budget?: string;
+  tripType?: string;
+  duration?: string;
+};
+
+function decodePrefill(encoded: string | undefined): PrefillShape {
+  if (!encoded) return {};
+  try {
+    const decoded =
+      typeof window === "undefined"
+        ? ""
+        : decodeURIComponent(escape(atob(encoded)));
+    if (!decoded) return {};
+    return JSON.parse(decoded) as PrefillShape;
+  } catch {
+    return {};
+  }
+}
+
+type StepId = "destination" | "dates" | "companion" | "budget" | "tripType" | "avoid";
+const ALL_STEPS: StepId[] = ["destination", "dates", "companion", "budget", "tripType", "avoid"];
+const BUDGET_IDS: Budget[] = ["economico", "medio", "sin-limite"];
 
 function OnboardingPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { prefill: prefillRaw } = Route.useSearch();
+  const prefill = useMemo(() => decodePrefill(prefillRaw), [prefillRaw]);
+
+  const prefilledBudget: Budget | undefined =
+    prefill.budget && (BUDGET_IDS as string[]).includes(prefill.budget)
+      ? (prefill.budget as Budget)
+      : undefined;
+
+  const activeSteps: StepId[] = useMemo(() => {
+    return ALL_STEPS.filter((id) => {
+      if (id === "destination" && prefill.destination) return false;
+      if (id === "budget" && prefilledBudget) return false;
+      if (id === "tripType" && prefill.tripType) return false;
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefill.destination, prefill.budget, prefill.tripType]);
+
+  const TOTAL_STEPS = activeSteps.length;
+
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<FormData>({
-    destination: "",
-    tripType: "",
+  const [data, setData] = useState<FormData>(() => ({
+    destination: prefill.destination ?? "",
+    tripType: prefill.tripType ?? "",
     avoid: "",
-  });
+    budget: prefilledBudget,
+  }));
 
   const dateLocale = i18n.language.toLowerCase().startsWith("en") ? enUS : es;
 
+  const currentStepId: StepId = activeSteps[step] ?? "avoid";
+
   const canAdvance = () => {
-    switch (step) {
-      case 0: return data.destination.trim().length > 1;
-      case 1: return !!data.startDate && !!data.endDate;
-      case 2: return !!data.companion;
-      case 3: return !!data.budget;
-      case 4: return data.tripType.trim().length > 1;
-      case 5: return true;
+    switch (currentStepId) {
+      case "destination": return data.destination.trim().length > 1;
+      case "dates": return !!data.startDate && !!data.endDate;
+      case "companion": return !!data.companion;
+      case "budget": return !!data.budget;
+      case "tripType": return data.tripType.trim().length > 1;
+      case "avoid": return true;
       default: return false;
     }
   };
