@@ -32,6 +32,31 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (error || !trip) throw new Error("Viaje no encontrado");
+    // Check free plan limit
+const { data: planProfile } = await supabase
+  .from("profiles")
+  .select("plan")
+  .eq("id", userId)
+  .maybeSingle();
+
+// If not free, skip limit check
+if ((planProfile?.plan ?? "free") !== "free") {
+  return;
+}
+
+// Count only completed itineraries
+const { count } = await supabase
+  .from("trips")
+  .select("*", { count: "exact", head: true })
+  .eq("user_id", userId)
+  .eq("status", "ready");
+
+// Free plan limit enforcement
+if ((count ?? 0) >= 1) {
+  throw new Error(
+    "LIMIT_REACHED: Has alcanzado el límite de 1 itinerario en el plan gratuito. Actualiza al plan Viajero para crear más."
+  );
+}
 
     if (trip.status === "ready" && trip.itinerary) {
       return { itinerary: trip.itinerary, hero_image_url: trip.hero_image_url };
