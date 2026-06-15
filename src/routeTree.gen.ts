@@ -18,6 +18,8 @@ import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedNewTripRouteImport } from './routes/_authenticated/new-trip'
+import { Route as AuthenticatedInspireRouteImport } from './routes/_authenticated/inspire'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
 import { Route as AuthenticatedTripTripIdRouteImport } from './routes/_authenticated/trip.$tripId'
@@ -70,6 +72,16 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNewTripRoute = AuthenticatedNewTripRouteImport.update({
+  id: '/new-trip',
+  path: '/new-trip',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInspireRoute = AuthenticatedInspireRouteImport.update({
+  id: '/inspire',
+  path: '/inspire',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -115,6 +127,8 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/inspire': typeof AuthenticatedInspireRoute
+  '/new-trip': typeof AuthenticatedNewTripRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
@@ -132,6 +146,8 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/inspire': typeof AuthenticatedInspireRoute
+  '/new-trip': typeof AuthenticatedNewTripRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
@@ -151,6 +167,8 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/inspire': typeof AuthenticatedInspireRoute
+  '/_authenticated/new-trip': typeof AuthenticatedNewTripRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
@@ -170,6 +188,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/assistant'
     | '/dashboard'
+    | '/inspire'
+    | '/new-trip'
     | '/onboarding'
     | '/welcome'
     | '/api/chat'
@@ -187,6 +207,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/assistant'
     | '/dashboard'
+    | '/inspire'
+    | '/new-trip'
     | '/onboarding'
     | '/welcome'
     | '/api/chat'
@@ -205,6 +227,8 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/_authenticated/assistant'
     | '/_authenticated/dashboard'
+    | '/_authenticated/inspire'
+    | '/_authenticated/new-trip'
     | '/_authenticated/onboarding'
     | '/_authenticated/welcome'
     | '/api/chat'
@@ -295,6 +319,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/new-trip': {
+      id: '/_authenticated/new-trip'
+      path: '/new-trip'
+      fullPath: '/new-trip'
+      preLoaderRoute: typeof AuthenticatedNewTripRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inspire': {
+      id: '/_authenticated/inspire'
+      path: '/inspire'
+      fullPath: '/inspire'
+      preLoaderRoute: typeof AuthenticatedInspireRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -350,6 +388,8 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedInspireRoute: typeof AuthenticatedInspireRoute
+  AuthenticatedNewTripRoute: typeof AuthenticatedNewTripRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
   AuthenticatedTripTripIdRoute: typeof AuthenticatedTripTripIdRoute
@@ -358,6 +398,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedInspireRoute: AuthenticatedInspireRoute,
+  AuthenticatedNewTripRoute: AuthenticatedNewTripRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
   AuthenticatedTripTripIdRoute: AuthenticatedTripTripIdRoute,
