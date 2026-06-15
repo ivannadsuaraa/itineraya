@@ -140,7 +140,7 @@ function DashboardPage() {
           className="mt-6"
         >
           <Link
-            to="/onboarding"
+            to="/new-trip"
             className="group relative flex items-center gap-4 overflow-hidden rounded-3xl bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] p-6 shadow-2xl shadow-[#1E6B9A]/25 transition-transform hover:scale-[1.01]"
           >
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md">
