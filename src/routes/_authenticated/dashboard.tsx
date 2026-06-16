@@ -98,11 +98,8 @@ function DashboardPage() {
             <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">{t("dashboard.back")}</span>
           </Link>
-          <Link to="/dashboard" className="flex min-w-0 items-center gap-2 text-sky-900 transition hover:opacity-80">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/30">
-              <Plane className="h-4 w-4 -rotate-45 text-white" />
-            </div>
-            <span className="truncate font-display text-base font-bold tracking-tight sm:text-lg">Itineraya</span>
+          <Link to="/dashboard" className="inline-flex min-w-0 items-center transition hover:opacity-80">
+            <img src={logoFull.url} alt="Itineraya" className="h-8 w-auto select-none sm:h-9" draggable={false} />
           </Link>
         </div>
         <div className="flex items-center gap-2">
