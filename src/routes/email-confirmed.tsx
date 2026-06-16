@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { CheckCircle2, LogIn, Plane } from "lucide-react";
+import { CheckCircle2, LogIn } from "lucide-react";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/email-confirmed")({
