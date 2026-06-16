@@ -209,11 +209,9 @@ function AuthPage() {
               </div>
               <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
               <p className="mt-3 text-sm text-sky-700">
-                {t("auth.checkEmailDescPre")}
-                <span className="font-semibold">{email}</span>
-                {t("auth.checkEmailDescMid")}
-                <span className="font-semibold">{t("auth.checkEmailDescBtn")}</span>
-                {t("auth.checkEmailDescPost")}
+                {t("auth.checkEmailSentTo")}
+                <span className="font-semibold break-all">{email}</span>
+                {t("auth.checkEmailHelp")}
               </p>
               <p className="mt-2 text-xs text-sky-500">{t("auth.checkSpam")}</p>
               <button
@@ -223,6 +221,14 @@ function AuthPage() {
                 className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
               >
                 {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.alreadyVerified")}
+              </button>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-[#1E6B9A] transition hover:bg-sky-50 disabled:opacity-60"
+              >
+                {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.resendEmail")}
               </button>
               <button
                 type="button"
