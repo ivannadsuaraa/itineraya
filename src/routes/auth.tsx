@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
