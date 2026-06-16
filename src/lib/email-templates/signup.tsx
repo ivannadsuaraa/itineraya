@@ -14,8 +14,7 @@ import {
   Text,
 } from '@react-email/components'
 
-const LOGO_URL = 'https://itineraya.com/og-image.jpg'
-const LOGO_MARK_URL = 'https://itineraya.com/favicon.png'
+const LOGO_URL = 'https://itineraya.com/itineraya-logo.png'
 
 interface SignupEmailProps {
   siteName: string
