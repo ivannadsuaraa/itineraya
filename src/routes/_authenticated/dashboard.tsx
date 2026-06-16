@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Plane, Plus, LogOut, MapPin, Calendar, Sparkles, Loader2, ArrowLeft } from "lucide-react";
+import { Plus, LogOut, MapPin, Calendar, Sparkles, Loader2, ArrowLeft } from "lucide-react";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
