@@ -150,6 +150,7 @@ function TripPage() {
 
         const result = await generate({ data: { tripId } });
         if (cancelled) return;
+        if (!result) throw new Error("Itinerary generation failed");
         setTrip({
           id: tripId,
           destination: data.destination,
