@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, ArrowRight, Loader2, Check } from "lucide-react";
+import { ArrowRight, Loader2, Check } from "lucide-react";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
