@@ -21,6 +21,7 @@ import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
