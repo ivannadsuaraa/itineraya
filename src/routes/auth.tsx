@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -52,6 +53,8 @@ function AuthPage() {
   const [signupSent, setSignupSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [verifyChecking, setVerifyChecking] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [lastResendAt, setLastResendAt] = useState<number>(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -114,6 +117,32 @@ function AuthPage() {
     }
   };
 
+  const handleResend = async () => {
+    if (!email) {
+      toast.error(t("auth.needCreds"));
+      return;
+    }
+    if (Date.now() - lastResendAt < 30_000) {
+      toast.error(t("auth.resendCooldown"));
+      return;
+    }
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
+      });
+      if (error) throw error;
+      setLastResendAt(Date.now());
+      toast.success(t("auth.resendSent"));
+    } catch {
+      toast.error(t("auth.resendFail"));
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
@@ -162,11 +191,8 @@ function AuthPage() {
           transition={{ duration: 0.5 }}
           className="mb-6 sm:mb-8"
         >
-          <Link to="/" className="flex flex-col items-center gap-2 text-sky-900">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
-              <Plane className="h-7 w-7 rotate-[-45deg] text-white" />
-            </div>
-            <span className="font-display text-2xl font-bold tracking-tight">Itineraya</span>
+          <Link to="/" className="inline-flex">
+            <img src={logoFull.url} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
           </Link>
         </motion.div>
 
@@ -183,11 +209,9 @@ function AuthPage() {
               </div>
               <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
               <p className="mt-3 text-sm text-sky-700">
-                {t("auth.checkEmailDescPre")}
-                <span className="font-semibold">{email}</span>
-                {t("auth.checkEmailDescMid")}
-                <span className="font-semibold">{t("auth.checkEmailDescBtn")}</span>
-                {t("auth.checkEmailDescPost")}
+                {t("auth.checkEmailSentTo")}
+                <span className="font-semibold break-all">{email}</span>
+                {t("auth.checkEmailHelp")}
               </p>
               <p className="mt-2 text-xs text-sky-500">{t("auth.checkSpam")}</p>
               <button
@@ -197,6 +221,14 @@ function AuthPage() {
                 className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
               >
                 {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.alreadyVerified")}
+              </button>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-[#1E6B9A] transition hover:bg-sky-50 disabled:opacity-60"
+              >
+                {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.resendEmail")}
               </button>
               <button
                 type="button"

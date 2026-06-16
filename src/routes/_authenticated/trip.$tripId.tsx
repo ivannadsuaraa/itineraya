@@ -21,6 +21,7 @@ import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
@@ -409,9 +410,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
         </div>
 
         <div className="flex items-center justify-between border-t border-sky-100 px-5 py-3 text-xs text-sky-500">
-          <span className="flex items-center gap-1.5 font-semibold">
-            <Plane className="h-3.5 w-3.5 -rotate-45" /> Itineraya
-          </span>
+          <img src={logoFull.url} alt="Itineraya" className="h-5 w-auto" />
           <span>{destination}</span>
         </div>
       </div>

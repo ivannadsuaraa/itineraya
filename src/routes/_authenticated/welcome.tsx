@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, ArrowRight, Loader2, Check } from "lucide-react";
+import { ArrowRight, Loader2, Check } from "lucide-react";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -80,11 +81,8 @@ function WelcomePage() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-12">
-        <Link to="/dashboard" className="mb-8 flex flex-col items-center gap-2 text-sky-900">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
-            <Plane className="h-7 w-7 rotate-[-45deg] text-white" />
-          </div>
-          <span className="font-display text-2xl font-bold tracking-tight">Itineraya</span>
+        <Link to="/dashboard" className="mb-8 inline-flex">
+          <img src={logoFull.url} alt="Itineraya" className="h-14 w-auto select-none" draggable={false} />
         </Link>
 
         <div className="mb-6 flex w-full max-w-xs items-center gap-2">

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { CheckCircle2, LogIn, Plane } from "lucide-react";
+import { CheckCircle2, LogIn } from "lucide-react";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/email-confirmed")({
@@ -30,11 +31,8 @@ function EmailConfirmedPage() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-12 text-center">
-        <Link to="/" className="mb-8 flex flex-col items-center gap-2 text-sky-900">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
-            <Plane className="h-6 w-6 rotate-[-45deg] text-white" />
-          </div>
-          <span className="font-display text-xl font-bold tracking-tight">Itineraya</span>
+        <Link to="/" className="mb-8 inline-flex">
+          <img src={logoFull.url} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
         </Link>
 
         <motion.div

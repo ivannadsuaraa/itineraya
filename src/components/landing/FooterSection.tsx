@@ -1,5 +1,5 @@
-import { Plane } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 export function FooterSection() {
   const { t } = useTranslation();
@@ -8,10 +8,7 @@ export function FooterSection() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8">
           {/* Logo */}
-          <div className="flex items-center gap-2 text-sky-800">
-            <Plane className="h-5 w-5 rotate-[-45deg]" />
-            <span className="font-display text-lg font-bold tracking-tight">Itineraya</span>
-          </div>
+          <img src={logoFull.url} alt="Itineraya" className="h-10 w-auto select-none" draggable={false} />
 
           {/* Social links */}
           <div className="flex items-center gap-5">

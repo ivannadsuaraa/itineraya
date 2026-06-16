@@ -7,10 +7,14 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
+  Section,
   Text,
 } from '@react-email/components'
+
+const LOGO_URL = 'https://itineraya.com/itineraya-logo.png'
 
 interface SignupEmailProps {
   siteName: string
@@ -30,26 +34,31 @@ export const SignupEmail = ({
     <Preview>Confirm your email for {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Section style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <Img src={LOGO_URL} alt={siteName} width="180" style={{ display: 'inline-block' }} />
+        </Section>
+        <Heading style={h1}>Confirma tu email</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
+          Gracias por registrarte en{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
-          !
+          .
         </Text>
         <Text style={text}>
-          Please confirm your email address (
+          Confirma tu dirección de email (
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) by clicking the button below:
+          ) pulsando el botón:
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          Verify Email
-        </Button>
+        <Section style={{ textAlign: 'center', margin: '32px 0' }}>
+          <Button style={button} href={confirmationUrl}>
+            Verificar email
+          </Button>
+        </Section>
         <Text style={footer}>
-          If you didn't create an account, you can safely ignore this email.
+          Si no creaste una cuenta, puedes ignorar este email.
         </Text>
       </Container>
     </Body>
