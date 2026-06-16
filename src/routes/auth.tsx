@@ -117,6 +117,32 @@ function AuthPage() {
     }
   };
 
+  const handleResend = async () => {
+    if (!email) {
+      toast.error(t("auth.needCreds"));
+      return;
+    }
+    if (Date.now() - lastResendAt < 30_000) {
+      toast.error(t("auth.resendCooldown"));
+      return;
+    }
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
+      });
+      if (error) throw error;
+      setLastResendAt(Date.now());
+      toast.success(t("auth.resendSent"));
+    } catch {
+      toast.error(t("auth.resendFail"));
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
