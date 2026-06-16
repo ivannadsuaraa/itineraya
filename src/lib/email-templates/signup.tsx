@@ -7,10 +7,15 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
+  Section,
   Text,
 } from '@react-email/components'
+
+const LOGO_URL = 'https://itineraya.com/og-image.jpg'
+const LOGO_MARK_URL = 'https://itineraya.com/favicon.png'
 
 interface SignupEmailProps {
   siteName: string
