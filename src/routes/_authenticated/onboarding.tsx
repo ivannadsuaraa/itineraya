@@ -66,7 +66,9 @@ type PrefillShape = {
   destination?: string;
   budget?: string;
   tripType?: string;
+  tripTypes?: TripTypeId[];
   duration?: string;
+  nDays?: number;
 };
 
 function decodePrefill(encoded: string | undefined): PrefillShape {
@@ -98,6 +100,10 @@ function OnboardingPage() {
       ? (prefill.budget as Budget)
       : undefined;
 
+  const prefilledTripTypes: TripTypeId[] = Array.isArray(prefill.tripTypes)
+    ? prefill.tripTypes.filter((x): x is TripTypeId => (TRIP_TYPE_IDS as string[]).includes(x))
+    : [];
+
   const activeSteps: StepId[] = useMemo(() => {
     return ALL_STEPS.filter((id) => {
       if (id === "destination" && prefill.destination) return false;
@@ -112,12 +118,26 @@ function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<FormData>(() => ({
-    destination: prefill.destination ?? "",
-    tripTypes: [],
-    avoid: "",
-    budget: prefilledBudget,
-  }));
+  const [data, setData] = useState<FormData>(() => {
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+    if (prefill.nDays && prefill.nDays > 0) {
+      const start = new Date();
+      start.setDate(start.getDate() + 14);
+      startDate = start;
+      const end = new Date(start);
+      end.setDate(end.getDate() + Math.max(0, prefill.nDays - 1));
+      endDate = end;
+    }
+    return {
+      destination: prefill.destination ?? "",
+      tripTypes: prefilledTripTypes,
+      avoid: "",
+      budget: prefilledBudget,
+      startDate,
+      endDate,
+    };
+  });
 
 
   const dateLocale = i18n.language.toLowerCase().startsWith("en") ? enUS : es;

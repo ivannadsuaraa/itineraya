@@ -146,6 +146,42 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_inspirations: {
+        Row: {
+          created_at: string
+          destination: string
+          hero_image_url: string | null
+          id: string
+          n_days: number | null
+          slug: string
+          summary: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          hero_image_url?: string | null
+          id?: string
+          n_days?: number | null
+          slug: string
+          summary?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          hero_image_url?: string | null
+          id?: string
+          n_days?: number | null
+          slug?: string
+          summary?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean

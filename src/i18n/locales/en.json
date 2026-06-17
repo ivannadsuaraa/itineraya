@@ -205,7 +205,11 @@
     "generating": "Generating…",
     "flexible": "Flexible dates",
     "traveler": "traveler",
-    "metaTitle": "My trips – Itineraya"
+    "metaTitle": "My trips – Itineraya",
+    "saved": "Saved",
+    "savedEmpty": "No saved inspirations yet. Explore shared trips and save the ones that inspire you.",
+    "savedRemix": "Remix",
+    "savedRemove": "Remove"
   },
   "onboarding": {
     "metaTitle": "Tell us about your trip – Itineraya",
@@ -327,7 +331,14 @@
     "ctaTitle": "Create your own itinerary for free",
     "ctaSubtitle": "In under a minute. Our AI designs a unique trip for you.",
     "cta": "Start free",
-    "ctaFooter": "No card · Cancel anytime"
+    "ctaFooter": "No card · Cancel anytime",
+    "view": "View itinerary",
+    "remix": "Remix this trip",
+    "save": "Save inspiration",
+    "savedLabel": "Saved",
+    "saved": "Added to your saved ✨",
+    "saveError": "Could not save",
+    "saveLoginPrompt": "Sign in to save inspirations"
   },
   "onboardingDates": {
     "rangeStart": "Check-in",

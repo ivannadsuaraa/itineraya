@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Plus, LogOut, MapPin, Calendar, Sparkles, Loader2, ArrowLeft } from "lucide-react";
+import { Plus, LogOut, MapPin, Calendar, Sparkles, Loader2, ArrowLeft, Bookmark, Wand2, X } from "lucide-react";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
@@ -28,10 +28,20 @@ function dateLocale(lang: string) {
   return lang.toLowerCase().startsWith("en") ? enUS : es;
 }
 
+type SavedInspo = {
+  id: string;
+  slug: string;
+  destination: string;
+  hero_image_url: string | null;
+  summary: string | null;
+  n_days: number | null;
+};
+
 function DashboardPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[] | null>(null);
+  const [saved, setSaved] = useState<SavedInspo[] | null>(null);
   const [name, setName] = useState<string>("");
 
   useEffect(() => {
@@ -52,18 +62,45 @@ function DashboardPage() {
         }
       }
 
-      const { data, error } = await supabase
-        .from("trips")
-        .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
-        .order("created_at", { ascending: false });
+      const [{ data, error }, { data: savedData }] = await Promise.all([
+        supabase
+          .from("trips")
+          .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("saved_inspirations")
+          .select("id,slug,destination,hero_image_url,summary,n_days")
+          .order("created_at", { ascending: false }),
+      ]);
       if (error) {
         toast.error(t("dashboard.loadFail"));
         setTrips([]);
-        return;
+      } else {
+        setTrips(data ?? []);
       }
-      setTrips(data ?? []);
+      setSaved((savedData ?? []) as SavedInspo[]);
     })();
   }, [navigate, t]);
+
+  const remixSaved = (s: SavedInspo) => {
+    const payload = {
+      destination: s.destination,
+      nDays: s.n_days ?? undefined,
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    navigate({ to: "/onboarding", search: { prefill: encoded } });
+  };
+
+  const removeSaved = async (id: string) => {
+    const prev = saved ?? [];
+    setSaved(prev.filter((x) => x.id !== id));
+    const { error } = await supabase.from("saved_inspirations").delete().eq("id", id);
+    if (error) {
+      setSaved(prev);
+      toast.error(t("dashboard.loadFail"));
+    }
+  };
+
 
   const upcoming = (trips ?? [])
     .filter((t) => t.start_date && new Date(t.start_date) >= new Date(new Date().toDateString()))
@@ -220,10 +257,64 @@ function DashboardPage() {
             </div>
           )}
         </section>
+
+        {saved && saved.length > 0 && (
+          <section className="mt-10">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold text-sky-900">
+              <Bookmark className="h-5 w-5 text-[#1E6B9A]" />
+              {t("dashboard.saved")}
+            </h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {saved.map((s) => (
+                <div
+                  key={s.id}
+                  className="group relative overflow-hidden rounded-3xl bg-white/85 shadow-lg ring-1 ring-white/60 backdrop-blur-xl"
+                >
+                  <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
+                    <div className="relative h-36 w-full overflow-hidden">
+                      {s.hero_image_url ? (
+                        <img src={s.hero_image_url} alt={s.destination} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4 text-white">
+                        <div className="flex items-center gap-1.5 text-xs opacity-90">
+                          <MapPin className="h-3 w-3" />
+                          <span className="truncate">{s.destination}</span>
+                        </div>
+                        <div className="font-display text-lg font-bold drop-shadow">{s.destination}</div>
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => remixSaved(s)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-2 text-xs font-bold text-white shadow"
+                    >
+                      <Wand2 className="h-3.5 w-3.5" />
+                      {t("dashboard.savedRemix")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSaved(s.id)}
+                      aria-label={t("dashboard.savedRemove")}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/70 text-sky-700 ring-1 ring-sky-200 hover:bg-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
 }
+
 
 function Countdown({ trip, locale }: { trip: Trip; locale: Locale }) {
   const { t } = useTranslation();
