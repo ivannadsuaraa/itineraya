@@ -18,7 +18,6 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Itineraya – Viajes personalizados con IA" },
       { property: "og:description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: LandingPage,

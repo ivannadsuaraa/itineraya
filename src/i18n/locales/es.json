@@ -295,7 +295,8 @@
     "more": "Más",
     "error": "No se pudo crear el enlace",
     "text": "Mira mi viaje a {{destination}} en Itineraya",
-    "publicHint": "Solo se comparte el itinerario. Tu cuenta sigue siendo privada."
+    "publicHint": "Solo se comparte el itinerario. Tu cuenta sigue siendo privada.",
+    "instagramHint": "Enlace copiado — pégalo en tu historia o bio de Instagram"
   },
   "publicTrip": {
     "eyebrow": "Itinerario público",

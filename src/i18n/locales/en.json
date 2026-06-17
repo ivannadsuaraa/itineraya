@@ -295,7 +295,8 @@
     "more": "More",
     "error": "Couldn't create the link",
     "text": "Check out my trip to {{destination}} on Itineraya",
-    "publicHint": "Only the itinerary is shared. Your account stays private."
+    "publicHint": "Only the itinerary is shared. Your account stays private.",
+    "instagramHint": "Link copied — paste it into your Instagram story or bio"
   },
   "publicTrip": {
     "eyebrow": "Public itinerary",

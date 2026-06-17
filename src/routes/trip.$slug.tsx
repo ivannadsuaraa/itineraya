@@ -16,9 +16,12 @@ export const Route = createFileRoute("/trip/$slug")({
     const title = `Itineraya — ${dest} Travel Itinerary`;
     const desc = loaderData.summary ?? `Personalized AI travel itinerary for ${dest}`;
     const url = `https://itineraya.com/trip/${params.slug}`;
+    // og:image priority: 1) trip hero, 2) Unsplash destination photo, 3) official Itineraya logo
     const image =
       loaderData.hero_image_url ??
-      `https://source.unsplash.com/1200x630/?${encodeURIComponent(dest + ",travel")}`;
+      (dest
+        ? `https://source.unsplash.com/1200x630/?${encodeURIComponent(dest + ",travel")}`
+        : "https://itineraya.com/itineraya-logo.png");
     return {
       meta: [
         { title },

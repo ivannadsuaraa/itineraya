@@ -103,15 +103,16 @@ export function ShareDialog({ open, onClose, tripId, destination }: Props) {
                 <span className="text-xl">💬</span>
                 WhatsApp
               </a>
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center gap-1 rounded-2xl bg-sky-50 p-3 text-xs font-semibold text-sky-700 hover:bg-sky-100"
+              <button
+                onClick={async () => {
+                  await copy();
+                  toast.success(t("share.instagramHint"));
+                }}
+                className="flex flex-col items-center gap-1 rounded-2xl bg-gradient-to-br from-fuchsia-50 to-orange-50 p-3 text-xs font-semibold text-fuchsia-700 hover:from-fuchsia-100 hover:to-orange-100"
               >
-                <span className="text-xl">🐦</span>
-                Twitter
-              </a>
+                <span className="text-xl">📸</span>
+                Instagram
+              </button>
               <button
                 onClick={nativeShare}
                 className="flex flex-col items-center gap-1 rounded-2xl bg-violet-50 p-3 text-xs font-semibold text-violet-700 hover:bg-violet-100"
