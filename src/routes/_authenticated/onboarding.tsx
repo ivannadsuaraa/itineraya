@@ -130,7 +130,8 @@ function OnboardingPage() {
       case "dates": return !!data.startDate && !!data.endDate;
       case "companion": return !!data.companion;
       case "budget": return !!data.budget;
-      case "tripType": return data.tripType.trim().length > 1;
+      case "tripType": return data.tripTypes.length > 0;
+      case "accommodation": return data.hasAccommodation !== undefined;
       case "avoid": return true;
       default: return false;
     }
@@ -146,6 +147,9 @@ function OnboardingPage() {
     setDirection(-1);
     setStep((s) => Math.max(0, s - 1));
   };
+
+  const tripTypesLabel = (ids: TripTypeId[]) =>
+    ids.map((id) => t(`onboarding.tripTypes.${id}`)).join(", ");
 
   const handleFinish = async () => {
     setLoading(true);
@@ -167,12 +171,14 @@ function OnboardingPage() {
         familia: "En familia",
       };
 
+      const tripStyleStr = tripTypesLabel(data.tripTypes);
+
       await supabase
         .from("profiles")
         .update({
           preferred_destinations: [data.destination],
           budget_range: data.budget ? budgetMap[data.budget] : null,
-          travel_style: data.tripType,
+          travel_style: tripStyleStr,
         })
         .eq("id", userId);
 
@@ -187,7 +193,10 @@ function OnboardingPage() {
           departure_time: data.departureTime || null,
           companion: data.companion ? companionMap[data.companion] : null,
           budget: data.budget ? budgetMap[data.budget] : null,
-          trip_style: data.tripType,
+          trip_style: tripStyleStr,
+          trip_types: data.tripTypes,
+          has_accommodation: !!data.hasAccommodation,
+          travel_mode: "planning",
           avoid: data.avoid,
           status: "pending",
         })
@@ -196,6 +205,7 @@ function OnboardingPage() {
       if (tripErr || !trip) throw tripErr ?? new Error(t("onboarding.saveFail"));
 
       navigate({ to: "/trip/$tripId", params: { tripId: trip.id } });
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("onboarding.somethingWrong");
       toast.error(msg);
