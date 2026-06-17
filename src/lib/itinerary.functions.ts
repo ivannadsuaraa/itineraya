@@ -114,6 +114,16 @@ if ((count ?? 0) >= 1) {
       ? `Last day (day ${dayCount}) departure time: ${departureTime}. Do NOT schedule activities after this time on the last day; leave at least 2-3h before departure for transfer to airport/station. If departure is early morning (before 10:00) plan ONLY transfer; if morning (before 13:00) keep it to breakfast + a single light activity.`
       : `Last day departure: unknown — assume a normal evening end.`;
 
+    const tripTypes = ((trip as { trip_types?: string[] | null }).trip_types) ?? [];
+    const hasAccommodation = !!(trip as { has_accommodation?: boolean | null }).has_accommodation;
+    const tripTypesLine = tripTypes.length > 0
+      ? tripTypes.join(", ")
+      : (trip.trip_style ?? "unspecified");
+
+    const accommodationBlock = hasAccommodation
+      ? `ACCOMMODATION: The traveler ALREADY HAS a hotel/apartment booked. DO NOT recommend hotels. DO NOT include any "check-in", "hotel suggestion" or "where to stay" activity. Treat the accommodation as a fixed but unknown base — start/end each day from a generic "your accommodation" without naming a specific hotel.`
+      : `ACCOMMODATION: The traveler does NOT yet have a place to stay. You MAY include one short "check-in" or accommodation-area note on day 1 if useful, but the focus is the itinerary, not hotel listings.`;
+
     const prompt = `You are the TRAVEL INTELLIGENCE ENGINE — an expert travel planner that does NOT generate generic tourist lists. You build deeply personalized, geographically coherent, time-realistic itineraries. Write all user-facing strings in ${langName}.
 
 ============================
@@ -126,8 +136,10 @@ ${arrivalLine}
 ${departureLine}
 Travelling with: ${trip.companion ?? "unspecified"}
 Budget: ${trip.budget ?? "unspecified"}
-Trip style: ${trip.trip_style ?? "unspecified"}
+Trip types (multi-select): ${tripTypesLine}
 Avoid: ${trip.avoid?.trim() || "nothing in particular"}
+
+${accommodationBlock}
 
 Traveler profile:
 - Age: ${profile?.age ?? "unknown"}
@@ -139,38 +151,46 @@ Traveler profile:
 ============================
 INTERNAL REASONING — MANDATORY (do this silently before writing JSON)
 ============================
-1. TRAVELER PSYCHOLOGY: Infer the traveler archetype from age, companion, budget, style and history. Young solo on a tight budget ≠ family with kids ≠ couple on a luxury escape ≠ group of friends partying. Every activity must fit this archetype (pace, vibe, price tier, kid-friendliness, nightlife level, physical effort).
-2. GEOGRAPHIC LOGIC: Mentally cluster the destination into neighborhoods/zones. Each day must focus on ONE coherent zone (or two adjacent ones). NEVER jump across the city/region back and forth in the same day. Order activities so consecutive stops are walking distance or one short transit hop apart.
-3. TIME PHYSICS: Every activity must fit realistically in the day. Account for: arrival/departure times, travel time between stops (walking ~5 km/h, metro/taxi 15–30 min between zones), opening hours of typical venues, meal times appropriate for the destination's culture, and human rest needs. No day should overflow or leave huge unexplained gaps.
-4. EXPERIENCE DESIGN: Balance intensity vs rest, indoor vs outdoor, iconic vs hidden, active vs contemplative, food vs sightseeing. Avoid two museums in a row, two heavy meals back to back, or three nightlife stops in one evening (unless the archetype demands it).
+1. TRAVELER PSYCHOLOGY: Infer the traveler archetype from age, companion, budget, trip types and history. Every activity must fit this archetype (pace, vibe, price tier, kid-friendliness, nightlife level, physical effort).
+2. GEOGRAPHIC LOGIC: Mentally cluster the destination into neighborhoods/zones. Each day must focus on ONE coherent zone (or two adjacent ones). NEVER zig-zag.
+3. TIME PHYSICS: Every activity must fit realistically. Account for arrival/departure, travel time between stops, opening hours, culturally-correct meal times, rest needs.
+4. EXPERIENCE DESIGN: Balance intensity vs rest, indoor vs outdoor, iconic vs hidden. Honor the SELECTED TRIP TYPES (${tripTypesLine}) — the mix of activities should clearly reflect them.
+
+============================
+TRANSPORT INTELLIGENCE — MANDATORY
+============================
+For EACH activity after the first of the day, include in "description" a short transport hint to reach it from the previous stop:
+- Mode: walking / metro / bus / taxi / ferry / bike / tram / train (use the modes that actually exist in ${trip.destination}).
+- Approximate travel time in minutes (realistic: walking ~5 km/h, metro 15–25 min cross-city, taxi depends on traffic).
+- Use real local transport systems when known (e.g. Metro Line 4, Vaporetto line 1, JR Yamanote line, MRT, tube, tram 28).
+- NEVER imply instant teleportation between distant zones. If two stops are far, either insert a transport step or keep them on different days.
+- Prefer walking when stops are <1.5 km apart; metro/bus for cross-city; taxi only when faster makes sense (late night, with luggage, kids/elderly).
+Format example inside description: "🚶 10 min a pie desde la parada anterior" or "🚇 Metro L1 hasta Sol, ~15 min".
 
 ============================
 CLIMATE & SEASON AWARENESS
 ============================
 - Consider the typical weather of ${trip.destination} in ${monthName}.
-- Cold/winter: prioritize indoor (museums, cafés, spas, thermal baths, covered markets). NO beach/pool/long hikes/rooftops.
-- Hot summer in hot destinations: outdoor sightseeing 08:00–11:00 and 17:00+; midday for indoor/lunch/siesta/pool.
-- Rainy season: covered options + flexible indoor backups.
-- Add brief practical weather tips in descriptions when relevant.
+- Cold/winter: prioritize indoor. Hot summer: outdoor early/late, indoor midday. Rainy: covered options + backups.
 
 ============================
-SELF-VALIDATION CHECKLIST (run silently before finalizing JSON; if ANY check fails, FIX the plan and re-check)
+SELF-VALIDATION CHECKLIST (silent; fix and re-check if any fails)
 ============================
-[ ] Geographic coherence: each day stays in one zone or adjacent zones; no zig-zag across the map.
-[ ] Travel-time realism: consecutive activities reachable in the implied time gap.
-[ ] Balanced load: sensible number of activities per day for the archetype.
-[ ] Logical flow: morning → midday → afternoon → evening; meals at culturally appropriate hours; rest blocks where needed.
-[ ] Personalization: every activity justifiable from the traveler profile. Remove anything generic or off-archetype.
-[ ] Arrival/departure constraints respected on day 1 and last day.
+[ ] Geographic coherence per day.
+[ ] Travel-time realism with transport hints on chained stops.
+[ ] Balanced load for the archetype.
+[ ] Logical morning→evening flow with culturally-correct meal hours.
+[ ] Every activity justifiable from the traveler profile and selected trip types.
+[ ] Arrival/departure constraints respected.
 [ ] Climate constraints respected for ${monthName}.
-Only output the JSON AFTER the checklist passes.
+[ ] Accommodation rule respected (${hasAccommodation ? "no hotel suggestions" : "minimal/no hotel listings"}).
 
 ============================
 HARD RULES
 ============================
 - FORBIDDEN: generic tourist top-10 lists, copy-pasted "must-see" plans, activities with no link to the traveler profile, vague venues.
-- Every activity must connect LOCATION + TIME + USER ARCHETYPE.
-- "place" must be a REAL, specific, named venue in ${trip.destination}. Never invent generic names.
+- Every activity must connect LOCATION + TIME + USER ARCHETYPE + REALISTIC TRANSPORT.
+- "place" must be a REAL, specific, named venue in ${trip.destination}.
 
 ============================
 OUTPUT FORMAT — return ONLY valid JSON, no markdown, no backticks
@@ -189,7 +209,7 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no backticks
           "emoji": "🛬",
           "title": "Short activity name (3-6 words, ${langName})",
           "place": "Real venue name",
-          "description": "1-2 lines in ${langName} — concrete tip tied to this traveler.",
+          "description": "1-2 lines in ${langName}, INCLUDING transport hint (mode + approx minutes) when relevant.",
           "category": "transport"
         }
       ]
@@ -199,12 +219,14 @@ OUTPUT FORMAT — return ONLY valid JSON, no markdown, no backticks
 
 MANDATORY OUTPUT REQUIREMENTS:
 - Generate ${dayCount} days.
-- 5–7 activities per day for normal travelers; fewer on tight arrival/departure days or slow-travel archetypes; more only for high-intensity archetypes.
-- "time": ALWAYS 24h HH:MM. NEVER use "Morning/Afternoon/Evening".
+- 5–7 activities per day for normal travelers; fewer on tight arrival/departure days.
+- "time": ALWAYS 24h HH:MM.
 - "emoji": ONE emoji per activity.
 - "category": EXACTLY one of: "hotel", "restaurant", "activity", "transport", "sight", "nightlife", "shopping", "other".
+${hasAccommodation ? '- DO NOT use category "hotel" for any activity.' : ""}
 
 Return pure JSON only.`;
+
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
