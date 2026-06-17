@@ -4,13 +4,13 @@ import { z } from "zod";
 
 const Input = z.object({ tripId: z.string().uuid() });
 
-const UNSPLASH_KEY = "czoq8W7s7ZJy_tslF57tAB-lQS_y_u6TDTiG0vFtwds";
-
 async function unsplashImage(query: string): Promise<string | null> {
+  const key = process.env.UNSPLASH_KEY;
+  if (!key) return null;
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+      { headers: { Authorization: `Client-ID ${key}` } },
     );
     if (!res.ok) return null;
     const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };

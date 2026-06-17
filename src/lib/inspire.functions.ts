@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const Input = z.object({
@@ -18,13 +19,13 @@ export type SuggestedDestination = {
   imageUrl: string;
 };
 
-const UNSPLASH_KEY = "czoq8W7s7ZJy_tslF57tAB-lQS_y_u6TDTiG0vFtwds";
-
 async function unsplashImage(query: string): Promise<string> {
+  const key = process.env.UNSPLASH_KEY;
+  if (!key) return `https://source.unsplash.com/800x600/?${encodeURIComponent(query)}`;
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
-      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } },
+      { headers: { Authorization: `Client-ID ${key}` } },
     );
     if (!res.ok) return `https://source.unsplash.com/800x600/?${encodeURIComponent(query)}`;
     const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };
@@ -38,6 +39,7 @@ async function unsplashImage(query: string): Promise<string> {
 }
 
 export const suggestDestinations = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }) => {
     const key = process.env.LOVABLE_API_KEY;
