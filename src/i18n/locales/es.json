@@ -327,7 +327,14 @@
     "ctaTitle": "Crea tu propio itinerario gratis",
     "ctaSubtitle": "En menos de un minuto. Nuestra IA diseña un viaje único para ti.",
     "cta": "Empezar gratis",
-    "ctaFooter": "Sin tarjeta · Cancela cuando quieras"
+    "ctaFooter": "Sin tarjeta · Cancela cuando quieras",
+    "view": "Ver itinerario",
+    "remix": "Remix este viaje",
+    "save": "Guardar inspiración",
+    "savedLabel": "Guardado",
+    "saved": "Añadido a tus guardados ✨",
+    "saveError": "No se pudo guardar",
+    "saveLoginPrompt": "Inicia sesión para guardar inspiraciones"
   },
   "onboardingDates": {
     "rangeStart": "Llegada",
