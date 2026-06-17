@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { verifyWebhookRequest, WebhookError } from "@lovable.dev/webhooks-js";
 
 type LovableWebhookPayload = {
   type?: string;
@@ -27,10 +28,41 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
           const url = new URL(request.url);
           const env = pickEnv(url);
 
-          // Read raw body for any future signature verification.
-          // The Lovable gateway forwards normalized webhook events.
-          const rawBody = await request.text();
-          const payload = JSON.parse(rawBody) as LovableWebhookPayload;
+          // Verify webhook signature using the Lovable gateway signing key
+          // (the LOVABLE_API_KEY acts as the shared secret, same pattern as
+          // the auth email webhook). Reject any unsigned/invalid request.
+          const apiKey = process.env.LOVABLE_API_KEY;
+          if (!apiKey) {
+            console.error("[payments/webhook] LOVABLE_API_KEY not configured");
+            return new Response("server misconfigured", { status: 500 });
+          }
+
+          let rawBody: string;
+          let payload: LovableWebhookPayload;
+          try {
+            const verified = await verifyWebhookRequest<LovableWebhookPayload>({
+              req: request,
+              secret: apiKey,
+              parser: (body) => JSON.parse(body) as LovableWebhookPayload,
+            });
+            rawBody = verified.body;
+            payload = verified.payload;
+          } catch (err) {
+            if (err instanceof WebhookError) {
+              console.error("[payments/webhook] signature verification failed", { code: err.code });
+              if (
+                err.code === "invalid_signature" ||
+                err.code === "missing_timestamp" ||
+                err.code === "invalid_timestamp" ||
+                err.code === "stale_timestamp"
+              ) {
+                return new Response("invalid signature", { status: 401 });
+              }
+              return new Response("invalid payload", { status: 400 });
+            }
+            throw err;
+          }
+          void rawBody;
 
           const eventType = payload.type ?? payload.event ?? "";
           const obj = (payload.data?.object ?? payload.object ?? payload.data ?? {}) as Record<
