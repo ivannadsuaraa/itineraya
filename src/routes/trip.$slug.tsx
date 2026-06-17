@@ -16,12 +16,12 @@ export const Route = createFileRoute("/trip/$slug")({
     const title = `Itineraya — ${dest} Travel Itinerary`;
     const desc = loaderData.summary ?? `Personalized AI travel itinerary for ${dest}`;
     const url = `https://itineraya.com/trip/${params.slug}`;
-    // og:image priority: 1) trip hero, 2) Unsplash destination photo, 3) official Itineraya logo
-    const image =
-      loaderData.hero_image_url ??
-      (dest
-        ? `https://source.unsplash.com/1200x630/?${encodeURIComponent(dest + ",travel")}`
-        : "https://itineraya.com/itineraya-logo.png");
+    // og:image priority: 1) trip hero, 2) Unsplash destination photo, 3) official Itineraya logo.
+    // Append slug as cache-buster so social platforms refetch per-trip previews.
+    const unsplashFallback = dest
+      ? `https://source.unsplash.com/featured/1200x630/?${encodeURIComponent(dest)},travel&sig=${encodeURIComponent(params.slug)}`
+      : "https://itineraya.com/itineraya-logo.png";
+    const image = loaderData.hero_image_url ?? unsplashFallback;
     return {
       meta: [
         { title },
@@ -52,7 +52,8 @@ export const Route = createFileRoute("/trip/$slug")({
   errorComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
       <div>
-        <h1 className="font-display text-2xl font-bold text-sky-900">Algo salió mal</h1>
+        <h1 className="font-display text-2xl font-bold text-sky-900">Este itinerario no está disponible</h1>
+        <p className="mt-2 text-sky-700">El enlace no es válido, ha expirado o ya no es público.</p>
         <Link to="/" className="mt-6 inline-block rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white">
           Volver a Itineraya
         </Link>
