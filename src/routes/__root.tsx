@@ -94,7 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Genera tu itinerario de viaje perfecto en segundos con inteligencia artificial",
       },
       { property: "og:url", content: "https://itineraya.com" },
-      { property: "og:image", content: "https://itineraya.com/og-image.jpg" },
+      { property: "og:image", content: "https://itineraya.com/itineraya-logo.png" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "Itineraya — Tu itinerario de viaje personalizado con IA" },
