@@ -31,10 +31,25 @@ export function DateRangeField({
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Airbnb-style: first click = start, second click = end (no confirm).
+  // If a complete range exists and user clicks again, treat that click as a new start.
   const handleSelect = (range: DateRange | undefined) => {
-    onChange(range);
-    if (range?.from && range?.to) {
-      setTimeout(() => setOpen(false), 150);
+    const prev = value;
+    let next = range;
+
+    if (prev?.from && prev?.to && range?.from && range?.to) {
+      const fromChanged = range.from.getTime() !== prev.from.getTime();
+      const toChanged = range.to.getTime() !== prev.to.getTime();
+      if (fromChanged) {
+        next = { from: range.from, to: undefined };
+      } else if (toChanged) {
+        next = { from: range.to, to: undefined };
+      }
+    }
+
+    onChange(next);
+    if (next?.from && next?.to) {
+      setTimeout(() => setOpen(false), 200);
     }
   };
 
@@ -45,7 +60,7 @@ export function DateRangeField({
   const summary = from
     ? to
       ? `${format(from, "d MMM", { locale })} → ${format(to, "d MMM yyyy", { locale })}`
-      : format(from, "PPP", { locale })
+      : `${format(from, "d MMM", { locale })} → …`
     : placeholder;
 
   return (
@@ -72,15 +87,23 @@ export function DateRangeField({
             </div>
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start" onOpenAutoFocus={() => setIsMobile(window.innerWidth < 640)}>
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            setIsMobile(typeof window !== "undefined" && window.innerWidth < 640);
+          }}
+        >
           <Calendar
             mode="range"
             selected={value}
             onSelect={handleSelect}
             numberOfMonths={isMobile ? 1 : 2}
+            defaultMonth={from ?? new Date()}
+            min={1}
             disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))}
             locale={locale}
-            initialFocus
             className={cn("p-3 pointer-events-auto")}
           />
         </PopoverContent>
