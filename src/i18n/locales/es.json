@@ -279,7 +279,39 @@
     "mapsTitle": "Abrir en Google Maps",
     "book": "Reservar",
     "viewVerb": "Ver",
-    "bookOn": "{{label}} en {{brand}}"
+    "bookOn": "{{label}} en {{brand}}",
+    "viewMap": "Mapa",
+    "mapTitle": "Mapa del viaje",
+    "mapLoading": "Localizando lugares… {{done}}/{{total}}",
+    "mapReady": "{{count}} lugares en el mapa",
+    "nights_one": "{{count}} noche",
+    "nights_other": "{{count}} noches"
+  },
+  "share": {
+    "title": "Compartir tu viaje",
+    "subtitle": "Cualquiera con el enlace podrá verlo, sin cuenta.",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "more": "Más",
+    "error": "No se pudo crear el enlace",
+    "text": "Mira mi viaje a {{destination}} en Itineraya",
+    "publicHint": "Solo se comparte el itinerario. Tu cuenta sigue siendo privada."
+  },
+  "publicTrip": {
+    "eyebrow": "Itinerario público",
+    "duration_one": "{{count}} día",
+    "duration_other": "{{count}} días",
+    "summary": "Resumen del viaje",
+    "ctaShort": "Crea el tuyo",
+    "ctaTitle": "Crea tu propio itinerario gratis",
+    "ctaSubtitle": "En menos de un minuto. Nuestra IA diseña un viaje único para ti.",
+    "cta": "Empezar gratis",
+    "ctaFooter": "Sin tarjeta · Cancela cuando quieras"
+  },
+  "onboardingDates": {
+    "rangeStart": "Llegada",
+    "rangeEnd": "Vuelta",
+    "rangePlaceholder": "Selecciona tus fechas"
   },
   "assistant": {
     "metaTitle": "Asistente de viaje IA – Itineraya",

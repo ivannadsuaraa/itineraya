@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,19 +9,22 @@ import {
   FileText,
   LayoutGrid,
   Loader2,
-  Plane,
   Sparkles,
   MapPin,
   Calendar as CalendarIcon,
   Wand2,
+  Map as MapIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
+import { ShareDialog } from "@/components/trip/ShareDialog";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
+
+const TripMap = lazy(() => import("@/components/trip/TripMap").then((m) => ({ default: m.TripMap })));
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
@@ -103,10 +106,11 @@ function TripPage() {
     itinerary: Itinerary | null;
     status: string;
   } | null>(null);
-  const [view, setView] = useState<"cards" | "text">("cards");
+  const [view, setView] = useState<"cards" | "text" | "map">("cards");
   const [msgIdx, setMsgIdx] = useState(0);
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -225,7 +229,24 @@ function TripPage() {
                 <FileText className="h-3.5 w-3.5" />
                 <span className="hidden xs:inline sm:inline">{t("trip.viewText")}</span>
               </button>
+              <button
+                onClick={() => setView("map")}
+                className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
+                  view === "map" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
+                }`}
+              >
+                <MapIcon className="h-3.5 w-3.5" />
+                <span className="hidden xs:inline sm:inline">{t("trip.viewMap")}</span>
+              </button>
             </div>
+            <button
+              onClick={() => setShareOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/80 px-3 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
+              aria-label={t("trip.share")}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("trip.share")}</span>
+            </button>
             {plan && plan !== "free" ? (
               <button
                 onClick={() => setAssistantOpen(true)}
@@ -268,13 +289,14 @@ function TripPage() {
 
       <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
         <AnimatePresence mode="wait">
-          {view === "cards" ? (
+          {view === "cards" && (
             <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               {itin.days.map((day) => (
                 <DayCard key={day.day} day={day} destination={trip.destination} />
               ))}
             </motion.div>
-          ) : (
+          )}
+          {view === "text" && (
             <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
               {itin.days.map((day) => (
                 <div key={day.day} className="mb-6 last:mb-0">
@@ -296,6 +318,13 @@ function TripPage() {
               ))}
             </motion.div>
           )}
+          {view === "map" && (
+            <motion.div key="map" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+              <Suspense fallback={<div className="flex h-96 items-center justify-center rounded-3xl bg-white/80"><Loader2 className="h-6 w-6 animate-spin text-sky-500" /></div>}>
+                <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
+              </Suspense>
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -307,6 +336,13 @@ function TripPage() {
         onItineraryUpdated={(itinerary) =>
           setTrip((prev) => (prev ? { ...prev, itinerary: itinerary as Itinerary } : prev))
         }
+      />
+
+      <ShareDialog
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
       />
     </div>
   );
@@ -518,7 +554,7 @@ function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
             className="absolute inset-0 flex items-center justify-center"
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-xl shadow-[#1E6B9A]/30">
-              <Plane className="h-6 w-6 -rotate-45 text-white" />
+              <MapIcon className="h-6 w-6 text-white" />
             </div>
           </motion.div>
         </div>

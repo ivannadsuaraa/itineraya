@@ -14,6 +14,7 @@ import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TripSlugRouteImport } from './routes/trip.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
@@ -50,6 +51,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TripSlugRoute = TripSlugRouteImport.update({
+  id: '/trip/$slug',
+  path: '/trip/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/trip/$slug': typeof TripSlugRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/trip/$slug': typeof TripSlugRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/trip/$slug': typeof TripSlugRoute
   '/_authenticated/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -194,6 +203,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
+    | '/trip/$slug'
     | '/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -213,6 +223,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
+    | '/trip/$slug'
     | '/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -233,6 +244,7 @@ export interface FileRouteTypes {
     | '/_authenticated/welcome'
     | '/api/chat'
     | '/checkout/return'
+    | '/trip/$slug'
     | '/_authenticated/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -248,6 +260,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   ApiChatRoute: typeof ApiChatRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  TripSlugRoute: typeof TripSlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -289,6 +302,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trip/$slug': {
+      id: '/trip/$slug'
+      path: '/trip/$slug'
+      fullPath: '/trip/$slug'
+      preLoaderRoute: typeof TripSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/return': {
@@ -416,6 +436,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   ApiChatRoute: ApiChatRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  TripSlugRoute: TripSlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

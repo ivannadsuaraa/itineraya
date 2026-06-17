@@ -279,7 +279,39 @@
     "mapsTitle": "Open in Google Maps",
     "book": "Book",
     "viewVerb": "View",
-    "bookOn": "{{label}} on {{brand}}"
+    "bookOn": "{{label}} on {{brand}}",
+    "viewMap": "Map",
+    "mapTitle": "Trip map",
+    "mapLoading": "Locating places… {{done}}/{{total}}",
+    "mapReady": "{{count}} places on the map",
+    "nights_one": "{{count}} night",
+    "nights_other": "{{count}} nights"
+  },
+  "share": {
+    "title": "Share your trip",
+    "subtitle": "Anyone with the link can view it, no account needed.",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "more": "More",
+    "error": "Couldn't create the link",
+    "text": "Check out my trip to {{destination}} on Itineraya",
+    "publicHint": "Only the itinerary is shared. Your account stays private."
+  },
+  "publicTrip": {
+    "eyebrow": "Public itinerary",
+    "duration_one": "{{count}} day",
+    "duration_other": "{{count}} days",
+    "summary": "Trip summary",
+    "ctaShort": "Build yours",
+    "ctaTitle": "Create your own itinerary for free",
+    "ctaSubtitle": "In under a minute. Our AI designs a unique trip for you.",
+    "cta": "Start free",
+    "ctaFooter": "No card · Cancel anytime"
+  },
+  "onboardingDates": {
+    "rangeStart": "Check-in",
+    "rangeEnd": "Check-out",
+    "rangePlaceholder": "Pick your dates"
   },
   "assistant": {
     "metaTitle": "AI travel assistant – Itineraya",

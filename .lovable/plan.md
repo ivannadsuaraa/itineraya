@@ -1,92 +1,45 @@
-# Plan: Travel Inspiration Flow + Session Persistence
+## Plan
 
-## Part 1: Trip Creation Mode Selector
+Tres mejoras nuevas sin tocar IA, planes, auth, pagos ni dashboard.
 
-### New screen before onboarding
-Add a route `src/routes/_authenticated/new-trip.tsx` shown when user clicks "Crear viaje". Shows two big cards:
-- ✅ **"Ya sé dónde quiero ir"** → navigates to `/onboarding` (current flow)
-- 🌍 **"Ayúdame a elegir destino"** → navigates to `/inspire`
+### 1. Compartir itinerarios (público, sin login)
 
-Update all "Crear viaje" buttons in `dashboard.tsx` and landing CTAs to point to `/new-trip` instead of `/onboarding`.
+- Migración: añadir a `public.trips` la columna `share_slug TEXT UNIQUE` y política RLS de SELECT pública restringida a filas con `share_slug IS NOT NULL`, exponiendo solo columnas no sensibles vía un server function público.
+- Server function `getPublicTrip` (sin auth) que usa cliente publishable y devuelve `destination, hero_image_url, itinerary, start_date, end_date, share_slug`.
+- Server function autenticada `enableTripShare({ tripId })` que genera slug amigable `kebab(destination)-N-dias-XXXX` y lo guarda si no existe.
+- Nueva ruta pública `src/routes/trip.$slug.tsx` (fuera de `_authenticated`) con loader que llama a `getPublicTrip`, hero, resumen, días con actividades, y CTA final "Crea tu propio itinerario gratis" → `/auth`.
+- Botón "Compartir" en `trip.$tripId.tsx`: abre diálogo que llama a `enableTripShare`, muestra URL `https://itineraya.com/trip/<slug>` y botones Copiar / Web Share API / WhatsApp / Twitter.
+- `head()` con OG meta dinámicos (título "{destino} · {N} días · Itineraya", hero como og:image).
 
-## Part 2: Inspire Flow (`/_authenticated/inspire.tsx`)
+### 2. Selector de fechas estilo Airbnb
 
-Multi-step wizard, same pastel-blue aesthetic as onboarding (reuse card/animation patterns). State machine driven by a **config array** so adding new questions later is trivial:
+- Reemplazar las dos `DateField` separadas en `onboarding.tsx` por un único `DateRangeField` (Popover + `<Calendar mode="range" />` ya disponible en `react-day-picker`).
+- Estado pasa a `data.dates: { from?: Date; to?: Date }`; mapear a `startDate`/`endDate` solo en el save para no tocar la lógica downstream.
+- Resumen visible debajo: "20 jul → 30 jul · 10 noches" (i18n ES/EN).
+- En móvil: un mes; en escritorio: dos meses (`numberOfMonths`).
+- Validación: `canAdvance("dates")` requiere `from && to`.
 
-```ts
-// src/lib/inspire/questions.ts
-export const INSPIRE_QUESTIONS = [
-  { id: 'tripType', type: 'visual-multi', options: [
-      { id: 'newyear', label: 'Nochevieja', emoji: '🎆' },
-      { id: 'beach', label: 'Playa', emoji: '🏖️' },
-      ...10 options
-  ]},
-  { id: 'region', type: 'single', options: ['spain','europe','anywhere'] },
-  { id: 'budget', type: 'single', options: ['low','mid','high'] },
-  { id: 'origin', type: 'text' },
-  { id: 'duration', type: 'single', options: ['weekend','3-5','week','more'] },
-];
-```
+### 3. Mapa interactivo
 
-Renderer maps `type` → component. New question types/criteria add by extending the array + i18n keys.
+- Añadir dependencias: `leaflet` + `react-leaflet` (sin API key, OpenStreetMap).
+- Nueva pestaña "Mapa" junto a Tarjetas/Texto en `trip.$tripId.tsx` (tres opciones).
+- Geocoding lazy con Nominatim (cliente, cacheado en memoria por sesión + en `localStorage` por `tripId`): para cada actividad consulta `"{place || title}, {destination}"` y guarda lat/lng.
+- Marcadores por día con color distinto (paleta azul pastel: 8 tonos), `divIcon` con número del día.
+- Popup: nombre, descripción, hora, categoría (emoji) y enlace externo (Google Maps + booking link existente).
+- Mapa centrado automáticamente con `fitBounds` sobre todos los marcadores.
+- CSS de Leaflet importado en el componente del mapa.
 
-### After last step
-Calls new server fn `suggestDestinations` → returns 3 destinations sorted by score.
+### Detalles técnicos
 
-## Part 3: AI Destination Suggester
+- Mapa solo se monta cuando la pestaña está activa (evita SSR issues con Leaflet — usar dynamic import o `useEffect` mount).
+- Slug único: `slugify(destination) + '-' + dias + '-dias' + '-' + nanoid(5)`.
+- Sin cambios en `itinerary.functions.ts`, `payments.functions.ts`, ni nada de auth.
+- i18n: añadir claves para "Compartir", "Mapa", resumen de rango, CTA pública.
 
-New file `src/lib/inspire.functions.ts`:
-```ts
-suggestDestinations({ tripType, region, budget, origin, duration })
-  → Promise<{ destinations: Array<{ name, country, score, reason, photoQuery }> }>
-```
-- Uses Lovable AI Gateway (`google/gemini-3-flash-preview`) with structured output (Zod schema, 3 items, score 0-100).
-- System prompt enforces: realistic + personalized, avoid overused tourist defaults, factor origin distance vs duration, climate seasonality (current month), budget realism.
-- Photos: `https://source.unsplash.com/800x600/?<city>,travel` (free, no key). photoQuery returned by model.
+### Archivos
 
-### Results screen
-3 cards ranked 🥇🥈🥉, each: image, name, score badge, reason paragraph, button **"Crear itinerario aquí"** → navigates to `/onboarding?prefill=<base64 json>` with `{ destination, budget, duration, tripType }`.
+- Crear: `src/routes/trip.$slug.tsx`, `src/lib/share.functions.ts`, `src/components/trip/TripMap.tsx`, `src/components/trip/ShareDialog.tsx`, `src/components/DateRangeField.tsx`.
+- Editar: `src/routes/_authenticated/trip.$tripId.tsx`, `src/routes/_authenticated/onboarding.tsx`, `src/i18n/locales/{es,en}.json`.
+- Migración Supabase para `share_slug` + política pública.
 
-## Part 4: Onboarding Prefill
-
-Modify `src/routes/_authenticated/onboarding.tsx`:
-- Read `prefill` search param via `validateSearch`.
-- If present, hydrate initial state and **skip** the destination, budget, duration, and trip-style steps. Only ask: exact dates, companions, things to avoid.
-- Implement as a `skipSteps: Set<string>` driven by which prefill fields exist — keeps it extensible.
-
-## Part 5: Session Persistence on Landing
-
-Issue: Landing (`/`) doesn't reflect auth state; user appears logged out.
-
-Fix `src/components/landing/Navbar.tsx` and Hero CTAs:
-- Already subscribes to `onAuthStateChange`. Verify it also runs `supabase.auth.getSession()` on mount (not just `getUser()`) so SSR→client hydration keeps state.
-- When `isLoggedIn`: hide "Iniciar sesión" and "Empezar gratis"; show **"Mis viajes"** → links to `/dashboard`.
-- Same change in `HeroSection.tsx` primary CTA: if logged in, label "Ir a mis viajes" → `/dashboard`; else "Empezar gratis" → `/auth?mode=signup`.
-
-Root cause check: confirm `src/integrations/supabase/client.ts` has `persistSession: true` & `autoRefreshToken: true` (it's auto-generated, should be fine — if session loss is real it's just the landing UI not reading session).
-
-## Part 6: i18n
-
-Add ES + EN strings under `inspire.*` and `newTrip.*` namespaces for all new UI.
-
-## Technical Details
-
-**Files created:**
-- `src/routes/_authenticated/new-trip.tsx`
-- `src/routes/_authenticated/inspire.tsx`
-- `src/lib/inspire/questions.ts` (config)
-- `src/lib/inspire/types.ts`
-- `src/lib/inspire.functions.ts` (server fn, uses Lovable AI Gateway)
-
-**Files edited:**
-- `src/routes/_authenticated/onboarding.tsx` (prefill + skip steps)
-- `src/routes/_authenticated/dashboard.tsx` (CTA → /new-trip)
-- `src/components/landing/Navbar.tsx` (auth-aware CTAs)
-- `src/components/landing/HeroSection.tsx` (auth-aware CTA)
-- `src/i18n/locales/{es,en}.json`
-
-**AI call:** Lovable AI Gateway via `createLovableAiGatewayProvider`, `generateText` with `Output.object({ schema })`, model `google/gemini-3-flash-preview`. No new secrets needed (`LOVABLE_API_KEY` already provisioned).
-
-**Reusability:** New inspiration types = add object to `INSPIRE_QUESTIONS`. New scoring criteria = extend Zod schema + prompt section. Prefill = add field to map; onboarding auto-skips.
-
-Confirm before I implement?
+¿Procedo?
