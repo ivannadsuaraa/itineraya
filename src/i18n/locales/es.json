@@ -205,7 +205,11 @@
     "generating": "Generando…",
     "flexible": "Fechas flexibles",
     "traveler": "viajero",
-    "metaTitle": "Mis viajes – Itineraya"
+    "metaTitle": "Mis viajes – Itineraya",
+    "saved": "Guardados",
+    "savedEmpty": "Aún no tienes inspiraciones guardadas. Explora viajes compartidos y guarda los que te inspiren.",
+    "savedRemix": "Remix",
+    "savedRemove": "Quitar"
   },
   "onboarding": {
     "metaTitle": "Cuéntanos sobre tu viaje – Itineraya",
