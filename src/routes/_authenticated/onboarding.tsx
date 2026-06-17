@@ -368,15 +368,59 @@ function OnboardingPage() {
               )}
 
               {currentStepId === "tripType" && (
-                <StepShell emoji="🎒" title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleSubtitle")}>
-                  <textarea
-                    autoFocus
-                    rows={4}
-                    value={data.tripType}
-                    onChange={(e) => setData({ ...data, tripType: e.target.value })}
-                    placeholder={t("onboarding.stylePh")}
-                    className="w-full resize-none rounded-2xl border border-sky-200 bg-white/70 px-5 py-4 text-base text-sky-900 placeholder-sky-400 outline-none transition-all focus:border-[#1E6B9A] focus:bg-white focus:ring-4 focus:ring-[#1E6B9A]/10"
-                  />
+                <StepShell emoji="🎒" title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleMultiSubtitle")}>
+                  <div className="flex flex-wrap gap-2">
+                    {TRIP_TYPE_IDS.map((id) => {
+                      const selected = data.tripTypes.includes(id);
+                      return (
+                        <button
+                          type="button"
+                          key={id}
+                          onClick={() =>
+                            setData({
+                              ...data,
+                              tripTypes: selected
+                                ? data.tripTypes.filter((x) => x !== id)
+                                : [...data.tripTypes, id],
+                            })
+                          }
+                          className={cn(
+                            "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                            selected
+                              ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-md shadow-[#1E6B9A]/25"
+                              : "border-sky-200 bg-white/70 text-sky-800 hover:bg-white",
+                          )}
+                        >
+                          <span>{TRIP_TYPE_EMOJI[id]}</span>
+                          <span>{t(`onboarding.tripTypes.${id}`)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-3 text-xs text-sky-600">{t("onboarding.styleMultiHint")}</p>
+                </StepShell>
+              )}
+
+              {currentStepId === "accommodation" && (
+                <StepShell emoji="🏨" title={t("onboarding.accomTitle")} subtitle={t("onboarding.accomSubtitle")}>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <OptionCard
+                      selected={data.hasAccommodation === false}
+                      onClick={() => setData({ ...data, hasAccommodation: false })}
+                      icon={<Sparkles className="h-5 w-5" />}
+                      label={t("onboarding.accomNo")}
+                      description={t("onboarding.accomNoDesc")}
+                      horizontal
+                    />
+                    <OptionCard
+                      selected={data.hasAccommodation === true}
+                      onClick={() => setData({ ...data, hasAccommodation: true })}
+                      icon={<Home className="h-5 w-5" />}
+                      label={t("onboarding.accomYes")}
+                      description={t("onboarding.accomYesDesc")}
+                      horizontal
+                    />
+                  </div>
                 </StepShell>
               )}
 
@@ -392,6 +436,7 @@ function OnboardingPage() {
                   />
                 </StepShell>
               )}
+
             </motion.div>
           </AnimatePresence>
         </div>
