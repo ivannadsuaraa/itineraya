@@ -28,10 +28,20 @@ function dateLocale(lang: string) {
   return lang.toLowerCase().startsWith("en") ? enUS : es;
 }
 
+type SavedInspo = {
+  id: string;
+  slug: string;
+  destination: string;
+  hero_image_url: string | null;
+  summary: string | null;
+  n_days: number | null;
+};
+
 function DashboardPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[] | null>(null);
+  const [saved, setSaved] = useState<SavedInspo[] | null>(null);
   const [name, setName] = useState<string>("");
 
   useEffect(() => {
@@ -52,18 +62,45 @@ function DashboardPage() {
         }
       }
 
-      const { data, error } = await supabase
-        .from("trips")
-        .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
-        .order("created_at", { ascending: false });
+      const [{ data, error }, { data: savedData }] = await Promise.all([
+        supabase
+          .from("trips")
+          .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("saved_inspirations")
+          .select("id,slug,destination,hero_image_url,summary,n_days")
+          .order("created_at", { ascending: false }),
+      ]);
       if (error) {
         toast.error(t("dashboard.loadFail"));
         setTrips([]);
-        return;
+      } else {
+        setTrips(data ?? []);
       }
-      setTrips(data ?? []);
+      setSaved((savedData ?? []) as SavedInspo[]);
     })();
   }, [navigate, t]);
+
+  const remixSaved = (s: SavedInspo) => {
+    const payload = {
+      destination: s.destination,
+      nDays: s.n_days ?? undefined,
+    };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    navigate({ to: "/onboarding", search: { prefill: encoded } });
+  };
+
+  const removeSaved = async (id: string) => {
+    const prev = saved ?? [];
+    setSaved(prev.filter((x) => x.id !== id));
+    const { error } = await supabase.from("saved_inspirations").delete().eq("id", id);
+    if (error) {
+      setSaved(prev);
+      toast.error(t("dashboard.loadFail"));
+    }
+  };
+
 
   const upcoming = (trips ?? [])
     .filter((t) => t.start_date && new Date(t.start_date) >= new Date(new Date().toDateString()))
