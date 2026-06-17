@@ -68,9 +68,82 @@ export const Route = createFileRoute("/trip/$slug")({
 
 function PublicTripPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const trip = Route.useLoaderData();
   const days = (trip.days ?? []) as PublicTripDay[];
   const nDays = days.length;
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Infer canonical trip-type ids from saved itinerary categories (best-effort).
+  const inferTripTypes = (): string[] => {
+    const cats = new Set<string>();
+    for (const d of days) for (const a of d.activities) if (a.category) cats.add(a.category.toLowerCase());
+    const map: Record<string, string> = {
+      beach: "beach", playa: "beach",
+      party: "party", fiesta: "party", nightlife: "party",
+      cultural: "cultural", culture: "cultural", museum: "cultural",
+      food: "food", gastronomy: "food", restaurant: "food",
+      relax: "relax", wellness: "relax", spa: "relax",
+      nature: "nature", outdoor: "nature", hiking: "nature",
+      romantic: "romantic", romance: "romantic",
+      family: "family", kids: "family",
+      adventure: "adventure", sport: "adventure",
+    };
+    const out = new Set<string>();
+    for (const c of cats) {
+      const key = Object.keys(map).find((k) => c.includes(k));
+      if (key) out.add(map[key]);
+    }
+    return Array.from(out);
+  };
+
+  const handleRemix = () => {
+    const payload = {
+      destination: trip.destination,
+      tripTypes: inferTripTypes(),
+      nDays: nDays || undefined,
+    };
+    const encoded =
+      typeof window === "undefined"
+        ? ""
+        : btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    navigate({ to: "/onboarding", search: { prefill: encoded } });
+  };
+
+  const handleSave = async () => {
+    if (saving || saved) return;
+    setSaving(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) {
+        toast.info(t("publicTrip.saveLoginPrompt"));
+        navigate({ to: "/auth" });
+        return;
+      }
+      const { error } = await supabase
+        .from("saved_inspirations")
+        .upsert(
+          {
+            user_id: u.user.id,
+            slug: trip.slug,
+            destination: trip.destination,
+            hero_image_url: trip.hero_image_url,
+            summary: trip.summary,
+            n_days: nDays || null,
+          },
+          { onConflict: "user_id,slug" },
+        );
+      if (error) throw error;
+      setSaved(true);
+      toast.success(t("publicTrip.saved"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("publicTrip.saveError"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
