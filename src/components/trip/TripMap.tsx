@@ -141,6 +141,24 @@ export function TripMap({ destination, days, tripId }: Props) {
       setPins([...collected]);
     };
 
+    // Track how many pins already exist at each lat/lng so we can spread
+    // overlapping activity markers in a small spiral. Without this, several
+    // activities that geocode to the same city center collapse into a single
+    // visible marker per day.
+    const occupancy = new Map<string, number>();
+    const spread = (g: Geo): Geo => {
+      const key = `${g.lat.toFixed(4)}|${g.lng.toFixed(4)}`;
+      const n = occupancy.get(key) ?? 0;
+      occupancy.set(key, n + 1);
+      if (n === 0) return g;
+      // ~12m per 0.0001deg lat; spiral with growing radius
+      const angle = n * 2.39996; // golden angle
+      const r = 0.00045 * Math.sqrt(n);
+      return { lat: g.lat + r * Math.cos(angle), lng: g.lng + r * Math.sin(angle) };
+    };
+
+    const pushUnique = (g: Geo, item: (typeof tasks)[number]) => pushPin(spread(g), item);
+
     (async () => {
       // 1. Resolve destination + flush cached pins instantly (no waiting)
       const destGeo = cache["__dest__"] ?? (await geocode(destination));
@@ -155,7 +173,7 @@ export function TripMap({ destination, days, tripId }: Props) {
         const key = `${item.activity.place || item.activity.title}|${destination}`;
         const cached = cache[key];
         if (cached) {
-          pushPin(cached, item);
+          pushUnique(cached, item);
           setProgress((p) => ({ done: p.done + 1, total: p.total }));
         } else {
           pending.push(item);
@@ -171,20 +189,28 @@ export function TripMap({ destination, days, tripId }: Props) {
           const i = cursor++;
           const item = pending[i];
           const key = `${item.activity.place || item.activity.title}|${destination}`;
-          const q = `${item.activity.place || item.activity.title}, ${destination}`;
-          const g = await geocode(q);
+          // Try the most specific query first, fall back to title + destination
+          const specific = `${item.activity.place || item.activity.title}, ${destination}`;
+          let g = await geocode(specific);
+          if (!g && item.activity.place && item.activity.title && item.activity.place !== item.activity.title) {
+            g = await geocode(`${item.activity.title}, ${destination}`);
+          }
+          if (!g) {
+            // fall back to destination center so the activity is still represented
+            g = destGeo ?? null;
+          }
           if (cancelled.current) return;
           if (g) {
             cache[key] = g;
-            pushPin(g, item);
+            pushUnique(g, item);
           }
           setProgress((p) => ({ done: p.done + 1, total: p.total }));
           // small breather to stay polite with Nominatim
-          await new Promise((r) => setTimeout(r, 350));
+          await new Promise((r) => setTimeout(r, 300));
         }
       };
       await Promise.all(
-        Array.from({ length: Math.min(CONCURRENCY, pending.length) }, worker),
+        Array.from({ length: Math.min(CONCURRENCY, Math.max(pending.length, 1)) }, worker),
       );
 
       try {
