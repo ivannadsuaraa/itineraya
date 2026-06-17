@@ -246,7 +246,27 @@
     "stylePh": "Ej. Quiero descubrir templos y comida callejera, con algo de naturaleza.",
     "avoidTitle": "¿Algo que quieras evitar?",
     "avoidSubtitle": "Alergias, lugares masificados, vuelos largos… (opcional)",
-    "avoidPh": "Ej. Evitar mariscos y trayectos de más de 4 horas."
+    "avoidPh": "Ej. Evitar mariscos y trayectos de más de 4 horas.",
+    "styleMultiSubtitle": "Marca todo lo que encaje. Puedes elegir varios.",
+    "styleMultiHint": "Multi-selección · adapta el itinerario a tus intereses",
+    "accomTitle": "¿Ya tienes alojamiento?",
+    "accomSubtitle": "Si ya reservaste, no te sugeriremos hoteles.",
+    "accomNo": "No, ayúdame",
+    "accomNoDesc": "Podemos incluir zona orientativa",
+    "accomYes": "Sí, ya tengo",
+    "accomYesDesc": "Hotel o apartamento reservado",
+    "tripTypes": {
+      "beach": "Playa",
+      "party": "Fiesta / Nocturno",
+      "cultural": "Cultural",
+      "food": "Gastronomía",
+      "relax": "Relax",
+      "nature": "Naturaleza",
+      "romantic": "Romántico",
+      "family": "Familiar",
+      "adventure": "Aventura",
+      "special": "Eventos especiales"
+    }
   },
   "trip": {
     "metaTitle": "Tu itinerario – Itineraya",
@@ -348,7 +368,9 @@
     "knowTitle": "Ya sé dónde quiero ir",
     "knowDesc": "Cuéntanos tu destino y creamos el itinerario.",
     "inspireTitle": "Ayúdame a elegir destino",
-    "inspireDesc": "Responde unas preguntas y te recomendamos 3 destinos perfectos."
+    "inspireDesc": "Responde unas preguntas y te recomendamos 3 destinos perfectos.",
+    "copilotTitle": "Ya estoy de viaje",
+    "copilotDesc": "Activa el copiloto en tiempo real para sugerencias sobre la marcha."
   },
   "inspire": {
     "back": "Atrás",
@@ -417,6 +439,16 @@
     "label": "Idioma",
     "es": "Español",
     "en": "English"
+  },
+  "copilot": {
+    "title": "Copiloto de viaje",
+    "subtitle": "Estás de viaje ahora mismo. Te ayudo con sugerencias en tiempo real según la hora y el lugar.",
+    "destLabel": "¿Dónde estás ahora?",
+    "destPh": "Ej. Barcelona, Tokio, Lisboa…",
+    "start": "Empezar copiloto",
+    "headerTitle": "Copiloto en tiempo real",
+    "greeting": "¡Hola! Estás en {{destination}}. Cuéntame qué te apetece y te sugiero qué hacer ahora, cerca, con transporte realista.",
+    "inputPh": "¿Qué hago ahora? ¿Dónde ceno cerca?",
+    "thinking": "Pensando…"
   }
 }
-
