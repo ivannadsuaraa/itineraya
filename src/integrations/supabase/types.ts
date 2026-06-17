@@ -231,13 +231,16 @@ export type Database = {
           departure_time: string | null
           destination: string
           end_date: string | null
+          has_accommodation: boolean
           hero_image_url: string | null
           id: string
           itinerary: Json | null
           share_slug: string | null
           start_date: string | null
           status: string
+          travel_mode: string
           trip_style: string | null
+          trip_types: string[]
           updated_at: string
           user_id: string
         }
@@ -250,13 +253,16 @@ export type Database = {
           departure_time?: string | null
           destination: string
           end_date?: string | null
+          has_accommodation?: boolean
           hero_image_url?: string | null
           id?: string
           itinerary?: Json | null
           share_slug?: string | null
           start_date?: string | null
           status?: string
+          travel_mode?: string
           trip_style?: string | null
+          trip_types?: string[]
           updated_at?: string
           user_id: string
         }
@@ -269,13 +275,16 @@ export type Database = {
           departure_time?: string | null
           destination?: string
           end_date?: string | null
+          has_accommodation?: boolean
           hero_image_url?: string | null
           id?: string
           itinerary?: Json | null
           share_slug?: string | null
           start_date?: string | null
           status?: string
+          travel_mode?: string
           trip_style?: string | null
+          trip_types?: string[]
           updated_at?: string
           user_id?: string
         }
