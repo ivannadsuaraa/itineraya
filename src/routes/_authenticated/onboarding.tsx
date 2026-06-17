@@ -36,6 +36,18 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 
 type Companion = "solo" | "pareja" | "amigos" | "familia";
 type Budget = "economico" | "medio" | "sin-limite";
+type TripTypeId =
+  | "beach" | "party" | "cultural" | "food" | "relax"
+  | "nature" | "romantic" | "family" | "adventure" | "special";
+
+const TRIP_TYPE_IDS: TripTypeId[] = [
+  "beach","party","cultural","food","relax","nature","romantic","family","adventure","special",
+];
+
+const TRIP_TYPE_EMOJI: Record<TripTypeId, string> = {
+  beach: "🏖️", party: "🎉", cultural: "🏛️", food: "🍽️", relax: "🧘",
+  nature: "🌿", romantic: "💕", family: "👨‍👩‍👧", adventure: "🧗", special: "🎄",
+};
 
 interface FormData {
   destination: string;
@@ -45,7 +57,8 @@ interface FormData {
   departureTime?: string;
   companion?: Companion;
   budget?: Budget;
-  tripType: string;
+  tripTypes: TripTypeId[];
+  hasAccommodation?: boolean;
   avoid: string;
 }
 
@@ -70,8 +83,8 @@ function decodePrefill(encoded: string | undefined): PrefillShape {
   }
 }
 
-type StepId = "destination" | "dates" | "companion" | "budget" | "tripType" | "avoid";
-const ALL_STEPS: StepId[] = ["destination", "dates", "companion", "budget", "tripType", "avoid"];
+type StepId = "destination" | "dates" | "companion" | "budget" | "tripType" | "accommodation" | "avoid";
+const ALL_STEPS: StepId[] = ["destination", "dates", "companion", "budget", "tripType", "accommodation", "avoid"];
 const BUDGET_IDS: Budget[] = ["economico", "medio", "sin-limite"];
 
 function OnboardingPage() {
@@ -89,11 +102,10 @@ function OnboardingPage() {
     return ALL_STEPS.filter((id) => {
       if (id === "destination" && prefill.destination) return false;
       if (id === "budget" && prefilledBudget) return false;
-      if (id === "tripType" && prefill.tripType) return false;
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefill.destination, prefill.budget, prefill.tripType]);
+  }, [prefill.destination, prefill.budget]);
 
   const TOTAL_STEPS = activeSteps.length;
 
@@ -102,10 +114,11 @@ function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<FormData>(() => ({
     destination: prefill.destination ?? "",
-    tripType: prefill.tripType ?? "",
+    tripTypes: [],
     avoid: "",
     budget: prefilledBudget,
   }));
+
 
   const dateLocale = i18n.language.toLowerCase().startsWith("en") ? enUS : es;
 
