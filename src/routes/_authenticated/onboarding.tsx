@@ -36,6 +36,18 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
 
 type Companion = "solo" | "pareja" | "amigos" | "familia";
 type Budget = "economico" | "medio" | "sin-limite";
+type TripTypeId =
+  | "beach" | "party" | "cultural" | "food" | "relax"
+  | "nature" | "romantic" | "family" | "adventure" | "special";
+
+const TRIP_TYPE_IDS: TripTypeId[] = [
+  "beach","party","cultural","food","relax","nature","romantic","family","adventure","special",
+];
+
+const TRIP_TYPE_EMOJI: Record<TripTypeId, string> = {
+  beach: "🏖️", party: "🎉", cultural: "🏛️", food: "🍽️", relax: "🧘",
+  nature: "🌿", romantic: "💕", family: "👨‍👩‍👧", adventure: "🧗", special: "🎄",
+};
 
 interface FormData {
   destination: string;
@@ -45,7 +57,8 @@ interface FormData {
   departureTime?: string;
   companion?: Companion;
   budget?: Budget;
-  tripType: string;
+  tripTypes: TripTypeId[];
+  hasAccommodation?: boolean;
   avoid: string;
 }
 
@@ -70,8 +83,8 @@ function decodePrefill(encoded: string | undefined): PrefillShape {
   }
 }
 
-type StepId = "destination" | "dates" | "companion" | "budget" | "tripType" | "avoid";
-const ALL_STEPS: StepId[] = ["destination", "dates", "companion", "budget", "tripType", "avoid"];
+type StepId = "destination" | "dates" | "companion" | "budget" | "tripType" | "accommodation" | "avoid";
+const ALL_STEPS: StepId[] = ["destination", "dates", "companion", "budget", "tripType", "accommodation", "avoid"];
 const BUDGET_IDS: Budget[] = ["economico", "medio", "sin-limite"];
 
 function OnboardingPage() {
@@ -89,11 +102,10 @@ function OnboardingPage() {
     return ALL_STEPS.filter((id) => {
       if (id === "destination" && prefill.destination) return false;
       if (id === "budget" && prefilledBudget) return false;
-      if (id === "tripType" && prefill.tripType) return false;
       return true;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefill.destination, prefill.budget, prefill.tripType]);
+  }, [prefill.destination, prefill.budget]);
 
   const TOTAL_STEPS = activeSteps.length;
 
@@ -102,10 +114,11 @@ function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<FormData>(() => ({
     destination: prefill.destination ?? "",
-    tripType: prefill.tripType ?? "",
+    tripTypes: [],
     avoid: "",
     budget: prefilledBudget,
   }));
+
 
   const dateLocale = i18n.language.toLowerCase().startsWith("en") ? enUS : es;
 
@@ -117,7 +130,8 @@ function OnboardingPage() {
       case "dates": return !!data.startDate && !!data.endDate;
       case "companion": return !!data.companion;
       case "budget": return !!data.budget;
-      case "tripType": return data.tripType.trim().length > 1;
+      case "tripType": return data.tripTypes.length > 0;
+      case "accommodation": return data.hasAccommodation !== undefined;
       case "avoid": return true;
       default: return false;
     }
@@ -133,6 +147,9 @@ function OnboardingPage() {
     setDirection(-1);
     setStep((s) => Math.max(0, s - 1));
   };
+
+  const tripTypesLabel = (ids: TripTypeId[]) =>
+    ids.map((id) => t(`onboarding.tripTypes.${id}`)).join(", ");
 
   const handleFinish = async () => {
     setLoading(true);
@@ -154,12 +171,14 @@ function OnboardingPage() {
         familia: "En familia",
       };
 
+      const tripStyleStr = tripTypesLabel(data.tripTypes);
+
       await supabase
         .from("profiles")
         .update({
           preferred_destinations: [data.destination],
           budget_range: data.budget ? budgetMap[data.budget] : null,
-          travel_style: data.tripType,
+          travel_style: tripStyleStr,
         })
         .eq("id", userId);
 
@@ -174,7 +193,10 @@ function OnboardingPage() {
           departure_time: data.departureTime || null,
           companion: data.companion ? companionMap[data.companion] : null,
           budget: data.budget ? budgetMap[data.budget] : null,
-          trip_style: data.tripType,
+          trip_style: tripStyleStr,
+          trip_types: data.tripTypes,
+          has_accommodation: !!data.hasAccommodation,
+          travel_mode: "planning",
           avoid: data.avoid,
           status: "pending",
         })
@@ -183,6 +205,7 @@ function OnboardingPage() {
       if (tripErr || !trip) throw tripErr ?? new Error(t("onboarding.saveFail"));
 
       navigate({ to: "/trip/$tripId", params: { tripId: trip.id } });
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : t("onboarding.somethingWrong");
       toast.error(msg);
@@ -345,15 +368,59 @@ function OnboardingPage() {
               )}
 
               {currentStepId === "tripType" && (
-                <StepShell emoji="🎒" title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleSubtitle")}>
-                  <textarea
-                    autoFocus
-                    rows={4}
-                    value={data.tripType}
-                    onChange={(e) => setData({ ...data, tripType: e.target.value })}
-                    placeholder={t("onboarding.stylePh")}
-                    className="w-full resize-none rounded-2xl border border-sky-200 bg-white/70 px-5 py-4 text-base text-sky-900 placeholder-sky-400 outline-none transition-all focus:border-[#1E6B9A] focus:bg-white focus:ring-4 focus:ring-[#1E6B9A]/10"
-                  />
+                <StepShell emoji="🎒" title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleMultiSubtitle")}>
+                  <div className="flex flex-wrap gap-2">
+                    {TRIP_TYPE_IDS.map((id) => {
+                      const selected = data.tripTypes.includes(id);
+                      return (
+                        <button
+                          type="button"
+                          key={id}
+                          onClick={() =>
+                            setData({
+                              ...data,
+                              tripTypes: selected
+                                ? data.tripTypes.filter((x) => x !== id)
+                                : [...data.tripTypes, id],
+                            })
+                          }
+                          className={cn(
+                            "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all",
+                            selected
+                              ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-md shadow-[#1E6B9A]/25"
+                              : "border-sky-200 bg-white/70 text-sky-800 hover:bg-white",
+                          )}
+                        >
+                          <span>{TRIP_TYPE_EMOJI[id]}</span>
+                          <span>{t(`onboarding.tripTypes.${id}`)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-3 text-xs text-sky-600">{t("onboarding.styleMultiHint")}</p>
+                </StepShell>
+              )}
+
+              {currentStepId === "accommodation" && (
+                <StepShell emoji="🏨" title={t("onboarding.accomTitle")} subtitle={t("onboarding.accomSubtitle")}>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <OptionCard
+                      selected={data.hasAccommodation === false}
+                      onClick={() => setData({ ...data, hasAccommodation: false })}
+                      icon={<Sparkles className="h-5 w-5" />}
+                      label={t("onboarding.accomNo")}
+                      description={t("onboarding.accomNoDesc")}
+                      horizontal
+                    />
+                    <OptionCard
+                      selected={data.hasAccommodation === true}
+                      onClick={() => setData({ ...data, hasAccommodation: true })}
+                      icon={<Home className="h-5 w-5" />}
+                      label={t("onboarding.accomYes")}
+                      description={t("onboarding.accomYesDesc")}
+                      horizontal
+                    />
+                  </div>
                 </StepShell>
               )}
 
@@ -369,6 +436,7 @@ function OnboardingPage() {
                   />
                 </StepShell>
               )}
+
             </motion.div>
           </AnimatePresence>
         </div>

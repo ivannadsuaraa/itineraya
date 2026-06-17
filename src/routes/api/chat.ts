@@ -5,6 +5,8 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 type ChatRequestBody = {
   messages?: unknown;
+  mode?: "planning" | "in-trip" | null;
+  clientNow?: string | null;
   tripContext?: {
     destination?: string | null;
     startDate?: string | null;
@@ -19,7 +21,6 @@ export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // Require authentication to prevent unauthenticated AI credit consumption.
         const authHeader = request.headers.get("authorization");
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
           return new Response("Unauthorized", { status: 401 });
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Unauthorized", { status: 401 });
         }
 
-        const { messages, tripContext } = (await request.json()) as ChatRequestBody;
+        const { messages, tripContext, mode, clientNow } = (await request.json()) as ChatRequestBody;
         if (!Array.isArray(messages)) {
           return new Response("Messages are required", { status: 400 });
         }
@@ -57,7 +58,31 @@ export const Route = createFileRoute("/api/chat")({
           ctx.tripStyle ? `Estilo de viaje: ${ctx.tripStyle}` : null,
         ].filter(Boolean).join("\n");
 
-        const system = `Eres el asistente de viaje de Itineraya. Responde en español, con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
+        const nowIso = clientNow || new Date().toISOString();
+        const nowReadable = (() => {
+          try {
+            return new Date(nowIso).toLocaleString("es-ES", {
+              weekday: "long", hour: "2-digit", minute: "2-digit",
+              day: "2-digit", month: "long",
+            });
+          } catch { return nowIso; }
+        })();
+
+        const system = mode === "in-trip"
+          ? `Eres el COPILOTO DE VIAJE en tiempo real de Itineraya. El usuario YA ESTÁ en ${ctx.destination ?? "su destino"} ahora mismo.
+
+Hora local actual (aprox): ${nowReadable}.
+
+Tu misión: ayudarle EN VIVO durante el viaje. NO generes itinerarios largos de varios días. En su lugar:
+- Sugiere QUÉ HACER AHORA o en las próximas horas según la hora del día (mañana / mediodía / tarde / noche).
+- Recomienda actividades, restaurantes o sitios CERCANOS y abiertos a esta hora.
+- Da opciones de TRANSPORTE realistas (caminar, metro, bus, taxi, ferry) con tiempos estimados.
+- Adapta los planes si llueve, si está cansado, si quiere algo rápido, etc.
+- Sé conciso, práctico y específico (nombres reales, barrios reales). Usa markdown con listas cuando ayude.
+- Si pide un plan, hazlo solo para lo que queda del día u hoy + mañana como máximo.
+
+Responde en el idioma del usuario (por defecto español).`
+          : `Eres el asistente de viaje de Itineraya. Responde en español, con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
 
 Contexto del viaje del usuario:
 ${contextLines || "Sin viaje seleccionado todavía."}`;
@@ -76,3 +101,4 @@ ${contextLines || "Sin viaje seleccionado todavía."}`;
     },
   },
 });
+

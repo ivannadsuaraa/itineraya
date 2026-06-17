@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, MapPin, Compass } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Compass, Navigation } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { BrandLogo } from "@/components/BrandLogo";
 
@@ -26,7 +26,7 @@ function NewTripPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+      <div className="relative mx-auto flex min-h-screen max-w-4xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <div className="mb-4 self-start">
           <Link
             to="/dashboard"
@@ -53,7 +53,7 @@ function NewTripPage() {
           <p className="mt-2 text-sm text-sky-600 md:text-base">{t("newTrip.subtitle")}</p>
         </motion.div>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <ModeCard
             emoji="✅"
             icon={<MapPin className="h-7 w-7" />}
@@ -70,6 +70,14 @@ function NewTripPage() {
             highlight
             onClick={() => navigate({ to: "/inspire" })}
             delay={0.2}
+          />
+          <ModeCard
+            emoji="🧭"
+            icon={<Navigation className="h-7 w-7" />}
+            title={t("newTrip.copilotTitle")}
+            description={t("newTrip.copilotDesc")}
+            onClick={() => navigate({ to: "/copilot" })}
+            delay={0.3}
           />
         </div>
       </div>
@@ -118,7 +126,7 @@ function ModeCard({
         {icon}
       </div>
       <div>
-        <div className={"text-3xl " + (highlight ? "" : "")}>{emoji}</div>
+        <div className="text-3xl">{emoji}</div>
         <h3 className={"mt-1 font-display text-xl font-bold " + (highlight ? "text-white" : "text-sky-900")}>
           {title}
         </h3>

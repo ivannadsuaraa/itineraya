@@ -246,7 +246,27 @@
     "stylePh": "e.g. I want to discover temples and street food, with some nature.",
     "avoidTitle": "Anything to avoid?",
     "avoidSubtitle": "Allergies, crowded places, long flights… (optional)",
-    "avoidPh": "e.g. Avoid seafood and rides over 4 hours."
+    "avoidPh": "e.g. Avoid seafood and rides over 4 hours.",
+    "styleMultiSubtitle": "Pick everything that fits. You can choose several.",
+    "styleMultiHint": "Multi-select · tailors the itinerary to your interests",
+    "accomTitle": "Do you already have accommodation?",
+    "accomSubtitle": "If you already booked, we'll skip hotel suggestions.",
+    "accomNo": "No, help me",
+    "accomNoDesc": "We can hint an area",
+    "accomYes": "Yes, I do",
+    "accomYesDesc": "Hotel or apartment booked",
+    "tripTypes": {
+      "beach": "Beach",
+      "party": "Party / Nightlife",
+      "cultural": "Cultural",
+      "food": "Food & Gastronomy",
+      "relax": "Relax",
+      "nature": "Nature",
+      "romantic": "Romantic",
+      "family": "Family",
+      "adventure": "Adventure",
+      "special": "Special events"
+    }
   },
   "trip": {
     "metaTitle": "Your itinerary – Itineraya",
@@ -348,7 +368,9 @@
     "knowTitle": "I know where I want to go",
     "knowDesc": "Tell us your destination and we'll build the itinerary.",
     "inspireTitle": "Help me choose a destination",
-    "inspireDesc": "Answer a few questions and we'll recommend 3 perfect destinations."
+    "inspireDesc": "Answer a few questions and we'll recommend 3 perfect destinations.",
+    "copilotTitle": "I'm already traveling",
+    "copilotDesc": "Switch on the live copilot for on-the-go suggestions."
   },
   "inspire": {
     "back": "Back",
@@ -417,6 +439,16 @@
     "label": "Language",
     "es": "Español",
     "en": "English"
+  },
+  "copilot": {
+    "title": "Travel copilot",
+    "subtitle": "You're already on the trip. I'll suggest things to do right now, nearby, with realistic transport.",
+    "destLabel": "Where are you right now?",
+    "destPh": "e.g. Barcelona, Tokyo, Lisbon…",
+    "start": "Start copilot",
+    "headerTitle": "Live copilot",
+    "greeting": "Hi! You're in {{destination}}. Tell me what you feel like and I'll suggest what to do now, nearby, with realistic transport.",
+    "inputPh": "What should I do now? Where to eat nearby?",
+    "thinking": "Thinking…"
   }
 }
-

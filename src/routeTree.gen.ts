@@ -22,6 +22,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedNewTripRouteImport } from './routes/_authenticated/new-trip'
 import { Route as AuthenticatedInspireRouteImport } from './routes/_authenticated/inspire'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCopilotRouteImport } from './routes/_authenticated/copilot'
 import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
 import { Route as AuthenticatedTripTripIdRouteImport } from './routes/_authenticated/trip.$tripId'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -93,6 +94,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCopilotRoute = AuthenticatedCopilotRouteImport.update({
+  id: '/copilot',
+  path: '/copilot',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
   id: '/assistant',
   path: '/assistant',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/email-confirmed': typeof EmailConfirmedRoute
   '/pricing': typeof PricingRoute
   '/assistant': typeof AuthenticatedAssistantRoute
+  '/copilot': typeof AuthenticatedCopilotRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inspire': typeof AuthenticatedInspireRoute
   '/new-trip': typeof AuthenticatedNewTripRoute
@@ -152,6 +159,7 @@ export interface FileRoutesByTo {
   '/email-confirmed': typeof EmailConfirmedRoute
   '/pricing': typeof PricingRoute
   '/assistant': typeof AuthenticatedAssistantRoute
+  '/copilot': typeof AuthenticatedCopilotRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/inspire': typeof AuthenticatedInspireRoute
   '/new-trip': typeof AuthenticatedNewTripRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/email-confirmed': typeof EmailConfirmedRoute
   '/pricing': typeof PricingRoute
   '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
+  '/_authenticated/copilot': typeof AuthenticatedCopilotRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/inspire': typeof AuthenticatedInspireRoute
   '/_authenticated/new-trip': typeof AuthenticatedNewTripRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/email-confirmed'
     | '/pricing'
     | '/assistant'
+    | '/copilot'
     | '/dashboard'
     | '/inspire'
     | '/new-trip'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/email-confirmed'
     | '/pricing'
     | '/assistant'
+    | '/copilot'
     | '/dashboard'
     | '/inspire'
     | '/new-trip'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/email-confirmed'
     | '/pricing'
     | '/_authenticated/assistant'
+    | '/_authenticated/copilot'
     | '/_authenticated/dashboard'
     | '/_authenticated/inspire'
     | '/_authenticated/new-trip'
@@ -360,6 +372,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/copilot': {
+      id: '/_authenticated/copilot'
+      path: '/copilot'
+      fullPath: '/copilot'
+      preLoaderRoute: typeof AuthenticatedCopilotRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/assistant': {
       id: '/_authenticated/assistant'
       path: '/assistant'
@@ -407,6 +426,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
+  AuthenticatedCopilotRoute: typeof AuthenticatedCopilotRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInspireRoute: typeof AuthenticatedInspireRoute
   AuthenticatedNewTripRoute: typeof AuthenticatedNewTripRoute
@@ -417,6 +437,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
+  AuthenticatedCopilotRoute: AuthenticatedCopilotRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInspireRoute: AuthenticatedInspireRoute,
   AuthenticatedNewTripRoute: AuthenticatedNewTripRoute,
