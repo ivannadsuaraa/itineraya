@@ -1,12 +1,10 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import {
   ArrowLeft,
   ArrowRight,
-  CalendarIcon,
   Loader2,
   Sparkles,
   User,
@@ -19,12 +17,12 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
+import { DateRangeField, type DateRange } from "@/components/DateRangeField";
 
 const searchSchema = z.object({ prefill: z.string().optional() });
 
@@ -270,22 +268,20 @@ function OnboardingPage() {
 
               {currentStepId === "dates" && (
                 <StepShell emoji="📅" title={t("onboarding.datesTitle")} subtitle={t("onboarding.datesSubtitle")}>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <DateField
-                      label={t("onboarding.dateStart")}
-                      pickLabel={t("onboarding.datePick")}
-                      value={data.startDate}
-                      onChange={(d) => setData({ ...data, startDate: d })}
-                      locale={dateLocale}
-                    />
-                    <DateField
-                      label={t("onboarding.dateEnd")}
-                      pickLabel={t("onboarding.datePick")}
-                      value={data.endDate}
-                      onChange={(d) => setData({ ...data, endDate: d })}
-                      minDate={data.startDate}
-                      locale={dateLocale}
-                    />
+                  <DateRangeField
+                    value={
+                      data.startDate || data.endDate
+                        ? ({ from: data.startDate, to: data.endDate } as DateRange)
+                        : undefined
+                    }
+                    onChange={(r) => setData({ ...data, startDate: r?.from, endDate: r?.to })}
+                    locale={dateLocale}
+                    startLabel={t("onboardingDates.rangeStart")}
+                    endLabel={t("onboardingDates.rangeEnd")}
+                    placeholder={t("onboardingDates.rangePlaceholder")}
+                    nightsLabel={(n) => t("trip.nights", { count: n })}
+                  />
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <TimeField
                       label={t("onboarding.arrivalTime")}
                       value={data.arrivalTime}
@@ -486,52 +482,6 @@ function OptionCard({
   );
 }
 
-function DateField({
-  label,
-  pickLabel,
-  value,
-  onChange,
-  minDate,
-  locale,
-}: {
-  label: string;
-  pickLabel: string;
-  value?: Date;
-  onChange: (d: Date | undefined) => void;
-  minDate?: Date;
-  locale: typeof es;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-sky-700">{label}</span>
-      <Popover>
-        <PopoverTrigger asChild>
-          <button
-            type="button"
-            className={cn(
-              "flex w-full items-center gap-3 rounded-2xl border border-sky-200 bg-white/70 px-4 py-3.5 text-left text-sm transition-all hover:bg-white",
-              !value && "text-sky-400",
-            )}
-          >
-            <CalendarIcon className="h-4 w-4 text-sky-500" />
-            {value ? format(value, "PPP", { locale }) : pickLabel}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={value}
-            onSelect={onChange}
-            disabled={minDate ? (d) => d < minDate : undefined}
-            initialFocus
-            locale={locale}
-            className={cn("p-3 pointer-events-auto")}
-          />
-        </PopoverContent>
-      </Popover>
-    </label>
-  );
-}
 
 function TimeField({
   label,

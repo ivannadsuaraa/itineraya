@@ -234,6 +234,7 @@ export type Database = {
           hero_image_url: string | null
           id: string
           itinerary: Json | null
+          share_slug: string | null
           start_date: string | null
           status: string
           trip_style: string | null
@@ -252,6 +253,7 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           itinerary?: Json | null
+          share_slug?: string | null
           start_date?: string | null
           status?: string
           trip_style?: string | null
@@ -270,6 +272,7 @@ export type Database = {
           hero_image_url?: string | null
           id?: string
           itinerary?: Json | null
+          share_slug?: string | null
           start_date?: string | null
           status?: string
           trip_style?: string | null
