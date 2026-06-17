@@ -257,10 +257,64 @@ function DashboardPage() {
             </div>
           )}
         </section>
+
+        {saved && saved.length > 0 && (
+          <section className="mt-10">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold text-sky-900">
+              <Bookmark className="h-5 w-5 text-[#1E6B9A]" />
+              {t("dashboard.saved")}
+            </h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {saved.map((s) => (
+                <div
+                  key={s.id}
+                  className="group relative overflow-hidden rounded-3xl bg-white/85 shadow-lg ring-1 ring-white/60 backdrop-blur-xl"
+                >
+                  <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
+                    <div className="relative h-36 w-full overflow-hidden">
+                      {s.hero_image_url ? (
+                        <img src={s.hero_image_url} alt={s.destination} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4 text-white">
+                        <div className="flex items-center gap-1.5 text-xs opacity-90">
+                          <MapPin className="h-3 w-3" />
+                          <span className="truncate">{s.destination}</span>
+                        </div>
+                        <div className="font-display text-lg font-bold drop-shadow">{s.destination}</div>
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() => remixSaved(s)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-2 text-xs font-bold text-white shadow"
+                    >
+                      <Wand2 className="h-3.5 w-3.5" />
+                      {t("dashboard.savedRemix")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSaved(s.id)}
+                      aria-label={t("dashboard.savedRemove")}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/70 text-sky-700 ring-1 ring-sky-200 hover:bg-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
 }
+
 
 function Countdown({ trip, locale }: { trip: Trip; locale: Locale }) {
   const { t } = useTranslation();
