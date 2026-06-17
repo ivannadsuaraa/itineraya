@@ -12,10 +12,13 @@ export const Route = createFileRoute("/trip/$slug")({
   },
   head: ({ loaderData, params }) => {
     if (!loaderData) return { meta: [{ title: "Itineraya" }] };
-    const days = loaderData.days?.length ?? 0;
-    const title = `${loaderData.destination} · ${days} días · Itineraya`;
-    const desc = loaderData.summary ?? `Itinerario de viaje personalizado a ${loaderData.destination}.`;
+    const dest = loaderData.destination;
+    const title = `Itineraya — ${dest} Travel Itinerary`;
+    const desc = loaderData.summary ?? `Personalized AI travel itinerary for ${dest}`;
     const url = `https://itineraya.com/trip/${params.slug}`;
+    const image =
+      loaderData.hero_image_url ??
+      `https://source.unsplash.com/1200x630/?${encodeURIComponent(dest + ",travel")}`;
     return {
       meta: [
         { title },
@@ -24,13 +27,10 @@ export const Route = createFileRoute("/trip/$slug")({
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
         { property: "og:type", content: "article" },
-        ...(loaderData.hero_image_url
-          ? [
-              { property: "og:image", content: loaderData.hero_image_url },
-              { name: "twitter:image", content: loaderData.hero_image_url },
-              { name: "twitter:card", content: "summary_large_image" },
-            ]
-          : []),
+        { property: "og:image", content: image },
+        { property: "og:image:width", content: "1200" },
+        { property: "og:image:height", content: "630" },
+        { property: "og:image:alt", content: `${dest} — Itineraya` },
       ],
       links: [{ rel: "canonical", href: url }],
     };

@@ -99,13 +99,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "Itineraya — Tu itinerario de viaje personalizado con IA" },
       { property: "og:locale", content: "es_ES" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Itineraya — Tu itinerario de viaje personalizado con IA" },
-      {
-        name: "twitter:description",
-        content: "Genera tu itinerario de viaje perfecto en segundos con inteligencia artificial",
-      },
-      { name: "twitter:image", content: "https://itineraya.com/og-image.jpg" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
