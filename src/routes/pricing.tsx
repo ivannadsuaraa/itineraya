@@ -55,11 +55,11 @@ function PricingPage() {
       period: t("pricing.free.period"),
       features: [
         t("pricing.free.f1"),
-        t("pricing.free.f2"),
         t("pricing.free.f3"),
         t("pricing.free.f4"),
         t("pricing.free.f5"),
       ],
+
       cta: t("pricing.startFree"),
     },
     {
@@ -70,12 +70,12 @@ function PricingPage() {
       period: t("pricing.perYear"),
       features: [
         t("pricing.viajero.f1"),
-        t("pricing.viajero.f2"),
         t("pricing.viajero.f3"),
         t("pricing.viajero.f4"),
         t("pricing.viajero.f5"),
         t("pricing.viajero.f6"),
       ],
+
       cta: t("pricing.choose"),
       priceId: "viajero_yearly",
       highlighted: true,
