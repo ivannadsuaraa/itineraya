@@ -13,6 +13,7 @@ import {
   Map as MapIcon,
 } from "lucide-react";
 import { getDiscoverableTrip } from "@/lib/explore.functions";
+import type { PublicTripDay } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
