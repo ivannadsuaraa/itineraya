@@ -271,7 +271,7 @@ function DiscoverableTripPage() {
           </button>
           <div className="inline-flex items-center justify-center gap-1 rounded-2xl bg-white/70 p-1 ring-1 ring-sky-200 backdrop-blur sm:order-1">
             <button
-              onClick={() => setView("itinerary")}
+              onClick={(e) => switchView("itinerary", e)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
                 view === "itinerary" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
               }`}
@@ -280,7 +280,7 @@ function DiscoverableTripPage() {
               {t("publicTrip.view")}
             </button>
             <button
-              onClick={() => setView("map")}
+              onClick={(e) => switchView("map", e)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
                 view === "map" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
               }`}
