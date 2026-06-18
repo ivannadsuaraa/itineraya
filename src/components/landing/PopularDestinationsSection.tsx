@@ -22,7 +22,7 @@ const DESTINATIONS: Destination[] = [
   { name: "Tailandia", country: "Asia", image: `https://images.unsplash.com/photo-1528181304800-259b08848526${W}`, tag: "Exótica" },
   { name: "Roma", country: "Italia", image: `https://images.unsplash.com/photo-1552832230-c0197dd311b5${W}`, tag: "Historia" },
   { name: "Maldivas", country: "Océano Índico", image: `https://images.unsplash.com/photo-1514282401047-d79a71a590e8${W}`, tag: "Playa de ensueño" },
-  { name: "Islandia", country: "Europa", image: `https://images.unsplash.com/photo-1490080886466-6ea0a78d4f4f${W}`, tag: "Naturaleza" },
+  { name: "Islandia", country: "Europa", image: `https://images.unsplash.com/photo-1539066834018-6fc8d7e7f91c`, tag: "Naturaleza" },
 ];
 
 function encodePrefill(destination: string) {
