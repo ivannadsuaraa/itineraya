@@ -289,6 +289,9 @@ function TripPage() {
       </div>
 
       <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
+        <div className="mb-6">
+          <PublishToggle tripId={trip.id} />
+        </div>
         <AnimatePresence mode="wait">
           {view === "cards" && (
             <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
