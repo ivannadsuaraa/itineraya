@@ -82,6 +82,8 @@ function PublicTripPage() {
   const navigate = useNavigate();
   const trip = Route.useLoaderData();
   const { authed, checked } = useAuthStatus();
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   // Friendly fallback when the trip no longer exists, was unpublished or never existed.
   if (!trip) {
@@ -101,18 +103,15 @@ function PublicTripPage() {
 
   const days = (trip.days ?? []) as PublicTripDay[];
   const nDays = days.length;
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   // Show roughly half the days un-gated; gate the rest behind sign-up.
   const splitIdx = Math.max(1, Math.ceil(nDays / 2));
-  const visibleDays = authed ? days : days.slice(0, splitIdx);
-  const gatedDays = authed ? [] : days.slice(splitIdx);
-  const isLocked = checked && !authed;
+  const visibleDays = checked && !authed ? days.slice(0, splitIdx) : days;
+  const gatedDays = checked && !authed ? days.slice(splitIdx) : [];
 
   // Anything the visitor tries to do while logged-out funnels to /auth.
   const requireAuth = (e?: MouseEvent) => {
-    if (authed) return true;
+    if (!checked || authed) return true;
     e?.preventDefault();
     navigate({ to: "/auth" });
     return false;
