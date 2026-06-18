@@ -416,7 +416,6 @@ function TripCard({
           </Link>
           <Link
             to="/assistant"
-            search={{ tripId: trip.id }}
             className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-700"
             aria-label={t("dashboard.editAi")}
             title={t("dashboard.editAi")}
