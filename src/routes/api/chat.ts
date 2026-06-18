@@ -46,8 +46,8 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages are required", { status: 400 });
         }
 
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        const key = process.env.GEMINI_API_KEY;
+if (!key) return new Response("Missing GEMINI_API_KEY", { status: 500 });
 
         const ctx = tripContext ?? {};
         const contextLines = [
@@ -88,8 +88,8 @@ Contexto del viaje del usuario:
 ${contextLines || "Sin viaje seleccionado todavía."}`;
 
         const gateway = createLovableAiGatewayProvider(key);
-        const result = streamText({
-          model: gateway("google/gemini-3-flash-preview"),
+const result = streamText({
+  model: gateway("google/gemini-2.0-flash"),
           system,
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
