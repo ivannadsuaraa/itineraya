@@ -342,65 +342,16 @@ function PublicTripPage() {
 
         {/* Days */}
         <div className="mt-8 space-y-6">
-          {days.map((day) => (
-            <article key={day.day} className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60">
-              {day.image_url && (
-                <div className="relative h-48 w-full overflow-hidden md:h-64">
-                  <img src={day.image_url} alt={day.title} className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                    <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                      {t("trip.dayLabel", { n: day.day })}
-                    </span>
-                    <h3 className="mt-2 font-display text-2xl font-bold drop-shadow">{day.title}</h3>
-                    {day.subtitle && <p className="text-sm opacity-90">{day.subtitle}</p>}
-                  </div>
-                </div>
-              )}
-              {!day.image_url && (
-                <div className="p-6 pb-2">
-                  <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E6B9A]">
-                    {t("trip.dayLabel", { n: day.day })}
-                  </span>
-                  <h3 className="mt-2 font-display text-2xl font-bold text-sky-900">{day.title}</h3>
-                  {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
-                </div>
-              )}
-
-              <ul className="space-y-3 p-5 md:p-6">
-                {day.activities.map((a, i) => (
-                  <li key={i} className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
-                    <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
-                      <CalendarIcon className="h-3 w-3 opacity-70" />
-                      <span className="mt-0.5 text-xs font-bold leading-none">{a.time}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start gap-2">
-                        <span className="text-lg leading-none">{a.emoji ?? "📍"}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-sky-900">{a.title}</div>
-                          {a.place && (
-                            <div className="truncate text-xs font-medium text-sky-700/90">{a.place}</div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-1 text-sm text-sky-700">{a.description}</div>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((a.place || a.title) + ", " + trip.destination)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 hover:bg-sky-50"
-                      >
-                        <MapPin className="h-3 w-3" />
-                        {t("trip.maps")}
-                      </a>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
+          {visibleDays.map(renderDay)}
         </div>
+
+        {gatedDays.length > 0 && (
+          <div className="mt-6">
+            <PaywallGate>
+              <div className="space-y-6">{gatedDays.map(renderDay)}</div>
+            </PaywallGate>
+          </div>
+        )}
 
         {/* CTA */}
         <div className="mt-12 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] p-8 text-center text-white shadow-2xl md:p-12">
