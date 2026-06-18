@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 export function FooterSection() {
@@ -50,15 +51,15 @@ export function FooterSection() {
               &copy; {new Date().getFullYear()} Itineraya. {t("footer.rights")}
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
+              <Link to="/privacy" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.privacy")}
-              </a>
-              <a href="#" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
+              </Link>
+              <Link to="/terms" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.terms")}
-              </a>
-              <a href="#" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
+              </Link>
+              <Link to="/contact" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.contact")}
-              </a>
+              </Link>
             </div>
           </div>
         </div>
