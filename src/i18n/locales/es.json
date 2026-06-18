@@ -415,7 +415,11 @@
     "inspireTitle": "Ayúdame a elegir destino",
     "inspireDesc": "Responde unas preguntas y te recomendamos 3 destinos perfectos.",
     "copilotTitle": "Ya estoy de viaje",
-    "copilotDesc": "Activa el copiloto en tiempo real para sugerencias sobre la marcha."
+    "copilotDesc": "Activa el copiloto en tiempo real para sugerencias sobre la marcha.",
+    "limitTitle": "Has alcanzado el límite de 1 itinerario en el plan gratuito",
+    "limitDesc": "Actualiza a Viajero para crear itinerarios ilimitados, desbloquear el asistente IA y mucho más.",
+    "limitUpgrade": "Actualizar a plan Viajero",
+    "limitCancel": "Volver"
   },
   "inspire": {
     "back": "Atrás",
