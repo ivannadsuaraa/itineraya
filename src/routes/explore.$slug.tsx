@@ -13,7 +13,7 @@ import {
   Map as MapIcon,
 } from "lucide-react";
 import { getDiscoverableTrip } from "@/lib/explore.functions";
-import type { PublicTripDay } from "@/lib/share.functions";
+import type { PublicTripDay, PublicTripActivity } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
@@ -318,7 +318,7 @@ function DiscoverableTripPage() {
                 )}
 
                 <ul className="space-y-3 p-5 md:p-6">
-                  {day.activities.map((a, i: number) => (
+                  {day.activities.map((a: PublicTripActivity, i: number) => (
                     <li
                       key={i}
                       className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3"
