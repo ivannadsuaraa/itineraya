@@ -17,6 +17,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExploreIndexRouteImport } from './routes/explore.index'
 import { Route as TripSlugRouteImport } from './routes/trip.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -70,6 +71,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreIndexRoute = ExploreIndexRouteImport.update({
+  id: '/explore/',
+  path: '/explore/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TripSlugRoute = TripSlugRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/explore/': typeof ExploreIndexRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/explore': typeof ExploreIndexRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -218,6 +226,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/explore/': typeof ExploreIndexRoute
   '/_authenticated/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -244,6 +253,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/checkout/return'
     | '/trip/$slug'
+    | '/explore/'
     | '/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -268,6 +278,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/checkout/return'
     | '/trip/$slug'
+    | '/explore'
     | '/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/checkout/return'
     | '/trip/$slug'
+    | '/explore/'
     | '/_authenticated/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -312,6 +324,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   TripSlugRoute: typeof TripSlugRoute
+  ExploreIndexRoute: typeof ExploreIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -374,6 +387,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore/': {
+      id: '/explore/'
+      path: '/explore'
+      fullPath: '/explore/'
+      preLoaderRoute: typeof ExploreIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trip/$slug': {
@@ -521,6 +541,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   TripSlugRoute: TripSlugRoute,
+  ExploreIndexRoute: ExploreIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
