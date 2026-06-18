@@ -100,13 +100,41 @@ function DiscoverableTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const trip = Route.useLoaderData();
-  const days = trip.days ?? [];
-  const nDays = days.length;
+  const { authed, checked } = useAuthStatus();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [view, setView] = useState<"itinerary" | "map">("itinerary");
 
-  const handleRemix = () => {
+  if (!trip) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
+        <div className="max-w-md rounded-3xl bg-white/85 p-8 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-3xl">✈️</div>
+          <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">Este itinerario ya no está disponible</h1>
+          <p className="mt-2 text-sky-700">Quizá el autor lo despublicó o el enlace caducó. ¡Pero puedes crear el tuyo en segundos!</p>
+          <Link to="/explore" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#15577E]">
+            Descubrir otros viajes <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const days = trip.days ?? [];
+  const nDays = days.length;
+  const splitIdx = Math.max(1, Math.ceil(nDays / 2));
+  const visibleDays = checked && !authed ? days.slice(0, splitIdx) : days;
+  const gatedDays = checked && !authed ? days.slice(splitIdx) : [];
+
+  const requireAuth = (e?: MouseEvent) => {
+    if (!checked || authed) return true;
+    e?.preventDefault();
+    navigate({ to: "/auth" });
+    return false;
+  };
+
+  const handleRemix = (e?: MouseEvent) => {
+    if (!requireAuth(e)) return;
     const payload = {
       destination: trip.destination,
       tripTypes: trip.trip_types ?? [],
@@ -119,7 +147,8 @@ function DiscoverableTripPage() {
     navigate({ to: "/onboarding", search: { prefill: encoded } });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e?: MouseEvent) => {
+    if (!requireAuth(e)) return;
     if (saving || saved) return;
     setSaving(true);
     try {
@@ -150,6 +179,11 @@ function DiscoverableTripPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const switchView = (target: "itinerary" | "map", e?: MouseEvent) => {
+    if (target === "map" && !requireAuth(e)) return;
+    setView(target);
   };
 
   return (
