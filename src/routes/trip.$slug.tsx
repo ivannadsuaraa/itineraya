@@ -12,11 +12,20 @@ import logoFull from "@/assets/itineraya-logo.png.asset.json";
 export const Route = createFileRoute("/trip/$slug")({
   loader: async ({ params }) => {
     const trip = await getPublicTrip({ data: { slug: params.slug } });
-    if (!trip) throw notFound();
-    return trip;
+    return trip; // may be null — handled in component with a friendly screen
   },
   head: ({ loaderData, params }) => {
-    if (!loaderData) return { meta: [{ title: "Itineraya" }] };
+    if (!loaderData) {
+      const url = `https://itineraya.com/trip/${params.slug}`;
+      return {
+        meta: [
+          { title: "Itineraya — Itinerario no disponible" },
+          { name: "robots", content: "noindex" },
+          { property: "og:title", content: "Itineraya" },
+          { property: "og:url", content: url },
+        ],
+      };
+    }
     const dest = loaderData.destination;
     const title = `Itineraya — ${dest} Travel Itinerary`;
     const desc = loaderData.summary ?? `Personalized AI travel itinerary for ${dest}`;
