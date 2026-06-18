@@ -1,8 +1,7 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Map, Plus, Sparkles, Compass, User, LogOut } from "lucide-react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Map, Plus, Sparkles, Compass, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
 import logoMark from "@/assets/itineraya-mark.svg";
 
 export type NavItem = {
