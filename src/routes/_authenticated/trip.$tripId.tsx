@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { ShareDialog } from "@/components/trip/ShareDialog";
+import { PublishToggle } from "@/components/trip/PublishToggle";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
