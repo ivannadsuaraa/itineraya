@@ -25,6 +25,7 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
+    { label: t("nav.explore"), href: "/explore" },
     { label: t("nav.howItWorks"), href: "#how-it-works" },
     { label: t("nav.features"), href: "#features" },
     { label: t("nav.pricing"), href: "/pricing" },

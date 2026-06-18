@@ -17,7 +17,9 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ExploreIndexRouteImport } from './routes/explore.index'
 import { Route as TripSlugRouteImport } from './routes/trip.$slug'
+import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
@@ -72,9 +74,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExploreIndexRoute = ExploreIndexRouteImport.update({
+  id: '/explore/',
+  path: '/explore/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TripSlugRoute = TripSlugRouteImport.update({
   id: '/trip/$slug',
   path: '/trip/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreSlugRoute = ExploreSlugRouteImport.update({
+  id: '/explore/$slug',
+  path: '/explore/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
@@ -167,7 +179,9 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/explore/$slug': typeof ExploreSlugRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/explore/': typeof ExploreIndexRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -191,7 +205,9 @@ export interface FileRoutesByTo {
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/explore/$slug': typeof ExploreSlugRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/explore': typeof ExploreIndexRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -217,7 +233,9 @@ export interface FileRoutesById {
   '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
+  '/explore/$slug': typeof ExploreSlugRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/explore/': typeof ExploreIndexRoute
   '/_authenticated/trip/$tripId': typeof AuthenticatedTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -243,7 +261,9 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
+    | '/explore/$slug'
     | '/trip/$slug'
+    | '/explore/'
     | '/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -267,7 +287,9 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
+    | '/explore/$slug'
     | '/trip/$slug'
+    | '/explore'
     | '/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -292,7 +314,9 @@ export interface FileRouteTypes {
     | '/_authenticated/welcome'
     | '/api/chat'
     | '/checkout/return'
+    | '/explore/$slug'
     | '/trip/$slug'
+    | '/explore/'
     | '/_authenticated/trip/$tripId'
     | '/api/public/payments/webhook'
     | '/lovable/email/auth/preview'
@@ -311,7 +335,9 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
+  ExploreSlugRoute: typeof ExploreSlugRoute
   TripSlugRoute: typeof TripSlugRoute
+  ExploreIndexRoute: typeof ExploreIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -376,11 +402,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explore/': {
+      id: '/explore/'
+      path: '/explore'
+      fullPath: '/explore/'
+      preLoaderRoute: typeof ExploreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trip/$slug': {
       id: '/trip/$slug'
       path: '/trip/$slug'
       fullPath: '/trip/$slug'
       preLoaderRoute: typeof TripSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore/$slug': {
+      id: '/explore/$slug'
+      path: '/explore/$slug'
+      fullPath: '/explore/$slug'
+      preLoaderRoute: typeof ExploreSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout/return': {
@@ -520,7 +560,9 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
+  ExploreSlugRoute: ExploreSlugRoute,
   TripSlugRoute: TripSlugRoute,
+  ExploreIndexRoute: ExploreIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

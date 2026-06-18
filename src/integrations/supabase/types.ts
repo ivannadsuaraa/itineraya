@@ -270,7 +270,9 @@ export type Database = {
           has_accommodation: boolean
           hero_image_url: string | null
           id: string
+          is_public: boolean
           itinerary: Json | null
+          published_at: string | null
           share_slug: string | null
           start_date: string | null
           status: string
@@ -292,7 +294,9 @@ export type Database = {
           has_accommodation?: boolean
           hero_image_url?: string | null
           id?: string
+          is_public?: boolean
           itinerary?: Json | null
+          published_at?: string | null
           share_slug?: string | null
           start_date?: string | null
           status?: string
@@ -314,7 +318,9 @@ export type Database = {
           has_accommodation?: boolean
           hero_image_url?: string | null
           id?: string
+          is_public?: boolean
           itinerary?: Json | null
+          published_at?: string | null
           share_slug?: string | null
           start_date?: string | null
           status?: string

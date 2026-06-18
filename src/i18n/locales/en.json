@@ -6,7 +6,8 @@
     "login": "Log in",
     "startFree": "Start free",
     "myTrips": "My trips",
-    "toggleMenu": "Toggle menu"
+    "toggleMenu": "Toggle menu",
+    "explore": "Explore"
   },
   "popular": {
     "title": "Destinations inspiring trips right now",
@@ -488,5 +489,44 @@
     "greeting": "Hi! You're in {{destination}}. Tell me what you feel like and I'll suggest what to do now, nearby, with realistic transport.",
     "inputPh": "What should I do now? Where to eat nearby?",
     "thinking": "Thinking…"
+  },
+  "explore": {
+    "eyebrow": "Real inspiration",
+    "title": "Discover amazing trips",
+    "subtitle": "Real itineraries from the community. Get inspired and build yours in seconds.",
+    "searchPlaceholder": "Search destination (Bali, Tokyo, Paris…)",
+    "style": {
+      "all": "All styles",
+      "adventure": "Adventure",
+      "relax": "Relax",
+      "cultural": "Cultural",
+      "romantic": "Romantic",
+      "family": "Family",
+      "party": "Party",
+      "nature": "Nature"
+    },
+    "duration": {
+      "all": "Any duration",
+      "short": "Short (1–4 days)",
+      "medium": "Medium (5–9 days)",
+      "long": "Long (10+ days)"
+    },
+    "empty": "No published trips yet",
+    "emptyHint": "When travelers publish their itineraries, they'll appear here.",
+    "cardTitle": "{{days}} days in {{destination}}",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "remix": "Remix",
+    "view": "View trip",
+    "viralCta": "Build yours in 10 seconds",
+    "heroEyebrow": "Itinerary shared by the community"
+  },
+  "publish": {
+    "title": "Publish as inspiration",
+    "subtitle": "Share this trip on Itineraya's public feed and inspire other travelers.",
+    "enabled": "Published to public feed",
+    "disabled": "Trip unpublished",
+    "error": "Could not update visibility",
+    "viewPublic": "Open public page"
   }
 }
