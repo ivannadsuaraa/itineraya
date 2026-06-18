@@ -1,5 +1,5 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
   MapPin,
@@ -16,6 +16,8 @@ import { getDiscoverableTrip } from "@/lib/explore.functions";
 import type { PublicTripDay, PublicTripActivity } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthStatus } from "@/lib/use-auth-status";
+import { PaywallGate } from "@/components/trip/PaywallGate";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 const TripMap = lazy(() =>
@@ -25,11 +27,10 @@ const TripMap = lazy(() =>
 export const Route = createFileRoute("/explore/$slug")({
   loader: async ({ params }) => {
     const trip = await getDiscoverableTrip({ data: { slug: params.slug } });
-    if (!trip) throw notFound();
-    return trip;
+    return trip; // may be null — handled in component
   },
   head: ({ loaderData, params }) => {
-    if (!loaderData) return { meta: [{ title: "Itineraya" }] };
+    if (!loaderData) return { meta: [{ title: "Itineraya — Itinerario no disponible" }, { name: "robots", content: "noindex" }] };
     const dest = loaderData.destination;
     const nDays = loaderData.days?.length ?? 0;
     const title = nDays
@@ -99,13 +100,41 @@ function DiscoverableTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const trip = Route.useLoaderData();
-  const days = trip.days ?? [];
-  const nDays = days.length;
+  const { authed, checked } = useAuthStatus();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [view, setView] = useState<"itinerary" | "map">("itinerary");
 
-  const handleRemix = () => {
+  if (!trip) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
+        <div className="max-w-md rounded-3xl bg-white/85 p-8 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-3xl">✈️</div>
+          <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">Este itinerario ya no está disponible</h1>
+          <p className="mt-2 text-sky-700">Quizá el autor lo despublicó o el enlace caducó. ¡Pero puedes crear el tuyo en segundos!</p>
+          <Link to="/explore" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#15577E]">
+            Descubrir otros viajes <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const days = trip.days ?? [];
+  const nDays = days.length;
+  const splitIdx = Math.max(1, Math.ceil(nDays / 2));
+  const visibleDays = checked && !authed ? days.slice(0, splitIdx) : days;
+  const gatedDays = checked && !authed ? days.slice(splitIdx) : [];
+
+  const requireAuth = (e?: MouseEvent) => {
+    if (!checked || authed) return true;
+    e?.preventDefault();
+    navigate({ to: "/auth" });
+    return false;
+  };
+
+  const handleRemix = (e?: MouseEvent) => {
+    if (!requireAuth(e)) return;
     const payload = {
       destination: trip.destination,
       tripTypes: trip.trip_types ?? [],
@@ -118,7 +147,8 @@ function DiscoverableTripPage() {
     navigate({ to: "/onboarding", search: { prefill: encoded } });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e?: MouseEvent) => {
+    if (!requireAuth(e)) return;
     if (saving || saved) return;
     setSaving(true);
     try {
@@ -150,6 +180,70 @@ function DiscoverableTripPage() {
       setSaving(false);
     }
   };
+
+  const switchView = (target: "itinerary" | "map", e?: MouseEvent) => {
+    if (target === "map" && !requireAuth(e)) return;
+    setView(target);
+  };
+
+  const renderDay = (day: PublicTripDay) => (
+    <article key={day.day} className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60">
+      {day.image_url ? (
+        <div className="relative h-48 w-full overflow-hidden md:h-64">
+          <img src={day.image_url} alt={day.title} className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
+            <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
+              {t("trip.dayLabel", { n: day.day })}
+            </span>
+            <h3 className="mt-2 font-display text-2xl font-bold drop-shadow">{day.title}</h3>
+            {day.subtitle && <p className="text-sm opacity-90">{day.subtitle}</p>}
+          </div>
+        </div>
+      ) : (
+        <div className="p-6 pb-2">
+          <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E6B9A]">
+            {t("trip.dayLabel", { n: day.day })}
+          </span>
+          <h3 className="mt-2 font-display text-2xl font-bold text-sky-900">{day.title}</h3>
+          {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
+        </div>
+      )}
+      <ul className="space-y-3 p-5 md:p-6">
+        {day.activities.map((a: PublicTripActivity, i: number) => (
+          <li key={i} className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
+            <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
+              <CalendarIcon className="h-3 w-3 opacity-70" />
+              <span className="mt-0.5 text-xs font-bold leading-none">{a.time}</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start gap-2">
+                <span className="text-lg leading-none">{a.emoji ?? "📍"}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-sky-900">{a.title}</div>
+                  {a.place && (
+                    <div className="truncate text-xs font-medium text-sky-700/90">{a.place}</div>
+                  )}
+                </div>
+              </div>
+              <div className="mt-1 text-sm text-sky-700">{a.description}</div>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((a.place || a.title) + ", " + trip.destination)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => requireAuth(e)}
+                className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 hover:bg-sky-50"
+              >
+                <MapPin className="h-3 w-3" />
+                {t("trip.maps")}
+              </a>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
@@ -236,7 +330,7 @@ function DiscoverableTripPage() {
           </button>
           <div className="inline-flex items-center justify-center gap-1 rounded-2xl bg-white/70 p-1 ring-1 ring-sky-200 backdrop-blur sm:order-1">
             <button
-              onClick={() => setView("itinerary")}
+              onClick={(e) => switchView("itinerary", e)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
                 view === "itinerary" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
               }`}
@@ -245,7 +339,7 @@ function DiscoverableTripPage() {
               {t("publicTrip.view")}
             </button>
             <button
-              onClick={() => setView("map")}
+              onClick={(e) => switchView("map", e)}
               className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold transition ${
                 view === "map" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
               }`}
@@ -277,89 +371,16 @@ function DiscoverableTripPage() {
             <TripMap destination={trip.destination} days={days} tripId={trip.slug} />
           </Suspense>
         ) : (
-          <div className="mt-8 space-y-6">
-            {days.map((day: PublicTripDay) => (
-              <article
-                key={day.day}
-                className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60"
-              >
-                {day.image_url ? (
-                  <div className="relative h-48 w-full overflow-hidden md:h-64">
-                    <img
-                      src={day.image_url}
-                      alt={day.title}
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-                      <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                        {t("trip.dayLabel", { n: day.day })}
-                      </span>
-                      <h3 className="mt-2 font-display text-2xl font-bold drop-shadow">
-                        {day.title}
-                      </h3>
-                      {day.subtitle && (
-                        <p className="text-sm opacity-90">{day.subtitle}</p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-6 pb-2">
-                    <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E6B9A]">
-                      {t("trip.dayLabel", { n: day.day })}
-                    </span>
-                    <h3 className="mt-2 font-display text-2xl font-bold text-sky-900">
-                      {day.title}
-                    </h3>
-                    {day.subtitle && (
-                      <p className="text-sm text-sky-600">{day.subtitle}</p>
-                    )}
-                  </div>
-                )}
-
-                <ul className="space-y-3 p-5 md:p-6">
-                  {day.activities.map((a: PublicTripActivity, i: number) => (
-                    <li
-                      key={i}
-                      className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3"
-                    >
-                      <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
-                        <CalendarIcon className="h-3 w-3 opacity-70" />
-                        <span className="mt-0.5 text-xs font-bold leading-none">
-                          {a.time}
-                        </span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start gap-2">
-                          <span className="text-lg leading-none">{a.emoji ?? "📍"}</span>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-sky-900">{a.title}</div>
-                            {a.place && (
-                              <div className="truncate text-xs font-medium text-sky-700/90">
-                                {a.place}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="mt-1 text-sm text-sky-700">{a.description}</div>
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                            (a.place || a.title) + ", " + trip.destination,
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 hover:bg-sky-50"
-                        >
-                          <MapPin className="h-3 w-3" />
-                          {t("trip.maps")}
-                        </a>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
+          <>
+            <div className="mt-8 space-y-6">{visibleDays.map(renderDay)}</div>
+            {gatedDays.length > 0 && (
+              <div className="mt-6">
+                <PaywallGate>
+                  <div className="space-y-6">{gatedDays.map(renderDay)}</div>
+                </PaywallGate>
+              </div>
+            )}
+          </>
         )}
 
         <div className="mt-12 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] p-8 text-center text-white shadow-2xl md:p-12">

@@ -368,6 +368,12 @@
     "saveError": "No se pudo guardar",
     "saveLoginPrompt": "Inicia sesión para guardar inspiraciones"
   },
+  "paywall": {
+    "title": "Regístrate gratis para ver el itinerario completo",
+    "subtitle": "Crea una cuenta en segundos y desbloquea el resto de días, mapa interactivo y crea el tuyo propio.",
+    "cta": "Crear cuenta gratis",
+    "footer": "Sin tarjeta · En 10 segundos"
+  },
   "onboardingDates": {
     "rangeStart": "Llegada",
     "rangeEnd": "Vuelta",

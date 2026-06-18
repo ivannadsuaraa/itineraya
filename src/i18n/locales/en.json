@@ -368,6 +368,12 @@
     "saveError": "Could not save",
     "saveLoginPrompt": "Sign in to save inspirations"
   },
+  "paywall": {
+    "title": "Sign up free to see the full itinerary",
+    "subtitle": "Create an account in seconds and unlock the rest of the days, interactive map and build your own.",
+    "cta": "Create free account",
+    "footer": "No card · In 10 seconds"
+  },
   "onboardingDates": {
     "rangeStart": "Check-in",
     "rangeEnd": "Check-out",
