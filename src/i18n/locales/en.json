@@ -209,7 +209,24 @@
     "saved": "Saved",
     "savedEmpty": "No saved inspirations yet. Explore shared trips and save the ones that inspire you.",
     "savedRemix": "Remix",
-    "savedRemove": "Remove"
+    "savedRemove": "Remove",
+    "view": "View",
+    "editAi": "Edit with AI",
+    "share": "Share",
+    "inspirationTitle": "In-season inspiration",
+    "inspirationSub": "Destinations at their best right now.",
+    "plan": "Plan it",
+    "countdown": "In",
+    "weatherNow": "Weather now",
+    "upcoming": "Upcoming",
+    "past": "Past"
+  },
+  "sidebar": {
+    "trips": "My trips",
+    "create": "New trip",
+    "assistant": "AI Assistant",
+    "inspire": "Inspiration",
+    "profile": "Profile"
   },
   "onboarding": {
     "metaTitle": "Tell us about your trip – Itineraya",
