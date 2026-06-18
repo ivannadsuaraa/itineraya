@@ -8,6 +8,16 @@
     "myTrips": "Mis viajes",
     "toggleMenu": "Abrir menú"
   },
+  "popular": {
+    "title": "Destinos que están inspirando viajes",
+    "subtitle": "Elige uno y te generamos un itinerario personalizado en segundos.",
+    "badge": "Tendencia",
+    "cta": "Planificar viaje",
+    "modalTitle": "Crea tu cuenta para planificar {{dest}}",
+    "modalDesc": "Es gratis. En menos de un minuto tendrás tu itinerario listo y guardado.",
+    "modalSignup": "Crear cuenta gratis",
+    "modalLogin": "Ya tengo cuenta"
+  },
   "hero": {
     "badge": "Impulsado por Inteligencia Artificial",
     "title1": "Tu viaje perfecto,",
