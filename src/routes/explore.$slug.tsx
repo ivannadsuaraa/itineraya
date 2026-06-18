@@ -278,7 +278,7 @@ function DiscoverableTripPage() {
           </Suspense>
         ) : (
           <div className="mt-8 space-y-6">
-            {days.map((day) => (
+            {days.map((day: PublicTripDay) => (
               <article
                 key={day.day}
                 className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60"
@@ -318,7 +318,7 @@ function DiscoverableTripPage() {
                 )}
 
                 <ul className="space-y-3 p-5 md:p-6">
-                  {day.activities.map((a, i) => (
+                  {day.activities.map((a, i: number) => (
                     <li
                       key={i}
                       className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3"
