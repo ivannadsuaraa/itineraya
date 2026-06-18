@@ -209,7 +209,24 @@
     "saved": "Guardados",
     "savedEmpty": "Aún no tienes inspiraciones guardadas. Explora viajes compartidos y guarda los que te inspiren.",
     "savedRemix": "Remix",
-    "savedRemove": "Quitar"
+    "savedRemove": "Quitar",
+    "view": "Ver",
+    "editAi": "Editar con IA",
+    "share": "Compartir",
+    "inspirationTitle": "Inspiración para esta época",
+    "inspirationSub": "Destinos que están en su mejor momento ahora mismo.",
+    "plan": "Planificar",
+    "countdown": "Faltan",
+    "weatherNow": "Clima ahora",
+    "upcoming": "Próximo",
+    "past": "Pasado"
+  },
+  "sidebar": {
+    "trips": "Mis viajes",
+    "create": "Crear viaje",
+    "assistant": "Asistente IA",
+    "inspire": "Inspiración",
+    "profile": "Perfil"
   },
   "onboarding": {
     "metaTitle": "Cuéntanos sobre tu viaje – Itineraya",
