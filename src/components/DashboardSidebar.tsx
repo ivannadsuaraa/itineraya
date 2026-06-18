@@ -72,11 +72,6 @@ export function DashboardSidebar() {
 export function MobileBottomBar() {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const items: NavItem[] = [
-    ...NAV_ITEMS,
-    { to: "/dashboard", labelKey: "sidebar.profile", icon: User },
-  ];
-  // dedupe by to+label
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur-xl">
       <ul className="grid grid-cols-4">
