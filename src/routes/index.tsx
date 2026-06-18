@@ -30,6 +30,7 @@ function LandingPage() {
     <div className="min-h-screen bg-white">
       <Navbar />
       <HeroSection />
+      <PopularDestinationsSection />
       <HowItWorksSection />
       <FeaturesSection />
       <TestimonialsSection />
