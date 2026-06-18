@@ -1,5 +1,5 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { lazy, Suspense, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import {
   MapPin,
@@ -16,6 +16,8 @@ import { getDiscoverableTrip } from "@/lib/explore.functions";
 import type { PublicTripDay, PublicTripActivity } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthStatus } from "@/lib/use-auth-status";
+import { PaywallGate } from "@/components/trip/PaywallGate";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 const TripMap = lazy(() =>
@@ -25,11 +27,10 @@ const TripMap = lazy(() =>
 export const Route = createFileRoute("/explore/$slug")({
   loader: async ({ params }) => {
     const trip = await getDiscoverableTrip({ data: { slug: params.slug } });
-    if (!trip) throw notFound();
-    return trip;
+    return trip; // may be null — handled in component
   },
   head: ({ loaderData, params }) => {
-    if (!loaderData) return { meta: [{ title: "Itineraya" }] };
+    if (!loaderData) return { meta: [{ title: "Itineraya — Itinerario no disponible" }, { name: "robots", content: "noindex" }] };
     const dest = loaderData.destination;
     const nDays = loaderData.days?.length ?? 0;
     const title = nDays
