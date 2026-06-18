@@ -81,10 +81,42 @@ function PublicTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const trip = Route.useLoaderData();
+  const { authed, checked } = useAuthStatus();
+
+  // Friendly fallback when the trip no longer exists, was unpublished or never existed.
+  if (!trip) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
+        <div className="max-w-md rounded-3xl bg-white/85 p-8 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-3xl">✈️</div>
+          <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">Este itinerario ya no está disponible</h1>
+          <p className="mt-2 text-sky-700">Quizá el autor lo despublicó o el enlace caducó. ¡Pero puedes crear el tuyo en segundos!</p>
+          <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#15577E]">
+            Crear mi itinerario gratis <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const days = (trip.days ?? []) as PublicTripDay[];
   const nDays = days.length;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Show roughly half the days un-gated; gate the rest behind sign-up.
+  const splitIdx = Math.max(1, Math.ceil(nDays / 2));
+  const visibleDays = authed ? days : days.slice(0, splitIdx);
+  const gatedDays = authed ? [] : days.slice(splitIdx);
+  const isLocked = checked && !authed;
+
+  // Anything the visitor tries to do while logged-out funnels to /auth.
+  const requireAuth = (e?: MouseEvent) => {
+    if (authed) return true;
+    e?.preventDefault();
+    navigate({ to: "/auth" });
+    return false;
+  };
 
   // Infer canonical trip-type ids from saved itinerary categories (best-effort).
   const inferTripTypes = (): string[] => {
