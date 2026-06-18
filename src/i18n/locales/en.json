@@ -8,6 +8,16 @@
     "myTrips": "My trips",
     "toggleMenu": "Toggle menu"
   },
+  "popular": {
+    "title": "Destinations inspiring trips right now",
+    "subtitle": "Pick one and we'll build a personalized itinerary in seconds.",
+    "badge": "Trending",
+    "cta": "Plan this trip",
+    "modalTitle": "Create your account to plan {{dest}}",
+    "modalDesc": "It's free. In under a minute your itinerary will be ready and saved.",
+    "modalSignup": "Create free account",
+    "modalLogin": "I already have an account"
+  },
   "hero": {
     "badge": "Powered by Artificial Intelligence",
     "title1": "Your perfect trip,",
