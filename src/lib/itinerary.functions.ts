@@ -62,8 +62,8 @@ if ((count ?? 0) >= 1) {
       return { itinerary: trip.itinerary, hero_image_url: trip.hero_image_url };
     }
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) throw new Error("Missing GEMINI_API_KEY");
 
     // Load user profile (language, age, travel_style, budget_range, preferred_destinations)
     const { data: profile } = await supabase
@@ -228,37 +228,35 @@ ${hasAccommodation ? '- DO NOT use category "hotel" for any activity.' : ""}
 Return pure JSON only.`;
 
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
+    const aiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
+              {
+                text: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
+              },
+            ],
           },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
+        }),
+      },
+    );
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
       if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
-      if (aiRes.status === 402) throw new Error("Créditos de IA agotados. Recarga tu plan.");
-      throw new Error(`Error IA ${aiRes.status}: ${text.slice(0, 200)}`);
+      throw new Error(`Error Gemini ${aiRes.status}: ${text.slice(0, 200)}`);
     }
 
     const aiJson = (await aiRes.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
     };
-    const content = aiJson.choices?.[0]?.message?.content;
+    const content = aiJson.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
     if (!content) throw new Error("Respuesta vacía del modelo");
 
     type ParsedActivity = {
