@@ -6,7 +6,8 @@
     "login": "Iniciar sesión",
     "startFree": "Empieza gratis",
     "myTrips": "Mis viajes",
-    "toggleMenu": "Abrir menú"
+    "toggleMenu": "Abrir menú",
+    "explore": "Descubre"
   },
   "popular": {
     "title": "Destinos que están inspirando viajes",
@@ -488,5 +489,44 @@
     "greeting": "¡Hola! Estás en {{destination}}. Cuéntame qué te apetece y te sugiero qué hacer ahora, cerca, con transporte realista.",
     "inputPh": "¿Qué hago ahora? ¿Dónde ceno cerca?",
     "thinking": "Pensando…"
+  },
+  "explore": {
+    "eyebrow": "Inspiración real",
+    "title": "Descubre viajes increíbles",
+    "subtitle": "Itinerarios reales creados por la comunidad. Inspírate y crea el tuyo en segundos.",
+    "searchPlaceholder": "Buscar destino (Bali, Tokio, París…)",
+    "style": {
+      "all": "Todos los estilos",
+      "adventure": "Aventura",
+      "relax": "Relax",
+      "cultural": "Cultural",
+      "romantic": "Romántico",
+      "family": "Familiar",
+      "party": "Fiesta",
+      "nature": "Naturaleza"
+    },
+    "duration": {
+      "all": "Cualquier duración",
+      "short": "Corto (1–4 días)",
+      "medium": "Medio (5–9 días)",
+      "long": "Largo (10+ días)"
+    },
+    "empty": "Aún no hay viajes publicados",
+    "emptyHint": "Cuando los viajeros publiquen sus itinerarios, aparecerán aquí.",
+    "cardTitle": "{{days}} días en {{destination}}",
+    "days_one": "{{count}} día",
+    "days_other": "{{count}} días",
+    "remix": "Remix",
+    "view": "Ver viaje",
+    "viralCta": "Crea el tuyo en 10 segundos",
+    "heroEyebrow": "Itinerario publicado por la comunidad"
+  },
+  "publish": {
+    "title": "Publicar como inspiración",
+    "subtitle": "Comparte este viaje en el feed público de Itineraya para inspirar a otros.",
+    "enabled": "Publicado en el feed público",
+    "disabled": "Viaje despublicado",
+    "error": "No se pudo actualizar la visibilidad",
+    "viewPublic": "Ver página pública"
   }
 }
