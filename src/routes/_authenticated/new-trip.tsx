@@ -1,8 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, MapPin, Compass, Navigation } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Compass, Navigation, Lock, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { supabase } from "@/integrations/supabase/client";
+import { useSubscription } from "@/hooks/useSubscription";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/new-trip")({
   head: () => ({ meta: [{ title: "Crear viaje – Itineraya" }] }),
@@ -12,6 +16,36 @@ export const Route = createFileRoute("/_authenticated/new-trip")({
 function NewTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isActive, loading: subLoading, userId } = useSubscription();
+  const [tripCount, setTripCount] = useState<number | null>(null);
+  const [showLimit, setShowLimit] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const { count } = await supabase
+        .from("trips")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (!cancelled) setTripCount(count ?? 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  // Free plan = no active paid subscription. If user already has ≥1 trip, block creation.
+  const isFreePlan = !subLoading && !isActive;
+  const overLimit = isFreePlan && (tripCount ?? 0) >= 1;
+
+  const handlePick = (to: "/onboarding" | "/inspire" | "/copilot") => {
+    if (overLimit) {
+      setShowLimit(true);
+      return;
+    }
+    navigate({ to });
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
@@ -59,7 +93,7 @@ function NewTripPage() {
             icon={<MapPin className="h-7 w-7" />}
             title={t("newTrip.knowTitle")}
             description={t("newTrip.knowDesc")}
-            onClick={() => navigate({ to: "/onboarding" })}
+            onClick={() => handlePick("/onboarding")}
             delay={0.1}
           />
           <ModeCard
@@ -68,7 +102,7 @@ function NewTripPage() {
             title={t("newTrip.inspireTitle")}
             description={t("newTrip.inspireDesc")}
             highlight
-            onClick={() => navigate({ to: "/inspire" })}
+            onClick={() => handlePick("/inspire")}
             delay={0.2}
           />
           <ModeCard
@@ -76,11 +110,48 @@ function NewTripPage() {
             icon={<Navigation className="h-7 w-7" />}
             title={t("newTrip.copilotTitle")}
             description={t("newTrip.copilotDesc")}
-            onClick={() => navigate({ to: "/copilot" })}
+            onClick={() => handlePick("/copilot")}
             delay={0.3}
           />
         </div>
       </div>
+
+      <Dialog open={showLimit} onOpenChange={setShowLimit}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white shadow-lg">
+              <Lock className="h-5 w-5" />
+            </div>
+            <DialogTitle className="text-center font-display text-xl text-sky-900">
+              {t("newTrip.limitTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-center text-sky-700">
+              {t("newTrip.limitDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-col">
+            <button
+              type="button"
+              onClick={() => {
+                setShowLimit(false);
+                navigate({ to: "/pricing" });
+              }}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl"
+            >
+              <Sparkles className="h-4 w-4" />
+              {t("newTrip.limitUpgrade")}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowLimit(false)}
+              className="inline-flex w-full items-center justify-center rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-sky-700 ring-1 ring-sky-200 hover:bg-sky-50"
+            >
+              {t("newTrip.limitCancel")}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
