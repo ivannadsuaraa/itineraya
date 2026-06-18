@@ -1,10 +1,12 @@
-import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import { MapPin, Sparkles, ArrowRight, Calendar as CalendarIcon, Wand2, Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
 import { getPublicTrip, type PublicTripDay } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuthStatus } from "@/lib/use-auth-status";
+import { PaywallGate } from "@/components/trip/PaywallGate";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 export const Route = createFileRoute("/trip/$slug")({
