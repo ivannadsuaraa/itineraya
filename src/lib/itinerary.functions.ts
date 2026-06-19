@@ -32,31 +32,35 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (error || !trip) throw new Error("Viaje no encontrado");
-    // Check free plan limit
-const { data: planProfile } = await supabase
-  .from("profiles")
-  .select("plan")
-  .eq("id", userId)
-  .maybeSingle();
+    // Plan-based itinerary limit
+    const { data: planProfile } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", userId)
+      .maybeSingle();
 
-// If not free, skip limit check
-if ((planProfile?.plan ?? "free") !== "free") {
-  return;
-}
+    const plan = (planProfile?.plan ?? "free") as "free" | "viajero" | "explorador";
+    const planLimit: number | null =
+      plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
 
-// Count only completed itineraries
-const { count } = await supabase
-  .from("trips")
-  .select("*", { count: "exact", head: true })
-  .eq("user_id", userId)
-  .eq("status", "ready");
+    if (planLimit !== null) {
+      // Count only completed itineraries, excluding the current trip being generated
+      const { count } = await supabase
+        .from("trips")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "ready")
+        .neq("id", data.tripId);
 
-// Free plan limit enforcement
-if ((count ?? 0) >= 1) {
-  throw new Error(
-    "LIMIT_REACHED: Has alcanzado el límite de 1 itinerario en el plan gratuito. Actualiza al plan Viajero para crear más."
-  );
-}
+      if ((count ?? 0) >= planLimit) {
+        const msg =
+          plan === "free"
+            ? "LIMIT_REACHED: Has alcanzado el límite de 1 itinerario en el plan gratuito. Actualiza al plan Viajero para crear más."
+            : `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios del plan Viajero. Actualiza a Explorador para itinerarios ilimitados.`;
+        throw new Error(msg);
+      }
+    }
+
 
     if (trip.status === "ready" && trip.itinerary) {
       return { itinerary: trip.itinerary, hero_image_url: trip.hero_image_url };
