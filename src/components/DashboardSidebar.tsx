@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Plus, Sparkles, Compass, LogOut } from "lucide-react";
+import { Map, Plus, Sparkles, Compass, LogOut, Home } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import logoMark from "@/assets/itineraya-mark.svg";
@@ -29,10 +29,20 @@ export function DashboardSidebar() {
 
   return (
     <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-slate-200 bg-white/80 backdrop-blur-xl">
-      <Link to="/dashboard" className="flex items-center gap-2 px-5 py-5">
-        <img src={logoMark} alt="" className="h-8 w-8" draggable={false} />
-        <span className="font-display text-lg font-bold text-sky-900">Itineraya</span>
-      </Link>
+      <div className="flex items-center justify-between px-5 py-5">
+        <Link to="/" className="flex items-center gap-2" title="Volver al inicio">
+          <img src={logoMark} alt="" className="h-8 w-8" draggable={false} />
+          <span className="font-display text-lg font-bold text-sky-900">Itineraya</span>
+        </Link>
+        <Link
+          to="/"
+          aria-label="Inicio"
+          title="Inicio"
+          className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-sky-900"
+        >
+          <Home className="h-4 w-4" />
+        </Link>
+      </div>
       <nav className="flex-1 px-3 py-2">
         <ul className="space-y-1">
           {NAV_ITEMS.map((item) => {

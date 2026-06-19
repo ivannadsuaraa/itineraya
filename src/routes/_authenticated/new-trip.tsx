@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscription } from "@/hooks/useSubscription";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/new-trip")({
@@ -13,31 +12,41 @@ export const Route = createFileRoute("/_authenticated/new-trip")({
   component: NewTripPage,
 });
 
+type Plan = "free" | "viajero" | "explorador";
+
 function NewTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isActive, loading: subLoading, userId } = useSubscription();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [plan, setPlan] = useState<Plan | null>(null);
   const [tripCount, setTripCount] = useState<number | null>(null);
   const [showLimit, setShowLimit] = useState(false);
 
   useEffect(() => {
-    if (!userId) return;
     let cancelled = false;
     (async () => {
-      const { count } = await supabase
-        .from("trips")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId);
-      if (!cancelled) setTripCount(count ?? 0);
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u.user?.id ?? null;
+      if (cancelled) return;
+      setUserId(uid);
+      if (!uid) return;
+      const [{ data: profile }, { count }] = await Promise.all([
+        supabase.from("profiles").select("plan").eq("id", uid).maybeSingle(),
+        supabase.from("trips").select("id", { count: "exact", head: true }).eq("user_id", uid).eq("status", "ready"),
+      ]);
+      if (cancelled) return;
+      setPlan(((profile?.plan as Plan | undefined) ?? "free"));
+      setTripCount(count ?? 0);
     })();
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, []);
 
-  // Free plan = no active paid subscription. If user already has ≥1 trip, block creation.
-  const isFreePlan = !subLoading && !isActive;
-  const overLimit = isFreePlan && (tripCount ?? 0) >= 1;
+  const planLimit: number | null =
+    plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
+  const overLimit =
+    plan !== null && planLimit !== null && (tripCount ?? 0) >= planLimit;
 
   const handlePick = (to: "/onboarding" | "/inspire" | "/copilot") => {
     if (overLimit) {
@@ -46,6 +55,9 @@ function NewTripPage() {
     }
     navigate({ to });
   };
+  // silence unused
+  void userId;
+
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
