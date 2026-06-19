@@ -23,6 +23,7 @@ import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNewTripRouteImport } from './routes/_authenticated/new-trip'
 import { Route as AuthenticatedInspireRouteImport } from './routes/_authenticated/inspire'
@@ -104,6 +105,11 @@ const AuthenticatedWelcomeRoute = AuthenticatedWelcomeRouteImport.update({
   path: '/welcome',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/inspire': typeof AuthenticatedInspireRoute
   '/new-trip': typeof AuthenticatedNewTripRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -202,6 +209,7 @@ export interface FileRoutesByTo {
   '/inspire': typeof AuthenticatedInspireRoute
   '/new-trip': typeof AuthenticatedNewTripRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/_authenticated/inspire': typeof AuthenticatedInspireRoute
   '/_authenticated/new-trip': typeof AuthenticatedNewTripRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/inspire'
     | '/new-trip'
     | '/onboarding'
+    | '/profile'
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/inspire'
     | '/new-trip'
     | '/onboarding'
+    | '/profile'
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inspire'
     | '/_authenticated/new-trip'
     | '/_authenticated/onboarding'
+    | '/_authenticated/profile'
     | '/_authenticated/welcome'
     | '/api/chat'
     | '/checkout/return'
@@ -444,6 +456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWelcomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -531,6 +550,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInspireRoute: typeof AuthenticatedInspireRoute
   AuthenticatedNewTripRoute: typeof AuthenticatedNewTripRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
   AuthenticatedTripTripIdRoute: typeof AuthenticatedTripTripIdRoute
 }
@@ -542,6 +562,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInspireRoute: AuthenticatedInspireRoute,
   AuthenticatedNewTripRoute: AuthenticatedNewTripRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
   AuthenticatedTripTripIdRoute: AuthenticatedTripTripIdRoute,
 }

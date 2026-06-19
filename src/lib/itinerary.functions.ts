@@ -197,6 +197,25 @@ HARD RULES
 - "place" must be a REAL, specific, named venue in ${trip.destination}.
 
 ============================
+SPANISH MEAL NAMING — STRICT (only when writing in Spanish)
+============================
+When ${langName} is Spanish, name meals using PENINSULAR SPANISH conventions:
+- "Desayuno" → morning meal (07:30–10:00).
+- "Almuerzo" → ONLY a light mid-morning snack/brunch (10:30–12:00). NEVER use "almuerzo" for the midday main meal.
+- "Comida" → MAIN midday meal (13:30–16:00). Any meal scheduled between 13:30 and 16:00 MUST be titled "Comida" (never "Almuerzo", never "Lunch").
+- "Merienda" → optional afternoon snack (17:00–19:00).
+- "Cena" → evening meal (20:30–23:00).
+Activity titles for meals MUST start with the correct word (e.g. "Comida en …", "Cena en …"). Do NOT translate "lunch" as "almuerzo" — it is always "comida".
+
+============================
+PACING & TRANSITIONS
+============================
+- Never schedule back-to-back activities in different zones without an explicit transport step in between.
+- Respect realistic walking/transit times; leave breathing room between intense activities.
+- Keep a logical morning → midday meal → afternoon → evening flow each day.
+
+
+============================
 OUTPUT FORMAT — return ONLY valid JSON, no markdown, no backticks
 ============================
 {
