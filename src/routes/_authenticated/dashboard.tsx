@@ -19,7 +19,7 @@ import { es, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DashboardSidebar, MobileBottomBar } from "@/components/DashboardSidebar";
+import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { ShareDialog } from "@/components/trip/ShareDialog";
 import {
   getSeasonalInspirations,
