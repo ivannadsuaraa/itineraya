@@ -237,7 +237,10 @@
     "create": "Crear viaje",
     "assistant": "Asistente IA",
     "inspire": "Inspiración",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "feed": "Feed",
+    "createShort": "Crear",
+    "tripsShort": "Viajes"
   },
   "onboarding": {
     "metaTitle": "Cuéntanos sobre tu viaje – Itineraya",

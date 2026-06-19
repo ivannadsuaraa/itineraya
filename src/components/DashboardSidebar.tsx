@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Plus, Sparkles, Compass, LogOut, Home } from "lucide-react";
+import { Map, Plus, Sparkles, Compass, LogOut, Home, User, PlusCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import logoMark from "@/assets/itineraya-mark.svg";
@@ -15,6 +15,13 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/new-trip", labelKey: "sidebar.create", icon: Plus },
   { to: "/assistant", labelKey: "sidebar.assistant", icon: Sparkles },
   { to: "/inspire", labelKey: "sidebar.inspire", icon: Compass },
+];
+
+export const MOBILE_NAV_ITEMS: NavItem[] = [
+  { to: "/explore", labelKey: "sidebar.feed", icon: Compass },
+  { to: "/new-trip", labelKey: "sidebar.createShort", icon: PlusCircle },
+  { to: "/dashboard", labelKey: "sidebar.tripsShort", icon: Map },
+  { to: "/profile", labelKey: "sidebar.profile", icon: User },
 ];
 
 export function DashboardSidebar() {
@@ -83,20 +90,24 @@ export function MobileBottomBar() {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur-xl">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
       <ul className="grid grid-cols-4">
-        {NAV_ITEMS.map((item) => {
+        {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.to;
+          const active =
+            pathname === item.to ||
+            (item.to === "/dashboard" && pathname.startsWith("/dashboard")) ||
+            (item.to === "/explore" && pathname.startsWith("/explore")) ||
+            (item.to === "/profile" && pathname.startsWith("/profile"));
           return (
             <li key={item.to}>
               <Link
                 to={item.to}
-                className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold ${
-                  active ? "text-sky-700" : "text-slate-500"
+                className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition ${
+                  active ? "text-sky-700" : "text-slate-500 hover:text-sky-700"
                 }`}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className={`h-5 w-5 ${active ? "scale-110" : ""} transition-transform`} />
                 {t(item.labelKey)}
               </Link>
             </li>
