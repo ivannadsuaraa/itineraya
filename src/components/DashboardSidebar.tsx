@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Plus, Sparkles, Compass, LogOut, Home } from "lucide-react";
+import { Map, Plus, Sparkles, Compass, LogOut, Home, User, PlusCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import logoMark from "@/assets/itineraya-mark.svg";
@@ -15,6 +15,13 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/new-trip", labelKey: "sidebar.create", icon: Plus },
   { to: "/assistant", labelKey: "sidebar.assistant", icon: Sparkles },
   { to: "/inspire", labelKey: "sidebar.inspire", icon: Compass },
+];
+
+export const MOBILE_NAV_ITEMS: NavItem[] = [
+  { to: "/explore", labelKey: "sidebar.feed", icon: Compass },
+  { to: "/new-trip", labelKey: "sidebar.createShort", icon: PlusCircle },
+  { to: "/dashboard", labelKey: "sidebar.tripsShort", icon: Map },
+  { to: "/profile", labelKey: "sidebar.profile", icon: User },
 ];
 
 export function DashboardSidebar() {
