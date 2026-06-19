@@ -136,7 +136,7 @@ function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <DashboardSidebar />
-      <MobileBottomBar />
+
 
       <div className="md:pl-60 pb-24 md:pb-12">
         <main className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-10">
