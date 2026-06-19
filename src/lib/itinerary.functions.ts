@@ -232,24 +232,26 @@ ${hasAccommodation ? '- DO NOT use category "hotel" for any activity.' : ""}
 Return pure JSON only.`;
 
 
-    const aiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [
-              {
-                text: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
-              },
-            ],
-          },
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
-        }),
-      },
-    );
+    let aiRes: Response | null = null;
+for (let attempt = 1; attempt <= 3; attempt++) {
+  aiRes = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{ text: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text." }],
+        },
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
+      }),
+    },
+  );
+  if (aiRes.status !== 429) break;
+  if (attempt < 3) await new Promise((r) => setTimeout(r, 5000 * attempt));
+}
+if (!aiRes) throw new Error("Error al conectar con la IA.");
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
