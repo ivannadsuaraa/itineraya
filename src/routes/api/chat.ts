@@ -89,7 +89,7 @@ ${contextLines || "Sin viaje seleccionado todavía."}`;
 
         const gateway = createLovableAiGatewayProvider(key);
 const result = streamText({
-  model: gateway("google/gemini-2.0-flash"),
+  model: gateway("google/gemini-2.5-flash"),
           system,
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
