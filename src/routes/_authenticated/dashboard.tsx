@@ -70,22 +70,27 @@ function DashboardPage() {
       const meta = u.user?.user_metadata as { full_name?: string; name?: string } | undefined;
       setName(meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? t("dashboard.traveler"));
 
-      if (u.user) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("welcome_completed")
-          .eq("id", u.user.id)
-          .maybeSingle();
-        if (prof && !prof.welcome_completed) {
-          navigate({ to: "/welcome", replace: true });
-          return;
-        }
+      if (!u.user) {
+        setTrips([]);
+        setSaved([]);
+        return;
+      }
+
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("welcome_completed")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      if (prof && !prof.welcome_completed) {
+        navigate({ to: "/welcome", replace: true });
+        return;
       }
 
       const [{ data, error }, { data: savedData }] = await Promise.all([
         supabase
           .from("trips")
           .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
+          .eq("user_id", u.user.id)
           .order("created_at", { ascending: false }),
         supabase
           .from("saved_inspirations")

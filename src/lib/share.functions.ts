@@ -100,6 +100,7 @@ export const getPublicTrip = createServerFn({ method: "GET" })
       .from("trips")
       .select("destination, hero_image_url, itinerary, start_date, end_date, share_slug")
       .eq("share_slug" as never, data.slug)
+      .eq("is_public" as never, true)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) return null;

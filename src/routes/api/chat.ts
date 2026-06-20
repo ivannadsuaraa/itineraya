@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAnthropic } from "@ai-sdk/anthropic";
 
 type ChatRequestBody = {
   messages?: unknown;
@@ -46,8 +46,8 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages are required", { status: 400 });
         }
 
-        const key = process.env.GEMINI_API_KEY;
-if (!key) return new Response("Missing GEMINI_API_KEY", { status: 500 });
+        const key = process.env.ANTHROPIC_API_KEY;
+        if (!key) return new Response("Missing ANTHROPIC_API_KEY", { status: 500 });
 
         const ctx = tripContext ?? {};
         const contextLines = [
@@ -87,9 +87,9 @@ Responde en el idioma del usuario (por defecto español).`
 Contexto del viaje del usuario:
 ${contextLines || "Sin viaje seleccionado todavía."}`;
 
-        const gateway = createLovableAiGatewayProvider(key);
-const result = streamText({
-  model: gateway("google/gemini-2.5-flash"),
+        const anthropic = createAnthropic({ apiKey: key });
+        const result = streamText({
+          model: anthropic("claude-haiku-4-5"),
           system,
           messages: await convertToModelMessages(messages as UIMessage[]),
         });

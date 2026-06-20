@@ -1,45 +1,71 @@
-## Plan
+## 1. Migrar IA a Anthropic Claude Haiku 4.5
 
-Tres mejoras nuevas sin tocar IA, planes, auth, pagos ni dashboard.
+Reemplazar el gateway de Lovable AI (Gemini) por llamadas directas a la API de Anthropic usando `ANTHROPIC_API_KEY` (ya en secrets) y el modelo `claude-haiku-4-5`.
 
-### 1. Compartir itinerarios (público, sin login)
+Archivos:
+- `src/lib/itinerary.functions.ts` — la llamada AI principal de generación.
+- `src/lib/inspire.functions.ts` (línea 109, `google/gemini-2.5-flash`).
+- `src/lib/itinerary-edit.functions.ts` (línea 108).
+- `src/routes/api/chat.ts` (líneas 49–92, usa `GEMINI_API_KEY` + gateway).
 
-- Migración: añadir a `public.trips` la columna `share_slug TEXT UNIQUE` y política RLS de SELECT pública restringida a filas con `share_slug IS NOT NULL`, exponiendo solo columnas no sensibles vía un server function público.
-- Server function `getPublicTrip` (sin auth) que usa cliente publishable y devuelve `destination, hero_image_url, itinerary, start_date, end_date, share_slug`.
-- Server function autenticada `enableTripShare({ tripId })` que genera slug amigable `kebab(destination)-N-dias-XXXX` y lo guarda si no existe.
-- Nueva ruta pública `src/routes/trip.$slug.tsx` (fuera de `_authenticated`) con loader que llama a `getPublicTrip`, hero, resumen, días con actividades, y CTA final "Crea tu propio itinerario gratis" → `/auth`.
-- Botón "Compartir" en `trip.$tripId.tsx`: abre diálogo que llama a `enableTripShare`, muestra URL `https://itineraya.com/trip/<slug>` y botones Copiar / Web Share API / WhatsApp / Twitter.
-- `head()` con OG meta dinámicos (título "{destino} · {N} días · Itineraya", hero como og:image).
+Enfoque: usar el SDK `@anthropic-ai/sdk` (instalar) y crear un pequeño helper `src/lib/anthropic.server.ts` que exponga:
+- `generateJSON({ system, prompt, schema })` para los flujos de generación/edición/inspire (one-shot, JSON).
+- Streaming para `routes/api/chat.ts` con `client.messages.stream(...)` devolviendo un `Response` SSE compatible con el cliente actual de chat (revisar formato esperado por `useChat`/transport antes de implementar; si el cliente usa AI SDK UI, mantenerlo con el provider OpenAI-compatible pero apuntar a un wrapper Anthropic — alternativa: usar `@ai-sdk/anthropic`). Decisión: instalar `@ai-sdk/anthropic` para mantener compatibilidad con `streamText` / `generateText` ya usados y solo cambiar el `model` y la key.
 
-### 2. Selector de fechas estilo Airbnb
+Resultado: borrar dependencia de `LOVABLE_API_KEY`/`GEMINI_API_KEY` en estos 4 archivos; mantener system prompts y validadores intactos.
 
-- Reemplazar las dos `DateField` separadas en `onboarding.tsx` por un único `DateRangeField` (Popover + `<Calendar mode="range" />` ya disponible en `react-day-picker`).
-- Estado pasa a `data.dates: { from?: Date; to?: Date }`; mapear a `startDate`/`endDate` solo en el save para no tocar la lógica downstream.
-- Resumen visible debajo: "20 jul → 30 jul · 10 noches" (i18n ES/EN).
-- En móvil: un mes; en escritorio: dos meses (`numberOfMonths`).
-- Validación: `canAdvance("dates")` requiere `from && to`.
+## 2. Bug crítico de privacidad en "Mis viajes"
 
-### 3. Mapa interactivo
+Causa raíz probable: la consulta del dashboard (`src/routes/_authenticated/dashboard.tsx` línea 86–89) hace `from("trips").select(...)` **sin filtrar por `user_id`**, confiando solo en RLS — y la política de RLS sobre `trips` debe estar permitiendo lectura pública (añadida cuando se implementó `/explore`).
 
-- Añadir dependencias: `leaflet` + `react-leaflet` (sin API key, OpenStreetMap).
-- Nueva pestaña "Mapa" junto a Tarjetas/Texto en `trip.$tripId.tsx` (tres opciones).
-- Geocoding lazy con Nominatim (cliente, cacheado en memoria por sesión + en `localStorage` por `tripId`): para cada actividad consulta `"{place || title}, {destination}"` y guarda lat/lng.
-- Marcadores por día con color distinto (paleta azul pastel: 8 tonos), `divIcon` con número del día.
-- Popup: nombre, descripción, hora, categoría (emoji) y enlace externo (Google Maps + booking link existente).
-- Mapa centrado automáticamente con `fitBounds` sobre todos los marcadores.
-- CSS de Leaflet importado en el componente del mapa.
+Arreglo en dos capas:
+1. **Cliente**: añadir `.eq("user_id", u.user.id)` a la query del dashboard.
+2. **RLS**: revisar las policies de `trips`. Mantener:
+   - SELECT propio: `auth.uid() = user_id`.
+   - SELECT público SOLO si `is_public = true` (para `/explore`, usado desde server functions sin user scope).
+   Eliminar/corregir cualquier policy que permita SELECT amplio a `authenticated`.
 
-### Detalles técnicos
+Verificar también `saved_inspirations` y otras queries en dashboard/profile que puedan tener el mismo patrón.
 
-- Mapa solo se monta cuando la pestaña está activa (evita SSR issues con Leaflet — usar dynamic import o `useEffect` mount).
-- Slug único: `slugify(destination) + '-' + dias + '-dias' + '-' + nanoid(5)`.
-- Sin cambios en `itinerary.functions.ts`, `payments.functions.ts`, ni nada de auth.
-- i18n: añadir claves para "Compartir", "Mapa", resumen de rango, CTA pública.
+## 3. Mostrar barra inferior móvil en todas las pantallas autenticadas excepto las indicadas
 
-### Archivos
+La `MobileBottomBar` se renderiza hoy en `src/routes/_authenticated/route.tsx`. Añadir lógica para ocultarla en rutas:
+- `/onboarding`
+- `/auth` (no es autenticada, ya excluida)
+- pantalla de carga de itinerario: la ruta `trip.$tripId` cuando `status !== "ready"` (estado generando). Detectarlo con un flag en contexto o más simple: ocultar siempre que la ruta sea `trip.$tripId` y leer el estado vía hook ligero; alternativa pragmática: ocultar en `/onboarding` y dejar la barra en trip; añadir condición específica del loader si confirmas. Decisión propuesta: ocultar en `/onboarding`, `/welcome` y rutas que matchen `trip.$tripId` mientras `status === "generating"`.
 
-- Crear: `src/routes/trip.$slug.tsx`, `src/lib/share.functions.ts`, `src/components/trip/TripMap.tsx`, `src/components/trip/ShareDialog.tsx`, `src/components/DateRangeField.tsx`.
-- Editar: `src/routes/_authenticated/trip.$tripId.tsx`, `src/routes/_authenticated/onboarding.tsx`, `src/i18n/locales/{es,en}.json`.
-- Migración Supabase para `share_slug` + política pública.
+Implementación: usar `useRouterState({ select: s => s.location.pathname })` + un pequeño hook que consulte `trips.status` cuando aplique.
 
-¿Procedo?
+## 4. Logo clicable a la home en todas las pantallas
+
+- Dashboard sidebar/header (`DashboardSidebar.tsx`): el logo ya apunta a `/` (cambio reciente). Verificar.
+- Pantallas autenticadas en móvil: añadir un **header superior fijo** con el logo (link a `/`) en `_authenticated/route.tsx`, visible en todas las rutas autenticadas. Reusar `BrandLogo`.
+- Pantallas públicas (`auth`, `pricing`, `explore`, `trip.$slug`): asegurar que el `Navbar` (o un mini-header) incluye logo→`/`.
+
+## 5. Flecha de retroceso global
+
+Añadir en el header superior fijo (paso 4) un botón `ArrowLeft` que haga `router.history.back()`. Ocultarlo en la home (`/`) y en `/dashboard` (raíz autenticada). Mismo componente para móvil y desktop.
+
+## 6. Verificar botón "Empieza gratis"
+
+En `HeroSection.tsx` línea 109–116: si no hay sesión, lleva a `/auth?mode=signup`. Verificar:
+- que `/auth` lee `search.mode === "signup"` y muestra el formulario de registro.
+- que el botón del `Navbar` (línea 84, 148) hace lo mismo.
+- E2E rápido con Playwright para confirmar el flujo.
+
+---
+
+## Orden de implementación
+
+1. Bug de privacidad (#2) — crítico, primero.
+2. Migración a Anthropic (#1).
+3. Header superior + logo + back (#4, #5) en `_authenticated/route.tsx`.
+4. Visibilidad de la bottom bar (#3).
+5. Verificación del botón (#6).
+
+## Detalles técnicos
+
+- Instalar: `@ai-sdk/anthropic` (mantiene `streamText`/`generateText` actuales).
+- Cambiar provider en cada archivo: `import { anthropic } from "@ai-sdk/anthropic"` y `model: anthropic("claude-haiku-4-5")`. La SDK lee `ANTHROPIC_API_KEY` automáticamente.
+- Migración SQL para corregir policies de `trips` (DROP la policy permisiva, recrear con `auth.uid() = user_id` para SELECT privado + `is_public = true` para SELECT público anon).
+- `MobileBottomBar` y header: usar `useRouterState` para path; nada de estado global.

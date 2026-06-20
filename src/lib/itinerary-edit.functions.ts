@@ -50,8 +50,8 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !trip || !trip.itinerary) throw new Error("Viaje no encontrado");
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const current = trip.itinerary as unknown as Itinerary;
 
@@ -101,28 +101,29 @@ REQUISITOS:
 - "place" con nombre REAL (hotel/restaurante/museo) en ${trip.destination}.
 - "category" exactamente uno de los valores listados.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      headers: {
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "Devuelves ÚNICAMENTE JSON válido, sin markdown ni texto extra." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
+        model: "claude-haiku-4-5",
+        max_tokens: 8192,
+        system: "Devuelves ÚNICAMENTE JSON válido, sin markdown ni texto extra.",
+        messages: [{ role: "user", content: prompt }],
       }),
     });
 
     if (!aiRes.ok) {
       const text = await aiRes.text();
       if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
-      if (aiRes.status === 402) throw new Error("Créditos de IA agotados.");
-      throw new Error(`Error IA ${aiRes.status}: ${text.slice(0, 200)}`);
+      throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
     }
 
-    const aiJson = (await aiRes.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const content = aiJson.choices?.[0]?.message?.content;
+    const aiJson = (await aiRes.json()) as { content?: Array<{ text?: string }> };
+    const content = aiJson.content?.[0]?.text;
     if (!content) throw new Error("Respuesta vacía del modelo");
 
     let parsed: Itinerary & { change_summary?: string };

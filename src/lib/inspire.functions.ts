@@ -42,8 +42,8 @@ export const suggestDestinations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const month = new Date().toLocaleString("en-US", { month: "long" });
 
@@ -99,36 +99,31 @@ Return ONLY valid JSON with this exact shape:
   ]
 }`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${key}`,
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a travel inspiration engine. Return ONLY valid JSON without markdown.",
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
+        model: "claude-haiku-4-5",
+        max_tokens: 2048,
+        system:
+          "You are a travel inspiration engine. Return ONLY valid JSON without markdown, explanations or extra text.",
+        messages: [{ role: "user", content: prompt }],
       }),
     });
 
     if (!aiRes.ok) {
       if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
-      if (aiRes.status === 402) throw new Error("Créditos de IA agotados.");
       throw new Error(`Error IA ${aiRes.status}`);
     }
 
     const aiJson = (await aiRes.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      content?: Array<{ text?: string }>;
     };
-    const content = aiJson.choices?.[0]?.message?.content ?? "";
+    const content = aiJson.content?.[0]?.text ?? "";
     let parsed: { destinations: Omit<SuggestedDestination, "imageUrl">[] };
     try {
       parsed = JSON.parse(content);
