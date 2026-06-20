@@ -254,36 +254,35 @@ Return pure JSON only.`;
 
     let aiRes: Response | null = null;
 for (let attempt = 1; attempt <= 3; attempt++) {
-  aiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(key)}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text." }],
-        },
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        generationConfig: { responseMimeType: "application/json", temperature: 0.7 },
-      }),
+  aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({
+      model: "claude-haiku-4-5",
+      max_tokens: 8192,
+      system: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
   if (aiRes.status !== 429) break;
   if (attempt < 3) await new Promise((r) => setTimeout(r, 5000 * attempt));
 }
 if (!aiRes) throw new Error("Error al conectar con la IA.");
 
-    if (!aiRes.ok) {
-      const text = await aiRes.text();
-      if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
-      throw new Error(`Error Gemini ${aiRes.status}: ${text.slice(0, 200)}`);
-    }
+if (!aiRes.ok) {
+  const text = await aiRes.text();
+  if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
+  throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
+}
 
-    const aiJson = (await aiRes.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    };
-    const content = aiJson.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-    if (!content) throw new Error("Respuesta vacía del modelo");
+const aiJson = (await aiRes.json()) as { content?: Array<{ text?: string }> };
+const content = aiJson.content?.[0]?.text ?? "";
+if (!content) throw new Error("Respuesta vacía del modelo");
+
 
     type ParsedActivity = {
       time: string;
