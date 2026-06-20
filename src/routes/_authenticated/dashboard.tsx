@@ -70,16 +70,20 @@ function DashboardPage() {
       const meta = u.user?.user_metadata as { full_name?: string; name?: string } | undefined;
       setName(meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? t("dashboard.traveler"));
 
-      if (u.user) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("welcome_completed")
-          .eq("id", u.user.id)
-          .maybeSingle();
-        if (prof && !prof.welcome_completed) {
-          navigate({ to: "/welcome", replace: true });
-          return;
-        }
+      if (!u.user) {
+        setTrips([]);
+        setSaved([]);
+        return;
+      }
+
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("welcome_completed")
+        .eq("id", u.user.id)
+        .maybeSingle();
+      if (prof && !prof.welcome_completed) {
+        navigate({ to: "/welcome", replace: true });
+        return;
       }
 
       const [{ data, error }, { data: savedData }] = await Promise.all([
