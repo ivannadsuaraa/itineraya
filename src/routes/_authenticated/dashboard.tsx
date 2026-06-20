@@ -86,6 +86,7 @@ function DashboardPage() {
         supabase
           .from("trips")
           .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
+          .eq("user_id", u.user.id)
           .order("created_at", { ascending: false }),
         supabase
           .from("saved_inspirations")

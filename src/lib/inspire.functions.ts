@@ -42,8 +42,8 @@ export const suggestDestinations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const month = new Date().toLocaleString("en-US", { month: "long" });
 

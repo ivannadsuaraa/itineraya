@@ -50,8 +50,8 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !trip || !trip.itinerary) throw new Error("Viaje no encontrado");
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+    const key = process.env.ANTHROPIC_API_KEY;
+    if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const current = trip.itinerary as unknown as Itinerary;
 

@@ -40,6 +40,7 @@ function AssistantPage() {
         supabase
           .from("trips")
           .select("id,destination,start_date,end_date,budget,companion,trip_style")
+          .eq("user_id", u.user.id)
           .order("created_at", { ascending: false }),
       ]);
       setPlan(((profile as { plan?: Plan } | null)?.plan ?? "free") as Plan);
