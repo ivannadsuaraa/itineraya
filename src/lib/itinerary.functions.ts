@@ -66,8 +66,9 @@ export const generateItinerary = createServerFn({ method: "POST" })
       return { itinerary: trip.itinerary, hero_image_url: trip.hero_image_url };
     }
 
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) throw new Error("Missing GEMINI_API_KEY");
+    const key = process.env.ANTHROPIC_API_KEY;
+if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
+
 
     // Load user profile (language, age, travel_style, budget_range, preferred_destinations)
     const { data: profile } = await supabase
