@@ -532,7 +532,7 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
 function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
   const dots = useMemo(() => Array.from({ length: 12 }), []);
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }} />
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }} />
