@@ -74,7 +74,7 @@ function bookingForCategory(
   const q = `${placeOrTitle} ${destination}`.trim();
   switch (category) {
     case "hotel":
-      return { kind: "book", brand: "Booking", url: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(q)}` };
+      return { kind: "book", brand: "Booking", url: `https://www.booking.com/search.html?ss=${encodeURIComponent(placeOrTitle)}` };
     case "restaurant":
       return { kind: "book", brand: "TheFork", url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}` };
     case "nightlife":
