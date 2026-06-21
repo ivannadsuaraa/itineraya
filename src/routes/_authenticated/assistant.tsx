@@ -60,12 +60,9 @@ function AssistantPage() {
     );
   }
 
-  if (plan === "free") {
-    return <UpgradeGate onBack={() => navigate({ to: "/dashboard" })} />;
-  }
-
   return (
     <ChatSurface
+      plan={plan}
       trips={trips}
       tripId={tripId}
       setTripId={setTripId}
