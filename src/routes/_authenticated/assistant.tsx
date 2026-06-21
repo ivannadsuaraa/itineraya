@@ -113,11 +113,13 @@ function UpgradeGate({ onBack }: { onBack: () => void }) {
 }
 
 function ChatSurface({
+  plan,
   trips,
   tripId,
   setTripId,
   activeTrip,
 }: {
+  plan: Plan;
   trips: Trip[];
   tripId: string | null;
   setTripId: (id: string | null) => void;
