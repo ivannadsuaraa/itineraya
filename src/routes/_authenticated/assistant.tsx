@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { motion } from "framer-motion";
@@ -26,7 +26,7 @@ type Trip = {
 type Plan = "free" | "viajero" | "explorador";
 
 function AssistantPage() {
-  const navigate = useNavigate();
+  void 0;
   const [plan, setPlan] = useState<Plan | null>(null);
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [tripId, setTripId] = useState<string | null>(null);
@@ -60,12 +60,9 @@ function AssistantPage() {
     );
   }
 
-  if (plan === "free") {
-    return <UpgradeGate onBack={() => navigate({ to: "/dashboard" })} />;
-  }
-
   return (
     <ChatSurface
+      plan={plan}
       trips={trips}
       tripId={tripId}
       setTripId={setTripId}
@@ -116,11 +113,13 @@ function UpgradeGate({ onBack }: { onBack: () => void }) {
 }
 
 function ChatSurface({
+  plan,
   trips,
   tripId,
   setTripId,
   activeTrip,
 }: {
+  plan: Plan;
   trips: Trip[];
   tripId: string | null;
   setTripId: (id: string | null) => void;

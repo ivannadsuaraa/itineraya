@@ -23,7 +23,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-async function routeAfterLogin(navigate: ReturnType<typeof useNavigate>, userId: string, return_to?: string) {
+async function routeAfterLogin(_navigate: ReturnType<typeof useNavigate>, userId: string, return_to?: string) {
   if (return_to && /^https?:\/\//.test(return_to)) {
     window.location.replace(return_to);
     return;
@@ -33,11 +33,9 @@ async function routeAfterLogin(navigate: ReturnType<typeof useNavigate>, userId:
     .select("welcome_completed")
     .eq("id", userId)
     .maybeSingle();
-  if (!data?.welcome_completed) {
-    navigate({ to: "/welcome" });
-  } else {
-    navigate({ to: "/dashboard" });
-  }
+  // Full reload ensures the authenticated layout picks up the new session
+  // (avoids a blank screen race where the router runs before the session is in storage).
+  window.location.replace(data?.welcome_completed ? "/dashboard" : "/welcome");
 }
 
 function AuthPage() {

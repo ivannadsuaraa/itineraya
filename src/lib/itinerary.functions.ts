@@ -44,12 +44,11 @@ export const generateItinerary = createServerFn({ method: "POST" })
       plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
 
     if (planLimit !== null) {
-      // Count only completed itineraries, excluding the current trip being generated
+      // Count ALL existing trips (any status) except the one being generated.
       const { count } = await supabase
         .from("trips")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("status", "ready")
         .neq("id", data.tripId);
 
       if ((count ?? 0) >= planLimit) {

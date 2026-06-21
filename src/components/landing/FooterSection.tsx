@@ -51,12 +51,12 @@ export function FooterSection() {
               &copy; {new Date().getFullYear()} Itineraya. {t("footer.rights")}
             </p>
             <div className="flex gap-6">
-              <Link to="/privacy" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
+              <a href="https://itineraya.com/privacy" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.privacy")}
-              </Link>
-              <Link to="/terms" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
+              </a>
+              <a href="https://itineraya.com/terms" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.terms")}
-              </Link>
+              </a>
               <Link to="/contact" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.contact")}
               </Link>
