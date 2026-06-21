@@ -32,7 +32,7 @@ function NewTripPage() {
       if (!uid) return;
       const [{ data: profile }, { count }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", uid).maybeSingle(),
-        supabase.from("trips").select("id", { count: "exact", head: true }).eq("user_id", uid).eq("status", "ready"),
+        supabase.from("trips").select("id", { count: "exact", head: true }).eq("user_id", uid),
       ]);
       if (cancelled) return;
       setPlan(((profile?.plan as Plan | undefined) ?? "free"));
@@ -45,10 +45,12 @@ function NewTripPage() {
 
   const planLimit: number | null =
     plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
+  const loaded = plan !== null && tripCount !== null;
   const overLimit =
-    plan !== null && planLimit !== null && (tripCount ?? 0) >= planLimit;
+    loaded && planLimit !== null && (tripCount ?? 0) >= planLimit;
 
   const handlePick = (to: "/onboarding" | "/inspire" | "/copilot") => {
+    if (!loaded) return;
     if (overLimit) {
       setShowLimit(true);
       return;
