@@ -26,7 +26,7 @@ type Trip = {
 type Plan = "free" | "viajero" | "explorador";
 
 function AssistantPage() {
-  const navigate = useNavigate();
+  void 0;
   const [plan, setPlan] = useState<Plan | null>(null);
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [tripId, setTripId] = useState<string | null>(null);
