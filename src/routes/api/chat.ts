@@ -40,6 +40,42 @@ export const Route = createFileRoute("/api/chat")({
         if (claimsErr || !claimsData?.claims?.sub) {
           return new Response("Unauthorized", { status: 401 });
         }
+        const userId = claimsData.claims.sub as string;
+
+        // Enforce per-day message limit for the free plan.
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: profileRow } = await supabaseAdmin
+          .from("profiles")
+          .select("plan")
+          .eq("id", userId)
+          .maybeSingle();
+        const plan = ((profileRow?.plan as string | undefined) ?? "free") as
+          | "free"
+          | "viajero"
+          | "explorador";
+        const FREE_DAILY_LIMIT = 10;
+        const today = new Date().toISOString().slice(0, 10);
+        if (plan === "free") {
+          const { data: usageRow } = await supabaseAdmin
+            .from("chat_usage")
+            .select("message_count")
+            .eq("user_id", userId)
+            .eq("usage_date", today)
+            .maybeSingle();
+          const used = usageRow?.message_count ?? 0;
+          if (used >= FREE_DAILY_LIMIT) {
+            return new Response(
+              `LIMIT_REACHED: Has alcanzado el límite diario de ${FREE_DAILY_LIMIT} mensajes del plan gratuito. Actualiza a Viajero o Explorador para mensajes ilimitados.`,
+              { status: 429 },
+            );
+          }
+          await supabaseAdmin
+            .from("chat_usage")
+            .upsert(
+              { user_id: userId, usage_date: today, message_count: used + 1 },
+              { onConflict: "user_id,usage_date" },
+            );
+        }
 
         const { messages, tripContext, mode, clientNow } = (await request.json()) as ChatRequestBody;
         if (!Array.isArray(messages)) {
