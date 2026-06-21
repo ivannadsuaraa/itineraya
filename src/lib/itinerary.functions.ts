@@ -262,7 +262,7 @@ for (let attempt = 1; attempt <= 3; attempt++) {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5",
-      max_tokens: 8192,
+      max_tokens: 16000,
       system: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
       messages: [{ role: "user", content: prompt }],
     }),
