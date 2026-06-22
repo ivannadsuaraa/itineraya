@@ -167,12 +167,12 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
   const { t } = useTranslation();
   const fallback = useMemo(
     () =>
-      `https://source.unsplash.com/featured/800x1000/?${encodeURIComponent(
-        item.destination,
-      )},travel&sig=${encodeURIComponent(item.slug)}`,
+      `https://loremflickr.com/800/1000/${encodeURIComponent(
+        item.destination.split(",")[0].trim() + ",travel",
+      )}?lock=${Math.abs(hashString(item.slug)) % 1000}`,
     [item.destination, item.slug],
   );
-  const img = item.hero_image_url ?? fallback;
+  const [img, setImg] = useState(item.hero_image_url ?? fallback);
   const title = item.n_days
     ? t("explore.cardTitle", { days: item.n_days, destination: item.destination })
     : item.destination;
