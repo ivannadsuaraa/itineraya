@@ -72,7 +72,7 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
     // Load user profile (language, age, travel_style, budget_range, preferred_destinations)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("language, age, travel_style, budget_range, preferred_destinations")
+      .select("language, age, travel_style, budget_range, preferred_destinations, traveler_type")
       .eq("id", userId)
       .maybeSingle();
     const lang: "es" | "en" =
@@ -128,127 +128,44 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
       ? `ACCOMMODATION: The traveler ALREADY HAS a hotel/apartment booked. DO NOT recommend hotels. DO NOT include any "check-in", "hotel suggestion" or "where to stay" activity. Treat the accommodation as a fixed but unknown base — start/end each day from a generic "your accommodation" without naming a specific hotel.`
       : `ACCOMMODATION: The traveler does NOT yet have a place to stay. You MAY include one short "check-in" or accommodation-area note on day 1 if useful, but the focus is the itinerary, not hotel listings.`;
 
-    const prompt = `You are the TRAVEL INTELLIGENCE ENGINE — an expert travel planner that does NOT generate generic tourist lists. You build deeply personalized, geographically coherent, time-realistic itineraries. Write all user-facing strings in ${langName}.
+    const prompt = `You are an expert travel planner. Build a personalized, geographically coherent, time-realistic itinerary. Write all user-facing strings in ${langName}.
 
-============================
-USER & TRIP CONTEXT
-============================
+CONTEXT
 Destination: ${trip.destination}
-Dates: ${trip.start_date ?? "flexible"} to ${trip.end_date ?? "flexible"} (~${dayCount} days)
-Travel month: ${monthName}
+Dates: ${trip.start_date ?? "flexible"} → ${trip.end_date ?? "flexible"} (~${dayCount} days, ${monthName})
 ${arrivalLine}
 ${departureLine}
-Travelling with: ${trip.companion ?? "unspecified"}
-Budget: ${trip.budget ?? "unspecified"}
-Trip types (multi-select): ${tripTypesLine}
-Avoid: ${trip.avoid?.trim() || "nothing in particular"}
-
+With: ${trip.companion ?? "?"} | Budget: ${trip.budget ?? "?"} | Types: ${tripTypesLine} | Avoid: ${trip.avoid?.trim() || "—"}
 ${accommodationBlock}
+Profile: age ${profile?.age ?? "?"}, type ${profile?.traveler_type ?? "?"}, style ${profile?.travel_style ?? "?"}, budget ${profile?.budget_range ?? "?"}, likes ${profile?.preferred_destinations?.join(", ") || "?"}. History: ${historyLine}
 
-Traveler profile:
-- Age: ${profile?.age ?? "unknown"}
-- Declared travel style: ${profile?.travel_style ?? "unknown"}
-- Declared budget range: ${profile?.budget_range ?? "unknown"}
-- Preferred destinations: ${profile?.preferred_destinations?.join(", ") || "unknown"}
-- Previous trips (history): ${historyLine}
+RULES
+- Each day focuses on ONE neighborhood/zone (or two adjacent). NEVER zig-zag across the city.
+- Realistic travel times. For every activity after the first of the day, include a short transport hint in "description" (mode + minutes), using real local transport (metro lines, tram, vaporetto, etc.). Walk if <1.5 km.
+- Respect arrival/departure constraints and climate for ${monthName} (cold/rainy → indoor; hot summer → outdoor early/late, indoor midday).
+- Balance pace, indoor/outdoor, iconic/hidden. Mix must reflect the selected trip types.
+- Culturally-correct meal hours. In Spanish use peninsular meal naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal, never "almuerzo"/"lunch"), Cena (20:30–23:00). Meal activity titles MUST start with the meal word ("Comida en …", "Cena en …").
 
-============================
-INTERNAL REASONING — MANDATORY (do this silently before writing JSON)
-============================
-1. TRAVELER PSYCHOLOGY: Infer the traveler archetype from age, companion, budget, trip types and history. Every activity must fit this archetype (pace, vibe, price tier, kid-friendliness, nightlife level, physical effort).
-2. GEOGRAPHIC LOGIC: Mentally cluster the destination into neighborhoods/zones. Each day must focus on ONE coherent zone (or two adjacent ones). NEVER zig-zag.
-3. TIME PHYSICS: Every activity must fit realistically. Account for arrival/departure, travel time between stops, opening hours, culturally-correct meal times, rest needs.
-4. EXPERIENCE DESIGN: Balance intensity vs rest, indoor vs outdoor, iconic vs hidden. Honor the SELECTED TRIP TYPES (${tripTypesLine}) — the mix of activities should clearly reflect them.
-
-============================
-TRANSPORT INTELLIGENCE — MANDATORY
-============================
-For EACH activity after the first of the day, include in "description" a short transport hint to reach it from the previous stop:
-- Mode: walking / metro / bus / taxi / ferry / bike / tram / train (use the modes that actually exist in ${trip.destination}).
-- Approximate travel time in minutes (realistic: walking ~5 km/h, metro 15–25 min cross-city, taxi depends on traffic).
-- Use real local transport systems when known (e.g. Metro Line 4, Vaporetto line 1, JR Yamanote line, MRT, tube, tram 28).
-- NEVER imply instant teleportation between distant zones. If two stops are far, either insert a transport step or keep them on different days.
-- Prefer walking when stops are <1.5 km apart; metro/bus for cross-city; taxi only when faster makes sense (late night, with luggage, kids/elderly).
-Format example inside description: "🚶 10 min a pie desde la parada anterior" or "🚇 Metro L1 hasta Sol, ~15 min".
-
-============================
-CLIMATE & SEASON AWARENESS
-============================
-- Consider the typical weather of ${trip.destination} in ${monthName}.
-- Cold/winter: prioritize indoor. Hot summer: outdoor early/late, indoor midday. Rainy: covered options + backups.
-
-============================
-SELF-VALIDATION CHECKLIST (silent; fix and re-check if any fails)
-============================
-[ ] Geographic coherence per day.
-[ ] Travel-time realism with transport hints on chained stops.
-[ ] Balanced load for the archetype.
-[ ] Logical morning→evening flow with culturally-correct meal hours.
-[ ] Every activity justifiable from the traveler profile and selected trip types.
-[ ] Arrival/departure constraints respected.
-[ ] Climate constraints respected for ${monthName}.
-[ ] Accommodation rule respected (${hasAccommodation ? "no hotel suggestions" : "minimal/no hotel listings"}).
-
-============================
-HARD RULES
-============================
-- FORBIDDEN: generic tourist top-10 lists, copy-pasted "must-see" plans, activities with no link to the traveler profile, vague venues.
-- Every activity must connect LOCATION + TIME + USER ARCHETYPE + REALISTIC TRANSPORT.
-- "place" must be a REAL, specific, named venue in ${trip.destination}.
-
-============================
-SPANISH MEAL NAMING — STRICT (only when writing in Spanish)
-============================
-When ${langName} is Spanish, name meals using PENINSULAR SPANISH conventions:
-- "Desayuno" → morning meal (07:30–10:00).
-- "Almuerzo" → ONLY a light mid-morning snack/brunch (10:30–12:00). NEVER use "almuerzo" for the midday main meal.
-- "Comida" → MAIN midday meal (13:30–16:00). Any meal scheduled between 13:30 and 16:00 MUST be titled "Comida" (never "Almuerzo", never "Lunch").
-- "Merienda" → optional afternoon snack (17:00–19:00).
-- "Cena" → evening meal (20:30–23:00).
-Activity titles for meals MUST start with the correct word (e.g. "Comida en …", "Cena en …"). Do NOT translate "lunch" as "almuerzo" — it is always "comida".
-
-============================
-PACING & TRANSITIONS
-============================
-- Never schedule back-to-back activities in different zones without an explicit transport step in between.
-- Respect realistic walking/transit times; leave breathing room between intense activities.
-- Keep a logical morning → midday meal → afternoon → evening flow each day.
-
-
-============================
-OUTPUT FORMAT — return ONLY valid JSON, no markdown, no backticks
-============================
+OUTPUT — return ONLY valid JSON, no markdown:
 {
-  "summary": "1-2 inspiring sentences (in ${langName}) reflecting the traveler archetype",
-  "days": [
-    {
-      "day": 1,
-      "title": "Short day title (in ${langName}) — usually names the zone/theme",
-      "subtitle": "1-sentence recap (in ${langName})",
-      "image_query": "2-3 English words for a representative photo",
-      "activities": [
-        {
-          "time": "09:00",
-          "emoji": "🛬",
-          "title": "Short activity name (3-6 words, ${langName})",
-          "place": "Real venue name",
-          "description": "1-2 lines in ${langName}, INCLUDING transport hint (mode + approx minutes) when relevant.",
-          "category": "transport"
-        }
-      ]
-    }
-  ]
+  "summary": "1-2 inspiring sentences in ${langName}",
+  "days": [{
+    "day": 1,
+    "title": "Short zone/theme title in ${langName}",
+    "subtitle": "1-sentence recap in ${langName}",
+    "image_query": "2-3 English words",
+    "activities": [{
+      "time": "HH:MM (24h)",
+      "emoji": "single emoji",
+      "title": "3-6 words in ${langName}",
+      "place": "Real venue name",
+      "description": "1-2 lines in ${langName}, with transport hint when chained",
+      "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other"
+    }]
+  }]
 }
 
-MANDATORY OUTPUT REQUIREMENTS:
-- Generate ${dayCount} days.
-- 5–7 activities per day for normal travelers; fewer on tight arrival/departure days.
-- "time": ALWAYS 24h HH:MM.
-- "emoji": ONE emoji per activity.
-- "category": EXACTLY one of: "hotel", "restaurant", "activity", "transport", "sight", "nightlife", "shopping", "other".
-${hasAccommodation ? '- DO NOT use category "hotel" for any activity.' : ""}
-
-Return pure JSON only.`;
+Generate exactly ${dayCount} days. 5–7 activities/day (fewer on tight arrival/departure days). ${hasAccommodation ? 'NEVER use category "hotel".' : ""} Pure JSON only.`;
 
 
     let aiRes: Response | null = null;
