@@ -163,6 +163,12 @@ function ExplorePage() {
   );
 }
 
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h;
+}
+
 function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void }) {
   const { t } = useTranslation();
   const fallback = useMemo(
@@ -185,8 +191,10 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
             src={img}
             alt={item.destination}
             loading="lazy"
-            className="h-auto w-full object-cover"
+            onError={() => setImg(fallback)}
+            className="h-56 w-full object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
             <h3 className="font-display text-lg font-bold drop-shadow">{title}</h3>
