@@ -137,7 +137,7 @@ ${arrivalLine}
 ${departureLine}
 With: ${trip.companion ?? "?"} | Budget: ${trip.budget ?? "?"} | Types: ${tripTypesLine} | Avoid: ${trip.avoid?.trim() || "—"}
 ${accommodationBlock}
-Profile: age ${profile?.age ?? "?"}, style ${profile?.travel_style ?? "?"}, budget ${profile?.budget_range ?? "?"}, likes ${profile?.preferred_destinations?.join(", ") || "?"}. History: ${historyLine}
+Profile: age ${profile?.age ?? "?"}, type ${profile?.traveler_type ?? "?"}, style ${profile?.travel_style ?? "?"}, budget ${profile?.budget_range ?? "?"}, likes ${profile?.preferred_destinations?.join(", ") || "?"}. History: ${historyLine}
 
 RULES
 - Each day focuses on ONE neighborhood/zone (or two adjacent). NEVER zig-zag across the city.
