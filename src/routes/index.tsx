@@ -28,10 +28,21 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const { t } = useTranslation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session?.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) =>
+      setIsLoggedIn(!!s?.user),
+    );
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
       <HeroSection />
+
       <PopularDestinationsSection />
       <HowItWorksSection />
       <FeaturesSection />
