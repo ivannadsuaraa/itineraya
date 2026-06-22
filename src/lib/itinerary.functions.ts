@@ -72,7 +72,7 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
     // Load user profile (language, age, travel_style, budget_range, preferred_destinations)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("language, age, travel_style, budget_range, preferred_destinations")
+      .select("language, age, travel_style, budget_range, preferred_destinations, traveler_type")
       .eq("id", userId)
       .maybeSingle();
     const lang: "es" | "en" =
