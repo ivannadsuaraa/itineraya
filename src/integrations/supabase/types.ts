@@ -131,6 +131,7 @@ export type Database = {
           plan: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations: string[] | null
           travel_style: string | null
+          traveler_type: string | null
           updated_at: string
           welcome_completed: boolean
         }
@@ -145,6 +146,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations?: string[] | null
           travel_style?: string | null
+          traveler_type?: string | null
           updated_at?: string
           welcome_completed?: boolean
         }
@@ -159,6 +161,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["subscription_plan"]
           preferred_destinations?: string[] | null
           travel_style?: string | null
+          traveler_type?: string | null
           updated_at?: string
           welcome_completed?: boolean
         }
