@@ -290,6 +290,10 @@ export type Database = {
           end_date: string | null
           has_accommodation: boolean
           hero_image_url: string | null
+          hotel_address: string | null
+          hotel_lat: number | null
+          hotel_lng: number | null
+          hotel_name: string | null
           id: string
           is_public: boolean
           itinerary: Json | null
@@ -314,6 +318,10 @@ export type Database = {
           end_date?: string | null
           has_accommodation?: boolean
           hero_image_url?: string | null
+          hotel_address?: string | null
+          hotel_lat?: number | null
+          hotel_lng?: number | null
+          hotel_name?: string | null
           id?: string
           is_public?: boolean
           itinerary?: Json | null
@@ -338,6 +346,10 @@ export type Database = {
           end_date?: string | null
           has_accommodation?: boolean
           hero_image_url?: string | null
+          hotel_address?: string | null
+          hotel_lat?: number | null
+          hotel_lng?: number | null
+          hotel_name?: string | null
           id?: string
           is_public?: boolean
           itinerary?: Json | null
