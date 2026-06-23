@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
+import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker";
 
 const searchSchema = z.object({ prefill: z.string().optional() });
 
