@@ -4,6 +4,13 @@ import { Loader2, MapPin, Search, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { geocodePlace } from "@/lib/geocode.functions";
 
+declare global {
+  interface Window {
+    __initGoogleMaps?: () => void;
+  }
+}
+
+
 // Minimal google.maps types we use here
 type LatLng = { lat: number; lng: number };
 
