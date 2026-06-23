@@ -60,6 +60,7 @@ interface FormData {
   budget?: Budget;
   tripTypes: TripTypeId[];
   hasAccommodation?: boolean;
+  hotel?: HotelSelection | null;
   avoid: string;
 }
 
