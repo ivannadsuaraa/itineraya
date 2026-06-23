@@ -1,3 +1,4 @@
+/// <reference types="google.maps" />
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Loader2, MapPin, Search, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
