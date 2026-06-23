@@ -153,7 +153,10 @@ function OnboardingPage() {
       case "companion": return !!data.companion;
       case "budget": return !!data.budget;
       case "tripType": return data.tripTypes.length > 0;
-      case "accommodation": return data.hasAccommodation !== undefined;
+      case "accommodation":
+        if (data.hasAccommodation === undefined) return false;
+        if (data.hasAccommodation === true && !data.hotel) return false;
+        return true;
       case "avoid": return true;
       default: return false;
     }
