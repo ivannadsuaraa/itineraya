@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
+import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker";
 
 const searchSchema = z.object({ prefill: z.string().optional() });
 
@@ -59,6 +60,7 @@ interface FormData {
   budget?: Budget;
   tripTypes: TripTypeId[];
   hasAccommodation?: boolean;
+  hotel?: HotelSelection | null;
   avoid: string;
 }
 
@@ -151,7 +153,10 @@ function OnboardingPage() {
       case "companion": return !!data.companion;
       case "budget": return !!data.budget;
       case "tripType": return data.tripTypes.length > 0;
-      case "accommodation": return data.hasAccommodation !== undefined;
+      case "accommodation":
+        if (data.hasAccommodation === undefined) return false;
+        if (data.hasAccommodation === true && !data.hotel) return false;
+        return true;
       case "avoid": return true;
       default: return false;
     }
@@ -216,6 +221,10 @@ function OnboardingPage() {
           trip_style: tripStyleStr,
           trip_types: data.tripTypes,
           has_accommodation: !!data.hasAccommodation,
+          hotel_name: data.hotel?.name ?? null,
+          hotel_address: data.hotel?.address ?? null,
+          hotel_lat: data.hotel?.lat ?? null,
+          hotel_lng: data.hotel?.lng ?? null,
           travel_mode: "planning",
           avoid: data.avoid,
           status: "pending",
@@ -426,7 +435,7 @@ function OnboardingPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <OptionCard
                       selected={data.hasAccommodation === false}
-                      onClick={() => setData({ ...data, hasAccommodation: false })}
+                      onClick={() => setData({ ...data, hasAccommodation: false, hotel: null })}
                       icon={<Sparkles className="h-5 w-5" />}
                       label={t("onboarding.accomNo")}
                       description={t("onboarding.accomNoDesc")}
@@ -441,8 +450,25 @@ function OnboardingPage() {
                       horizontal
                     />
                   </div>
+                  {data.hasAccommodation === true && (
+                    <div className="mt-5">
+                      <p className="mb-2 text-sm font-semibold text-sky-900">
+                        Marca tu alojamiento en el mapa
+                      </p>
+                      <p className="mb-3 text-xs text-sky-600">
+                        Usaremos este punto como base para todas las recomendaciones (restaurantes,
+                        actividades…). Búscalo por nombre o coloca el pin manualmente.
+                      </p>
+                      <HotelMapPicker
+                        destination={data.destination}
+                        value={data.hotel ?? null}
+                        onChange={(hotel) => setData((d) => ({ ...d, hotel }))}
+                      />
+                    </div>
+                  )}
                 </StepShell>
               )}
+
 
               {currentStepId === "avoid" && (
                 <StepShell emoji="🚫" title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>

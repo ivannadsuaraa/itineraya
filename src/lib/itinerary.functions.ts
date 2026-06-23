@@ -120,13 +120,22 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const tripTypes = ((trip as { trip_types?: string[] | null }).trip_types) ?? [];
     const hasAccommodation = !!(trip as { has_accommodation?: boolean | null }).has_accommodation;
+    const hotelName = (trip as { hotel_name?: string | null }).hotel_name ?? null;
+    const hotelAddress = (trip as { hotel_address?: string | null }).hotel_address ?? null;
+    const hotelLatRaw = (trip as { hotel_lat?: number | string | null }).hotel_lat;
+    const hotelLngRaw = (trip as { hotel_lng?: number | string | null }).hotel_lng;
+    const hotelLat = hotelLatRaw != null ? Number(hotelLatRaw) : null;
+    const hotelLng = hotelLngRaw != null ? Number(hotelLngRaw) : null;
+    const hasHotelCoords = hotelLat != null && hotelLng != null && !Number.isNaN(hotelLat) && !Number.isNaN(hotelLng);
     const tripTypesLine = tripTypes.length > 0
       ? tripTypes.join(", ")
       : (trip.trip_style ?? "unspecified");
 
-    const accommodationBlock = hasAccommodation
-      ? `ACCOMMODATION: The traveler ALREADY HAS a hotel/apartment booked. DO NOT recommend hotels. DO NOT include any "check-in", "hotel suggestion" or "where to stay" activity. Treat the accommodation as a fixed but unknown base — start/end each day from a generic "your accommodation" without naming a specific hotel.`
-      : `ACCOMMODATION: The traveler does NOT yet have a place to stay. You MAY include one short "check-in" or accommodation-area note on day 1 if useful, but the focus is the itinerary, not hotel listings.`;
+    const accommodationBlock = hasHotelCoords
+      ? `ACCOMMODATION (FIXED ANCHOR): The traveler is staying at "${hotelName ?? "their accommodation"}"${hotelAddress ? ` (${hotelAddress})` : ""}, coordinates ${hotelLat!.toFixed(5)}, ${hotelLng!.toFixed(5)}. This is the MANDATORY center of every day. EVERY activity, restaurant and meeting point MUST be within ~3 km (walking + short transit). Each day must START and END at the hotel. NEVER suggest activities in a different city/region. DO NOT recommend any other hotels. Order activities to minimize distance from the hotel.`
+      : hasAccommodation
+        ? `ACCOMMODATION: The traveler ALREADY HAS a place to stay but did not pin its location. Treat it as a generic base in the city center. DO NOT recommend other hotels. Start/end each day from "your accommodation".`
+        : `ACCOMMODATION: The traveler does NOT yet have a place to stay. You MAY include one short "check-in" or accommodation-area note on day 1; the focus is the itinerary, not hotel listings.`;
 
     const prompt = `You are an expert travel planner. Build a personalized, geographically coherent, time-realistic itinerary. Write all user-facing strings in ${langName}.
 
