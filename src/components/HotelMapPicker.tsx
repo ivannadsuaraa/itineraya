@@ -28,7 +28,7 @@ function loadGoogleMaps(): Promise<typeof google> {
       reject(new Error("window unavailable"));
       return;
     }
-    // @ts-expect-error global
+    
     if (window.google?.maps) return resolve(window.google);
 
     const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
@@ -37,9 +37,9 @@ function loadGoogleMaps(): Promise<typeof google> {
       reject(new Error("Missing Google Maps browser key"));
       return;
     }
-    // @ts-expect-error attach global callback
+    
     window.__initGoogleMaps = () => {
-      // @ts-expect-error global
+      
       resolve(window.google);
     };
     const existing = document.getElementById(SCRIPT_ID);
@@ -189,7 +189,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
     }
     const handle = setTimeout(async () => {
       try {
-        // @ts-expect-error global
+        
         if (!window.google?.maps?.places) return;
         const { AutocompleteSuggestion } = (await google.maps.importLibrary(
           "places",
