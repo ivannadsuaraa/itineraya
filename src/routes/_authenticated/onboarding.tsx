@@ -435,7 +435,7 @@ function OnboardingPage() {
                   <div className="grid gap-3 sm:grid-cols-2">
                     <OptionCard
                       selected={data.hasAccommodation === false}
-                      onClick={() => setData({ ...data, hasAccommodation: false })}
+                      onClick={() => setData({ ...data, hasAccommodation: false, hotel: null })}
                       icon={<Sparkles className="h-5 w-5" />}
                       label={t("onboarding.accomNo")}
                       description={t("onboarding.accomNoDesc")}
@@ -450,8 +450,25 @@ function OnboardingPage() {
                       horizontal
                     />
                   </div>
+                  {data.hasAccommodation === true && (
+                    <div className="mt-5">
+                      <p className="mb-2 text-sm font-semibold text-sky-900">
+                        Marca tu alojamiento en el mapa
+                      </p>
+                      <p className="mb-3 text-xs text-sky-600">
+                        Usaremos este punto como base para todas las recomendaciones (restaurantes,
+                        actividades…). Búscalo por nombre o coloca el pin manualmente.
+                      </p>
+                      <HotelMapPicker
+                        destination={data.destination}
+                        value={data.hotel ?? null}
+                        onChange={(hotel) => setData((d) => ({ ...d, hotel }))}
+                      />
+                    </div>
+                  )}
                 </StepShell>
               )}
+
 
               {currentStepId === "avoid" && (
                 <StepShell emoji="🚫" title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>
