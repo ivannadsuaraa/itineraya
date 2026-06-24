@@ -19,22 +19,25 @@ export type SuggestedDestination = {
   imageUrl: string;
 };
 
+function fallbackImage(query: string): string {
+  const q = encodeURIComponent(query.split(",")[0].trim() + ",travel");
+  const lock = Math.abs([...query].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)) % 1000;
+  return `https://loremflickr.com/800/600/${q}?lock=${lock}`;
+}
+
 async function unsplashImage(query: string): Promise<string> {
   const key = process.env.UNSPLASH_KEY;
-  if (!key) return `https://source.unsplash.com/800x600/?${encodeURIComponent(query)}`;
+  if (!key) return fallbackImage(query);
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
       { headers: { Authorization: `Client-ID ${key}` } },
     );
-    if (!res.ok) return `https://source.unsplash.com/800x600/?${encodeURIComponent(query)}`;
+    if (!res.ok) return fallbackImage(query);
     const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };
-    return (
-      data.results?.[0]?.urls?.regular ??
-      `https://source.unsplash.com/800x600/?${encodeURIComponent(query)}`
-    );
+    return data.results?.[0]?.urls?.regular ?? fallbackImage(query);
   } catch {
-    return `https://source.unsplash.com/800x600/?${encodeURIComponent(query)}`;
+    return fallbackImage(query);
   }
 }
 
