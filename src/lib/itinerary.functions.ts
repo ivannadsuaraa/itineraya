@@ -276,3 +276,4 @@ if (!content) throw new Error("Respuesta vacía del modelo");
 
     return { itinerary: parsed, hero_image_url: hero };
   });
+ 
