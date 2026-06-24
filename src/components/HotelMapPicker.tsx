@@ -1,18 +1,8 @@
-/// <reference types="google.maps" />
-import { useEffect, useRef, useState, useCallback } from "react";
-import { Loader2, MapPin, Search, X } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { geocodePlace } from "@/lib/geocode.functions";
-
-declare global {
-  interface Window {
-    __initGoogleMaps?: () => void;
-  }
-}
-
-
-// Minimal google.maps types we use here
-type LatLng = { lat: number; lng: number };
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { Loader2, Search, X } from "lucide-react";
 
 export interface HotelSelection {
   name: string | null;
@@ -27,160 +17,91 @@ interface Props {
   onChange: (sel: HotelSelection | null) => void;
 }
 
-const SCRIPT_ID = "google-maps-js-sdk";
+type NominatimResult = {
+  lat: string;
+  lon: string;
+  display_name: string;
+  name?: string;
+  type?: string;
+  class?: string;
+};
 
-function loadGoogleMaps(): Promise<typeof google> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === "undefined") {
-      reject(new Error("window unavailable"));
-      return;
-    }
-    
-    if (window.google?.maps) return resolve(window.google);
+const PIN_ICON = L.divIcon({
+  className: "itineraya-hotel-pin",
+  html: `<div style="
+    width:32px;height:32px;border-radius:9999px;
+    background:#1E6B9A;border:3px solid #fff;
+    box-shadow:0 6px 16px rgba(30,107,154,0.45);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:16px;
+  ">🏨</div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+});
 
-    const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
-    const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
-    if (!key) {
-      reject(new Error("Missing Google Maps browser key"));
-      return;
-    }
-    
-    window.__initGoogleMaps = () => {
-      
-      resolve(window.google);
-    };
-    const existing = document.getElementById(SCRIPT_ID);
-    if (existing) {
-      // Already loading — wait for callback
-      return;
-    }
-    const s = document.createElement("script");
-    s.id = SCRIPT_ID;
-    s.async = true;
-    s.defer = true;
-    const params = new URLSearchParams({
-      key,
-      v: "weekly",
-      libraries: "places,marker",
-      loading: "async",
-      callback: "__initGoogleMaps",
-    });
-    if (channel) params.set("channel", channel);
-    s.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
-    s.onerror = () => reject(new Error("Failed to load Google Maps"));
-    document.head.appendChild(s);
+async function nominatimSearch(query: string, signal?: AbortSignal): Promise<NominatimResult[]> {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=6&q=${encodeURIComponent(query)}`;
+  const res = await fetch(url, { signal, headers: { "Accept-Language": "es,en" } });
+  if (!res.ok) return [];
+  return (await res.json()) as NominatimResult[];
+}
+
+async function nominatimReverse(lat: number, lng: number): Promise<string | null> {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    const res = await fetch(url, { headers: { "Accept-Language": "es,en" } });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { display_name?: string };
+    return data.display_name ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function RecenterOnChange({ center, zoom }: { center: [number, number]; zoom?: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom ?? map.getZoom(), { animate: true });
+  }, [center, zoom, map]);
+  return null;
+}
+
+function ClickCapture({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e) {
+      onPick(e.latlng.lat, e.latlng.lng);
+    },
   });
+  return null;
 }
 
 export function HotelMapPicker({ destination, value, onChange }: Props) {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const mapInstance = useRef<google.maps.Map | null>(null);
-  const markerRef = useRef<google.maps.Marker | null>(null);
-  const sessionToken = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
-  const geocodeFn = useServerFn(geocodePlace);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchInput, setSearchInput] = useState("");
-  const [suggestions, setSuggestions] = useState<
-    Array<{ placeId: string; primary: string; secondary: string }>
-  >([]);
-
-  const setPin = useCallback(
-    (pos: LatLng, name: string | null, address: string | null) => {
-      if (!mapInstance.current) return;
-      if (!markerRef.current) {
-        markerRef.current = new google.maps.Marker({
-          map: mapInstance.current,
-          position: pos,
-          draggable: true,
-          animation: google.maps.Animation.DROP,
-        });
-        markerRef.current.addListener("dragend", () => {
-          const p = markerRef.current?.getPosition();
-          if (!p) return;
-          const lat = p.lat();
-          const lng = p.lng();
-          // Reverse geocode for address on drag
-          new google.maps.Geocoder().geocode({ location: { lat, lng } }, (results, status) => {
-            const addr = status === "OK" && results?.[0]?.formatted_address ? results[0].formatted_address : null;
-            onChange({ name: null, address: addr, lat, lng });
-          });
-        });
-      } else {
-        markerRef.current.setPosition(pos);
-      }
-      mapInstance.current.panTo(pos);
-      if ((mapInstance.current.getZoom() ?? 0) < 14) mapInstance.current.setZoom(15);
-      onChange({ name, address, lat: pos.lat, lng: pos.lng });
-    },
-    [onChange],
+  const [center, setCenter] = useState<[number, number]>(
+    value ? [value.lat, value.lng] : [40.4168, -3.7038],
   );
+  const [zoom, setZoom] = useState<number>(value ? 15 : 5);
+  const [loadingCenter, setLoadingCenter] = useState(!value);
+  const [searchInput, setSearchInput] = useState(value?.name ?? "");
+  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const [searching, setSearching] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Init map once
+  // Initial center: geocode destination if no value
   useEffect(() => {
+    if (value) return;
+    if (!destination.trim()) {
+      setLoadingCenter(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
-      try {
-        await loadGoogleMaps();
-        if (cancelled || !mapRef.current) return;
-
-        const initialCenter: LatLng = value
-          ? { lat: value.lat, lng: value.lng }
-          : { lat: 40.4168, lng: -3.7038 }; // Madrid fallback while geocoding
-
-        mapInstance.current = new google.maps.Map(mapRef.current, {
-          center: initialCenter,
-          zoom: value ? 15 : 5,
-          disableDefaultUI: true,
-          zoomControl: true,
-          gestureHandling: "greedy",
-          clickableIcons: false,
-        });
-
-        // Click to drop/move pin
-        mapInstance.current.addListener("click", (e: google.maps.MapMouseEvent) => {
-          if (!e.latLng) return;
-          const lat = e.latLng.lat();
-          const lng = e.latLng.lng();
-          setPin({ lat, lng }, null, null);
-        });
-
-        // If we already have a value, render the marker
-        if (value) {
-          markerRef.current = new google.maps.Marker({
-            map: mapInstance.current,
-            position: initialCenter,
-            draggable: true,
-            animation: google.maps.Animation.DROP,
-          });
-          markerRef.current.addListener("dragend", () => {
-            const p = markerRef.current?.getPosition();
-            if (!p) return;
-            onChange({ name: value.name, address: value.address, lat: p.lat(), lng: p.lng() });
-          });
-        } else if (destination.trim()) {
-          // Center map on the destination via geocoding
-          try {
-            const res = await geocodeFn({ data: { query: destination } });
-            if (!cancelled && res.lat != null && res.lng != null && mapInstance.current) {
-              mapInstance.current.setCenter({ lat: res.lat, lng: res.lng });
-              mapInstance.current.setZoom(13);
-            }
-          } catch {
-            /* ignore geocode failure, user can still pan */
-          }
-        }
-
-        sessionToken.current = new google.maps.places.AutocompleteSessionToken();
-        setLoading(false);
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "No se pudo cargar el mapa");
-          setLoading(false);
-        }
+      const res = await nominatimSearch(destination);
+      if (cancelled) return;
+      if (res[0]) {
+        setCenter([parseFloat(res[0].lat), parseFloat(res[0].lon)]);
+        setZoom(13);
       }
+      setLoadingCenter(false);
     })();
     return () => {
       cancelled = true;
@@ -188,116 +109,129 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounced autocomplete using Places API (New)
+  // Debounced suggestion fetch
   useEffect(() => {
-    if (!searchInput || searchInput.trim().length < 2) {
+    const q = searchInput.trim();
+    if (q.length < 3) {
       setSuggestions([]);
       return;
     }
     const handle = setTimeout(async () => {
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
+      setSearching(true);
       try {
-        
-        if (!window.google?.maps?.places) return;
-        const { AutocompleteSuggestion } = (await google.maps.importLibrary(
-          "places",
-        )) as google.maps.PlacesLibrary;
-        const center = mapInstance.current?.getCenter();
-        const result = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
-          input: searchInput,
-          sessionToken: sessionToken.current ?? undefined,
-          includedPrimaryTypes: ["lodging"],
-          locationBias: center
-            ? { center: { lat: center.lat(), lng: center.lng() }, radius: 30000 }
-            : undefined,
-        });
-        const items = (result.suggestions ?? [])
-          .map((s) => s.placePrediction)
-          .filter((p): p is google.maps.places.PlacePrediction => !!p)
-          .slice(0, 6)
-          .map((p) => ({
-            placeId: p.placeId,
-            primary: p.mainText?.text ?? p.text?.text ?? "",
-            secondary: p.secondaryText?.text ?? "",
-          }));
-        setSuggestions(items);
+        const scoped = `${q}, ${destination}`.trim();
+        const res = await nominatimSearch(scoped, ctrl.signal);
+        setSuggestions(res);
       } catch {
-        setSuggestions([]);
+        /* ignore */
+      } finally {
+        setSearching(false);
       }
-    }, 250);
+    }, 400);
     return () => clearTimeout(handle);
-  }, [searchInput]);
+  }, [searchInput, destination]);
 
-  const selectSuggestion = async (placeId: string, primary: string) => {
-    try {
-      const { Place } = (await google.maps.importLibrary("places")) as google.maps.PlacesLibrary;
-      const place = new Place({ id: placeId });
-      await place.fetchFields({ fields: ["location", "formattedAddress", "displayName"] });
-      const loc = place.location;
-      if (!loc) return;
-      setPin(
-        { lat: loc.lat(), lng: loc.lng() },
-        place.displayName ?? primary,
-        place.formattedAddress ?? null,
-      );
-      setSuggestions([]);
-      setSearchInput(place.displayName ?? primary);
-      sessionToken.current = new google.maps.places.AutocompleteSessionToken();
-    } catch {
-      /* ignore */
-    }
-  };
+  const setPin = useCallback(
+    async (lat: number, lng: number, name: string | null, address: string | null) => {
+      let finalAddress = address;
+      if (!finalAddress) {
+        finalAddress = await nominatimReverse(lat, lng);
+      }
+      onChange({ name, address: finalAddress, lat, lng });
+      setCenter([lat, lng]);
+      setZoom((z) => (z < 14 ? 15 : z));
+    },
+    [onChange],
+  );
 
-  const clearSelection = () => {
-    markerRef.current?.setMap(null);
-    markerRef.current = null;
-    setSearchInput("");
+  const handleSelect = (r: NominatimResult) => {
+    const lat = parseFloat(r.lat);
+    const lng = parseFloat(r.lon);
+    const name = r.name ?? r.display_name.split(",")[0];
+    setSearchInput(name);
     setSuggestions([]);
-    onChange(null);
+    void setPin(lat, lng, name, r.display_name);
   };
+
+  const markerPos: [number, number] | null = value ? [value.lat, value.lng] : null;
+
+  const mapEl = useMemo(
+    () => (
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        scrollWheelZoom
+        style={{ height: "100%", width: "100%" }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        />
+        <RecenterOnChange center={center} zoom={zoom} />
+        <ClickCapture
+          onPick={(lat, lng) => {
+            void setPin(lat, lng, null, null);
+          }}
+        />
+        {markerPos && (
+          <Marker
+            position={markerPos}
+            icon={PIN_ICON}
+            draggable
+            eventHandlers={{
+              dragend: (e) => {
+                const m = e.target as L.Marker;
+                const p = m.getLatLng();
+                void setPin(p.lat, p.lng, value?.name ?? null, null);
+              },
+            }}
+          />
+        )}
+      </MapContainer>
+    ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [center, zoom, markerPos?.[0], markerPos?.[1]],
+  );
 
   return (
     <div className="space-y-3">
       <div className="relative">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-sky-500" />
-          <input
-            ref={searchRef}
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Buscar hotel o dirección…"
-            className="w-full rounded-2xl border border-sky-200 bg-white/90 py-3 pl-11 pr-10 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10"
-          />
-          {searchInput && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchInput("");
-                setSuggestions([]);
-              }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-sky-500 hover:bg-sky-100"
-              aria-label="Limpiar"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-sky-500" />
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Buscar hotel o dirección…"
+          className="w-full rounded-2xl border border-sky-200 bg-white/90 py-3 pl-11 pr-10 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10"
+        />
+        {searchInput && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchInput("");
+              setSuggestions([]);
+              onChange(null);
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-sky-500 hover:bg-sky-100"
+            aria-label="Limpiar"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
         {suggestions.length > 0 && (
-          <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-2xl border border-sky-100 bg-white shadow-xl">
-            {suggestions.map((s) => (
-              <li key={s.placeId}>
+          <ul className="absolute z-[1000] mt-1 max-h-72 w-full overflow-auto rounded-2xl border border-sky-100 bg-white shadow-xl">
+            {suggestions.map((s, i) => (
+              <li key={`${s.lat}-${s.lon}-${i}`}>
                 <button
                   type="button"
-                  onClick={() => selectSuggestion(s.placeId, s.primary)}
-                  className="flex w-full items-start gap-3 px-4 py-3 text-left text-sm transition hover:bg-sky-50"
+                  onClick={() => handleSelect(s)}
+                  className="block w-full px-4 py-2.5 text-left text-sm text-sky-900 hover:bg-sky-50"
                 >
-                  <MapPin className="mt-0.5 h-4 w-4 flex-none text-[#1E6B9A]" />
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold text-sky-900">{s.primary}</span>
-                    {s.secondary && (
-                      <span className="block truncate text-xs text-sky-600">{s.secondary}</span>
-                    )}
-                  </span>
+                  <div className="font-medium">{s.name ?? s.display_name.split(",")[0]}</div>
+                  <div className="truncate text-xs text-sky-500">{s.display_name}</div>
                 </button>
               </li>
             ))}
@@ -305,44 +239,21 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
         )}
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-sky-200 bg-sky-50">
-        <div ref={mapRef} className="h-72 w-full sm:h-80" />
-        {loading && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-sm">
-            <Loader2 className="h-6 w-6 animate-spin text-[#1E6B9A]" />
+      <div className="relative h-72 overflow-hidden rounded-2xl border border-sky-200">
+        {loadingCenter && (
+          <div className="absolute inset-0 z-[500] flex items-center justify-center bg-white/70">
+            <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
           </div>
         )}
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/90 p-4 text-center text-sm text-rose-600">
-            {error}
-          </div>
-        )}
+        {mapEl}
       </div>
 
-      {value ? (
-        <div className="flex items-start gap-3 rounded-2xl bg-sky-50 px-4 py-3 ring-1 ring-sky-100">
-          <MapPin className="mt-0.5 h-4 w-4 flex-none text-[#1E6B9A]" />
-          <div className="min-w-0 flex-1 text-sm">
-            <div className="truncate font-semibold text-sky-900">
-              {value.name ?? "Ubicación seleccionada"}
-            </div>
-            <div className="truncate text-xs text-sky-700">
-              {value.address ?? `${value.lat.toFixed(4)}, ${value.lng.toFixed(4)}`}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={clearSelection}
-            className="rounded-full px-2 py-1 text-xs font-semibold text-sky-700 hover:bg-white"
-          >
-            Cambiar
-          </button>
-        </div>
-      ) : (
-        <p className="text-xs text-sky-600">
-          Busca tu hotel o toca el mapa para colocar el pin. Puedes arrastrarlo para ajustarlo.
-        </p>
-      )}
+      <p className="text-xs text-sky-600">
+        {value
+          ? value.address ?? `${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`
+          : "Busca tu hotel o haz clic en el mapa para colocar el pin."}
+      </p>
+      {searching && <p className="text-[11px] text-sky-400">Buscando…</p>}
     </div>
   );
 }

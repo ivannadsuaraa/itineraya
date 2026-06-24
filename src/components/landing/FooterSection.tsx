@@ -50,13 +50,16 @@ export function FooterSection() {
             <p className="text-sm text-sky-500">
               &copy; {new Date().getFullYear()} Itineraya. {t("footer.rights")}
             </p>
-            <div className="flex gap-6">
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
               <a href="https://itineraya.com/privacy" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.privacy")}
               </a>
               <a href="https://itineraya.com/terms" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.terms")}
               </a>
+              <Link to="/cookies" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
+                Cookies
+              </Link>
               <Link to="/contact" className="text-sm text-sky-600 transition-colors hover:text-sky-900">
                 {t("footer.contact")}
               </Link>

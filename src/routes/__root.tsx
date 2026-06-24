@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { CookieBanner } from "@/components/CookieBanner";
 import "@/i18n";
 
 function NotFoundComponent() {
@@ -141,6 +142,7 @@ function RootComponent() {
       <LanguageProvider>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <CookieBanner />
       </LanguageProvider>
     </QueryClientProvider>
   );
