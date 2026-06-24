@@ -4,19 +4,25 @@ import { z } from "zod";
 
 const Input = z.object({ tripId: z.string().uuid() });
 
+function fallbackImage(query: string): string {
+  const q = encodeURIComponent(query.split(",")[0].trim() + ",travel");
+  const lock = Math.abs([...query].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)) % 1000;
+  return `https://loremflickr.com/1200/800/${q}?lock=${lock}`;
+}
+
 async function unsplashImage(query: string): Promise<string | null> {
   const key = process.env.UNSPLASH_KEY;
-  if (!key) return null;
+  if (!key) return fallbackImage(query);
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
       { headers: { Authorization: `Client-ID ${key}` } },
     );
-    if (!res.ok) return null;
+    if (!res.ok) return fallbackImage(query);
     const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };
-    return data.results?.[0]?.urls?.regular ?? null;
+    return data.results?.[0]?.urls?.regular ?? fallbackImage(query);
   } catch {
-    return null;
+    return fallbackImage(query);
   }
 }
 
@@ -137,7 +143,10 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
         ? `ACCOMMODATION: The traveler ALREADY HAS a place to stay but did not pin its location. Treat it as a generic base in the city center. DO NOT recommend other hotels. Start/end each day from "your accommodation".`
         : `ACCOMMODATION: The traveler does NOT yet have a place to stay. You MAY include one short "check-in" or accommodation-area note on day 1; the focus is the itinerary, not hotel listings.`;
 
-    const prompt = `You are an expert travel planner. Build a personalized, geographically coherent, time-realistic itinerary. Write all user-facing strings in ${langName}.
+    const prompt = `You are an expert travel planner. Build a personalized, geographically coherent, time-realistic itinerary.
+
+LANGUAGE LOCK (STRICT)
+Write 100% of user-facing strings (summary, title, subtitle, activity title, place, description) in ${langName}. NO MIXING. If ${langName} is English, never use Spanish words ("Desayuno", "Comida", "Cena", "almuerzo", etc.) — use "Breakfast", "Lunch", "Dinner". If ${langName} is Spanish, never insert English words. Proper nouns (real venue names) stay in their native form.
 
 CONTEXT
 Destination: ${trip.destination}
@@ -148,12 +157,25 @@ With: ${trip.companion ?? "?"} | Budget: ${trip.budget ?? "?"} | Types: ${tripTy
 ${accommodationBlock}
 Profile: age ${profile?.age ?? "?"}, type ${profile?.traveler_type ?? "?"}, style ${profile?.travel_style ?? "?"}, budget ${profile?.budget_range ?? "?"}, likes ${profile?.preferred_destinations?.join(", ") || "?"}. History: ${historyLine}
 
-RULES
+GEOGRAPHIC COHERENCE
 - Each day focuses on ONE neighborhood/zone (or two adjacent). NEVER zig-zag across the city.
-- Realistic travel times. For every activity after the first of the day, include a short transport hint in "description" (mode + minutes), using real local transport (metro lines, tram, vaporetto, etc.). Walk if <1.5 km.
+- Order activities to minimize distance: consecutive stops should be walkable or 1-2 transit stops apart.
+- Group meals near the day's zone (don't cross the city for lunch).
+
+TEMPORAL COHERENCE
+- Realistic durations (museum 1.5-2h, lunch 1-1.5h, sight 45-60min). Leave 15-30 min buffer between stops for transit + photos.
+- Respect opening hours and local meal times. Don't schedule activities back-to-back without travel time.
 - Respect arrival/departure constraints and climate for ${monthName} (cold/rainy → indoor; hot summer → outdoor early/late, indoor midday).
-- Balance pace, indoor/outdoor, iconic/hidden. Mix must reflect the selected trip types.
-- Culturally-correct meal hours. In Spanish use peninsular meal naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal, never "almuerzo"/"lunch"), Cena (20:30–23:00). Meal activity titles MUST start with the meal word ("Comida en …", "Cena en …").
+
+TRANSPORT
+- For EVERY activity after the first of the day, START the "description" with a transport hint: mode + estimated minutes from the previous stop, using REAL local options (e.g. "🚶 8 min a pie", "🚇 Metro L4 dirección Trafalgar, 12 min", "🚌 Bus 24, 15 min", "🚕 Taxi 10 min"). Walk if <1.2 km.
+- When relevant, mention the destination's official transport site in the day "subtitle" or the first activity (e.g. tmb.cat for Barcelona, ratp.fr for Paris, mta.info for NYC, atac.roma.it for Rome).
+
+LOCAL EVENTS
+- Consider festivals, public holidays and seasonal events happening on the trip dates (Carnaval, Semana Santa, San Juan 23 Jun, Fallas, La Mercè, Oktoberfest, Carnevale di Venezia, Holi, Sakura, Cherry Blossom, Christmas markets, etc.). If a notable event overlaps, INCLUDE it as an activity on the right day with the correct time.
+
+MEALS
+- Culturally-correct meal hours. ${lang === "es" ? 'In Spanish use peninsular naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal — never "almuerzo"/"lunch"), Cena (20:30–23:00). Titles MUST start with the meal word ("Comida en …", "Cena en …").' : 'In English use Breakfast / Lunch / Dinner. Adapt times to local culture (Spain lunch 13:30-16:00, dinner 20:30-23:00; Italy similar; UK lunch 12:30, dinner 19:00; Japan dinner 18:30).'}
 
 OUTPUT — return ONLY valid JSON, no markdown:
 {
@@ -168,13 +190,13 @@ OUTPUT — return ONLY valid JSON, no markdown:
       "emoji": "single emoji",
       "title": "3-6 words in ${langName}",
       "place": "Real venue name",
-      "description": "1-2 lines in ${langName}, with transport hint when chained",
+      "description": "1-2 lines in ${langName}. If not the first stop, START with transport hint.",
       "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other"
     }]
   }]
 }
 
-Generate exactly ${dayCount} days. 5–7 activities/day (fewer on tight arrival/departure days). ${hasAccommodation ? 'NEVER use category "hotel".' : ""} Pure JSON only.`;
+Generate exactly ${dayCount} days. 5–7 activities/day (fewer on tight arrival/departure days). ${hasAccommodation ? 'NEVER use category "hotel".' : ""} Pure JSON only. Remember: 100% ${langName}.`;
 
 
     let aiRes: Response | null = null;

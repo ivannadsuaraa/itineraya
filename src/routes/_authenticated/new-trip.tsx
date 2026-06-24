@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, MapPin, Compass, Navigation, Lock, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Compass, Lock, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -49,7 +49,7 @@ function NewTripPage() {
   const overLimit =
     loaded && planLimit !== null && (tripCount ?? 0) >= planLimit;
 
-  const handlePick = (to: "/onboarding" | "/inspire" | "/copilot") => {
+  const handlePick = (to: "/onboarding" | "/inspire") => {
     if (!loaded) return;
     if (overLimit) {
       setShowLimit(true);
@@ -101,7 +101,7 @@ function NewTripPage() {
           <p className="mt-2 text-sm text-sky-600 md:text-base">{t("newTrip.subtitle")}</p>
         </motion.div>
 
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
           <ModeCard
             emoji="✅"
             icon={<MapPin className="h-7 w-7" />}
@@ -118,14 +118,6 @@ function NewTripPage() {
             highlight
             onClick={() => handlePick("/inspire")}
             delay={0.2}
-          />
-          <ModeCard
-            emoji="🧭"
-            icon={<Navigation className="h-7 w-7" />}
-            title={t("newTrip.copilotTitle")}
-            description={t("newTrip.copilotDesc")}
-            onClick={() => handlePick("/copilot")}
-            delay={0.3}
           />
         </div>
       </div>
