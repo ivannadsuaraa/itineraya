@@ -4,19 +4,25 @@ import { z } from "zod";
 
 const Input = z.object({ tripId: z.string().uuid() });
 
+function fallbackImage(query: string): string {
+  const q = encodeURIComponent(query.split(",")[0].trim() + ",travel");
+  const lock = Math.abs([...query].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)) % 1000;
+  return `https://loremflickr.com/1200/800/${q}?lock=${lock}`;
+}
+
 async function unsplashImage(query: string): Promise<string | null> {
   const key = process.env.UNSPLASH_KEY;
-  if (!key) return null;
+  if (!key) return fallbackImage(query);
   try {
     const res = await fetch(
       `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
       { headers: { Authorization: `Client-ID ${key}` } },
     );
-    if (!res.ok) return null;
+    if (!res.ok) return fallbackImage(query);
     const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };
-    return data.results?.[0]?.urls?.regular ?? null;
+    return data.results?.[0]?.urls?.regular ?? fallbackImage(query);
   } catch {
-    return null;
+    return fallbackImage(query);
   }
 }
 
