@@ -40,10 +40,7 @@ export const Route = createFileRoute("/explore/$slug")({
       loaderData.summary ??
       `Itinerario inspirador para viajar a ${dest}. Descúbrelo en Itineraya y crea el tuyo en segundos.`;
     const url = `https://itineraya.com/explore/${params.slug}`;
-    const unsplashFallback = `https://source.unsplash.com/featured/1200x630/?${encodeURIComponent(
-      dest,
-    )},travel&sig=${encodeURIComponent(params.slug)}`;
-    const image = loaderData.hero_image_url ?? unsplashFallback;
+    const image = loaderData.hero_image_url ?? "https://itineraya.com/itineraya-logo.png";
     return {
       meta: [
         { title },
