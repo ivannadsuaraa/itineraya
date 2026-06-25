@@ -88,7 +88,7 @@ function bookingForCategory(
 }
 
 function TripPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { tripId } = Route.useParams();
   const navigate = useNavigate();
   const generate = useServerFn(generateItinerary);
