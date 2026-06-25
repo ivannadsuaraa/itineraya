@@ -23,19 +23,14 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-async function routeAfterLogin(_navigate: ReturnType<typeof useNavigate>, userId: string, return_to?: string) {
+async function routeAfterLogin(_navigate: ReturnType<typeof useNavigate>, _userId: string, return_to?: string) {
   if (return_to && /^https?:\/\//.test(return_to)) {
     window.location.replace(return_to);
     return;
   }
-  const { data } = await supabase
-    .from("profiles")
-    .select("welcome_completed")
-    .eq("id", userId)
-    .maybeSingle();
-  // Full reload ensures the authenticated layout picks up the new session
-  // (avoids a blank screen race where the router runs before the session is in storage).
-  window.location.replace(data?.welcome_completed ? "/dashboard" : "/welcome");
+  // Dashboard route itself redirects to /welcome if onboarding isn't complete.
+  // Full reload ensures the authenticated layout picks up the new session.
+  window.location.replace("/dashboard");
 }
 
 function AuthPage() {
