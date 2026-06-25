@@ -172,7 +172,7 @@ function TripPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [tripId, generate, t]);
+  }, [tripId, generate, t, i18n.language]);
 
   if (loading) return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} subtitle={t("trip.loadingSubtitle")} />;
 
