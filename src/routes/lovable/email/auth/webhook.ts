@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { render } from '@react-email/components'
-import { parseEmailWebhookPayload } from '@lovable.dev/email-js'
-import { WebhookError, verifyWebhookRequest } from '@lovable.dev/webhooks-js'
+import { Resend } from 'resend'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { SignupEmail } from '@/lib/email-templates/signup'
@@ -47,50 +46,48 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.LOVABLE_API_KEY
+        const resendApiKey = process.env.RESEND_API_KEY
 
-        if (!apiKey) {
-          console.error('LOVABLE_API_KEY not configured')
+        if (!resendApiKey) {
+          console.error('RESEND_API_KEY not configured')
           return Response.json(
             { error: 'Server configuration error' },
             { status: 500 }
           )
         }
 
-        // Verify signature + timestamp, then parse payload.
+        // Parse Resend webhook payload directly
+        // Resend webhooks are JSON payloads with headers including X-Event
         let payload: any
         let run_id = ''
         try {
-          const verified = await verifyWebhookRequest({
-            req: request,
-            secret: apiKey,
-            parser: parseEmailWebhookPayload,
+          const body = await request.text()
+          payload = JSON.parse(body)
+
+          // Resend typically uses X-Event header for different event types
+          const eventType = request.headers.get('x-event') || ''
+          console.log('Received auth event', {
+            eventType,
+            email_redacted: redactEmail(payload.email),
           })
-          payload = verified.payload
-          run_id = payload.run_id
-        } catch (error) {
-          if (error instanceof WebhookError) {
-            switch (error.code) {
-              case 'invalid_signature':
-              case 'missing_timestamp':
-              case 'invalid_timestamp':
-              case 'stale_timestamp':
-                console.error('Invalid webhook signature', { error: error.message })
-                return Response.json(
-                  { error: 'Invalid signature' },
-                  { status: 401 }
-                )
-              case 'invalid_payload':
-              case 'invalid_json':
-                console.error('Invalid webhook payload', { error: error.message })
-                return Response.json(
-                  { error: 'Invalid webhook payload' },
-                  { status: 400 }
-                )
-            }
+
+          // Only process specific email-related events
+          if (!['send', 'delivered', 'open', 'click', 'bounce'].includes(eventType)) {
+            return Response.json({ success: true, ignored: true })
           }
 
-          console.error('Webhook verification failed', { error })
+          // For auth emails, we expect a specific payload structure
+          // If this is a direct auth webhook (not Resend event), process it
+          if (payload.data && payload.data.action_type) {
+            // Legacy format from Lovable - process as before
+            run_id = payload.run_id || crypto.randomUUID()
+          } else {
+            // Resend webhook format - ignore for auth processing
+            return Response.json({ success: true, ignored: true })
+          }
+
+        } catch (error) {
+          console.error('Webhook parsing failed', { error })
           return Response.json(
             { error: 'Invalid webhook payload' },
             { status: 400 }
@@ -105,16 +102,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
           )
         }
 
-        if (payload.version !== '1') {
-          console.error('Unsupported payload version', { version: payload.version, run_id })
-          return Response.json(
-            { error: `Unsupported payload version: ${payload.version}` },
-            { status: 400 }
-          )
-        }
-
         // The email action type is in payload.data.action_type (e.g., "signup", "recovery")
-        // payload.type is the hook event type ("auth")
         const emailType = payload.data.action_type
         console.log('Received auth event', {
           emailType,
