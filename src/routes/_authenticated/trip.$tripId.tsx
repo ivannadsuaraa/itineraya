@@ -88,7 +88,7 @@ function bookingForCategory(
 }
 
 function TripPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { tripId } = Route.useParams();
   const navigate = useNavigate();
   const generate = useServerFn(generateItinerary);
@@ -154,7 +154,7 @@ function TripPage() {
           return;
         }
 
-        const result = await generate({ data: { tripId } });
+        const result = await generate({ data: { tripId, language: i18n.language } });
         if (cancelled) return;
         if (!result) throw new Error("Itinerary generation failed");
         setTrip({
@@ -172,7 +172,7 @@ function TripPage() {
       }
     })();
     return () => { cancelled = true; };
-  }, [tripId, generate, t]);
+  }, [tripId, generate, t, i18n.language]);
 
   if (loading) return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} subtitle={t("trip.loadingSubtitle")} />;
 

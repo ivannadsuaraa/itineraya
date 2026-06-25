@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({
-    mode: s.mode === "signup" ? ("signup" as const) : ("login" as const),
+    mode: s.mode === "signup" ? ("signup" as const) : s.mode === "forgot" ? ("forgot" as const) : ("login" as const),
     return_to: typeof s.return_to === "string" ? s.return_to : undefined,
   }),
   head: () => ({
@@ -37,17 +37,19 @@ function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { mode: initialMode, return_to } = Route.useSearch();
-  const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [verifyChecking, setVerifyChecking] = useState(false);
   const [resending, setResending] = useState(false);
   const [lastResendAt, setLastResendAt] = useState<number>(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -57,12 +59,35 @@ function AuthPage() {
     });
   }, [navigate, return_to]);
 
+  useEffect(() => { setErrorMsg(null); }, [mode]);
+
+  function mapAuthError(raw: string): string {
+    const m = raw.toLowerCase();
+    if (m.includes("invalid login") || m.includes("invalid credentials")) return t("auth.wrongPassword");
+    if (m.includes("email not confirmed")) return t("auth.notVerifiedYet");
+    if (m.includes("user already registered") || m.includes("already been registered") || m.includes("already exists")) return t("auth.emailExistsCta");
+    if (m.includes("weak password") || m.includes("password should")) return t("auth.weakPassword");
+    if (m.includes("rate limit") || m.includes("too many")) return t("auth.tooManyRequests");
+    if (m.includes("user not found")) return t("auth.noAccountFound");
+    return raw;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     setLoading(true);
     try {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setForgotSent(true);
+        toast.success(t("auth.forgotSent"));
+        return;
+      }
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -71,6 +96,13 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        // Supabase returns user with empty identities array when email already exists
+        // (with email confirmation enabled). Detect and surface clearly.
+        if (signUpData.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+          setErrorMsg(t("auth.emailExistsCta"));
+          toast.error(t("auth.emailExistsCta"));
+          return;
+        }
         setSignupSent(true);
         toast.success(t("auth.accountCreated"));
       } else {
@@ -80,8 +112,10 @@ function AuthPage() {
         if (signIn.user) await routeAfterLogin(navigate, signIn.user.id, return_to);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("auth.somethingWrong");
-      toast.error(msg.includes("Invalid login") ? t("auth.invalidLogin") : msg);
+      const raw = err instanceof Error ? err.message : t("auth.somethingWrong");
+      const msg = mapAuthError(raw);
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -99,7 +133,7 @@ function AuthPage() {
         if (error.message.toLowerCase().includes("not confirmed") || error.message.toLowerCase().includes("email not confirmed")) {
           toast.error(t("auth.notVerifiedYet"));
         } else {
-          toast.error(error.message);
+          toast.error(mapAuthError(error.message));
         }
         return;
       }
@@ -155,6 +189,7 @@ function AuthPage() {
       setGoogleLoading(false);
     }
   };
+
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
@@ -230,6 +265,55 @@ function AuthPage() {
               >
                 {t("auth.backToLogin")}
               </button>
+            </div>
+          ) : forgotSent ? (
+            <div className="text-center py-4">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+                <Mail className="h-8 w-8 text-[#1E6B9A]" />
+              </div>
+              <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
+              <p className="mt-3 text-sm text-sky-700">{t("auth.forgotSent")}</p>
+              <button
+                type="button"
+                onClick={() => { setForgotSent(false); setMode("login"); }}
+                className="mt-6 text-sm font-semibold text-[#1E6B9A] hover:underline"
+              >
+                {t("auth.backToLogin")}
+              </button>
+            </div>
+          ) : mode === "forgot" ? (
+            <div>
+              <button
+                type="button"
+                onClick={() => setMode("login")}
+                className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
+              >
+                <ArrowLeft className="h-3 w-3" /> {t("auth.backToLoginShort")}
+              </button>
+              <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.forgotTitle")}</h1>
+              <p className="mt-1 text-sm text-sky-600">{t("auth.forgotSubtitle")}</p>
+              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                <Field icon={<Mail className="h-4 w-4" />} label={t("auth.email")}>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t("auth.emailPh")}
+                    className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
+                  />
+                </Field>
+                {errorMsg && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMsg}</div>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] disabled:opacity-60"
+                >
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("auth.sendingReset")}</> : t("auth.forgotBtn")}
+                </button>
+              </form>
             </div>
           ) : (
           <>
@@ -317,6 +401,17 @@ function AuthPage() {
                       className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                     />
                   </Field>
+                  {mode === "login" && (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setMode("forgot")}
+                        className="text-xs font-semibold text-[#1E6B9A] hover:underline"
+                      >
+                        {t("auth.forgot")}
+                      </button>
+                    </div>
+                  )}
                   {mode === "signup" && (
                     <div className="space-y-1 px-1">
                       {[
@@ -334,13 +429,28 @@ function AuthPage() {
                   )}
                 </div>
 
+                {errorMsg && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    {errorMsg}
+                    {errorMsg === t("auth.emailExistsCta") && (
+                      <button
+                        type="button"
+                        onClick={() => { setMode("login"); setErrorMsg(null); }}
+                        className="ml-2 font-semibold underline"
+                      >
+                        {t("auth.loginOne")}
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 <button
                   type="submit"
                   disabled={loading}
                   className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/30 disabled:opacity-60"
                 >
                   {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <><Loader2 className="h-4 w-4 animate-spin" /> {mode === "login" ? t("auth.signingIn") : t("auth.signingUp")}</>
                   ) : mode === "login" ? (
                     t("auth.loginBtn")
                   ) : (

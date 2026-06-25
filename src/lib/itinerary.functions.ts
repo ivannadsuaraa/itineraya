@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const Input = z.object({ tripId: z.string().uuid() });
+const Input = z.object({
+  tripId: z.string().uuid(),
+  language: z.string().optional(),
+});
 
 function fallbackImage(query: string): string {
   const q = encodeURIComponent(query.split(",")[0].trim() + ",travel");
@@ -81,8 +84,13 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
       .select("language, age, travel_style, budget_range, preferred_destinations, traveler_type")
       .eq("id", userId)
       .maybeSingle();
+    // Prefer language passed from the client (current UI language) over stored profile.
+    const clientLang = (data.language ?? "").toLowerCase().slice(0, 2);
+    const profileLang = (profile?.language ?? "").toLowerCase().slice(0, 2);
     const lang: "es" | "en" =
-      (profile?.language ?? "").toLowerCase().slice(0, 2) === "en" ? "en" : "es";
+      clientLang === "en" || clientLang === "es"
+        ? (clientLang as "es" | "en")
+        : profileLang === "en" ? "en" : "es";
     const langName = lang === "en" ? "English" : "Spanish";
 
     // Trip history for personalization (last 5 ready trips, excluding current)
@@ -145,8 +153,12 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const prompt = `You are an expert travel planner. Build a personalized, geographically coherent, time-realistic itinerary.
 
-LANGUAGE LOCK (STRICT)
-Write 100% of user-facing strings (summary, title, subtitle, activity title, place, description) in ${langName}. NO MIXING. If ${langName} is English, never use Spanish words ("Desayuno", "Comida", "Cena", "almuerzo", etc.) — use "Breakfast", "Lunch", "Dinner". If ${langName} is Spanish, never insert English words. Proper nouns (real venue names) stay in their native form.
+LANGUAGE LOCK (ABSOLUTE — HIGHEST PRIORITY)
+Output language: ${langName} (${lang.toUpperCase()}). 100% of user-facing strings (summary, title, subtitle, activity title, place description, meal labels, transport hints, day themes) MUST be in ${langName}. Zero exceptions.
+${lang === "en"
+  ? `FORBIDDEN Spanish words (NEVER use): Desayuno, Almuerzo, Comida, Merienda, Cena, "a pie", "en metro", "en bus", dirección, Visita, Paseo, Tarde, Mañana, Noche, "y luego". Use ONLY English: Breakfast, Lunch, Dinner, Snack, "on foot", "by metro", "by bus", "towards", Visit, Walk, Afternoon, Morning, Evening, "and then". Transport hints in English: "🚶 8 min walk", "🚇 Metro Line 4 towards Trafalgar, 12 min", "🚌 Bus 24, 15 min", "🚕 Taxi 10 min".`
+  : `FORBIDDEN English words (NEVER use): Breakfast, Lunch, Dinner, Visit, Walk, towards, Morning, Afternoon, Evening. Use ONLY Spanish (peninsular): Desayuno, Comida, Cena, Visita, Paseo, dirección, Mañana, Tarde, Noche.`}
+Proper nouns (real venue/street/neighborhood names) stay in their native form — that is the ONLY allowed non-${langName} text.
 
 CONTEXT
 Destination: ${trip.destination}
@@ -175,7 +187,7 @@ LOCAL EVENTS
 - Consider festivals, public holidays and seasonal events happening on the trip dates (Carnaval, Semana Santa, San Juan 23 Jun, Fallas, La Mercè, Oktoberfest, Carnevale di Venezia, Holi, Sakura, Cherry Blossom, Christmas markets, etc.). If a notable event overlaps, INCLUDE it as an activity on the right day with the correct time.
 
 MEALS
-- Culturally-correct meal hours. ${lang === "es" ? 'In Spanish use peninsular naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal — never "almuerzo"/"lunch"), Cena (20:30–23:00). Titles MUST start with the meal word ("Comida en …", "Cena en …").' : 'In English use Breakfast / Lunch / Dinner. Adapt times to local culture (Spain lunch 13:30-16:00, dinner 20:30-23:00; Italy similar; UK lunch 12:30, dinner 19:00; Japan dinner 18:30).'}
+- Culturally-correct meal hours. ${lang === "es" ? 'In Spanish use peninsular naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal — never "almuerzo"/"lunch"), Cena (20:30–23:00). Titles MUST start with the meal word ("Comida en …", "Cena en …").' : 'Use ONLY English meal names: Breakfast / Lunch / Dinner / Snack. Titles MUST start with the meal word ("Lunch at …", "Dinner at …"). Never write "Desayuno", "Comida", "Cena". Adapt times to local culture (Spain lunch 13:30-16:00, dinner 20:30-23:00; Italy similar; UK lunch 12:30, dinner 19:00; Japan dinner 18:30).'}
 
 OUTPUT — return ONLY valid JSON, no markdown:
 {
