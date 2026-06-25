@@ -37,17 +37,19 @@ function AuthPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { mode: initialMode, return_to } = Route.useSearch();
-  const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [verifyChecking, setVerifyChecking] = useState(false);
   const [resending, setResending] = useState(false);
   const [lastResendAt, setLastResendAt] = useState<number>(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -57,12 +59,35 @@ function AuthPage() {
     });
   }, [navigate, return_to]);
 
+  useEffect(() => { setErrorMsg(null); }, [mode]);
+
+  function mapAuthError(raw: string): string {
+    const m = raw.toLowerCase();
+    if (m.includes("invalid login") || m.includes("invalid credentials")) return t("auth.wrongPassword");
+    if (m.includes("email not confirmed")) return t("auth.notVerifiedYet");
+    if (m.includes("user already registered") || m.includes("already been registered") || m.includes("already exists")) return t("auth.emailExistsCta");
+    if (m.includes("weak password") || m.includes("password should")) return t("auth.weakPassword");
+    if (m.includes("rate limit") || m.includes("too many")) return t("auth.tooManyRequests");
+    if (m.includes("user not found")) return t("auth.noAccountFound");
+    return raw;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg(null);
     setLoading(true);
     try {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setForgotSent(true);
+        toast.success(t("auth.forgotSent"));
+        return;
+      }
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -71,6 +96,13 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        // Supabase returns user with empty identities array when email already exists
+        // (with email confirmation enabled). Detect and surface clearly.
+        if (signUpData.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
+          setErrorMsg(t("auth.emailExistsCta"));
+          toast.error(t("auth.emailExistsCta"));
+          return;
+        }
         setSignupSent(true);
         toast.success(t("auth.accountCreated"));
       } else {
@@ -80,8 +112,10 @@ function AuthPage() {
         if (signIn.user) await routeAfterLogin(navigate, signIn.user.id, return_to);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("auth.somethingWrong");
-      toast.error(msg.includes("Invalid login") ? t("auth.invalidLogin") : msg);
+      const raw = err instanceof Error ? err.message : t("auth.somethingWrong");
+      const msg = mapAuthError(raw);
+      setErrorMsg(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -99,7 +133,7 @@ function AuthPage() {
         if (error.message.toLowerCase().includes("not confirmed") || error.message.toLowerCase().includes("email not confirmed")) {
           toast.error(t("auth.notVerifiedYet"));
         } else {
-          toast.error(error.message);
+          toast.error(mapAuthError(error.message));
         }
         return;
       }
@@ -155,6 +189,7 @@ function AuthPage() {
       setGoogleLoading(false);
     }
   };
+
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
