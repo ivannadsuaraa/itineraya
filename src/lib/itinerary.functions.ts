@@ -187,7 +187,7 @@ LOCAL EVENTS
 - Consider festivals, public holidays and seasonal events happening on the trip dates (Carnaval, Semana Santa, San Juan 23 Jun, Fallas, La Mercè, Oktoberfest, Carnevale di Venezia, Holi, Sakura, Cherry Blossom, Christmas markets, etc.). If a notable event overlaps, INCLUDE it as an activity on the right day with the correct time.
 
 MEALS
-- Culturally-correct meal hours. ${lang === "es" ? 'In Spanish use peninsular naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal — never "almuerzo"/"lunch"), Cena (20:30–23:00). Titles MUST start with the meal word ("Comida en …", "Cena en …").' : 'In English use Breakfast / Lunch / Dinner. Adapt times to local culture (Spain lunch 13:30-16:00, dinner 20:30-23:00; Italy similar; UK lunch 12:30, dinner 19:00; Japan dinner 18:30).'}
+- Culturally-correct meal hours. ${lang === "es" ? 'In Spanish use peninsular naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal — never "almuerzo"/"lunch"), Cena (20:30–23:00). Titles MUST start with the meal word ("Comida en …", "Cena en …").' : 'Use ONLY English meal names: Breakfast / Lunch / Dinner / Snack. Titles MUST start with the meal word ("Lunch at …", "Dinner at …"). Never write "Desayuno", "Comida", "Cena". Adapt times to local culture (Spain lunch 13:30-16:00, dinner 20:30-23:00; Italy similar; UK lunch 12:30, dinner 19:00; Japan dinner 18:30).'}
 
 OUTPUT — return ONLY valid JSON, no markdown:
 {
