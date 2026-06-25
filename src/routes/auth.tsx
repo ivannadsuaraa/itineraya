@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/auth")({
   ssr: false,
   validateSearch: (s: Record<string, unknown>) => ({
-    mode: s.mode === "signup" ? ("signup" as const) : ("login" as const),
+    mode: s.mode === "signup" ? ("signup" as const) : s.mode === "forgot" ? ("forgot" as const) : ("login" as const),
     return_to: typeof s.return_to === "string" ? s.return_to : undefined,
   }),
   head: () => ({
