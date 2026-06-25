@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const Input = z.object({ tripId: z.string().uuid() });
+const Input = z.object({
+  tripId: z.string().uuid(),
+  language: z.string().optional(),
+});
 
 function fallbackImage(query: string): string {
   const q = encodeURIComponent(query.split(",")[0].trim() + ",travel");
