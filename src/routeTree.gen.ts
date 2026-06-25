@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
@@ -40,6 +41,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/email-confirmed': typeof EmailConfirmedRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/copilot': typeof AuthenticatedCopilotRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/email-confirmed': typeof EmailConfirmedRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/copilot': typeof AuthenticatedCopilotRoute
@@ -240,6 +248,7 @@ export interface FileRoutesById {
   '/email-confirmed': typeof EmailConfirmedRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/terms': typeof TermsRoute
   '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
   '/_authenticated/copilot': typeof AuthenticatedCopilotRoute
@@ -270,6 +279,7 @@ export interface FileRouteTypes {
     | '/email-confirmed'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/terms'
     | '/assistant'
     | '/copilot'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/email-confirmed'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/terms'
     | '/assistant'
     | '/copilot'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/email-confirmed'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/terms'
     | '/_authenticated/assistant'
     | '/_authenticated/copilot'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   EmailConfirmedRoute: typeof EmailConfirmedRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -599,6 +619,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailConfirmedRoute: EmailConfirmedRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
