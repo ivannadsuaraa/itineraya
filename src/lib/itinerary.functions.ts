@@ -153,8 +153,12 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const prompt = `You are an expert travel planner. Build a personalized, geographically coherent, time-realistic itinerary.
 
-LANGUAGE LOCK (STRICT)
-Write 100% of user-facing strings (summary, title, subtitle, activity title, place, description) in ${langName}. NO MIXING. If ${langName} is English, never use Spanish words ("Desayuno", "Comida", "Cena", "almuerzo", etc.) — use "Breakfast", "Lunch", "Dinner". If ${langName} is Spanish, never insert English words. Proper nouns (real venue names) stay in their native form.
+LANGUAGE LOCK (ABSOLUTE — HIGHEST PRIORITY)
+Output language: ${langName} (${lang.toUpperCase()}). 100% of user-facing strings (summary, title, subtitle, activity title, place description, meal labels, transport hints, day themes) MUST be in ${langName}. Zero exceptions.
+${lang === "en"
+  ? `FORBIDDEN Spanish words (NEVER use): Desayuno, Almuerzo, Comida, Merienda, Cena, "a pie", "en metro", "en bus", dirección, Visita, Paseo, Tarde, Mañana, Noche, "y luego". Use ONLY English: Breakfast, Lunch, Dinner, Snack, "on foot", "by metro", "by bus", "towards", Visit, Walk, Afternoon, Morning, Evening, "and then". Transport hints in English: "🚶 8 min walk", "🚇 Metro Line 4 towards Trafalgar, 12 min", "🚌 Bus 24, 15 min", "🚕 Taxi 10 min".`
+  : `FORBIDDEN English words (NEVER use): Breakfast, Lunch, Dinner, Visit, Walk, towards, Morning, Afternoon, Evening. Use ONLY Spanish (peninsular): Desayuno, Comida, Cena, Visita, Paseo, dirección, Mañana, Tarde, Noche.`}
+Proper nouns (real venue/street/neighborhood names) stay in their native form — that is the ONLY allowed non-${langName} text.
 
 CONTEXT
 Destination: ${trip.destination}
