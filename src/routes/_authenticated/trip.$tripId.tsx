@@ -154,7 +154,7 @@ function TripPage() {
           return;
         }
 
-        const result = await generate({ data: { tripId } });
+        const result = await generate({ data: { tripId, language: i18n.language } });
         if (cancelled) return;
         if (!result) throw new Error("Itinerary generation failed");
         setTrip({
