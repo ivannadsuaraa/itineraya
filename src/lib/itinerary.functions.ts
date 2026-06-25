@@ -84,8 +84,13 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
       .select("language, age, travel_style, budget_range, preferred_destinations, traveler_type")
       .eq("id", userId)
       .maybeSingle();
+    // Prefer language passed from the client (current UI language) over stored profile.
+    const clientLang = (data.language ?? "").toLowerCase().slice(0, 2);
+    const profileLang = (profile?.language ?? "").toLowerCase().slice(0, 2);
     const lang: "es" | "en" =
-      (profile?.language ?? "").toLowerCase().slice(0, 2) === "en" ? "en" : "es";
+      clientLang === "en" || clientLang === "es"
+        ? (clientLang as "es" | "en")
+        : profileLang === "en" ? "en" : "es";
     const langName = lang === "en" ? "English" : "Spanish";
 
     // Trip history for personalization (last 5 ready trips, excluding current)
