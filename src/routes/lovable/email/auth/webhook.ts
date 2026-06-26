@@ -29,7 +29,10 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 
 const SITE_NAME = 'Itineraya'
 const ROOT_DOMAIN = 'itineraya.com'
-const FROM_ADDRESS = `Itineraya <noreply@notify.itineraya.com>`
+// RESEND_FROM lets you point to a verified domain without redeploying code.
+// Defaults to Resend's sandbox sender so emails work out of the box until
+// you verify your own domain at https://resend.com/domains.
+const FROM_ADDRESS = process.env.RESEND_FROM || 'Itineraya <onboarding@resend.dev>'
 
 function redactEmail(email: string | null | undefined): string {
   if (!email) return '***'
