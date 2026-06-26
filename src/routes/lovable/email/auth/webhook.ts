@@ -32,7 +32,7 @@ const ROOT_DOMAIN = 'itineraya.com'
 // RESEND_FROM lets you point to a verified domain without redeploying code.
 // Defaults to Resend's sandbox sender so emails work out of the box until
 // you verify your own domain at https://resend.com/domains.
-const FROM_ADDRESS = process.env.RESEND_FROM || 'Itineraya <onboarding@resend.dev>'
+const FROM_ADDRESS = process.env.RESEND_FROM || 'Itineraya <noreply@itineraya.com>'
 
 function redactEmail(email: string | null | undefined): string {
   if (!email) return '***'
