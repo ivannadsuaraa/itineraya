@@ -10,10 +10,12 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (s: Record<string, unknown>) => ({
-    mode: s.mode === "signup" ? ("signup" as const) : s.mode === "forgot" ? ("forgot" as const) : ("login" as const),
-    return_to: typeof s.return_to === "string" ? s.return_to : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { mode: "login" | "signup" | "forgot"; return_to?: string } => {
+    const mode = s.mode === "signup" ? "signup" : s.mode === "forgot" ? "forgot" : "login";
+    const out: { mode: "login" | "signup" | "forgot"; return_to?: string } = { mode };
+    if (typeof s.return_to === "string") out.return_to = s.return_to;
+    return out;
+  },
   head: () => ({
     meta: [
       { title: "Sign in – Itineraya" },
