@@ -155,6 +155,7 @@ function ItineraryPage() {
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [tripmatesOpen, setTripmatesOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
