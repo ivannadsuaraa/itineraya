@@ -2,14 +2,8 @@
 import { motion } from 'framer-motion';
 import type { Transition, Variants } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
-<<<<<<< HEAD
-import { cn } from '@lib/utils'; // Assuming a utility for class merging
-import { useTranslations } from 'next-intl'; // Assuming i18n for translations
-import ItineraryView from './ItineraryView'; // Import the new ItineraryView component
-=======
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
->>>>>>> a47748de2cf31788a0d85991d0d8b13a045a2cec
 
 // --- Animation Variants ---
 
