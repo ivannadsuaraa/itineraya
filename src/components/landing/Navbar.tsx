@@ -15,8 +15,8 @@ export function Navbar() {
 
   useEffect(() => {
     setMounted(true);
-    supabase.auth.getSession().then(({ data }) => {
-      setIsLoggedIn(!!data.session?.user);
+    supabase.auth.getUser().then(({ data }) => {
+      setIsLoggedIn(!!data.user);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsLoggedIn(!!session?.user);
