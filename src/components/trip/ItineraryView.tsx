@@ -1,7 +1,7 @@
 // src/components/trip/ItineraryView.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { cn } from '@lib/utils'; // Assuming utility for class merging
+import { cn } from '@/lib/utils'; // Assuming utility for class merging
 
 // --- Mock Data Example ---
 // In a real app, this data would come from an API or state management
