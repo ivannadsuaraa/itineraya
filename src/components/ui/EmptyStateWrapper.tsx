@@ -1,7 +1,8 @@
 // src/components/ui/EmptyStateWrapper.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { cn } from '@lib/utils'; // Assuming a utility for class merging
+import type { Variants } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 // Placeholder for icon data - in a real app, this would be more sophisticated
 // For now, using basic SVG path data for simple icons like planes, compasses
@@ -12,7 +13,7 @@ const defaultIconPaths = {
 };
 
 // --- Particle Variants ---
-const particleVariants = {
+const particleVariants: Variants = {
   animate: (custom: { delay: number, speed: number, iconPath: string }) => ({
     opacity: [0.7, 0],
     y: ['110vh', '-10vh'], // Move from bottom to above the screen

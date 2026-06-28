@@ -1,13 +1,14 @@
 // src/components/trip/TripCard.tsx
 import { motion } from 'framer-motion';
+import type { Transition, Variants } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
-import { cn } from '@lib/utils'; // Assuming a utility for class merging
-import { useTranslations } from 'next-intl'; // Assuming i18n for translations
+import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 
 // --- Animation Variants ---
 
 // Entrance animation for individual cards
-const cardVariants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 50 },
   visible: {
     opacity: 1,
@@ -26,18 +27,31 @@ const cardHoverEffects = {
 };
 
 // Hover transition for smooth effect
-const hoverTransition = {
+const hoverTransition: Transition = {
   type: "spring",
   stiffness: 300,
   damping: 20,
 };
 
-export const TripCard = ({ trip, index }) => {
+type TripCardTrip = {
+  id: string;
+  image_url?: string | null;
+  name?: string | null;
+  destination?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  description?: string | null;
+  status?: string | null;
+  members?: unknown[];
+};
+
+export const TripCard = ({ trip, index }: { trip: TripCardTrip; index?: number }) => {
   const navigate = useNavigate();
-  const t = useTranslations('Dashboard'); // Assuming translations are set up
+  const { t } = useTranslation();
+  const title = trip.name ?? trip.destination ?? '';
 
   const handleClick = () => {
-    navigate({ to: `/trip/${trip.id}` });
+    navigate({ to: '/trip/$tripId', params: { tripId: trip.id } });
   };
 
   return (
@@ -58,7 +72,7 @@ export const TripCard = ({ trip, index }) => {
       <div className="mb-4 relative overflow-hidden rounded-lg">
         <motion.img
           src={trip.image_url || '/placeholder-trip-image.jpg'} // Placeholder image
-          alt={trip.name}
+          alt={title}
           className="w-full h-48 object-cover rounded-lg"
           // Optional: subtle hover zoom on image
           whileHover={{ scale: 1.05 }}
@@ -66,19 +80,19 @@ export const TripCard = ({ trip, index }) => {
         />
         {/* Overlay for image if needed, e.g., for date/location text */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent rounded-lg">
-          <p className="text-white text-lg font-bold">{trip.name}</p>
-          <p className="text-white text-sm">{new Date(trip.start_date).toLocaleDateString()} - {new Date(trip.end_date).toLocaleDateString()}</p>
+          <p className="text-white text-lg font-bold">{title}</p>
+          <p className="text-white text-sm">{trip.start_date ? new Date(trip.start_date).toLocaleDateString() : ''} - {trip.end_date ? new Date(trip.end_date).toLocaleDateString() : ''}</p>
         </div>
       </div>
 
       {/* Trip Details Section */}
       <div className="p-2"> {/* Reduced padding to keep it tighter */}
-        <h3 className="text-xl font-semibold text-gray-800 mb-2 truncate">{trip.name}</h3>
+        <h3 className="text-xl font-semibold text-gray-800 mb-2 truncate">{title}</h3>
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">{trip.description}</p>
 
         <div className="flex justify-between items-center text-sm text-gray-500">
-          <span>{t('trips.status_' + trip.status)}</span>
-          <span>{trip.members.length} members</span>
+          <span>{t('Dashboard.trips.status_' + trip.status)}</span>
+          <span>{trip.members?.length ?? 0} members</span>
         </div>
       </div>
     </motion.div>
