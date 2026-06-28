@@ -58,16 +58,11 @@ export function FeaturesSection() {
             <motion.div
               key={feature.title}
               variants={item}
-              whileHover={{ scale: 1.02, y: -4, transition: { duration: 0.2 } }}
               className="rounded-2xl border border-sky-100 bg-white/70 p-6 backdrop-blur-sm transition-all hover:border-sky-200 hover:bg-white hover:shadow-lg hover:shadow-sky-900/5 sm:p-8"
             >
-              <motion.div
-                className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600"
-                whileHover={{ scale: 1.1, rotate: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
                 <feature.icon className="h-6 w-6" />
-              </motion.div>
+              </div>
               <h3 className="mt-5 font-display text-lg font-semibold text-sky-900">
                 {feature.title}
               </h3>

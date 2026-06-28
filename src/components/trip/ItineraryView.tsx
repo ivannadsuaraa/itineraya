@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+// src/components/trip/ItineraryView.tsx
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils'; // Assuming utility for class merging
+import { useMicroAnimation } from '@/hooks/useMicroAnimation';
 
 // --- Mock Data Example ---
+// In a real app, this data would come from an API or state management
 const mockItineraryData = {
   days: [
     {
@@ -34,6 +37,7 @@ const mockItineraryData = {
         { id: 'act11', time: '17:00', name: 'Return to City', description: 'Travel back to the main hotel' },
       ],
     },
+    // Add more days as needed
   ],
 };
 
@@ -55,59 +59,40 @@ interface ItineraryViewProps {
   className?: string;
 }
 
-// ── Scroll Progress Bar ──────────────
-function ScrollProgress() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const onScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-[3px] bg-sky-100">
-      <motion.div
-        className="h-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] origin-left"
-        style={{ scaleX: progress }}
-      />
-    </div>
-  );
-}
-
-// ── Staggered cascade animation for activity cards ──
-const activityVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.98 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.4,
-      delay: i * 0.1,
-      ease: [0.25, 0.1, 0.25, 1] as const,
-    },
-  }),
+// --- Animation Variants ---
+const daySelectorVariants = {
+  sticky: {
+    y: 0, // Element is in its normal position
+  },
+  fixed: {
+    y: -100, // Positioned fixed, might need adjustment based on actual header height
+  },
 };
 
+
 const ItineraryView: React.FC<ItineraryViewProps> = ({ itineraryData = mockItineraryData, className }) => {
-  const [activeDay, setActiveDay] = useState<string | null>(null);
+  const { whileTap: tapScaleAnimation } = useMicroAnimation();
+  const [activeDay, setActiveDay] = useState<string | null>(null); // Track the currently visible day
   const dayRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const daySelectorRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [isSelectorFixed, setIsSelectorFixed] = useState(false);
 
-  // Scroll progress
+  // --- Effect for Intersection Observer ---
   useEffect(() => {
-    const currentContentRef = dayRefs.current[itineraryData.days[0]?.date];
-    if (!currentContentRef) return;
+    const currentContentRef = contentRef.current;
+    const currentDaySelectorRef = daySelectorRef.current;
 
+    if (!currentContentRef || !currentDaySelectorRef || itineraryData.days.length === 0) return;
+
+    // Observer for sticky behavior
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
+          // entry.target is the element being observed
+          // If the observed element (e.g., first day's content) is NOT intersecting the viewport
+          // it means we have scrolled past it, so the selector should become fixed.
+          // If it IS intersecting, it means we are at or above the first day, so it should be normal.
           if (entry.target === dayRefs.current[itineraryData.days[0].date] && !entry.isIntersecting) {
             setIsSelectorFixed(true);
           } else {
@@ -115,149 +100,124 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({ itineraryData = mockItine
           }
         });
       },
-      { root: null, rootMargin: '0px', threshold: 0 }
+      {
+        root: null, // Use the viewport as the root
+        rootMargin: '0px', // No margin on the root
+        threshold: 0, // Trigger when even 1px of the element is visible or hidden
+      }
     );
 
+    // Observe the first day's content `div` to determine when to fix the selector
     if (dayRefs.current[itineraryData.days[0].date]) {
       observer.observe(dayRefs.current[itineraryData.days[0].date]!);
     }
 
-    // Active day tracking
-    const activeObserver = new IntersectionObserver(
+    // Observer for active day tracking
+    const activeDayObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.3) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) { // Track when at least 50% is visible
             setActiveDay(entry.target.id);
           }
         });
       },
-      { rootMargin: '0px 0px -60% 0px', threshold: [0, 0.1, 0.2, 0.3, 0.5] }
+      {
+        root: currentContentRef, // Observe within the scrollable content container
+        rootMargin: '0px 0px -50% 0px', // Trigger when the element is roughly in the middle of the viewport
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+      }
     );
 
+    // Observe each day's content div
     Object.values(dayRefs.current).forEach(ref => {
-      if (ref) activeObserver.observe(ref);
+      if (ref) {
+        activeDayObserver.observe(ref);
+      }
     });
 
+    // Cleanup observers on component unmount
     return () => {
       observer.disconnect();
-      activeObserver.disconnect();
+      activeDayObserver.disconnect();
     };
-  }, [itineraryData.days]);
+  }, [itineraryData.days]); // Re-run effect if days data changes
 
-  const scrollToDay = useCallback((date: string) => {
+  // --- Handler to scroll to a specific day ---
+  const scrollToDay = (date: string) => {
     const ref = dayRefs.current[date];
-    if (ref) {
+    if (ref && contentRef.current) {
+      // Scroll to the element's position.
+      // Adjusting for the sticky header height might be necessary depending on UI.
+      // For now, simple scrollIntoView.
       ref.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setActiveDay(ref.id);
+      setActiveDay(ref.id); // Update active day immediately on click
     }
-  }, []);
+  };
 
   return (
     <div className={cn("relative flex flex-col w-full", className)}>
-      {/* Scroll progress bar */}
-      <ScrollProgress />
-
-      {/* Day Selector with sliding indicator */}
-      <div className="relative z-10 mb-6">
-        <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
-          Your Itinerary
-        </h3>
-        <div className="relative flex overflow-x-auto space-x-2 pb-2">
+      {/* Day Selector - Becomes sticky */}
+      <motion.div
+        ref={daySelectorRef}
+        className={cn(
+          "z-10 p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg mb-6 transition-all duration-300 ease-in-out",
+          isSelectorFixed ? "fixed top-20 w-[calc(100%-32px)] md:w-[calc(100%-64px)] max-w-4xl mx-auto left-1/2 -translate-x-1/2 shadow-lg" : "relative"
+          // Fixed positioning will need refinement based on header height and layout.
+          // For now, approximate positioning.
+        )}
+        variants={daySelectorVariants}
+        animate={isSelectorFixed ? "fixed" : "sticky"}
+        style={{ '--tw-translate-y': isSelectorFixed ? '4.5rem' : '0rem' } as React.CSSProperties } // Mimic fixed position relative to header height if needed
+        initial={false}
+      >
+        <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Your Itinerary</h3>
+        <div className="flex overflow-x-auto space-x-3 pb-3">
           {itineraryData.days.map((day) => (
-            <button
+            <motion.button
               key={day.date}
-              type="button"
               onClick={() => scrollToDay(day.date)}
+              whileTap={tapScaleAnimation} // Reusing micro-animation
               className={cn(
-                "relative px-4 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-300",
+                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ease-in-out",
                 activeDay === day.date
-                  ? "text-white"
-                  : "text-blue-600 bg-blue-100 dark:bg-gray-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-gray-600"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-blue-100 text-blue-700 dark:bg-gray-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-gray-600"
               )}
             >
-              {/* Sliding indicator */}
-              {activeDay === day.date && (
-                <motion.div
-                  layoutId="day-indicator"
-                  className="absolute inset-0 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] shadow-md"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                />
-              )}
-              <span className="relative z-10">
-                {day.label.split(":")[0]}
-              </span>
-            </button>
+              {day.label.split(":")[0]} {/* Display only the day number/role, e.g., "Day 1" */}
+            </motion.button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      {/* Itinerary Content */}
-      <div className="flex-grow relative">
-        {itineraryData.days.map((day, dayIndex) => (
+      {/* Itinerary Content - Scrollable area */}
+      <div ref={contentRef} className="flex-grow overflow-y-auto max-h-[calc(100vh-200px)] relative"> {/* Adjust max-height based on header/footer/selector heights */}
+        {itineraryData.days.map((day) => (
           <div
             key={day.date}
-            id={day.date}
-            ref={(el) => { dayRefs.current[day.date] = el; }}
-            className="mb-10 px-4 py-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm"
+            id={day.date} // ID for intersection observer targeting
+            ref={(el) => {
+              dayRefs.current[day.date] = el;
+            }}
+            className="mb-12 px-4 py-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm"
           >
-            <motion.h4
-              initial={{ opacity: 0, x: -8 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
-              className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center space-x-3"
-            >
+            <h4 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center space-x-3">
               <span>{day.label}</span>
-              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                ({new Date(day.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })})
-              </span>
-            </motion.h4>
-
-            {/* Staggered cascade of activity cards */}
-            <AnimatePresence mode="popLayout">
-              {day.activities.map((activity, actIndex) => (
-                <motion.div
-                  key={activity.id}
-                  custom={actIndex}
-                  variants={activityVariants}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-20px" }}
-                  whileHover={{
-                    scale: 1.02,
-                    boxShadow: "0 8px 30px rgba(30, 107, 154, 0.12)",
-                    transition: { duration: 0.2 },
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  className="p-4 mb-3 bg-gradient-to-r from-blue-50 to-white dark:from-gray-700 dark:to-gray-650 rounded-xl shadow-sm border border-blue-100 dark:border-gray-600 hover:border-blue-200 dark:hover:border-gray-500 transition-colors cursor-default"
-                >
-                  <div className="flex items-center space-x-4">
-                    <motion.span
-                      className="text-xl font-semibold text-blue-600 dark:text-blue-400 w-20 text-right shrink-0"
-                      whileHover={{ scale: 1.05, color: "#1E6B9A" }}
-                    >
-                      {activity.time}
-                    </motion.span>
-                    <div className="flex-1">
-                      <p className="text-lg font-bold text-gray-900 dark:text-white break-words">
-                        {activity.name}
-                      </p>
-                      {activity.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-300 break-words mt-0.5">
-                          {activity.description}
-                        </p>
-                      )}
-                    </div>
-                    {/* Subtle time indicator dot */}
-                    <motion.div
-                      className="h-2 w-2 rounded-full bg-blue-400 shrink-0"
-                      animate={{ opacity: [0.4, 0.8, 0.4] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    />
+              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">({new Date(day.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })})</span>
+            </h4>
+            {day.activities.map((activity) => (
+              <div key={activity.id} className="p-4 mb-4 bg-blue-50 dark:bg-gray-700 rounded-xl shadow-inner border border-blue-200 dark:border-gray-600">
+                <div className="flex items-center space-x-4">
+                  <span className="text-xl font-semibold text-blue-600 dark:text-blue-400 w-20 text-right">{activity.time}</span>
+                  <div className="flex-1">
+                    <p className="text-lg font-bold text-gray-900 dark:text-white break-words">{activity.name}</p>
+                    {activity.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300 break-words">{activity.description}</p>
+                    )}
                   </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                </div>
+              </div>
+            ))}
           </div>
         ))}
       </div>

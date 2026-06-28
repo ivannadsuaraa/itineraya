@@ -55,16 +55,11 @@ export function HowItWorksSection() {
             <motion.div
               key={step.number}
               variants={item}
-              whileHover={{ scale: 1.02, y: -6, transition: { duration: 0.2 } }}
-              className="group relative rounded-3xl bg-white p-8 shadow-[0_8px_32px_rgba(46,107,138,0.06)] ring-1 ring-sky-100"
+              className="group relative rounded-3xl bg-white p-8 shadow-[0_8px_32px_rgba(46,107,138,0.06)] ring-1 ring-sky-100 transition-all hover:shadow-[0_12px_40px_rgba(46,107,138,0.1)] hover:-translate-y-1"
             >
-              <motion.div
-                className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 transition-colors group-hover:bg-sky-600 group-hover:text-white"
-                whileHover={{ scale: 1.1, rotate: [0, -10, 10, 0] }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 transition-colors group-hover:bg-sky-600 group-hover:text-white">
                 <step.icon className="h-6 w-6" />
-              </motion.div>
+              </div>
               <span className="absolute top-8 right-8 font-display text-5xl font-bold text-sky-100 select-none">
                 {step.number}
               </span>

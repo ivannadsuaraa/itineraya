@@ -2,13 +2,11 @@ import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2, MapPin, Sparkles } from "lucide-react";
-import { PageTransition } from "@/components/PageTransition";
 import { useTranslation } from "react-i18next";
 import { es as esLocale, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
 import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker";
-import { DestinationAutocomplete } from "@/components/maps/DestinationAutocomplete";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -164,7 +162,6 @@ function OnboardingPage() {
   const locale = i18n.language.startsWith("en") ? enUS : esLocale;
 
   return (
-    <PageTransition>
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }} />
@@ -172,32 +169,19 @@ function OnboardingPage() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-8">
-        <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35 }}>
-          <Link to="/new-trip" className="inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white">
+        <Link to="/new-trip" className="mb-6 inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white">
           <ArrowLeft className="h-4 w-4" />
           {t("onboarding.back")}
         </Link>
-        </motion.div>
 
         <div className="mb-8">
           <div className="mb-3 flex items-center justify-between text-xs font-semibold text-sky-700">
-            <motion.span key={`step-label-${step}`} initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              {t("onboarding.stepIndicator", { n: step + 1, total: totalSteps })}
-            </motion.span>
-            <motion.span key={`step-pct-${step}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              {Math.round(((step + 1) / totalSteps) * 100)}%
-            </motion.span>
+            <span>{t("onboarding.stepIndicator", { n: step + 1, total: totalSteps })}</span>
+            <span>{Math.round(((step + 1) / totalSteps) * 100)}%</span>
           </div>
           <div className="flex gap-2">
             {Array.from({ length: totalSteps }).map((_, index) => (
-              <div key={index} className="h-2 flex-1 rounded-full bg-white/70">
-                <motion.div
-                  className="h-full rounded-full bg-[#1E6B9A]"
-                  initial={{ width: "0%" }}
-                  animate={{ width: index <= step ? "100%" : "0%" }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                />
-              </div>
+              <div key={index} className={cn("h-2 flex-1 rounded-full transition", index <= step ? "bg-[#1E6B9A]" : "bg-white/70")} />
             ))}
           </div>
         </div>
@@ -206,28 +190,22 @@ function OnboardingPage() {
           <motion.div
             key={step}
             custom={direction}
-            initial={{ opacity: 0, x: direction > 0 ? 40 : -40, y: 6 }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            exit={{ opacity: 0, x: direction > 0 ? -30 : 30, y: -4 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            initial={{ opacity: 0, x: direction > 0 ? 32 : -32 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction > 0 ? -32 : 32 }}
+            transition={{ duration: 0.25 }}
             className="rounded-3xl bg-white/85 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur-xl sm:p-8"
           >
             {step === 0 && (
               <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-sky-500" />
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.97 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3, delay: 0.05 }}
-                  >
-                    <DestinationAutocomplete
-                      value={data.destination}
-                      onChange={(value) => setData((prevData) => ({ ...prevData, destination: value }))}
-                      placeholder={t("onboarding.destPh")}
-                      className="w-full rounded-2xl border border-sky-200 bg-white/80 py-4 pl-12 pr-4 text-base font-medium text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
-                    />
-                  </motion.div>
+                  <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky-500" />
+                  <input
+                    value={data.destination}
+                    onChange={(event) => setData((prevData) => ({ ...prevData, destination: event.target.value }))}
+                    placeholder={t("onboarding.destPh")}
+                    className="w-full rounded-2xl border border-sky-200 bg-white/80 py-4 pl-12 pr-4 text-base font-medium text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                  />
                 </div>
               </StepShell>
             )}
@@ -286,7 +264,7 @@ function OnboardingPage() {
                   {getTripTypesForDestination(data.destination).map((id) => {
                     const selected = data.tripTypes.includes(id);
                     return (
-                      <motion.button
+                      <button
                         key={id}
                         type="button"
                         onClick={() =>
@@ -295,16 +273,13 @@ function OnboardingPage() {
                             tripTypes: selected ? prevData.tripTypes.filter((item) => item !== id) : [...prevData.tripTypes, id],
                           }))
                         }
-                        whileTap={{ scale: 0.94 }}
-                        whileHover={{ y: -2 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         className={cn(
-                          "rounded-2xl border px-4 py-3 text-left text-sm font-semibold will-change-transform",
+                          "rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition",
                           selected ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg" : "border-sky-200 bg-white/70 text-sky-800 hover:bg-white",
                         )}
                       >
                         {t(`onboarding.tripTypes.${id}`)}
-                      </motion.button>
+                      </button>
                     );
                   })}
                 </div>
@@ -345,104 +320,69 @@ function OnboardingPage() {
         </AnimatePresence>
 
         <div className="mt-6 flex items-center justify-between gap-3">
-          <motion.button
+          <button
             type="button"
             onClick={prev}
             disabled={step === 0 || loading}
-            whileHover={step > 0 ? { x: -3 } : {}}
-            whileTap={{ scale: 0.96 }}
             className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-white disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
-          </motion.button>
-          <motion.button
+          </button>
+          <button
             type="button"
             onClick={step === totalSteps - 1 ? finish : next}
             disabled={!canContinue || loading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             {step === totalSteps - 1 ? t("onboarding.generate") : t("onboarding.next")}
             {!loading && <ArrowRight className="h-4 w-4" />}
-          </motion.button>
+          </button>
         </div>
       </div>
     </div>
-    </PageTransition>
   );
 }
 
 function StepShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
     <div className="space-y-5">
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
-      >
+      <div>
         <h1 className="font-display text-2xl font-bold text-sky-900 sm:text-3xl">{title}</h1>
         <p className="mt-2 text-sm text-sky-600">{subtitle}</p>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: 0.08, ease: "easeOut" }}
-      >
-        {children}
-      </motion.div>
+      </div>
+      {children}
     </div>
   );
 }
 
 function TimeInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.05 }}
-    >
-      <label className="block rounded-2xl border border-sky-200 bg-white/70 px-4 py-3 transition focus-within:border-sky-400 focus-within:shadow-md">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-sky-600">{label}</span>
-        <input type="time" value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 w-full bg-transparent text-sm font-semibold text-sky-900 outline-none" />
-      </label>
-    </motion.div>
+    <label className="block rounded-2xl border border-sky-200 bg-white/70 px-4 py-3">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-sky-600">{label}</span>
+      <input type="time" value={value} onChange={(event) => onChange(event.target.value)} className="mt-1 w-full bg-transparent text-sm font-semibold text-sky-900 outline-none" />
+    </label>
   );
 }
 
 function OptionGrid({ value, onChange, options }: { value: string; onChange: (value: string) => void; options: string[][] }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
-      {options.map(([id, label, icon]) => {
-        const selected = value === id;
-        return (
-          <motion.button
-            key={id}
-            type="button"
-            onClick={() => onChange(id)}
-            whileTap={{ scale: 0.94 }}
-            whileHover={{ y: -2 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            className={cn(
-              "rounded-2xl border p-4 text-left will-change-transform",
-              selected
-                ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg"
-                : "border-sky-200 bg-white/70 text-sky-900 hover:bg-white",
-            )}
-          >
-            <motion.span
-              className="inline-block text-2xl"
-              animate={selected ? { scale: [1, 1.2, 1] } : {}}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              {icon}
-            </motion.span>
-            <span className="mt-2 block text-sm font-bold">{label}</span>
-          </motion.button>
-        );
-      })}
+      {options.map(([id, label, icon]) => (
+        <button
+          key={id}
+          type="button"
+          onClick={() => onChange(id)}
+          className={cn(
+            "rounded-2xl border p-4 text-left transition",
+            value === id ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg" : "border-sky-200 bg-white/70 text-sky-900 hover:bg-white",
+          )}
+        >
+          <span className="text-2xl">{icon}</span>
+          <span className="mt-2 block text-sm font-bold">{label}</span>
+        </button>
+      ))}
     </div>
   );
 }

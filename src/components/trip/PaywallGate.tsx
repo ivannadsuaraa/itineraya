@@ -39,7 +39,6 @@ export function PaywallGate({ children }: { children: ReactNode }) {
           <p className="mt-2 text-sm text-sky-700">{t("paywall.subtitle")}</p>
           <Link
             to="/auth"
-            search={{ mode: "login" }}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl"
           >
             <Sparkles className="h-4 w-4" />

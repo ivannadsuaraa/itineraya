@@ -363,17 +363,6 @@
     "mapTitle": "Trip map",
     "mapLoading": "Locating places… {{done}}/{{total}}",
     "mapReady": "{{count}} places on the map",
-    "mapLoadingMap": "Loading map…",
-    "category": {
-      "restaurant": "Restaurant",
-      "hotel": "Hotel",
-      "sight": "Sight",
-      "activity": "Activity",
-      "nightlife": "Nightlife",
-      "transport": "Transport",
-      "shopping": "Shopping",
-      "other": "Other"
-    },
     "nights_one": "{{count}} night",
     "nights_other": "{{count}} nights"
   },

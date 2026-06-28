@@ -363,17 +363,6 @@
     "mapTitle": "Mapa del viaje",
     "mapLoading": "Localizando lugares… {{done}}/{{total}}",
     "mapReady": "{{count}} lugares en el mapa",
-    "mapLoadingMap": "Cargando mapa…",
-    "category": {
-      "restaurant": "Restaurante",
-      "hotel": "Hotel",
-      "sight": "Lugar de interés",
-      "activity": "Actividad",
-      "nightlife": "Vida nocturna",
-      "transport": "Transporte",
-      "shopping": "Compras",
-      "other": "Otro"
-    },
     "nights_one": "{{count}} noche",
     "nights_other": "{{count}} noches"
   },
