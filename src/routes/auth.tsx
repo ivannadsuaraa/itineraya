@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
+import { PageTransition } from "@/components/PageTransition";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -30,8 +31,6 @@ async function routeAfterLogin(_navigate: ReturnType<typeof useNavigate>, _userI
     window.location.replace(return_to);
     return;
   }
-  // Dashboard route itself redirects to /welcome if onboarding isn't complete.
-  // Full reload ensures the authenticated layout picks up the new session.
   window.location.replace("/dashboard");
 }
 
@@ -98,8 +97,6 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        // Supabase returns user with empty identities array when email already exists
-        // (with email confirmation enabled). Detect and surface clearly.
         if (signUpData.user && Array.isArray(signUpData.user.identities) && signUpData.user.identities.length === 0) {
           setErrorMsg(t("auth.emailExistsCta"));
           toast.error(t("auth.emailExistsCta"));
@@ -192,315 +189,343 @@ function AuthPage() {
     }
   };
 
-
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }}
-        />
-      </div>
+    <PageTransition>
+      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+        <div className="pointer-events-none absolute inset-0">
+          <div
+            className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
+            style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
+          />
+          <div
+            className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
+            style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }}
+          />
+        </div>
 
-      <Link
-        to="/"
-        className="absolute top-4 left-4 z-10 inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-medium text-sky-800 shadow-sm backdrop-blur-md transition hover:bg-white sm:top-6 sm:left-6 sm:h-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {t("auth.back")}
-      </Link>
-
-      <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 py-12 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6 sm:mb-8"
+        <Link
+          to="/"
+          className="absolute top-4 left-4 z-10 inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-medium text-sky-800 shadow-sm backdrop-blur-md transition hover:bg-white sm:top-6 sm:left-6 sm:h-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
         >
-          <Link to="/" className="inline-flex">
-            <img src={logoFull.url} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
-          </Link>
-        </motion.div>
+          <ArrowLeft className="h-4 w-4" />
+          {t("auth.back")}
+        </Link>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-full rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8"
-        >
-          {signupSent ? (
-            <div className="text-center py-4">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
-                <Mail className="h-8 w-8 text-[#1E6B9A]" />
-              </div>
-              <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
-              <p className="mt-3 text-sm text-sky-700">
-                {t("auth.checkEmailSentTo")}
-                <span className="font-semibold break-all">{email}</span>
-                {t("auth.checkEmailHelp")}
-              </p>
-              <p className="mt-2 text-xs text-sky-500">{t("auth.checkSpam")}</p>
-              <button
-                type="button"
-                onClick={handleAlreadyVerified}
-                disabled={verifyChecking}
-                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
-              >
-                {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.alreadyVerified")}
-              </button>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resending}
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-[#1E6B9A] transition hover:bg-sky-50 disabled:opacity-60"
-              >
-                {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.resendEmail")}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSignupSent(false); setMode("login"); }}
-                className="mt-4 text-sm font-semibold text-[#1E6B9A] hover:underline"
-              >
-                {t("auth.backToLogin")}
-              </button>
-            </div>
-          ) : forgotSent ? (
-            <div className="text-center py-4">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
-                <Mail className="h-8 w-8 text-[#1E6B9A]" />
-              </div>
-              <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
-              <p className="mt-3 text-sm text-sky-700">{t("auth.forgotSent")}</p>
-              <button
-                type="button"
-                onClick={() => { setForgotSent(false); setMode("login"); }}
-                className="mt-6 text-sm font-semibold text-[#1E6B9A] hover:underline"
-              >
-                {t("auth.backToLogin")}
-              </button>
-            </div>
-          ) : mode === "forgot" ? (
-            <div>
-              <button
-                type="button"
-                onClick={() => setMode("login")}
-                className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
-              >
-                <ArrowLeft className="h-3 w-3" /> {t("auth.backToLoginShort")}
-              </button>
-              <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.forgotTitle")}</h1>
-              <p className="mt-1 text-sm text-sky-600">{t("auth.forgotSubtitle")}</p>
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                <Field icon={<Mail className="h-4 w-4" />} label={t("auth.email")}>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={t("auth.emailPh")}
-                    className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
-                  />
-                </Field>
-                {errorMsg && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMsg}</div>
-                )}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] disabled:opacity-60"
+        <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 py-12 sm:px-6">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 sm:mb-8"
+          >
+            <Link to="/" className="inline-flex">
+              <img src={logoFull.url} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="w-full rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8"
+          >
+            {signupSent ? (
+              <div className="text-center py-4">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100"
                 >
-                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("auth.sendingReset")}</> : t("auth.forgotBtn")}
-                </button>
-              </form>
-            </div>
-          ) : (
-          <>
-          <div className="mb-6 flex rounded-full bg-sky-50/80 p-1">
-            {(["login", "signup"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`relative flex-1 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
-                  mode === m ? "text-white" : "text-sky-700 hover:text-sky-900"
-                }`}
-              >
-                {mode === m && (
-                  <motion.div
-                    layoutId="auth-tab"
-                    className="absolute inset-0 rounded-full bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/25"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span className="relative">{m === "login" ? t("auth.loginTab") : t("auth.signupTab")}</span>
-              </button>
-            ))}
-          </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0, x: mode === "login" ? -10 : 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: mode === "login" ? 10 : -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <h1 className="font-display text-2xl font-bold text-sky-900">
-                {mode === "login" ? t("auth.loginTitle") : t("auth.signupTitle")}
-              </h1>
-              <p className="mt-1 text-sm text-sky-600">
-                {mode === "login" ? t("auth.loginSubtitle") : t("auth.signupSubtitle")}
-              </p>
-
-              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-                {mode === "signup" && (
-                  <Field icon={<User className="h-4 w-4" />} label={t("auth.fullName")}>
+                  <Mail className="h-8 w-8 text-[#1E6B9A]" />
+                </motion.div>
+                <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
+                <p className="mt-3 text-sm text-sky-700">
+                  {t("auth.checkEmailSentTo")}
+                  <span className="font-semibold break-all">{email}</span>
+                  {t("auth.checkEmailHelp")}
+                </p>
+                <p className="mt-2 text-xs text-sky-500">{t("auth.checkSpam")}</p>
+                <motion.button
+                  type="button"
+                  onClick={handleAlreadyVerified}
+                  disabled={verifyChecking}
+                  whileTap={{ scale: 0.97 }}
+                  className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-60"
+                >
+                  {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.alreadyVerified")}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending}
+                  whileTap={{ scale: 0.97 }}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-[#1E6B9A] transition hover:bg-sky-50 disabled:opacity-60"
+                >
+                  {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.resendEmail")}
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => { setSignupSent(false); setMode("login"); }}
+                  whileHover={{ scale: 1.02 }}
+                  className="mt-4 text-sm font-semibold text-[#1E6B9A] hover:underline"
+                >
+                  {t("auth.backToLogin")}
+                </motion.button>
+              </div>
+            ) : forgotSent ? (
+              <div className="text-center py-4">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100"
+                >
+                  <Mail className="h-8 w-8 text-[#1E6B9A]" />
+                </motion.div>
+                <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.checkEmail")}</h1>
+                <p className="mt-3 text-sm text-sky-700">{t("auth.forgotSent")}</p>
+                <motion.button
+                  type="button"
+                  onClick={() => { setForgotSent(false); setMode("login"); }}
+                  whileHover={{ scale: 1.02 }}
+                  className="mt-6 text-sm font-semibold text-[#1E6B9A] hover:underline"
+                >
+                  {t("auth.backToLogin")}
+                </motion.button>
+              </div>
+            ) : mode === "forgot" ? (
+              <div>
+                <motion.button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  whileHover={{ x: -3 }}
+                  className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
+                >
+                  <ArrowLeft className="h-3 w-3" /> {t("auth.backToLoginShort")}
+                </motion.button>
+                <h1 className="font-display text-2xl font-bold text-sky-900">{t("auth.forgotTitle")}</h1>
+                <p className="mt-1 text-sm text-sky-600">{t("auth.forgotSubtitle")}</p>
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                  <Field icon={<Mail className="h-4 w-4" />} label={t("auth.email")}>
                     <input
-                      type="text"
+                      type="email"
                       required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder={t("auth.fullNamePh")}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t("auth.emailPh")}
                       className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                     />
                   </Field>
-                )}
-                <Field icon={<Mail className="h-4 w-4" />} label={t("auth.email")}>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={t("auth.emailPh")}
-                    className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
-                  />
-                </Field>
-                <div className="space-y-2">
-                  <Field
-                    icon={<Lock className="h-4 w-4" />}
-                    label={t("auth.password")}
-                    rightElement={
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((s) => !s)}
-                        className="text-sky-500 hover:text-sky-700 transition"
-                        tabIndex={-1}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    }
+                  {errorMsg && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMsg}</div>
+                  )}
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileTap={{ scale: 0.97 }}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] disabled:opacity-60"
                   >
+                    {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> {t("auth.sendingReset")}</> : t("auth.forgotBtn")}
+                  </motion.button>
+                </form>
+              </div>
+            ) : (
+            <>
+            <div className="mb-6 flex rounded-full bg-sky-50/80 p-1">
+              {(["login", "signup"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMode(m)}
+                  className={`relative flex-1 rounded-full px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    mode === m ? "text-white" : "text-sky-700 hover:text-sky-900"
+                  }`}
+                >
+                  {mode === m && (
+                    <motion.div
+                      layoutId="auth-tab"
+                      className="absolute inset-0 rounded-full bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/25"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative">{m === "login" ? t("auth.loginTab") : t("auth.signupTab")}</span>
+                </button>
+              ))}
+            </div>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, x: mode === "login" ? -10 : 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: mode === "login" ? 10 : -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                <h1 className="font-display text-2xl font-bold text-sky-900">
+                  {mode === "login" ? t("auth.loginTitle") : t("auth.signupTitle")}
+                </h1>
+                <p className="mt-1 text-sm text-sky-600">
+                  {mode === "login" ? t("auth.loginSubtitle") : t("auth.signupSubtitle")}
+                </p>
+
+                <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                  {mode === "signup" && (
+                    <Field icon={<User className="h-4 w-4" />} label={t("auth.fullName")}>
+                      <input
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder={t("auth.fullNamePh")}
+                        className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
+                      />
+                    </Field>
+                  )}
+                  <Field icon={<Mail className="h-4 w-4" />} label={t("auth.email")}>
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type="email"
                       required
-                      minLength={6}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t("auth.emailPh")}
                       className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
                     />
                   </Field>
-                  {mode === "login" && (
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setMode("forgot")}
-                        className="text-xs font-semibold text-[#1E6B9A] hover:underline"
-                      >
-                        {t("auth.forgot")}
-                      </button>
-                    </div>
-                  )}
-                  {mode === "signup" && (
-                    <div className="space-y-1 px-1">
-                      {[
-                        { label: t("auth.req6"), met: password.length >= 6 },
-                        { label: t("auth.reqUpper"), met: /[A-Z]/.test(password) },
-                        { label: t("auth.reqDigit"), met: /[0-9]/.test(password) },
-                        { label: t("auth.reqSymbol"), met: /[^A-Za-z0-9]/.test(password) },
-                      ].map((req) => (
-                        <div key={req.label} className="flex items-center gap-2 text-xs">
-                          <div className={`h-1.5 w-1.5 rounded-full ${req.met ? "bg-green-500" : "bg-red-500"}`} />
-                          <span className={req.met ? "text-green-600" : "text-red-500"}>{req.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {errorMsg && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                    {errorMsg}
-                    {errorMsg === t("auth.emailExistsCta") && (
-                      <button
-                        type="button"
-                        onClick={() => { setMode("login"); setErrorMsg(null); }}
-                        className="ml-2 font-semibold underline"
-                      >
-                        {t("auth.loginOne")}
-                      </button>
+                  <div className="space-y-2">
+                    <Field
+                      icon={<Lock className="h-4 w-4" />}
+                      label={t("auth.password")}
+                      rightElement={
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((s) => !s)}
+                          className="text-sky-500 hover:text-sky-700 transition"
+                          tabIndex={-1}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      }
+                    >
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        required
+                        minLength={6}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-transparent text-sm text-sky-900 placeholder-sky-400 outline-none"
+                      />
+                    </Field>
+                    {mode === "login" && (
+                      <div className="flex justify-end">
+                        <motion.button
+                          type="button"
+                          onClick={() => setMode("forgot")}
+                          whileHover={{ scale: 1.03 }}
+                          className="text-xs font-semibold text-[#1E6B9A] hover:underline"
+                        >
+                          {t("auth.forgot")}
+                        </motion.button>
+                      </div>
+                    )}
+                    {mode === "signup" && (
+                      <div className="space-y-1 px-1">
+                        {[
+                          { label: t("auth.req6"), met: password.length >= 6 },
+                          { label: t("auth.reqUpper"), met: /[A-Z]/.test(password) },
+                          { label: t("auth.reqDigit"), met: /[0-9]/.test(password) },
+                          { label: t("auth.reqSymbol"), met: /[^A-Za-z0-9]/.test(password) },
+                        ].map((req) => (
+                          <div key={req.label} className="flex items-center gap-2 text-xs">
+                            <motion.div
+                              className="h-1.5 w-1.5 rounded-full"
+                              animate={{ backgroundColor: req.met ? "#22c55e" : "#ef4444" }}
+                              transition={{ duration: 0.2 }}
+                            />
+                            <span className={req.met ? "text-green-600" : "text-red-500"}>{req.label}</span>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                )}
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/30 disabled:opacity-60"
-                >
-                  {loading ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> {mode === "login" ? t("auth.signingIn") : t("auth.signingUp")}</>
-                  ) : mode === "login" ? (
-                    t("auth.loginBtn")
-                  ) : (
-                    t("auth.signupBtn")
+                  {errorMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                    >
+                      {errorMsg}
+                      {errorMsg === t("auth.emailExistsCta") && (
+                        <button
+                          type="button"
+                          onClick={() => { setMode("login"); setErrorMsg(null); }}
+                          className="ml-2 font-semibold underline"
+                        >
+                          {t("auth.loginOne")}
+                        </button>
+                      )}
+                    </motion.div>
                   )}
-                </button>
-              </form>
 
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-sky-200" />
-                <span className="text-xs font-medium uppercase tracking-wider text-sky-500">{t("auth.or")}</span>
-                <div className="h-px flex-1 bg-sky-200" />
-              </div>
+                  <motion.button
+                    type="submit"
+                    disabled={loading}
+                    whileTap={{ scale: 0.97 }}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/30 disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> {mode === "login" ? t("auth.signingIn") : t("auth.signingUp")}</>
+                    ) : mode === "login" ? (
+                      t("auth.loginBtn")
+                    ) : (
+                      t("auth.signupBtn")
+                    )}
+                  </motion.button>
+                </form>
 
-              <button
-                onClick={handleGoogle}
-                disabled={googleLoading}
-                className="flex w-full items-center justify-center gap-3 rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-sky-900 shadow-sm transition-all hover:bg-sky-50 hover:shadow-md disabled:opacity-60"
-              >
-                {googleLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <GoogleIcon />
-                    {t("auth.google")}
-                  </>
-                )}
-              </button>
+                <div className="my-6 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-sky-200" />
+                  <span className="text-xs font-medium uppercase tracking-wider text-sky-500">{t("auth.or")}</span>
+                  <div className="h-px flex-1 bg-sky-200" />
+                </div>
 
-              <p className="mt-6 text-center text-xs text-sky-600">
-                {mode === "login" ? t("auth.noAccount") : t("auth.yesAccount")}
-                <button
-                  type="button"
-                  onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                  className="font-semibold text-[#1E6B9A] hover:underline"
+                <motion.button
+                  onClick={handleGoogle}
+                  disabled={googleLoading}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex w-full items-center justify-center gap-3 rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-sky-900 shadow-sm transition-all hover:bg-sky-50 hover:shadow-md disabled:opacity-60"
                 >
-                  {mode === "login" ? t("auth.createOne") : t("auth.loginOne")}
-                </button>
-              </p>
-            </motion.div>
-          </AnimatePresence>
-          </>
-          )}
-        </motion.div>
+                  {googleLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <GoogleIcon />
+                      {t("auth.google")}
+                    </>
+                  )}
+                </motion.button>
 
-        <p className="mt-6 text-center text-xs text-sky-600">{t("auth.terms")}</p>
+                <p className="mt-6 text-center text-xs text-sky-600">
+                  {mode === "login" ? t("auth.noAccount") : t("auth.yesAccount")}
+                  <button
+                    type="button"
+                    onClick={() => setMode(mode === "login" ? "signup" : "login")}
+                    className="font-semibold text-[#1E6B9A] hover:underline"
+                  >
+                    {mode === "login" ? t("auth.createOne") : t("auth.loginOne")}
+                  </button>
+                </p>
+              </motion.div>
+            </AnimatePresence>
+            </>
+            )}
+          </motion.div>
+
+          <p className="mt-6 text-center text-xs text-sky-600">{t("auth.terms")}</p>
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
 
@@ -518,11 +543,14 @@ function Field({
   return (
     <label className="block">
       <span className="mb-1.5 block text-xs font-semibold text-sky-700">{label}</span>
-      <div className="flex items-center gap-3 rounded-2xl border border-sky-200 bg-white/70 px-4 py-3 transition-all focus-within:border-[#1E6B9A] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1E6B9A]/10">
+      <motion.div
+        className="flex items-center gap-3 rounded-2xl border border-sky-200 bg-white/70 px-4 py-3 transition-all focus-within:border-[#1E6B9A] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#1E6B9A]/10"
+        whileFocus={{ boxShadow: "0 0 20px rgba(30, 107, 154, 0.15)" }}
+      >
         <span className="text-sky-500">{icon}</span>
         {children}
         {rightElement}
-      </div>
+      </motion.div>
     </label>
   );
 }

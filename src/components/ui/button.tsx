@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -34,13 +34,38 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  /** Disable the press-animation micro-interaction */
+  noPress?: boolean;
 }
 
+/**
+ * Button with a satisfying press effect (scale 0.97 on click)
+ * and subtle hover scale (1.02).  Disabled = no animation.
+ */
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, noPress = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+    const isDisabled = props.disabled;
+
+    if (noPress || asChild) {
+      return (
+        <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      );
+    }
+
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <motion.div
+        whileHover={isDisabled ? undefined : { scale: 1.02 }}
+        whileTap={isDisabled ? undefined : { scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        className="inline-flex"
+      >
+        <Comp
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref}
+          {...props}
+        />
+      </motion.div>
     );
   },
 );

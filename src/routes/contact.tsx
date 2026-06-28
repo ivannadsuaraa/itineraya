@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Mail, Shield, FileText } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { PageTransition } from "@/components/PageTransition";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -23,6 +25,7 @@ function ContactPage() {
   const { i18n } = useTranslation();
   const isEs = i18n.language?.startsWith("es");
   return (
+    <PageTransition>
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
       <header className="border-b border-sky-100 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
@@ -85,6 +88,7 @@ function ContactPage() {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 }
 

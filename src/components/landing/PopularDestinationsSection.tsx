@@ -30,6 +30,12 @@ function encodePrefill(destination: string) {
   return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
 }
 
+/** Each card gets its own floating animation duration, delay, and amplitude */
+function getFloatClass(index: number): string {
+  const classes = ["animate-float-card", "animate-float-card-2", "animate-float-card-3", "animate-float-card-4"];
+  return classes[index % classes.length];
+}
+
 export function PopularDestinationsSection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -74,10 +80,15 @@ export function PopularDestinationsSection() {
             </h2>
             <p className="mt-2 max-w-xl text-base text-sky-600">{t("popular.subtitle")}</p>
           </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-700">
+          <motion.span
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-700"
+          >
             <Sparkles className="h-3.5 w-3.5" />
             {t("popular.badge")}
-          </span>
+          </motion.span>
         </motion.div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -86,11 +97,12 @@ export function PopularDestinationsSection() {
               type="button"
               key={d.name}
               onClick={() => handlePick(d)}
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.03 * i }}
-              className="group relative overflow-hidden rounded-2xl text-left shadow-sm transition hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-sky-400"
+              transition={{ duration: 0.5, delay: 0.04 * i, ease: "easeOut" }}
+              // Each card floats with its own rhythm
+              className={`group relative overflow-hidden rounded-2xl text-left shadow-sm transition hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-sky-400 ${getFloatClass(i)}`}
             >
               <div className="relative aspect-[4/5] w-full overflow-hidden">
                 <img
@@ -100,18 +112,27 @@ export function PopularDestinationsSection() {
                   className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-800">
+                <motion.span
+                  initial={{ opacity: 0, x: -8 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 + i * 0.04 }}
+                  className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-800"
+                >
                   {d.tag}
-                </span>
+                </motion.span>
                 <div className="absolute bottom-4 left-4 right-4 text-white">
                   <div className="flex items-center gap-1 text-xs opacity-90">
                     <MapPin className="h-3 w-3" />
                     {d.country}
                   </div>
                   <div className="font-display text-2xl font-bold drop-shadow">{d.name}</div>
-                  <div className="mt-2 inline-flex items-center gap-1 text-sm font-semibold opacity-0 transition group-hover:opacity-100">
+                  <motion.div
+                    initial={{ opacity: 0, x: -4 }}
+                    whileHover={{ opacity: 1, x: 0 }}
+                    className="mt-2 inline-flex items-center gap-1 text-sm font-semibold"
+                  >
                     {t("popular.cta")} →
-                  </div>
+                  </motion.div>
                 </div>
               </div>
             </motion.button>
@@ -119,14 +140,20 @@ export function PopularDestinationsSection() {
         </div>
       </div>
 
+      {/* Modal — AnimatePresence for smooth enter/exit */}
       {pending && (
-        <div
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
           onClick={() => setPending(null)}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
           >
@@ -152,28 +179,32 @@ export function PopularDestinationsSection() {
               </h3>
               <p className="mt-2 text-sm text-sky-700">{t("popular.modalDesc")}</p>
               <div className="mt-5 flex flex-col gap-2">
-                <button
+                <motion.button
                   type="button"
                   onClick={goSignup}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
                   className="w-full rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E]"
                 >
                   {t("popular.modalSignup")}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
                   onClick={() => {
                     if (!pending) return;
                     const returnTo = `${window.location.origin}/onboarding?prefill=${encodeURIComponent(encodePrefill(`${pending.name}, ${pending.country}`))}`;
                     navigate({ to: "/auth", search: { mode: "login", return_to: returnTo } });
                   }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
                   className="w-full rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-50"
                 >
                   {t("popular.modalLogin")}
-                </button>
+                </motion.button>
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </section>
   );

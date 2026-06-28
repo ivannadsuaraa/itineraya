@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2, MapPin, Sparkles } from "lucide-react";
+import { PageTransition } from "@/components/PageTransition";
 import { useTranslation } from "react-i18next";
 import { es as esLocale, enUS } from "date-fns/locale";
 import { toast } from "sonner";
@@ -162,6 +163,7 @@ function OnboardingPage() {
   const locale = i18n.language.startsWith("en") ? enUS : esLocale;
 
   return (
+    <PageTransition>
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }} />
@@ -368,6 +370,7 @@ function OnboardingPage() {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }
 
