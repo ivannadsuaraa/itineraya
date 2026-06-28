@@ -1,12 +1,13 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Loader2, MapPin, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { es as esLocale, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
 import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker";
+import { DestinationAutocomplete } from "@/components/DestinationAutocomplete";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
