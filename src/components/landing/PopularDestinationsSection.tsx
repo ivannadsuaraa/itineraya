@@ -120,62 +120,14 @@ export function PopularDestinationsSection() {
         </div>
       </div>
 
-      {pending && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={() => setPending(null)}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
-          >
-            <button
-              type="button"
-              onClick={() => setPending(null)}
-              className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow hover:bg-white"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
-            <div className="relative h-40 w-full overflow-hidden">
-              <img src={pending.image} alt={pending.name} className="h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-3 left-5 text-white">
-                <div className="text-xs opacity-90">{pending.country}</div>
-                <div className="font-display text-2xl font-bold">{pending.name}</div>
-              </div>
-            </div>
-            <div className="p-6">
-              <h3 className="font-display text-xl font-bold text-sky-900">
-                {t("popular.modalTitle", { dest: pending.name })}
-              </h3>
-              <p className="mt-2 text-sm text-sky-700">{t("popular.modalDesc")}</p>
-              <div className="mt-5 flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={goSignup}
-                  className="w-full rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E]"
-                >
-                  {t("popular.modalSignup")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!pending) return;
-                    const returnTo = `${window.location.origin}/onboarding?prefill=${encodeURIComponent(encodePrefill(`${pending.name}, ${pending.country}`))}`;
-                    navigate({ to: "/auth", search: { mode: "login", return_to: returnTo } });
-                  }}
-                  className="w-full rounded-full border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-50"
-                >
-                  {t("popular.modalLogin")}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+      <AuthModal
+        open={!!pending}
+        onClose={() => setPending(null)}
+        title={pending ? t("popular.modalTitle", { dest: pending.name }) : undefined}
+        description={pending ? t("popular.modalDesc") : undefined}
+        onAuthed={onAuthed}
+      />
+
     </section>
   );
 }
