@@ -180,7 +180,7 @@ Proper nouns (real venue/street/neighborhood names) stay in their native form �
 The "place" field MUST be the real venue name in its native language (e.g. "Museo del Prado" not "Prado Museum" in Spanish; "Eiffel Tower" not "Torre Eiffel" in English).
 
 GEOGRAPHIC COHERENCE — STRICT
-- ${trip.destination} is a ${isCoastal ? "coastal city with beaches — you MAY include beach/coastal activities if seasonally appropriate" : "NON-COASTAL city — ABSOLUTELY NO beach, seaside, or coastal activities. No "beach day", "sunbathing", "swimming at the beach", "playa", "spiaggia", "kayak", "snorkel", or any water/coastal activity. This is a hard rule."}
+- ${trip.destination} is a ${isCoastal ? "coastal city with beaches — you MAY include beach/coastal activities if seasonally appropriate" : "NON-COASTAL city — ABSOLUTELY NO beach, seaside, or coastal activities. No 'beach day', 'sunbathing', 'swimming at the beach', 'playa', 'spiaggia', 'kayak', 'snorkel', or any water/coastal activity. This is a hard rule."}
 - Each day focuses on EXACTLY ONE neighborhood/zone (or two adjacent). The distance between the furthest activities in a single day MUST be under 3 km unless a metro/train connects them in <15 min.
 - Order activities to form a logical LOOP or LINE: consecutive stops should be ≤1.2 km apart (walkable) or connected by direct transit.
 - NEVER send the traveler to a neighborhood on one side of the city and then back to the other side later the same day. Group meals within the same zone.

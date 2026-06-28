@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { PaywallGate } from "@/components/trip/PaywallGate";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import ItineraryView from "@/components/trip/ItineraryView"; // Import ItineraryView here
-import { Day } from "@/components/trip/ItineraryView"; // Import Day interface for type safety
+import type { Day } from "@/components/trip/ItineraryView"; // Import Day interface for type safety
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion components specifically for animations
 
 // Define animation variants for elements

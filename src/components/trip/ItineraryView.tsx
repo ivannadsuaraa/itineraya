@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils'; // Assuming utility for class merging
+import { useMicroAnimation } from '@/hooks/useMicroAnimation';
 
 // --- Mock Data Example ---
 // In a real app, this data would come from an API or state management
@@ -40,14 +41,14 @@ const mockItineraryData = {
   ],
 };
 
-interface Activity {
+export interface Activity {
   id: string;
   time: string;
   name: string;
   description?: string;
 }
 
-interface Day {
+export interface Day {
   date: string;
   label: string;
   activities: Activity[];
@@ -70,6 +71,7 @@ const daySelectorVariants = {
 
 
 const ItineraryView: React.FC<ItineraryViewProps> = ({ itineraryData = mockItineraryData, className }) => {
+  const { whileTap: tapScaleAnimation } = useMicroAnimation();
   const [activeDay, setActiveDay] = useState<string | null>(null); // Track the currently visible day
   const dayRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const daySelectorRef = useRef<HTMLDivElement>(null);
