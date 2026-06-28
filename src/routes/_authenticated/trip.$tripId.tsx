@@ -4,10 +4,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
+  Download,
   Share2,
   FileText,
   LayoutGrid,
   Loader2,
+  Sparkles,
+  MapPin,
+  Calendar as CalendarIcon,
   Wand2,
   Map as MapIcon,
   Users,
