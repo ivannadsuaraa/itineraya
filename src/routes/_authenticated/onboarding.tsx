@@ -126,7 +126,7 @@ function OnboardingPage() {
         .select("id")
         .single();
 
-      if (error) throw error;
+      if (error || !trip) throw error ?? new Error(t("onboarding.saveFail"));
       navigate({ to: "/trip/$tripId", params: { tripId: trip.id } });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("onboarding.saveFail"));
