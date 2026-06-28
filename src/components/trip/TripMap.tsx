@@ -12,6 +12,7 @@ type Activity = {
   place?: string;
   description: string;
   category?: string;
+  url?: string;
 };
 type Day = {
   day: number;

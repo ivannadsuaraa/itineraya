@@ -323,7 +323,8 @@
       "romantic": "Romantic",
       "family": "Family",
       "adventure": "Adventure",
-      "special": "Special events"
+      "special": "Special events",
+      "architecture": "Architecture"
     }
   },
   "trip": {

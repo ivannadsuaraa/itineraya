@@ -49,6 +49,7 @@ type Activity = {
   place?: string;
   description: string;
   category?: ActivityCategory;
+  url?: string;
 };
 
 type Day = {
@@ -79,7 +80,17 @@ function bookingForCategory(
   category: ActivityCategory | undefined,
   placeOrTitle: string,
   destination: string,
+  aiUrl?: string,
 ): BookingInfo | null {
+  // Prefer AI-generated direct link when available
+  if (aiUrl) {
+    const brand =
+      category === "hotel" ? "Booking" :
+      category === "restaurant" ? "TheFork" :
+      category === "nightlife" ? "TripAdvisor" :
+      "GetYourGuide";
+    return { kind: "book", brand, url: aiUrl };
+  }
   const q = `${placeOrTitle} ${destination}`.trim();
 
   switch (category) {
@@ -400,6 +411,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
         title: a.title,
         place: a.place,
         description: a.description,
+        url: a.url,
       })),
     });
   };
@@ -511,7 +523,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
 function ActivityRow({ activity, destination }: { activity: Activity; destination: string }) {
   const { t } = useTranslation();
   const placeQuery = `${activity.place || activity.title}, ${destination}`;
-  const booking = bookingForCategory(activity.category, activity.place || activity.title, destination);
+  const booking = bookingForCategory(activity.category, activity.place || activity.title, destination, activity.url);
   const bookingLabel = booking?.kind === "view" ? t("trip.viewVerb") : t("trip.book");
   return (
     <div className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">

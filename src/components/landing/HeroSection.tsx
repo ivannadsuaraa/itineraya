@@ -1,23 +1,10 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
 
 export function HeroSection() {
   const { t } = useTranslation();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session?.user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) =>
-      setIsLoggedIn(!!session?.user),
-    );
-    return () => subscription.unsubscribe();
-  }, []);
 
   const itineraryDays = [
     { icon: MapPin, label: "Templo Uluwatu", time: "09:00" },
@@ -97,24 +84,14 @@ export function HeroSection() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="mt-8 flex flex-wrap items-center gap-4"
             >
-              {mounted && isLoggedIn ? (
-                <Link
-                  to="/dashboard"
-                  className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
-                >
-                  {t("hero.ctaMyTrips")}
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              ) : (
-                <Link
-                  to="/auth"
-                  search={{ mode: "signup" }}
-                  className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
-                >
-                  {t("hero.ctaStart")}
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              )}
+              <Link
+                to="/auth"
+                search={{ mode: "signup" }}
+                className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
+              >
+                {t("hero.ctaStart")}
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
               <a
                 href="#how-it-works"
                 className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white/60 px-7 py-3.5 text-base font-medium text-sky-700 backdrop-blur-sm transition-all hover:bg-sky-50"

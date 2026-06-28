@@ -55,6 +55,29 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
 
     const current = trip.itinerary as unknown as Itinerary;
 
+    // Determine if destination is coastal (same logic as main prompt)
+    const isCoastalCity = (dest: string): boolean => {
+      const inland = new Set([
+        "madrid", "toledo", "granada", "sevilla", "córdoba", "salamanca", "valladolid",
+        "zaragoza", "pamplona", "burgos", "segovia", "ávila", "mérida", "cáceres",
+        "león", "santiago", "london", "paris", "prague", "vienna", "budapest", "berlin",
+        "munich", "milan", "rome", "florence", "venice", "siena", "verona", "bologna",
+        "turin", "dublin", "edinburgh", "york", "oxford", "cambridge", "bath",
+        "moscow", "kyiv", "warsaw", "krakow", "bucharest", "sofia", "belgrade",
+        "luxembourg", "brussels", "amsterdam", "copenhagen", "stockholm", "oslo",
+        "helsinki", "reykjavik", "innsbruck", "salzburg", "zurich", "geneva",
+        "luxor", "cairo", "jaipur", "agra", "delhi", "kathmandu",
+        "mexico city", "guadalajara", "quito", "bogotá", "cusco", "la paz",
+        "lima", "santiago de chile", "buenos aires", "asunción",
+      ]);
+      return !inland.has(dest.toLowerCase().trim());
+    };
+    const isCoastal = isCoastalCity(trip.destination);
+
+    const coastalRule = isCoastal
+      ? `${trip.destination} es una ciudad costera — puedes incluir actividades de playa si la temporada lo permite.`
+      : `${trip.destination} NO es una ciudad costera — ABSOLUTAMENTE PROHIBIDO recomendar playa, paseos marítimos, snorkel, kayak o cualquier actividad de costa.`;
+
     const prompt = `Eres un experto planificador de viajes. Vas a modificar un itinerario existente según la petición del usuario.
 
 Destino: ${trip.destination}
@@ -63,13 +86,30 @@ Compañía: ${trip.companion ?? "no especificado"}
 Presupuesto: ${trip.budget ?? "no especificado"}
 Estilo: ${trip.trip_style ?? "no especificado"}
 
+${coastalRule}
+
 Itinerario actual (JSON):
 ${JSON.stringify(current)}
 
 Petición del usuario:
 "${data.instruction}"
 
-Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura, conservando los días no modificados tal cual y respetando los campos image_url e image_query existentes:
+REGLAS OBLIGATORIAS:
+1. IDIOMA: 100% español peninsular. Prohibido: Breakfast, Lunch, Dinner, Visit, Walk, towards, Morning, Afternoon, Evening. Usa SIEMPRE: Desayuno, Comida, Cena, Visita, Paseo, dirección, Mañana, Tarde, Noche. Nombres propios de lugares se quedan en su idioma original.
+
+2. COHERENCIA GEOGRÁFICA: Cada día se centra en UN solo barrio/zona. No zigzaguees por la ciudad. Actividades consecutivas a ≤1.2 km o conectadas por transporte directo. Comidas en la misma zona del día.
+
+3. TRANSPORTE: Cada actividad tras la primera del día DEBE empezar su "description" con transporte: modo + línea + minutos (ej: "🚶 8 min a pie", "🚇 Metro L4 dirección Trafalgar, 12 min", "🚌 Bus 24, 15 min").
+
+4. HORARIOS: Museo 1.5-2h, comida 1-1.5h, sightseeing 45-60 min. 15-30 min de margen. Formato 24h HH:MM.
+
+5. ENLACES (url): Para "restaurant" o "hotel", incluye "url" con enlace DIRECTO al establecimiento concreto (web oficial, Google Maps del local, TheFork, Booking). NUNCA páginas principales.
+
+6. EVENTOS LOCALES: Si hay festivales/festivos/eventos conocidos en las fechas, inclúyelos como actividad.
+
+7. MANTÉN image_url e image_query existentes para días no modificados.
+
+Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura:
 {
   "summary": "string",
   "days": [
@@ -84,9 +124,10 @@ Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura, conser
           "time": "09:00",
           "emoji": "🛬",
           "title": "string",
-          "place": "Nombre real del lugar",
-          "description": "1-2 líneas con consejo útil",
-          "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other"
+          "place": "Nombre REAL del establecimiento",
+          "description": "1-2 líneas. Si no es primera actividad, EMPIEZA con transporte.",
+          "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other",
+          "url": "https://enlace-directo-al-establecimiento (opcional)"
         }
       ]
     }
@@ -95,11 +136,12 @@ Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura, conser
 }
 
 REQUISITOS:
-- Mantén MÍNIMO 5-6 actividades por día.
-- "time" SIEMPRE en formato 24h HH:MM (nunca "Mañana/Tarde/Noche").
-- "emoji" representativo de la actividad.
-- "place" con nombre REAL (hotel/restaurante/museo) en ${trip.destination}.
-- "category" exactamente uno de los valores listados.`;
+- Mínimo 5-6 actividades/día.
+- "time" SIEMPRE 24h HH:MM.
+- "emoji" representativo.
+- "place" con nombre REAL en ${trip.destination}.
+- "category" exactamente uno de los valores listados.
+- "url" solo si conoces el enlace directo al establecimiento concreto.`;
 
     const aiRes = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

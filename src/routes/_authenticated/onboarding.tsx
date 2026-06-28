@@ -39,7 +39,32 @@ type PrefillData = Partial<{
   duration: string;
 }>;
 
-const tripTypeIds = ["beach", "party", "cultural", "food", "relax", "nature", "romantic", "family", "adventure", "special"];
+const tripTypeIds = ["beach", "party", "cultural", "food", "relax", "nature", "romantic", "family", "adventure", "special", "architecture"];
+
+function isBeachDestination(destination: string): boolean {
+  const beachKeywords = [
+    "playa", "beach", "cancún", "cancun", "tulum", "riviera", "maldives", "bali",
+    "phuket", "koh ", "pattaya", "honolulu", "waikiki", "ibiza", "marbella",
+    "algarve", "costa ", "punta cana", "puerto vallarta", "acapulco", "mazatlán",
+    "santa marta", "cartagena", "miami beach", "fortaleza", "salvador",
+    "rio", "copacabana", "ciprus", "cyprus", "mykonos", "santorini", "crete",
+    "mallorca", "menorca", "formentera", "varadero", "mar del plata",
+    "nice", "cannes", "saint-tropez", "costa del sol", "costa brava",
+    "costa azul", "amalfi", "cinque terre", "key west", "virgin islands",
+    "bahamas", "seychelles", "mauritius", "boracay", "krabi", "da nang",
+    "nha trang", "goa", "sri lanka", "zanzibar", "cape town",
+  ];
+  return beachKeywords.some((k) => destination.toLowerCase().includes(k));
+}
+
+function getTripTypesForDestination(destination: string): string[] {
+  const all = [...tripTypeIds];
+  if (isBeachDestination(destination)) {
+    return all;
+  }
+  // City destinations: hide beach, nature; show architecture, cultural, food, party, etc.
+  return all.filter((id) => id !== "beach");
+}
 
 function decodePrefill(value?: string): PrefillData | null {
   if (!value) return null;
@@ -80,7 +105,7 @@ function OnboardingPage() {
     hotel: null,
   }));
 
-  const totalSteps = 6;
+  const totalSteps = 7;
   const canContinue =
     step === 0 ? data.destination.trim().length > 1 : step === 1 ? Boolean(data.dateRange?.from && data.dateRange?.to) : true;
 
@@ -236,7 +261,7 @@ function OnboardingPage() {
             {step === 4 && (
               <StepShell title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleMultiSubtitle")}>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {tripTypeIds.map((id) => {
+                  {getTripTypesForDestination(data.destination).map((id) => {
                     const selected = data.tripTypes.includes(id);
                     return (
                       <button
@@ -278,11 +303,16 @@ function OnboardingPage() {
                   ]}
                 />
                 {data.hasAccommodation && <HotelMapPicker destination={data.destination} value={data.hotel} onChange={(hotel) => setData((prevData) => ({ ...prevData, hotel }))} />}
+              </StepShell>
+            )}
+
+            {step === 6 && (
+              <StepShell title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>
                 <textarea
                   value={data.avoid}
                   onChange={(event) => setData((prevData) => ({ ...prevData, avoid: event.target.value }))}
                   placeholder={t("onboarding.avoidPh")}
-                  className="min-h-24 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-sm text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                  className="min-h-32 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-sm text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
                 />
               </StepShell>
             )}
