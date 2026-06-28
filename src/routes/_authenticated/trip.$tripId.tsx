@@ -28,7 +28,7 @@ import logoFull from "@/assets/itineraya-logo.png.asset.json";
 const TripMap = lazy(() => import("@/components/trip/TripMap").then((m) => ({ default: m.TripMap })));
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
-  component: TripPage,
+  component: ItineraryPage,
   head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
 });
 
