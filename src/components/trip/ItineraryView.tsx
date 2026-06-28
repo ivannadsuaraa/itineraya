@@ -196,7 +196,9 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({ itineraryData = mockItine
           <div
             key={day.date}
             id={day.date} // ID for intersection observer targeting
-            ref={(el) => dayRefs.current[day.date] = el}
+            ref={(el) => {
+              dayRefs.current[day.date] = el;
+            }}
             className="mb-12 px-4 py-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm"
           >
             <h4 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center space-x-3">
