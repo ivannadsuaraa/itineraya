@@ -340,49 +340,53 @@ function ItineraryPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
+      <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-6">
         <div className="mb-6">
           <PublishToggle tripId={trip.id} />
         </div>
-        <AnimatePresence mode="wait">
-          {view === "cards" && (
-            <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              {itin.days.map((day, index) => (
-                <DayCard day={day} destination={trip.destination} />
-              ))}
-            </motion.div>
-          )}
-          {view === "text" && (
-            <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
-              {itin.days.map((day, index) => (
-                <div key={day.day} className="mb-6 last:mb-0">
-                  <h2 className="font-display text-lg font-bold text-sky-900">
-                    {t("trip.dayHeading", { n: day.day, title: day.title })}
-                  </h2>
-                  {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
-                  <ul className="mt-3 space-y-2">
-                    {day.activities.map((a, i) => (
-                      <li key={i} className="text-sm text-sky-900">
-                        <span className="mr-1">{a.emoji ?? "📍"}</span>
-                        <span className="font-semibold text-[#1E6B9A]">{a.time}</span>{" "}
-                        — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
-                        <span className="text-sky-700">{a.description}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </motion.div>
-          )}
-          {view === "map" && (
-            <motion.div key="map" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <Suspense fallback={<div className="flex h-96 items-center justify-center rounded-3xl bg-white/80"><Loader2 className="h-6 w-6 animate-spin text-sky-500" /></div>}>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className={view === "map" ? "hidden lg:block" : ""}>
+            <AnimatePresence mode="wait">
+              {view !== "text" ? (
+                <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                  {itin.days.map((day) => (
+                    <DayCard key={day.day} day={day} destination={trip.destination} />
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
+                  {itin.days.map((day) => (
+                    <div key={day.day} className="mb-6 last:mb-0">
+                      <h2 className="font-display text-lg font-bold text-sky-900">
+                        {t("trip.dayHeading", { n: day.day, title: day.title })}
+                      </h2>
+                      {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
+                      <ul className="mt-3 space-y-2">
+                        {day.activities.map((a, i) => (
+                          <li key={i} className="text-sm text-sky-900">
+                            <span className="mr-1">{a.emoji ?? "📍"}</span>
+                            <span className="font-semibold text-[#1E6B9A]">{a.time}</span>{" "}
+                            — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
+                            <span className="text-sky-700">{a.description}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <div className={view === "map" ? "block" : "hidden lg:block"}>
+            <div className="lg:sticky lg:top-24">
+              <Suspense fallback={<div className="flex h-[70vh] items-center justify-center rounded-3xl bg-white/80"><Loader2 className="h-6 w-6 animate-spin text-sky-500" /></div>}>
                 <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
               </Suspense>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        </div>
       </div>
+
 
       <AssistantEditPanel
         open={assistantOpen}
