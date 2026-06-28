@@ -278,6 +278,82 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_user_id: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string
+          status: string
+          token: string
+          trip_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by: string
+          status?: string
+          token: string
+          trip_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string
+          status?: string
+          token?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_invites_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_members_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           arrival_time: string | null
