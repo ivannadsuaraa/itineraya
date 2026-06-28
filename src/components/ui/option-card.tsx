@@ -1,5 +1,6 @@
 // src/components/ui/option-card.tsx
 import { motion } from 'framer-motion';
+import type { TargetAndTransition } from 'framer-motion';
 import React from 'react';
 
 interface OptionCardProps {
@@ -11,7 +12,7 @@ interface OptionCardProps {
 }
 
 // Define tap animation variants
-const tapAnimation = {
+const tapAnimation: TargetAndTransition = {
   scale: 0.97,
   transition: { type: 'spring', stiffness: 400, damping: 10 },
 };

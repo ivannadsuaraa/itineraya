@@ -1,8 +1,9 @@
 // src/components/ui/AnimatedGradientBackground.tsx
 import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 const AnimatedGradientBackground = () => {
-  const gradientVariants = {
+  const gradientVariants: Variants = {
     animate: {
       backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"], // Horizontal shift and return
       transition: {
