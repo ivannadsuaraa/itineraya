@@ -1,8 +1,9 @@
-// src/components/trip/TripCard.tsx
+// src/components/trip/TripCard.tsx (Integrating ItineraryView placeholder)
 import { motion } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
 import { cn } from '@lib/utils'; // Assuming a utility for class merging
 import { useTranslations } from 'next-intl'; // Assuming i18n for translations
+import ItineraryView from './ItineraryView'; // Import the new ItineraryView component
 
 // --- Animation Variants ---
 
@@ -21,15 +22,15 @@ const cardVariants = {
 
 // Hover effects for a premium feel
 const cardHoverEffects = {
-  scale: 1.03, // Slight scale up
-  boxShadow: "0px 10px 30px rgba(0, 0, 0, 0.2)", // Deeper, softer shadow
+  scale: 1.04, // Slightly more pronounced scale up
+  boxShadow: "0px 15px 40px rgba(0, 0, 0, 0.25)", // Deeper, softer shadow
 };
 
 // Hover transition for smooth effect
 const hoverTransition = {
   type: "spring",
-  stiffness: 300,
-  damping: 20,
+  stiffness: 400, // Increased stiffness for a bouncier feel
+  damping: 15,    // Adjusted damping for a more pronounced spring
 };
 
 export const TripCard = ({ trip, index }) => {
@@ -81,6 +82,14 @@ export const TripCard = ({ trip, index }) => {
           <span>{trip.members.length} members</span>
         </div>
       </div>
+
+      {/* Placeholder for Itinerary View - This would typically be on a detail page, not the card itself */}
+      {/* For demonstration, if this card were to lead to an itinerary view directly: */}
+      {/* {trip.id === 'some_specific_trip_id' && (  // Conditional rendering example
+        <div className="mt-4 border-t pt-4">
+           <ItineraryView itineraryData={trip.itinerary} />
+        </div>
+      )} */}
     </motion.div>
   );
 };

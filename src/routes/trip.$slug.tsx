@@ -5,9 +5,41 @@ import { MapPin, Sparkles, ArrowRight, Calendar as CalendarIcon, Wand2, Bookmark
 import { getPublicTrip, type PublicTripDay } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuthStatus } from "@/lib/use-auth-status";
 import { PaywallGate } from "@/components/trip/PaywallGate";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
+import ItineraryView from "@/components/trip/ItineraryView"; // Import ItineraryView here
+import { Day } from "@/components/trip/ItineraryView"; // Import Day interface for type safety
+import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion components specifically for animations
+
+// Define animation variants for elements
+const heroImageVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+};
+
+const textFadeUpVariants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: 0.3 + i * 0.1, duration: 0.4, ease: "easeOut" },
+  }),
+};
+
+const gradientShiftVariants = {
+  visible: {
+    background: [
+      "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 20%, transparent 70%)",
+      "linear-gradient(to top, rgba(0,0,0,0.7) 10%, rgba(0,0,0,0.25) 30%, transparent 80%)",
+      "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 20%, transparent 70%)" // Cycle back
+    ],
+    transition: { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "loop" as const },
+  },
+};
 
 export const Route = createFileRoute("/trip/$slug")({
   loader: async ({ params }) => {
@@ -184,66 +216,27 @@ function PublicTripPage() {
     }
   };
 
-  const renderDay = (day: PublicTripDay) => (
-    <article key={day.day} className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60">
-      {day.image_url ? (
-        <div className="relative h-48 w-full overflow-hidden md:h-64">
-          <img src={day.image_url} alt={day.title} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-            <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-              {t("trip.dayLabel", { n: day.day })}
-            </span>
-            <h3 className="mt-2 font-display text-2xl font-bold drop-shadow">{day.title}</h3>
-            {day.subtitle && <p className="text-sm opacity-90">{day.subtitle}</p>}
-          </div>
-        </div>
-      ) : (
-        <div className="p-6 pb-2">
-          <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E6B9A]">
-            {t("trip.dayLabel", { n: day.day })}
-          </span>
-          <h3 className="mt-2 font-display text-2xl font-bold text-sky-900">{day.title}</h3>
-          {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
-        </div>
-      )}
+  // Helper to transform PublicTripDay to the Day format expected by ItineraryView
+  const transformTripDaysToItineraryDays = (tripDays: PublicTripDay[]): Day[] => {
+    return tripDays.map((day, dayIndex) => ({
+      date: day.date,
+      // Use day.title for label, prepending day number for clarity if title is generic
+      // Example: "Day N: Title" -> "Day N: Title" or "Title"
+      label: `Day ${day.day}: ${day.title}`, // Explicitly including "Day N" for clarity
+      activities: day.activities.map((activity, index) => ({
+        // Generate a unique ID. If time and name are not enough, use index from map.
+        id: `${activity.time}-${activity.name.replace(/\s+/g, '-')}-${dayIndex}-${index}`,
+        time: activity.time,
+        name: activity.name,
+        description: activity.description || "", // Ensure description is always a string
+        // Add other fields if ItineraryView's Activity interface expects them
+        // e.g., category: activity.category, emoji: activity.emoji, etc.
+      })),
+    }));
+  };
 
-      <ul className="space-y-3 p-5 md:p-6">
-        {day.activities.map((a, i) => (
-          <li key={i} className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
-            <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
-              <CalendarIcon className="h-3 w-3 opacity-70" />
-              <span className="mt-0.5 text-xs font-bold leading-none">{a.time}</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start gap-2">
-                <span className="text-lg leading-none">{a.emoji ?? "📍"}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sky-900">{a.title}</div>
-                  {a.place && (
-                    <div className="truncate text-xs font-medium text-sky-700/90">{a.place}</div>
-                  )}
-                </div>
-              </div>
-              <div className="mt-1 text-sm text-sky-700">{a.description}</div>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((a.place || a.title) + ", " + trip.destination)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => requireAuth(e)}
-                className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 hover:bg-sky-50"
-              >
-                <MapPin className="h-3 w-3" />
-                {t("trip.maps")}
-              </a>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-
-
+  const transformedVisibleDays = transformTripDaysToItineraryDays(visibleDays);
+  const transformedGatedDays = transformTripDaysToItineraryDays(gatedDays);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
@@ -265,21 +258,56 @@ function PublicTripPage() {
 
       {/* Hero */}
       <div className="relative h-72 w-full overflow-hidden md:h-96">
-        {trip.hero_image_url ? (
-          <img src={trip.hero_image_url} alt={trip.destination} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        {/* Animated Hero Image */}
+        <AnimatePresence>
+          <motion.img
+            key={trip.hero_image_url || "default-hero"} // Key helps AnimatePresence track changes
+            src={trip.hero_image_url || "/placeholder-hero.jpg"} // Use a placeholder if no image
+            alt={trip.destination}
+            variants={heroImageVariants}
+            initial="hidden"
+            animate="visible"
+            className="h-full w-full object-cover"
+          />
+        </AnimatePresence>
+
+        {/* Animated Gradient Overlay */}
+        <motion.div
+          variants={gradientShiftVariants}
+          initial="initial" // Needs an initial state if not animating from the start, or let it default
+          animate="visible"
+          className="absolute inset-0 backdrop-blur-sm" // Added backdrop-blur for visual effect
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" /> {/* Static gradient, consider removing or merging with animated one */}
+
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
           <div className="mx-auto max-w-4xl text-white">
-            <p className="text-xs font-semibold uppercase tracking-widest opacity-80">
+            <motion.p
+              custom={0}
+              variants={textFadeUpVariants}
+              initial="hidden"
+              animate="visible"
+              className="text-xs font-semibold uppercase tracking-widest opacity-80"
+            >
               {t("publicTrip.eyebrow")}
-            </p>
-            <h1 className="mt-2 font-display text-4xl font-bold drop-shadow md:text-5xl">
+            </motion.p>
+            <motion.h1
+              custom={1}
+              variants={textFadeUpVariants}
+              initial="hidden"
+              animate="visible"
+              className="mt-2 font-display text-4xl font-bold drop-shadow md:text-5xl"
+            >
               {trip.destination}
-            </h1>
-            <div className="mt-3 flex flex-wrap items-center gap-3 text-sm opacity-90">
+            </motion.h1>
+            <motion.div
+              custom={2}
+              variants={textFadeUpVariants}
+              initial="hidden"
+              animate="visible"
+              className="mt-3 flex flex-wrap items-center gap-3 text-sm opacity-90"
+            >
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 backdrop-blur-md">
                 <CalendarIcon className="h-3.5 w-3.5" />
                 {t("publicTrip.duration", { count: nDays })}
@@ -289,7 +317,7 @@ function PublicTripPage() {
                   {trip.start_date} → {trip.end_date}
                 </span>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -297,7 +325,7 @@ function PublicTripPage() {
       {/* Summary */}
       <div className="mx-auto max-w-4xl px-4 py-8 md:py-10">
         {/* Remix actions */}
-        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+        <div className="mb-8 grid gap-3 sm:grid-grid-cols-3">
           <button
             type="button"
             onClick={handleRemix}
@@ -336,18 +364,27 @@ function PublicTripPage() {
           </div>
         )}
 
-        {/* Days */}
+        {/* Itinerary View Component */}
         <div className="mt-8 space-y-6">
-          {visibleDays.map(renderDay)}
+             <ItineraryView itineraryData={{ days: transformedVisibleDays }} />
+             {gatedDays.length > 0 && (
+                 <PaywallGate>
+                     <ItineraryView itineraryData={{ days: transformedGatedDays }} />
+                 </PaywallGate>
+             )}
         </div>
 
-        {gatedDays.length > 0 && (
-          <div className="mt-6">
+        {/* Original renderDay logic was commented out previously and is now fully replaced by ItineraryView */}
+        {/*
+        <div className="mt-8 space-y-6">
+          {gatedDays.length > 0 && (
             <PaywallGate>
-              <div className="space-y-6">{gatedDays.map(renderDay)}</div>
+              <div className="space-y-6">{gatedDays.map(renderDay)}
+              </div>
             </PaywallGate>
-          </div>
-        )}
+          )}
+        </div>
+        */}
 
         {/* CTA */}
         <div className="mt-12 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] p-8 text-center text-white shadow-2xl md:p-12">
@@ -372,3 +409,4 @@ function PublicTripPage() {
     </div>
   );
 }
+;
