@@ -14,6 +14,7 @@ import {
   Calendar as CalendarIcon,
   Wand2,
   Map as MapIcon,
+  Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,11 +22,11 @@ import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { ShareDialog } from "@/components/trip/ShareDialog";
 import { PublishToggle } from "@/components/trip/PublishToggle";
+import { TripmatesModal } from "@/components/trip/TripmatesModal";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
-import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
-const TripMap = lazy(() => import("@/components/trip/TripMap").then((m) => ({ default: m.TripMap })));
+const TripMap = lazy(() => import("@/components/trip/GoogleTripMap").then((m) => ({ default: m.GoogleTripMap })));
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   component: ItineraryPage,
@@ -154,6 +155,7 @@ function ItineraryPage() {
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [tripmatesOpen, setTripmatesOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -283,6 +285,14 @@ function ItineraryPage() {
               </button>
             </div>
             <button
+              onClick={() => setTripmatesOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-md shadow-pink-500/25 transition hover:shadow-lg"
+              aria-label="Invite tripmates"
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Invite tripmates</span>
+            </button>
+            <button
               onClick={() => setShareOpen(true)}
               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/80 px-3 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
               aria-label={t("trip.share")}
@@ -330,49 +340,53 @@ function ItineraryPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
+      <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-6">
         <div className="mb-6">
           <PublishToggle tripId={trip.id} />
         </div>
-        <AnimatePresence mode="wait">
-          {view === "cards" && (
-            <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              {itin.days.map((day, index) => (
-                <DayCard day={day} destination={trip.destination} />
-              ))}
-            </motion.div>
-          )}
-          {view === "text" && (
-            <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
-              {itin.days.map((day, index) => (
-                <div key={day.day} className="mb-6 last:mb-0">
-                  <h2 className="font-display text-lg font-bold text-sky-900">
-                    {t("trip.dayHeading", { n: day.day, title: day.title })}
-                  </h2>
-                  {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
-                  <ul className="mt-3 space-y-2">
-                    {day.activities.map((a, i) => (
-                      <li key={i} className="text-sm text-sky-900">
-                        <span className="mr-1">{a.emoji ?? "📍"}</span>
-                        <span className="font-semibold text-[#1E6B9A]">{a.time}</span>{" "}
-                        — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
-                        <span className="text-sky-700">{a.description}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </motion.div>
-          )}
-          {view === "map" && (
-            <motion.div key="map" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <Suspense fallback={<div className="flex h-96 items-center justify-center rounded-3xl bg-white/80"><Loader2 className="h-6 w-6 animate-spin text-sky-500" /></div>}>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className={view === "map" ? "hidden lg:block" : ""}>
+            <AnimatePresence mode="wait">
+              {view !== "text" ? (
+                <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                  {itin.days.map((day) => (
+                    <DayCard key={day.day} day={day} destination={trip.destination} />
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
+                  {itin.days.map((day) => (
+                    <div key={day.day} className="mb-6 last:mb-0">
+                      <h2 className="font-display text-lg font-bold text-sky-900">
+                        {t("trip.dayHeading", { n: day.day, title: day.title })}
+                      </h2>
+                      {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
+                      <ul className="mt-3 space-y-2">
+                        {day.activities.map((a, i) => (
+                          <li key={i} className="text-sm text-sky-900">
+                            <span className="mr-1">{a.emoji ?? "📍"}</span>
+                            <span className="font-semibold text-[#1E6B9A]">{a.time}</span>{" "}
+                            — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
+                            <span className="text-sky-700">{a.description}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <div className={view === "map" ? "block" : "hidden lg:block"}>
+            <div className="lg:sticky lg:top-24">
+              <Suspense fallback={<div className="flex h-[70vh] items-center justify-center rounded-3xl bg-white/80"><Loader2 className="h-6 w-6 animate-spin text-sky-500" /></div>}>
                 <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
               </Suspense>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        </div>
       </div>
+
 
       <AssistantEditPanel
         open={assistantOpen}
@@ -387,6 +401,13 @@ function ItineraryPage() {
       <ShareDialog
         open={shareOpen}
         onClose={() => setShareOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
+      />
+
+      <TripmatesModal
+        open={tripmatesOpen}
+        onClose={() => setTripmatesOpen(false)}
         tripId={trip.id}
         destination={trip.destination}
       />
@@ -493,7 +514,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
         </div>
 
         <div className="flex items-center justify-between border-t border-sky-100 px-5 py-3 text-xs text-sky-500">
-          <img src={logoFull.url} alt="Itineraya" className="h-5 w-auto" />
+          <span className="font-semibold text-sky-700">Itineraya</span>
           <span>{destination}</span>
         </div>
       </div>

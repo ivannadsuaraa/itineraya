@@ -1,12 +1,13 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Loader2, MapPin, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { es as esLocale, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
 import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker";
+import { DestinationAutocomplete } from "@/components/DestinationAutocomplete";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -198,15 +199,11 @@ function OnboardingPage() {
           >
             {step === 0 && (
               <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky-500" />
-                  <input
-                    value={data.destination}
-                    onChange={(event) => setData((prevData) => ({ ...prevData, destination: event.target.value }))}
-                    placeholder={t("onboarding.destPh")}
-                    className="w-full rounded-2xl border border-sky-200 bg-white/80 py-4 pl-12 pr-4 text-base font-medium text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
-                  />
-                </div>
+                <DestinationAutocomplete
+                  value={data.destination}
+                  onChange={(destination) => setData((prevData) => ({ ...prevData, destination }))}
+                  placeholder={t("onboarding.destPh")}
+                />
               </StepShell>
             )}
 

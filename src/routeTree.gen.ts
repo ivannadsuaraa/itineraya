@@ -21,6 +21,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ExploreIndexRouteImport } from './routes/explore.index'
 import { Route as TripSlugRouteImport } from './routes/trip.$slug'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -95,6 +96,11 @@ const ExploreIndexRoute = ExploreIndexRouteImport.update({
 const TripSlugRoute = TripSlugRouteImport.update({
   id: '/trip/$slug',
   path: '/trip/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreSlugRoute = ExploreSlugRouteImport.update({
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/explore/$slug': typeof ExploreSlugRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
   '/explore/': typeof ExploreIndexRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/explore/$slug': typeof ExploreSlugRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
   '/explore': typeof ExploreIndexRoute
   '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
@@ -261,6 +269,7 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/explore/$slug': typeof ExploreSlugRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
   '/explore/': typeof ExploreIndexRoute
   '/_authenticated/trip/$tripId': typeof AuthenticatedTripTripIdRoute
@@ -292,6 +301,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/checkout/return'
     | '/explore/$slug'
+    | '/invite/$token'
     | '/trip/$slug'
     | '/explore/'
     | '/trip/$tripId'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/checkout/return'
     | '/explore/$slug'
+    | '/invite/$token'
     | '/trip/$slug'
     | '/explore'
     | '/trip/$tripId'
@@ -351,6 +362,7 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/checkout/return'
     | '/explore/$slug'
+    | '/invite/$token'
     | '/trip/$slug'
     | '/explore/'
     | '/_authenticated/trip/$tripId'
@@ -374,6 +386,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ExploreSlugRoute: typeof ExploreSlugRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   TripSlugRoute: typeof TripSlugRoute
   ExploreIndexRoute: typeof ExploreIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       path: '/trip/$slug'
       fullPath: '/trip/$slug'
       preLoaderRoute: typeof TripSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore/$slug': {
@@ -624,6 +644,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   ExploreSlugRoute: ExploreSlugRoute,
+  InviteTokenRoute: InviteTokenRoute,
   TripSlugRoute: TripSlugRoute,
   ExploreIndexRoute: ExploreIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
