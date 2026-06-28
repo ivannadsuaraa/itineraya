@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { CookieBanner } from "@/components/CookieBanner";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import "@/i18n";
 
 function NotFoundComponent() {
@@ -140,6 +141,8 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
+        {/* Living background — subtle gradient shift + particles */}
+        <AnimatedBackground />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <CookieBanner />

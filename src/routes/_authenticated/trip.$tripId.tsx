@@ -336,9 +336,16 @@ function ItineraryPage() {
         </div>
         <AnimatePresence mode="wait">
           {view === "cards" && (
-            <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+            <motion.div key="cards" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
               {itin.days.map((day, index) => (
-                <DayCard day={day} destination={trip.destination} />
+                <motion.div
+                  key={day.day}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1, duration: 0.5, ease: "easeOut" }}
+                >
+                  <DayCard day={day} destination={trip.destination} />
+                </motion.div>
               ))}
             </motion.div>
           )}
@@ -461,11 +468,19 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white/85 shadow-xl backdrop-blur-xl ring-1 ring-white/60">
+    <motion.div whileHover={{ y: -3, boxShadow: "0 16px 48px rgba(0,0,0,0.08)" }} transition={{ duration: 0.3, ease: "easeOut" }} className="overflow-hidden rounded-3xl bg-white/85 shadow-xl backdrop-blur-xl ring-1 ring-white/60 will-change-transform">
       <div className="bg-white">
         {day.image_url && (
           <div className="relative h-48 w-full overflow-hidden md:h-56">
-            <img src={day.image_url} alt={day.title} className="h-full w-full object-cover" crossOrigin="anonymous" />
+            <motion.img
+              src={day.image_url}
+              alt={day.title}
+              className="h-full w-full object-cover"
+              crossOrigin="anonymous"
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
               <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
@@ -486,9 +501,20 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           </div>
         )}
 
-        <div className="space-y-3 p-5 md:p-6">
+        <div className="relative space-y-1 p-5 md:p-6">
+          {/* Decorative connecting line between activities */}
+          {day.activities.length > 1 && (
+            <div className="absolute left-[2.15rem] top-[3.25rem] bottom-[1.25rem] w-px bg-gradient-to-b from-sky-200/60 via-sky-200/40 to-transparent md:left-[2.35rem]" />
+          )}
           {day.activities.map((a, i) => (
-            <ActivityRow key={i} activity={a} destination={destination} />
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.06, duration: 0.4, ease: "easeOut" }}
+            >
+              <ActivityRow activity={a} destination={destination} index={i} />
+            </motion.div>
           ))}
         </div>
 
@@ -516,24 +542,69 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           {t("trip.share")}
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-function ActivityRow({ activity, destination }: { activity: Activity; destination: string }) {
+const TRANSPORT_ICONS: Record<string, string> = {
+  walk: "🚶",
+  metro: "🚇",
+  taxi: "🚕",
+  bus: "🚌",
+  train: "🚄",
+  bike: "🚲",
+  ferry: "⛴️",
+  flight: "✈️",
+};
+
+function ActivityRow({ activity, destination, index }: { activity: Activity; destination: string; index?: number }) {
   const { t } = useTranslation();
   const placeQuery = `${activity.place || activity.title}, ${destination}`;
   const booking = bookingForCategory(activity.category, activity.place || activity.title, destination, activity.url);
   const bookingLabel = booking?.kind === "view" ? t("trip.viewVerb") : t("trip.book");
+  const isTransport = activity.category === "transport";
+  const transportIcon = isTransport ? (activity.emoji && TRANSPORT_ICONS[activity.emoji] ? TRANSPORT_ICONS[activity.emoji] : "🚶") : null;
   return (
-    <div className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
-      <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
-        <CalendarIcon className="h-3 w-3 opacity-70" />
+    <motion.div
+      layout
+      whileHover={{ y: -2, boxShadow: "0 6px 20px rgba(0,0,0,0.06)" }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className={`relative flex gap-3 rounded-2xl border p-3 will-change-transform ${
+        isTransport
+          ? "border-amber-200/60 bg-amber-50/50"
+          : "border-sky-100 bg-sky-50/40"
+      }`}
+    >
+      {/* Time badge */}
+      <div className={`flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl text-white ${
+        isTransport ? "bg-amber-600" : "bg-[#1E6B9A]"
+      }`}>
+        {isTransport ? (
+          <motion.span
+            className="text-base leading-none"
+            animate={{ x: [0, 3, 0], opacity: [0.7, 1, 0.7] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: (index ?? 0) * 0.4 }}
+          >
+            {transportIcon}
+          </motion.span>
+        ) : (
+          <CalendarIcon className="h-3 w-3 opacity-70" />
+        )}
         <span className="mt-0.5 text-xs font-bold leading-none">{activity.time}</span>
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
-          <span className="text-lg leading-none">{activity.emoji ?? "📍"}</span>
+          {isTransport ? (
+            <motion.span
+              className="text-lg leading-none"
+              animate={{ x: [0, 4, 0], opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: (index ?? 0) * 0.3 }}
+            >
+              {transportIcon}
+            </motion.span>
+          ) : (
+            <span className="text-lg leading-none">{activity.emoji ?? "📍"}</span>
+          )}
           <div className="min-w-0 flex-1">
             <div className="font-semibold text-sky-900">{activity.title}</div>
             {activity.place && (
@@ -568,7 +639,7 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
