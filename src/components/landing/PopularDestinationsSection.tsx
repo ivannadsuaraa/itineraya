@@ -3,7 +3,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, X, Sparkles } from "lucide-react";
+import { MapPin, Sparkles } from "lucide-react";
+import { AuthModal } from "@/components/AuthModal";
 
 type Destination = {
   name: string;
