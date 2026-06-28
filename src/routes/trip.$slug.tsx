@@ -6,6 +6,7 @@ import { getPublicTrip, type PublicTripDay } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaywallGate } from "@/components/trip/PaywallGate";
+import { useAuthStatus } from "@/lib/use-auth-status";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import ItineraryView from "@/components/trip/ItineraryView"; // Import ItineraryView here
 import type { Day } from "@/components/trip/ItineraryView"; // Import Day interface for type safety

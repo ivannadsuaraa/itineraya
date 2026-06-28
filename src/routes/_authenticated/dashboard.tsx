@@ -110,7 +110,7 @@ function DashboardPage() {
 
   const remixSaved = (s: SavedInspo) => {
     const payload = { destination: s.destination, nDays: s.n_days ?? undefined };
-    const encoded = btoa(unescape(encodeURIComponent(JSON.JSON.stringify(payload))));
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     navigate({ to: "/onboarding", search: { prefill: encoded } });
   };
 
