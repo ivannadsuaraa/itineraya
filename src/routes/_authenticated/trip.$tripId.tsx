@@ -28,8 +28,8 @@ import logoFull from "@/assets/itineraya-logo.png.asset.json";
 const TripMap = lazy(() => import("@/components/trip/TripMap").then((m) => ({ default: m.TripMap })));
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
-  head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
   component: TripPage,
+  head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
 });
 
 type ActivityCategory =
@@ -50,6 +50,7 @@ type Activity = {
   description: string;
   category?: ActivityCategory;
 };
+
 type Day = {
   day: number;
   title: string;
@@ -58,13 +59,21 @@ type Day = {
   image_query?: string;
   activities: Activity[];
 };
-type Itinerary = { summary?: string; days: Day[] };
+
+type Itinerary = {
+  summary?: string;
+  days: Day[];
+};
 
 function googleMapsUrl(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
-type BookingInfo = { kind: "book" | "view"; brand: string; url: string };
+type BookingInfo = {
+  kind: "book" | "view";
+  brand: string;
+  url: string;
+};
 
 function bookingForCategory(
   category: ActivityCategory | undefined,
@@ -72,22 +81,44 @@ function bookingForCategory(
   destination: string,
 ): BookingInfo | null {
   const q = `${placeOrTitle} ${destination}`.trim();
+
   switch (category) {
     case "hotel":
-      return { kind: "book", brand: "Booking", url: `https://www.booking.com/search.html?ss=${encodeURIComponent(placeOrTitle)}` };
+      return {
+        kind: "book",
+        brand: "Booking",
+        url: `https://www.booking.com/search.html?ss=${encodeURIComponent(placeOrTitle)}`,
+      };
+
     case "restaurant":
-      return { kind: "book", brand: "TheFork", url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}` };
+      return {
+        kind: "book",
+        brand: "TheFork",
+        url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}`,
+      };
+
     case "nightlife":
-      return { kind: "view", brand: "TripAdvisor", url: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}` };
+      return {
+        kind: "view",
+        brand: "TripAdvisor",
+        url: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`,
+      };
+
     case "activity":
     case "sight":
-      return { kind: "book", brand: "GetYourGuide", url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}` };
+      return {
+        kind: "book",
+        brand: "GetYourGuide",
+        url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}`,
+      };
+
     default:
       return null;
   }
 }
 
-function TripPage() {
+
+function ItineraryPage() {
   const { t, i18n } = useTranslation();
   const { tripId } = Route.useParams();
   const navigate = useNavigate();
@@ -295,14 +326,14 @@ function TripPage() {
         <AnimatePresence mode="wait">
           {view === "cards" && (
             <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              {itin.days.map((day) => (
-                <DayCard key={day.day} day={day} destination={trip.destination} />
+              {itin.days.map((day, index) => (
+                <DayCard day={day} destination={trip.destination} />
               ))}
             </motion.div>
           )}
           {view === "text" && (
             <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
-              {itin.days.map((day) => (
+              {itin.days.map((day, index) => (
                 <div key={day.day} className="mb-6 last:mb-0">
                   <h2 className="font-display text-lg font-bold text-sky-900">
                     {t("trip.dayHeading", { n: day.day, title: day.title })}
@@ -462,7 +493,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-sky-800 shadow-sm ring-1 ring-sky-200 transition hover:bg-sky-50 disabled:opacity-60"
         >
           {busy === "download" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-          {t("trip.downloadPostcard")}
+          {t("trip.postcardDownloaded")}
         </button>
         <button
           onClick={share}
