@@ -199,15 +199,11 @@ function OnboardingPage() {
           >
             {step === 0 && (
               <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
-                <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky-500" />
-                  <input
-                    value={data.destination}
-                    onChange={(event) => setData((prevData) => ({ ...prevData, destination: event.target.value }))}
-                    placeholder={t("onboarding.destPh")}
-                    className="w-full rounded-2xl border border-sky-200 bg-white/80 py-4 pl-12 pr-4 text-base font-medium text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
-                  />
-                </div>
+                <DestinationAutocomplete
+                  value={data.destination}
+                  onChange={(destination) => setData((prevData) => ({ ...prevData, destination }))}
+                  placeholder={t("onboarding.destPh")}
+                />
               </StepShell>
             )}
 
