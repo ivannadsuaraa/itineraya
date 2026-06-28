@@ -6,13 +6,15 @@ import { getPublicTrip, type PublicTripDay } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaywallGate } from "@/components/trip/PaywallGate";
+import { useAuthStatus } from "@/lib/use-auth-status";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import ItineraryView from "@/components/trip/ItineraryView"; // Import ItineraryView here
-import { Day } from "@/components/trip/ItineraryView"; // Import Day interface for type safety
+import type { Day } from "@/components/trip/ItineraryView"; // Import Day interface for type safety
 import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion components specifically for animations
+import type { Variants } from "framer-motion";
 
 // Define animation variants for elements
-const heroImageVariants = {
+const heroImageVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
   visible: {
     opacity: 1,
@@ -21,7 +23,7 @@ const heroImageVariants = {
   },
 };
 
-const textFadeUpVariants = {
+const textFadeUpVariants: Variants = {
   hidden: { opacity: 0, y: 10 },
   visible: (i: number) => ({
     opacity: 1,
@@ -30,7 +32,7 @@ const textFadeUpVariants = {
   }),
 };
 
-const gradientShiftVariants = {
+const gradientShiftVariants: Variants = {
   visible: {
     background: [
       "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 20%, transparent 70%)",
@@ -218,16 +220,19 @@ function PublicTripPage() {
 
   // Helper to transform PublicTripDay to the Day format expected by ItineraryView
   const transformTripDaysToItineraryDays = (tripDays: PublicTripDay[]): Day[] => {
+    const baseDate = trip.start_date ? new Date(trip.start_date) : null;
     return tripDays.map((day, dayIndex) => ({
-      date: day.date,
+      date: baseDate
+        ? new Date(baseDate.getTime() + dayIndex * 86400000).toISOString().slice(0, 10)
+        : `2024-01-${String(dayIndex + 1).padStart(2, "0")}`,
       // Use day.title for label, prepending day number for clarity if title is generic
       // Example: "Day N: Title" -> "Day N: Title" or "Title"
       label: `Day ${day.day}: ${day.title}`, // Explicitly including "Day N" for clarity
       activities: day.activities.map((activity, index) => ({
         // Generate a unique ID. If time and name are not enough, use index from map.
-        id: `${activity.time}-${activity.name.replace(/\s+/g, '-')}-${dayIndex}-${index}`,
+        id: `${activity.time}-${activity.title.replace(/\s+/g, '-')}-${dayIndex}-${index}`,
         time: activity.time,
-        name: activity.name,
+        name: activity.title,
         description: activity.description || "", // Ensure description is always a string
         // Add other fields if ItineraryView's Activity interface expects them
         // e.g., category: activity.category, emoji: activity.emoji, etc.
