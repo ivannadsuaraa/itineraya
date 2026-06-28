@@ -38,7 +38,7 @@ export function PopularDestinationsSection() {
   const [pending, setPending] = useState<Destination | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session?.user));
+    supabase.auth.getUser().then(({ data }) => setIsLoggedIn(!!data.user));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) =>
       setIsLoggedIn(!!session?.user),
     );
@@ -53,10 +53,10 @@ export function PopularDestinationsSection() {
     }
   };
 
-  const goSignup = () => {
+  const onAuthed = () => {
     if (!pending) return;
-    const returnTo = `${window.location.origin}/onboarding?prefill=${encodeURIComponent(encodePrefill(`${pending.name}, ${pending.country}`))}`;
-    navigate({ to: "/auth", search: { mode: "signup", return_to: returnTo } });
+    navigate({ to: "/onboarding", search: { prefill: encodePrefill(`${pending.name}, ${pending.country}`) } });
+    setPending(null);
   };
 
   return (
