@@ -90,7 +90,7 @@ const activityVariants = {
     transition: {
       duration: 0.4,
       delay: i * 0.1,
-      ease: [0.25, 0.1, 0.25, 1],
+      ease: [0.25, 0.1, 0.25, 1] as const,
     },
   }),
 };

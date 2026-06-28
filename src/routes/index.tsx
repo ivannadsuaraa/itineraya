@@ -8,11 +8,12 @@ import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { PageTransition } from "@/components/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { RegistrationModal } from "@/components/auth/RegistrationModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -31,6 +32,7 @@ function LandingPage() {
   const { t } = useTranslation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showRegistration, setShowRegistration] = useState(false);
   useEffect(() => {
     setMounted(true);
     supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session?.user));
@@ -79,20 +81,20 @@ function LandingPage() {
                       to="/dashboard"
                       className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35"
                     >
+                      <LayoutDashboard className="h-5 w-5" />
                       {t("hero.ctaMyTrips")}
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
                     </Link>
                   </motion.div>
                 ) : (
                   <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                    <Link
-                      to="/auth"
-                      search={{ mode: "signup" }}
-                      className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35"
+                    <button
+                      onClick={() => setShowRegistration(true)}
+                      className="group inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35"
                     >
                       {t("hero.ctaStart")}
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-                    </Link>
+                    </button>
                   </motion.div>
                 )}
               </div>
@@ -101,6 +103,15 @@ function LandingPage() {
 
           <FooterSection />
         </div>
+
+        <RegistrationModal
+          open={showRegistration}
+          onClose={() => setShowRegistration(false)}
+          onSuccess={() => {
+            setShowRegistration(false);
+            window.location.href = "/dashboard";
+          }}
+        />
       </PageTransition>
     </AnimatePresence>
   );

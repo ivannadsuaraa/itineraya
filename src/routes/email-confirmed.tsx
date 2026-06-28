@@ -65,6 +65,7 @@ function EmailConfirmedPage() {
         >
           <Link
             to="/auth"
+            search={{ mode: "login" }}
             className="inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/30 transition hover:bg-[#185a83]"
           >
             <LogIn className="h-5 w-5" />

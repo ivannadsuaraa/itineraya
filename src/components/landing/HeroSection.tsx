@@ -1,8 +1,10 @@
 import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera } from "lucide-react";
+import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera, LayoutDashboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
+import { RegistrationModal } from "@/components/auth/RegistrationModal";
 
 /**
  * Animated text reveal — each word fades+slides up one by one.
@@ -64,12 +66,24 @@ export function HeroSection() {
   const { t } = useTranslation();
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [showRegistration, setShowRegistration] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session?.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) =>
+      setIsLoggedIn(!!s?.user),
+    );
+    return () => subscription.unsubscribe();
   }, []);
 
   // Parallax on the hero background image
@@ -102,19 +116,25 @@ export function HeroSection() {
       {/* Background blobs with parallax offset on desktop */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <motion.div
-          style={!isMobile ? { y: bgY } : undefined}
           className="absolute -top-24 -right-24 h-[500px] w-[500px] rounded-full opacity-60 blur-3xl"
-          style={{ background: "radial-gradient(circle, oklch(0.926 0.029 238.249), transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, oklch(0.926 0.029 238.249), transparent 70%)",
+            ...(!isMobile ? { y: bgY } : {}),
+          } as React.CSSProperties}
         />
         <motion.div
-          style={!isMobile ? { y: useTransform(scrollYProgress, [0, 1], ["0%", "15%"]) } : undefined}
           className="absolute top-1/2 -left-32 h-[400px] w-[400px] rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, oklch(0.856 0.041 239.082), transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, oklch(0.856 0.041 239.082), transparent 70%)",
+            ...(!isMobile ? { y: useTransform(scrollYProgress, [0, 1], ["0%", "15%"]) } : {}),
+          } as React.CSSProperties}
         />
         <motion.div
-          style={!isMobile ? { y: useTransform(scrollYProgress, [0, 1], ["0%", "20%"]) } : undefined}
           className="absolute bottom-0 right-1/4 h-[300px] w-[300px] rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, oklch(0.837 0.056 236.834), transparent 70%)" }}
+          style={{
+            background: "radial-gradient(circle, oklch(0.837 0.056 236.834), transparent 70%)",
+            ...(!isMobile ? { y: useTransform(scrollYProgress, [0, 1], ["0%", "20%"]) } : {}),
+          } as React.CSSProperties}
         />
       </div>
 
@@ -182,14 +202,24 @@ export function HeroSection() {
               className="mt-8 flex flex-wrap items-center gap-4"
             >
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={{ type: "spring", stiffness: 400, damping: 17 }}>
-                <Link
-                  to="/auth"
-                  search={{ mode: "signup" }}
-                  className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35"
-                >
-                  {t("hero.ctaStart")}
-                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                {mounted && isLoggedIn ? (
+                  <Link
+                    to="/dashboard"
+                    className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35"
+                  >
+                    <LayoutDashboard className="h-5 w-5" />
+                    {t("nav.myTrips")}
+                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setShowRegistration(true)}
+                    className="group inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35"
+                  >
+                    {t("hero.ctaStart")}
+                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                )}
               </motion.div>
               <motion.a
                 whileHover={{ scale: 1.03 }}
@@ -319,6 +349,15 @@ export function HeroSection() {
           />
         </svg>
       </div>
+
+      <RegistrationModal
+        open={showRegistration}
+        onClose={() => setShowRegistration(false)}
+        onSuccess={() => {
+          setShowRegistration(false);
+          window.location.href = "/dashboard";
+        }}
+      />
     </section>
   );
 }

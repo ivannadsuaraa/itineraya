@@ -14,12 +14,14 @@ import {
   Calendar as CalendarIcon,
   Wand2,
   Map as MapIcon,
+  Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { ShareDialog } from "@/components/trip/ShareDialog";
+import { TripmatesModal } from "@/components/trip/TripmatesModal";
 import { PublishToggle } from "@/components/trip/PublishToggle";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
@@ -154,6 +156,7 @@ function ItineraryPage() {
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [tripmatesOpen, setTripmatesOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -290,6 +293,14 @@ function ItineraryPage() {
               <Share2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.share")}</span>
             </button>
+            <button
+              onClick={() => setTripmatesOpen(true)}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 text-xs font-semibold text-white shadow-md shadow-[#1E6B9A]/25 transition hover:shadow-lg"
+              aria-label="Invite tripmates"
+            >
+              <Users className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Invite tripmates</span>
+            </button>
             {plan && plan !== "free" ? (
               <button
                 onClick={() => setAssistantOpen(true)}
@@ -394,6 +405,13 @@ function ItineraryPage() {
       <ShareDialog
         open={shareOpen}
         onClose={() => setShareOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
+      />
+
+      <TripmatesModal
+        open={tripmatesOpen}
+        onClose={() => setTripmatesOpen(false)}
         tripId={trip.id}
         destination={trip.destination}
       />

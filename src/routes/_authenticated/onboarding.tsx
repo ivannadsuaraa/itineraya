@@ -8,6 +8,7 @@ import { es as esLocale, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
 import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker";
+import { DestinationAutocomplete } from "@/components/maps/DestinationAutocomplete";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -214,15 +215,15 @@ function OnboardingPage() {
             {step === 0 && (
               <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
                 <div className="relative">
-                  <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-sky-500" />
+                  <MapPin className="absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 text-sky-500" />
                   <motion.div
                     initial={{ opacity: 0, scale: 0.97 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: 0.05 }}
                   >
-                    <input
+                    <DestinationAutocomplete
                       value={data.destination}
-                      onChange={(event) => setData((prevData) => ({ ...prevData, destination: event.target.value }))}
+                      onChange={(value) => setData((prevData) => ({ ...prevData, destination: value }))}
                       placeholder={t("onboarding.destPh")}
                       className="w-full rounded-2xl border border-sky-200 bg-white/80 py-4 pl-12 pr-4 text-base font-medium text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
                     />

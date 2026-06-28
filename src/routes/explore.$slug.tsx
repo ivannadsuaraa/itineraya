@@ -126,7 +126,7 @@ function DiscoverableTripPage() {
   const requireAuth = (e?: MouseEvent) => {
     if (!checked || authed) return true;
     e?.preventDefault();
-    navigate({ to: "/auth" });
+    navigate({ to: "/auth", search: { mode: "login" } });
     return false;
   };
 
@@ -152,7 +152,7 @@ function DiscoverableTripPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
         toast.info(t("publicTrip.saveLoginPrompt"));
-        navigate({ to: "/auth" });
+        navigate({ to: "/auth", search: { mode: "login" } });
         return;
       }
       const { error } = await supabase
@@ -390,6 +390,7 @@ function DiscoverableTripPage() {
           </p>
           <Link
             to="/auth"
+            search={{ mode: "login" }}
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 font-bold text-[#1E6B9A] shadow-lg transition hover:bg-sky-50"
           >
             {t("publicTrip.cta")}
