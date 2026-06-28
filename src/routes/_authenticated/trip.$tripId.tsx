@@ -494,7 +494,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
         </div>
 
         <div className="flex items-center justify-between border-t border-sky-100 px-5 py-3 text-xs text-sky-500">
-          <img src={logoFull.url} alt="Itineraya" className="h-5 w-auto" />
+          <span className="font-semibold text-sky-700">Itineraya</span>
           <span>{destination}</span>
         </div>
       </div>
