@@ -404,6 +404,13 @@ function ItineraryPage() {
         tripId={trip.id}
         destination={trip.destination}
       />
+
+      <TripmatesModal
+        open={tripmatesOpen}
+        onClose={() => setTripmatesOpen(false)}
+        tripId={trip.id}
+        destination={trip.destination}
+      />
     </div>
   );
 }
