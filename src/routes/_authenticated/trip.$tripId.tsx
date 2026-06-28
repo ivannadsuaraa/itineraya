@@ -4,16 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
-  Download,
   Share2,
   FileText,
   LayoutGrid,
   Loader2,
-  Sparkles,
-  MapPin,
-  Calendar as CalendarIcon,
   Wand2,
   Map as MapIcon,
+  Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,11 +18,11 @@ import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { ShareDialog } from "@/components/trip/ShareDialog";
 import { PublishToggle } from "@/components/trip/PublishToggle";
+import { TripmatesModal } from "@/components/trip/TripmatesModal";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
-import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
-const TripMap = lazy(() => import("@/components/trip/TripMap").then((m) => ({ default: m.TripMap })));
+const TripMap = lazy(() => import("@/components/trip/GoogleTripMap").then((m) => ({ default: m.GoogleTripMap })));
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   component: ItineraryPage,
