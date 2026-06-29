@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { ArrowLeft, ArrowRight, Loader2, Sparkles, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -130,10 +130,10 @@ function InspirePage() {
               <div className="flex gap-2">
                 {Array.from({ length: total }).map((_, i) => (
                   <div key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-sky-100">
-                    <motion.div
-                      initial={false}
-                      animate={{ width: i <= step ? "100%" : "0%", opacity: i <= step ? 1 : 0.3 }}
-                      transition={{ duration: 0.4 }}
+                    <div
+                      
+                      
+                      
                       className="h-full rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2]"
                     />
                   </div>
@@ -142,14 +142,14 @@ function InspirePage() {
             </div>
 
             <div className="relative flex-1">
-              <AnimatePresence mode="wait" custom={direction}>
-                <motion.div
+              
+                <div
                   key={current.id}
-                  custom={direction}
-                  initial={{ opacity: 0, x: direction * 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: direction * -40 }}
-                  transition={{ duration: 0.3 }}
+                  
+                  
+                  
+                  
+                  
                   className="rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8"
                 >
                   <QuestionView
@@ -157,8 +157,8 @@ function InspirePage() {
                     value={answers[current.id as keyof InspireAnswers]}
                     onChange={(v) => setAnswers({ ...answers, [current.id]: v } as InspireAnswers)}
                   />
-                </motion.div>
-              </AnimatePresence>
+                </div>
+              
             </div>
 
             <div className="mt-8 flex items-center justify-between gap-3">
@@ -318,10 +318,10 @@ function DestinationCard({
   const { t } = useTranslation();
   const medal = rank === 0 ? "🥇" : rank === 1 ? "🥈" : "🥉";
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: rank * 0.08 }}
+    <div
+      
+      
+      
       className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60 backdrop-blur-xl"
     >
       <div className="relative h-40 sm:h-48">
@@ -349,6 +349,6 @@ function DestinationCard({
           {t("inspire.createHere")}
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { es as esLocale, enUS } from "date-fns/locale";
@@ -187,14 +187,14 @@ function OnboardingPage() {
           </div>
         </div>
 
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
+        
+          <div
             key={step}
-            custom={direction}
-            initial={{ opacity: 0, x: direction > 0 ? 32 : -32 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: direction > 0 ? -32 : 32 }}
-            transition={{ duration: 0.25 }}
+            
+            
+            
+            
+            
             className="rounded-3xl bg-white/85 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur-xl sm:p-8"
           >
             {step === 0 && (
@@ -313,8 +313,8 @@ function OnboardingPage() {
                 />
               </StepShell>
             )}
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        
 
         <div className="mt-6 flex items-center justify-between gap-3">
           <button

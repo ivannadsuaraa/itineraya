@@ -1,7 +1,6 @@
 // src/components/ui/EmptyStateWrapper.tsx
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import type { Variants } from 'framer-motion';
+
 import { cn } from '@/lib/utils';
 
 // Placeholder for icon data - in a real app, this would be more sophisticated
@@ -12,47 +11,22 @@ const defaultIconPaths = {
   star: "M12 2l2.46 7.588L20 11.78l-6 5.8L12 23l-2-6.22L6 11.78l5.54-2.192L12 2z", // Basic star path
 };
 
-// --- Particle Variants ---
-const particleVariants: Variants = {
-  animate: (custom: { delay: number, speed: number, iconPath: string }) => ({
-    opacity: [0.7, 0],
-    y: ['110vh', '-10vh'], // Move from bottom to above the screen
-    scale: [0.8, 1.2, 0.8], // Subtle scale effect
-    rotate: [0, 180, 360],  // Rotation
-    transition: {
-      delay: custom.delay,
-      duration: custom.speed * 5, // Adjust speed factor
-      ease: "linear",
-      repeat: Infinity,
-      times: [0, 0.5, 1], // Control timing of animation phases
-    },
-  }),
-};
-
 interface ParticleProps {
   initialX: number;
   initialY: number;
-  speed: number;
   iconPath: string;
-  index: number;
 }
 
-const Particle: React.FC<ParticleProps> = ({ initialX, initialY, speed, iconPath, index }) => {
-  const delay = Math.random() * 2; // Random delay for each particle
-
+const Particle: React.FC<ParticleProps> = ({ initialX, initialY, iconPath }) => {
   return (
-    <motion.div
+    <div
       className="absolute"
-      initial={{ x: `${initialX}%`, y: `${initialY}%`, opacity: 0, scale: 0.5 }}
-      animate="animate"
-      variants={particleVariants}
-      custom={{ delay, speed, iconPath }}
-      style={{ x: `${initialX}%`, y: `${initialY}%` }} // Initial position
+      style={{ left: `${initialX}%`, top: `${initialY}%` }}
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d={iconPath} fill="rgba(255, 255, 255, 0.6)" /> {/* White particles with opacity */}
       </svg>
-    </motion.div>
+    </div>
   );
 };
 
@@ -99,9 +73,7 @@ const EmptyStateWrapper: React.FC<EmptyStateWrapperProps> = ({
               key={p.id}
               initialX={p.initialX}
               initialY={p.initialY}
-              speed={p.speed}
               iconPath={p.iconPath}
-              index={p.id}
             />
           ))}
         </div>

@@ -10,38 +10,6 @@ import { useAuthStatus } from "@/lib/use-auth-status";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import ItineraryView from "@/components/trip/ItineraryView"; // Import ItineraryView here
 import type { Day } from "@/components/trip/ItineraryView"; // Import Day interface for type safety
-import { motion, AnimatePresence } from "framer-motion"; // Import framer-motion components specifically for animations
-import type { Variants } from "framer-motion";
-
-// Define animation variants for elements
-const heroImageVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.95 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
-
-const textFadeUpVariants: Variants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.3 + i * 0.1, duration: 0.4, ease: "easeOut" },
-  }),
-};
-
-const gradientShiftVariants: Variants = {
-  visible: {
-    background: [
-      "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 20%, transparent 70%)",
-      "linear-gradient(to top, rgba(0,0,0,0.7) 10%, rgba(0,0,0,0.25) 30%, transparent 80%)",
-      "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 20%, transparent 70%)" // Cycle back
-    ],
-    transition: { duration: 8, ease: "easeInOut", repeat: Infinity, repeatType: "loop" as const },
-  },
-};
 
 export const Route = createFileRoute("/trip/$slug")({
   loader: async ({ params }) => {
@@ -143,7 +111,7 @@ function PublicTripPage() {
   const requireAuth = (e?: MouseEvent) => {
     if (!checked || authed) return true;
     e?.preventDefault();
-    navigate({ to: "/auth" });
+    navigate({ to: "/auth", search: { mode: "login" } });
     return false;
   };
 
@@ -192,7 +160,7 @@ function PublicTripPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
         toast.info(t("publicTrip.saveLoginPrompt"));
-        navigate({ to: "/auth" });
+        navigate({ to: "/auth", search: { mode: "login" } });
         return;
       }
       const { error } = await supabase
@@ -253,6 +221,7 @@ function PublicTripPage() {
           </Link>
           <Link
             to="/auth"
+            search={{ mode: "login" }}
             className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-4 py-2 text-xs font-semibold text-white shadow hover:bg-[#15577E] sm:text-sm"
           >
             {t("publicTrip.ctaShort")}
@@ -264,23 +233,23 @@ function PublicTripPage() {
       {/* Hero */}
       <div className="relative h-72 w-full overflow-hidden md:h-96">
         {/* Animated Hero Image */}
-        <AnimatePresence>
-          <motion.img
-            key={trip.hero_image_url || "default-hero"} // Key helps AnimatePresence track changes
+        
+          <img
+            key={trip.hero_image_url || "default-hero"}
             src={trip.hero_image_url || "/placeholder-hero.jpg"} // Use a placeholder if no image
             alt={trip.destination}
-            variants={heroImageVariants}
-            initial="hidden"
-            animate="visible"
+            
+            
+            
             className="h-full w-full object-cover"
           />
-        </AnimatePresence>
+        
 
         {/* Animated Gradient Overlay */}
-        <motion.div
-          variants={gradientShiftVariants}
-          initial="initial" // Needs an initial state if not animating from the start, or let it default
-          animate="visible"
+        <div
+          
+          // Needs an initial state if not animating from the start, or let it default
+          
           className="absolute inset-0 backdrop-blur-sm" // Added backdrop-blur for visual effect
         />
 
@@ -288,29 +257,29 @@ function PublicTripPage() {
 
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
           <div className="mx-auto max-w-4xl text-white">
-            <motion.p
-              custom={0}
-              variants={textFadeUpVariants}
-              initial="hidden"
-              animate="visible"
+            <p
+              
+              
+              
+              
               className="text-xs font-semibold uppercase tracking-widest opacity-80"
             >
               {t("publicTrip.eyebrow")}
-            </motion.p>
-            <motion.h1
-              custom={1}
-              variants={textFadeUpVariants}
-              initial="hidden"
-              animate="visible"
+            </p>
+            <h1
+              
+              
+              
+              
               className="mt-2 font-display text-4xl font-bold drop-shadow md:text-5xl"
             >
               {trip.destination}
-            </motion.h1>
-            <motion.div
-              custom={2}
-              variants={textFadeUpVariants}
-              initial="hidden"
-              animate="visible"
+            </h1>
+            <div
+              
+              
+              
+              
               className="mt-3 flex flex-wrap items-center gap-3 text-sm opacity-90"
             >
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 backdrop-blur-md">
@@ -322,7 +291,7 @@ function PublicTripPage() {
                   {trip.start_date} → {trip.end_date}
                 </span>
               )}
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -398,6 +367,7 @@ function PublicTripPage() {
           <p className="mx-auto mt-3 max-w-xl text-white/90">{t("publicTrip.ctaSubtitle")}</p>
           <Link
             to="/auth"
+            search={{ mode: "login" }}
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 font-bold text-[#1E6B9A] shadow-lg transition hover:bg-sky-50"
           >
             {t("publicTrip.cta")}

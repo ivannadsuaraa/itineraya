@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,11 +62,11 @@ export function PopularDestinationsSection() {
   return (
     <section className="relative py-16 sm:py-20 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+        <div
+          
+          
+          
+          
           className="mb-10 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between"
         >
           <div>
@@ -79,18 +79,18 @@ export function PopularDestinationsSection() {
             <Sparkles className="h-3.5 w-3.5" />
             {t("popular.badge")}
           </span>
-        </motion.div>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {DESTINATIONS.map((d, i) => (
-            <motion.button
+            <button
               type="button"
               key={d.name}
               onClick={() => handlePick(d)}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.03 * i }}
+              
+              
+              
+              
               className="group relative overflow-hidden rounded-2xl text-left shadow-sm transition hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-sky-400"
             >
               <div className="relative aspect-[4/5] w-full overflow-hidden">
@@ -115,7 +115,7 @@ export function PopularDestinationsSection() {
                   </div>
                 </div>
               </div>
-            </motion.button>
+            </button>
           ))}
         </div>
       </div>

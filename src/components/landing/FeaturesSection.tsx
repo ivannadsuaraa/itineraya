@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+
 import { Sparkles, Map, Sun, Wallet, Globe, Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -31,11 +31,11 @@ export function FeaturesSection() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5 }}
+        <div
+          
+          
+          
+          
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
@@ -45,19 +45,19 @@ export function FeaturesSection() {
             {t("features.title")}
           </h2>
           <p className="mt-4 text-lg text-sky-600">{t("features.subtitle")}</p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-60px" }}
+        <div
+          
+          
+          
+          
           className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           {features.map((feature) => (
-            <motion.div
+            <div
               key={feature.title}
-              variants={item}
+              
               className="rounded-2xl border border-sky-100 bg-white/70 p-6 backdrop-blur-sm transition-all hover:border-sky-200 hover:bg-white hover:shadow-lg hover:shadow-sky-900/5 sm:p-8"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
@@ -69,9 +69,9 @@ export function FeaturesSection() {
               <p className="mt-2 text-sky-600 leading-relaxed">
                 {feature.description}
               </p>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

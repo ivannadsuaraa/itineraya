@@ -127,3 +127,10 @@
     max-width: 100%;
   }
 }
+
+/* App is static for now: animations and transitions disabled globally */
+*, *::before, *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}

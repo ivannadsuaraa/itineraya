@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { motion } from "framer-motion";
+
 import { Compass, Plane, ArrowLeft, Send, Loader2, Sparkles, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,7 +88,7 @@ function UpgradeGate({ onBack }: { onBack: () => void }) {
         >
           <ArrowLeft className="h-4 w-4" /> {t("assistant.back")}
         </button>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <div >
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
             <Lock className="h-7 w-7 text-white" />
           </div>
@@ -106,7 +106,7 @@ function UpgradeGate({ onBack }: { onBack: () => void }) {
           >
             <Sparkles className="h-4 w-4" /> {t("assistant.upgradeCta")}
           </Link>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
@@ -320,10 +320,10 @@ function MessageBubble({ message }: { message: UIMessage }) {
 
 function Dot({ delay = 0 }: { delay?: number }) {
   return (
-    <motion.span
+    <span
       className="h-1.5 w-1.5 rounded-full bg-sky-500"
-      animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
-      transition={{ duration: 0.9, repeat: Infinity, delay }}
+      
+      
     />
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { motion } from "framer-motion";
+
 import { ArrowLeft, Compass, Loader2, Navigation, Plane, Send, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,9 +41,9 @@ function CopilotPage() {
           <div className="mb-6 flex items-center justify-center">
             <BrandLogo size="md" />
           </div>
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
+            
+            
             className="rounded-3xl bg-white/80 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur-xl sm:p-8"
           >
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white shadow-md shadow-[#1E6B9A]/30">
@@ -72,7 +72,7 @@ function CopilotPage() {
               <Sparkles className="h-4 w-4" />
               {t("copilot.start")}
             </button>
-          </motion.div>
+          </div>
         </div>
       </div>
     );

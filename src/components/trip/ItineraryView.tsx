@@ -1,6 +1,6 @@
 // src/components/trip/ItineraryView.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+
 import { cn } from '@/lib/utils'; // Assuming utility for class merging
 import { useMicroAnimation } from '@/hooks/useMicroAnimation';
 
@@ -157,7 +157,7 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({ itineraryData = mockItine
   return (
     <div className={cn("relative flex flex-col w-full", className)}>
       {/* Day Selector - Becomes sticky */}
-      <motion.div
+      <div
         ref={daySelectorRef}
         className={cn(
           "z-10 p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg mb-6 transition-all duration-300 ease-in-out",
@@ -165,18 +165,18 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({ itineraryData = mockItine
           // Fixed positioning will need refinement based on header height and layout.
           // For now, approximate positioning.
         )}
-        variants={daySelectorVariants}
-        animate={isSelectorFixed ? "fixed" : "sticky"}
+        
+        
         style={{ '--tw-translate-y': isSelectorFixed ? '4.5rem' : '0rem' } as React.CSSProperties } // Mimic fixed position relative to header height if needed
-        initial={false}
+        
       >
         <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">Your Itinerary</h3>
         <div className="flex overflow-x-auto space-x-3 pb-3">
           {itineraryData.days.map((day) => (
-            <motion.button
+            <button
               key={day.date}
               onClick={() => scrollToDay(day.date)}
-              whileTap={tapScaleAnimation} // Reusing micro-animation
+              // Reusing micro-animation
               className={cn(
                 "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 ease-in-out",
                 activeDay === day.date
@@ -185,10 +185,10 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({ itineraryData = mockItine
               )}
             >
               {day.label.split(":")[0]} {/* Display only the day number/role, e.g., "Day 1" */}
-            </motion.button>
+            </button>
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* Itinerary Content - Scrollable area */}
       <div ref={contentRef} className="flex-grow overflow-y-auto max-h-[calc(100vh-200px)] relative"> {/* Adjust max-height based on header/footer/selector heights */}

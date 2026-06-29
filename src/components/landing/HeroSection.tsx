@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -34,20 +34,20 @@ export function HeroSection() {
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Text */}
           <div className="max-w-2xl">
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+            <div
+              
+              
+              
               className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-4 py-1.5 text-sm font-medium text-sky-700"
             >
               <Sparkles className="h-4 w-4" />
               <span>{t("hero.badge")}</span>
-            </motion.div>
+            </div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
+            <h1
+              
+              
+              
               className="mt-6 font-display text-4xl font-bold leading-[1.1] tracking-tight text-sky-900 sm:text-5xl lg:text-6xl"
             >
               {t("hero.title1")}{" "}
@@ -67,21 +67,21 @@ export function HeroSection() {
                   />
                 </svg>
               </span>
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+            <p
+              
+              
+              
               className="mt-6 max-w-lg text-lg leading-relaxed text-sky-600"
             >
               {t("hero.subtitle")}
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+            <div
+              
+              
+              
               className="mt-8 flex flex-wrap items-center gap-4"
             >
               <Link
@@ -98,14 +98,14 @@ export function HeroSection() {
               >
                 {t("hero.ctaHow")}
               </a>
-            </motion.div>
+            </div>
           </div>
 
           {/* Visual - Bali Itinerary Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.3 }}
+          <div
+            
+            
+            
             className="relative hidden lg:block"
           >
             <div className="relative mx-auto w-full max-w-md">
@@ -177,7 +177,7 @@ export function HeroSection() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 

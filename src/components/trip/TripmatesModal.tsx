@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { X, Users, Mail, Check, Loader2, Send, Sparkles } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { inviteTripmate, listTripmates } from "@/lib/tripmates.functions";
@@ -59,23 +59,17 @@ export function TripmatesModal({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl"
-          >
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl"
+      >
             <div className="relative bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] px-6 pb-8 pt-6 text-white">
               <button
                 type="button"
@@ -183,9 +177,7 @@ export function TripmatesModal({
                 </div>
               )}
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      </div>
+    </div>
   );
 }

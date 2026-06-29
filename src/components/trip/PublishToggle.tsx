@@ -123,7 +123,7 @@ export function PublishToggle({ tripId }: Props) {
           </div>
           <Link
             to="/explore/$slug"
-            params={{ slug }}
+            params={{ slug: slug ?? "" }}
             target="_blank"
             className="inline-flex items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
           >

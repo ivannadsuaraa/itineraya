@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+
 import {
   Plus,
   MapPin,
@@ -147,12 +147,12 @@ function DashboardPage() {
       <div className="md:pl-60 pb-24 md:pb-12">
         <main className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-10">
           {/* Greeting */}
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
+          <div >
             <p className="text-sm font-semibold text-sky-600">{t("dashboard.hello", { name })}</p>
             <h1 className="font-display text-3xl font-bold text-slate-900 md:text-4xl">
               {t("dashboard.where")}
             </h1>
-          </motion.div>
+          </div>
 
           {/* Hero next trip */}
           {upcoming && upcoming.start_date && (
@@ -160,10 +160,10 @@ function DashboardPage() {
           )}
 
           {/* New trip CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
+          <div
+            
+            
+            
             className="mt-6"
           >
             <Link
@@ -181,7 +181,7 @@ function DashboardPage() {
               </div>
               <ArrowRight className="h-5 w-5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-sky-600" />
             </Link>
-          </motion.div>
+          </div>
 
           {/* My trips */}
           <section className="mt-10">
@@ -237,13 +237,13 @@ function DashboardPage() {
                     <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
                       <div className="relative h-40 w-full overflow-hidden">
                         {s.hero_image_url ? (
-                          <motion.img
+                          <img
                             src={s.hero_image_url}
                             alt={s.destination}
                             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                            initial={{ opacity: 0, scale: 1.05 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.8, ease: "easeOut" }}
+                            
+                            
+                            
                           />
                         ) : (
                           <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
@@ -290,11 +290,11 @@ function DashboardPage() {
             </div>
             <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {inspirations.map((insp, i) => (
-                <motion.div
+                <div
                   key={insp.destination}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.04 * i }}
+                  
+                  
+                  
                   className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
                 >
                   <div className="relative h-44 w-full overflow-hidden">
@@ -323,7 +323,7 @@ function DashboardPage() {
                       {t("dashboard.plan")}
                     </button>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           </section>
@@ -362,22 +362,22 @@ function TripCard({
       : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.03 * index }}
+    <div
+      
+      
+      
       className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
     >
       <Link to="/trip/$tripId" params={{ tripId: trip.id }} className="block">
         <div className="relative h-44 w-full overflow-hidden">
           {trip.hero_image_url ? (
-            <motion.img
+            <img
               src={trip.hero_image_url}
               alt={trip.destination}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              
+              
+              
             />
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
@@ -450,7 +450,7 @@ function TripCard({
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -495,23 +495,23 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
   const fmt = isEs ? "d 'de' MMMM" : "MMM d";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05 }}
+    <div
+      
+      
+      
       className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
     >
       <Link to="/trip/$tripId" params={{ tripId: trip.id }} className="block">
         <div className="grid md:grid-cols-[1.4fr_1fr]">
           <div className="relative h-56 md:h-72">
             {trip.hero_image_url ? (
-              <motion.img
+              <img
                 src={trip.hero_image_url}
                 alt={trip.destination}
                 className="h-full w-full object-cover"
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
+                
+                
+                
               />
             ) : (
               <div className="h-full w-full bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2]" />
@@ -564,7 +564,7 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
           </div>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+
 import { CheckCircle2, LogIn } from "lucide-react";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
@@ -35,19 +35,19 @@ function EmailConfirmedPage() {
           <img src={logoFull.url} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
         </Link>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, type: "spring" }}
+        <div
+          
+          
+          
           className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100"
         >
           <CheckCircle2 className="h-11 w-11 text-emerald-600" />
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
+        <div
+          
+          
+          
         >
           <h1 className="font-display text-3xl font-bold text-sky-900">{t("emailConfirmed.title")}</h1>
           <p className="mt-3 text-sky-800/80">
@@ -55,22 +55,23 @@ function EmailConfirmedPage() {
             <strong>{t("emailConfirmed.bodyBrand")}</strong>
             {t("emailConfirmed.bodyPost")}
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+        <div
+          
+          
+          
           className="mt-8"
         >
           <Link
             to="/auth"
+            search={{ mode: "login" }}
             className="inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/30 transition hover:bg-[#185a83]"
           >
             <LogIn className="h-5 w-5" />
             {t("emailConfirmed.cta")}
           </Link>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+
 import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -29,11 +29,11 @@ export function TestimonialsSection() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5 }}
+        <div
+          
+          
+          
+          
           className="mx-auto max-w-2xl text-center"
         >
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
@@ -45,19 +45,19 @@ export function TestimonialsSection() {
           <p className="mt-4 text-lg text-sky-600">
             {t("testimonials.subtitle")}
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, margin: "-60px" }}
+        <div
+          
+          
+          
+          
           className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           {testimonials.map((t) => (
-            <motion.div
+            <div
               key={t.name}
-              variants={item}
+              
               className="relative rounded-3xl bg-white p-8 shadow-[0_8px_32px_rgba(46,107,138,0.06)] ring-1 ring-sky-100 transition-all hover:shadow-[0_12px_40px_rgba(46,107,138,0.1)] hover:-translate-y-1"
             >
               {/* Stars */}
@@ -80,9 +80,9 @@ export function TestimonialsSection() {
                   <p className="text-xs text-sky-500">{t.role}</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

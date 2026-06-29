@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { X, Send, Loader2, Compass, Plane, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { editItineraryWithAssistant } from "@/lib/itinerary-edit.functions";
@@ -74,24 +74,15 @@ export function AssistantEditPanel({
     }
   };
 
+  if (!open) return null;
+
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-40 bg-sky-950/40 backdrop-blur-sm"
-          />
-          <motion.aside
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 280, damping: 32 }}
-            className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-md flex-col bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] shadow-2xl"
-          >
+    <>
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-40 bg-sky-950/40 backdrop-blur-sm"
+      />
+      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-md flex-col bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] shadow-2xl">
             <header className="flex items-center justify-between border-b border-white/40 bg-white/60 px-5 py-3 backdrop-blur-xl">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] shadow-md shadow-[#1E6B9A]/30">
@@ -160,10 +151,8 @@ export function AssistantEditPanel({
                 </button>
               </div>
             </form>
-          </motion.aside>
-        </>
-      )}
-    </AnimatePresence>
+      </aside>
+    </>
   );
 }
 

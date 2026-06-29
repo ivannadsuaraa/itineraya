@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { Mail, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/auth")({
@@ -175,17 +174,14 @@ function AuthPage() {
   const handleGoogle = async () => {
     setGoogleLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/dashboard`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/dashboard` },
       });
-      if (result.error) {
+      if (error) {
         toast.error(t("auth.googleFail"));
         setGoogleLoading(false);
-        return;
       }
-      if (result.redirected) return;
-      const { data } = await supabase.auth.getUser();
-      if (data.user) await routeAfterLogin(navigate, data.user.id, return_to);
     } catch {
       toast.error(t("auth.googleFail"));
       setGoogleLoading(false);
@@ -215,21 +211,21 @@ function AuthPage() {
       </Link>
 
       <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 py-12 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+        <div
+          
+          
+          
           className="mb-6 sm:mb-8"
         >
           <Link to="/" className="inline-flex">
             <img src={logoFull.url} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
           </Link>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
+        <div
+          
+          
+          
           className="w-full rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8"
         >
           {signupSent ? (
@@ -329,10 +325,10 @@ function AuthPage() {
                 }`}
               >
                 {mode === m && (
-                  <motion.div
-                    layoutId="auth-tab"
+                  <div
+                    
                     className="absolute inset-0 rounded-full bg-[#1E6B9A] shadow-md shadow-[#1E6B9A]/25"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    
                   />
                 )}
                 <span className="relative">{m === "login" ? t("auth.loginTab") : t("auth.signupTab")}</span>
@@ -340,13 +336,13 @@ function AuthPage() {
             ))}
           </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
+          
+            <div
               key={mode}
-              initial={{ opacity: 0, x: mode === "login" ? -10 : 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: mode === "login" ? 10 : -10 }}
-              transition={{ duration: 0.2 }}
+              
+              
+              
+              
             >
               <h1 className="font-display text-2xl font-bold text-sky-900">
                 {mode === "login" ? t("auth.loginTitle") : t("auth.signupTitle")}
@@ -492,11 +488,11 @@ function AuthPage() {
                   {mode === "login" ? t("auth.createOne") : t("auth.loginOne")}
                 </button>
               </p>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          
           </>
           )}
-        </motion.div>
+        </div>
 
         <p className="mt-6 text-center text-xs text-sky-600">{t("auth.terms")}</p>
       </div>

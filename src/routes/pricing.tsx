@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+
 import { Check, ArrowLeft, Sparkles, BadgeCheck, X, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -162,9 +162,9 @@ function PricingPage() {
       </header>
 
       <main className="relative mx-auto max-w-6xl px-4 sm:px-5">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+        <div
+          
+          
           className="mx-auto max-w-2xl text-center"
         >
           <p className="text-sm font-semibold uppercase tracking-widest text-[#1E6B9A]">
@@ -176,18 +176,18 @@ function PricingPage() {
           <p className="mt-3 text-sky-700">
             Empieza gratis. Sube de plan cuando quieras más itinerarios, IA y herramientas avanzadas.
           </p>
-        </motion.div>
+        </div>
 
         <div className="mt-12 grid gap-6 md:grid-cols-3 md:items-stretch">
           {plans.map((plan, i) => {
             const current = planActiveFor(plan);
             const isStarting = starting === plan.id;
             return (
-              <motion.div
+              <div
                 key={plan.id}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * i }}
+                
+                
+                
                 className="relative flex"
               >
                 {plan.highlighted && !current && (
@@ -273,7 +273,7 @@ function PricingPage() {
                     </button>
                   )}
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>

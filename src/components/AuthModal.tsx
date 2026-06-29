@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, Mail, Lock } from "lucide-react";
+
+import { X, Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -17,76 +16,250 @@ type Props = {
 
 export function AuthModal({ open, onClose, title, description, onAuthed }: Props) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<"signup" | "login">("signup");
+  const [mode, setMode] = useState<"signup" | "login" | "forgot">("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [signupSent, setSignupSent] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
+  const [verifyChecking, setVerifyChecking] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [lastResendAt, setLastResendAt] = useState(0);
+
+  if (!open) return null;
+
+  const resetPanels = () => {
+    setSignupSent(false);
+    setForgotSent(false);
+  };
+
+  const mapAuthError = (raw: string): string => {
+    const m = raw.toLowerCase();
+    if (m.includes("invalid login") || m.includes("invalid credentials")) return t("auth.wrongPassword");
+    if (m.includes("email not confirmed")) return t("auth.notVerifiedYet");
+    if (m.includes("user already registered") || m.includes("already exists")) return t("auth.emailExistsCta");
+    if (m.includes("weak password") || m.includes("password should")) return t("auth.weakPassword");
+    if (m.includes("rate limit") || m.includes("too many")) return t("auth.tooManyRequests");
+    if (m.includes("user not found")) return t("auth.noAccountFound");
+    return raw;
+  };
 
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === "forgot") {
+      if (!email) return;
+      setBusy(true);
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        setForgotSent(true);
+        toast.success(t("auth.forgotSent"));
+      } catch (err) {
+        toast.error(err instanceof Error ? mapAuthError(err.message) : t("auth.somethingWrong"));
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     if (!email || !password) return;
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
         });
         if (error) throw error;
-        toast.success(t("auth.checkEmail", { defaultValue: "Check your email to confirm." }));
-        onAuthed?.();
+        if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+          toast.error(t("auth.emailExistsCta"));
+          return;
+        }
+        setSignupSent(true);
+        toast.success(t("auth.accountCreated"));
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        onAuthed?.();
+        if (data.user) onAuthed?.();
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? mapAuthError(err.message) : t("auth.somethingWrong"));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleAlreadyVerified = async () => {
+    if (!email || !password) {
+      toast.error(t("auth.needCreds"));
+      return;
+    }
+    setVerifyChecking(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.toLowerCase().includes("not confirmed")) {
+          toast.error(t("auth.notVerifiedYet"));
+        } else {
+          toast.error(mapAuthError(error.message));
+        }
+        return;
+      }
+      toast.success(t("auth.emailVerified"));
+      if (data.user) onAuthed?.();
+    } finally {
+      setVerifyChecking(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) {
+      toast.error(t("auth.needCreds"));
+      return;
+    }
+    if (Date.now() - lastResendAt < 30_000) {
+      toast.error(t("auth.resendCooldown"));
+      return;
+    }
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
+      });
+      if (error) throw error;
+      setLastResendAt(Date.now());
+      toast.success(t("auth.resendSent"));
+    } catch {
+      toast.error(t("auth.resendFail"));
+    } finally {
+      setResending(false);
     }
   };
 
   const handleGoogle = async () => {
     setBusy(true);
     try {
-      await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-      onAuthed?.();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) {
+        toast.error(error.message);
+        setBusy(false);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error");
-    } finally {
       setBusy(false);
     }
   };
 
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+      >
+        <button
+          type="button"
           onClick={onClose}
+          className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow hover:bg-white"
+          aria-label="Close"
         >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow hover:bg-white"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          <X className="h-4 w-4" />
+        </button>
 
-            <div className="px-6 pt-8 pb-6">
+        <div className="px-6 pt-8 pb-6">
+          {signupSent ? (
+            <div className="text-center py-2">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+                <Mail className="h-8 w-8 text-[#1E6B9A]" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-sky-900">{t("auth.checkEmail")}</h2>
+              <p className="mt-3 text-sm text-sky-700">
+                {t("auth.checkEmailSentTo")}
+                <span className="font-semibold break-all">{email}</span>
+                {t("auth.checkEmailHelp")}
+              </p>
+              <button
+                type="button"
+                onClick={handleAlreadyVerified}
+                disabled={verifyChecking}
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 hover:bg-[#15577E] disabled:opacity-60"
+              >
+                {verifyChecking ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.alreadyVerified")}
+              </button>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending}
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-sky-200 bg-white px-6 py-3 text-sm font-semibold text-[#1E6B9A] hover:bg-sky-50 disabled:opacity-60"
+              >
+                {resending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.resendEmail")}
+              </button>
+              <button
+                type="button"
+                onClick={() => { resetPanels(); setMode("login"); }}
+                className="mt-4 text-sm font-semibold text-[#1E6B9A] hover:underline"
+              >
+                {t("auth.backToLogin")}
+              </button>
+            </div>
+          ) : forgotSent ? (
+            <div className="text-center py-2">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+                <Mail className="h-8 w-8 text-[#1E6B9A]" />
+              </div>
+              <h2 className="font-display text-xl font-bold text-sky-900">{t("auth.checkEmail")}</h2>
+              <p className="mt-3 text-sm text-sky-700">{t("auth.forgotSent")}</p>
+              <button
+                type="button"
+                onClick={() => { resetPanels(); setMode("login"); }}
+                className="mt-6 text-sm font-semibold text-[#1E6B9A] hover:underline"
+              >
+                {t("auth.backToLogin")}
+              </button>
+            </div>
+          ) : mode === "forgot" ? (
+            <div>
+              <button
+                type="button"
+                onClick={() => { resetPanels(); setMode("login"); }}
+                className="mb-4 inline-flex items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
+              >
+                <ArrowLeft className="h-3 w-3" /> {t("auth.backToLoginShort")}
+              </button>
+              <h2 className="font-display text-xl font-bold text-sky-900">{t("auth.forgotTitle")}</h2>
+              <p className="mt-1 text-sm text-sky-600">{t("auth.forgotSubtitle")}</p>
+              <form onSubmit={handleEmail} className="mt-5 space-y-3">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t("authModal.email", { defaultValue: "Email" })}
+                    className="w-full rounded-2xl border border-sky-200 bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 hover:bg-[#15577E] disabled:opacity-50"
+                >
+                  {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.forgotBtn")}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
               <h2 className="font-display text-2xl font-bold text-sky-900">
                 {title ?? (mode === "signup" ? t("authModal.signupTitle", { defaultValue: "Sign up to save your trip" }) : t("authModal.loginTitle", { defaultValue: "Welcome back" }))}
               </h2>
@@ -96,7 +269,7 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
                 type="button"
                 disabled={busy}
                 onClick={handleGoogle}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-sky-50 disabled:opacity-50"
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border border-sky-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-sky-50 disabled:opacity-50"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.75h3.57c2.08-1.92 3.28-4.74 3.28-8.07z"/>
@@ -137,10 +310,21 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
                     className="w-full rounded-2xl border border-sky-200 bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
+                {mode === "login" && (
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => { resetPanels(); setMode("forgot"); }}
+                      className="text-xs font-semibold text-[#1E6B9A] hover:underline"
+                    >
+                      {t("auth.forgot")}
+                    </button>
+                  </div>
+                )}
                 <button
                   type="submit"
                   disabled={busy}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E] disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 hover:bg-[#15577E] disabled:opacity-50"
                 >
                   {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {mode === "signup"
@@ -166,10 +350,10 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
                   </>
                 )}
               </p>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

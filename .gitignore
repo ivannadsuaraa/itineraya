@@ -20,6 +20,22 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Secrets
+.env
+.env.*
+!.env.example
+
+supabase/.temp/
+
+# This repo standardizes on bun.lock; don't mix in a second lockfile
+package-lock.json
+
+# Local tooling / notes, not part of the app
+.claude/launch.json
+.graphify/
+obsidian/
+ITINERAYA/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

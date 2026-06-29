@@ -6,7 +6,7 @@ import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FooterSection } from "@/components/landing/FooterSection";
-import { motion } from "framer-motion";
+
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -56,11 +56,11 @@ function LandingPage() {
             style={{ background: "radial-gradient(circle, oklch(0.856 0.041 239.082), transparent 70%)" }}
           />
         </div>
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+        <div
+          
+          
+          
+          
           className="relative mx-auto max-w-3xl px-4 text-center sm:px-6"
         >
           <h2 className="font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
@@ -90,7 +90,7 @@ function LandingPage() {
             )}
           </div>
 
-        </motion.div>
+        </div>
       </section>
 
       <FooterSection />

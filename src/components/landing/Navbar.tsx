@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X, LayoutDashboard } from "lucide-react";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -32,10 +32,10 @@ export function Navbar() {
   ];
 
   return (
-    <motion.header
-      initial={{ y: -40, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <header
+      
+      
+      
       className="fixed top-0 left-0 right-0 z-50"
       suppressHydrationWarning
     >
@@ -100,13 +100,13 @@ export function Navbar() {
         </nav>
       </div>
 
-      <AnimatePresence>
+      
         {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
+          <div
+            
+            
+            
+            
             className="mx-4 mt-2 rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur-md md:hidden"
           >
             <div className="flex flex-col gap-2">
@@ -150,9 +150,9 @@ export function Navbar() {
                 </>
               )}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-    </motion.header>
+      
+    </header>
   );
 }

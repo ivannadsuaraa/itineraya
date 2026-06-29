@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { motion, AnimatePresence } from "framer-motion";
+
 import {
   ArrowLeft,
   Download,
@@ -346,15 +346,15 @@ function ItineraryPage() {
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <div className={view === "map" ? "hidden lg:block" : ""}>
-            <AnimatePresence mode="wait">
+            
               {view !== "text" ? (
-                <motion.div key="cards" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+                <div key="cards" className="space-y-6">
                   {itin.days.map((day) => (
                     <DayCard key={day.day} day={day} destination={trip.destination} />
                   ))}
-                </motion.div>
+                </div>
               ) : (
-                <motion.div key="text" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
+                <div key="text" className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
                   {itin.days.map((day) => (
                     <div key={day.day} className="mb-6 last:mb-0">
                       <h2 className="font-display text-lg font-bold text-sky-900">
@@ -373,9 +373,9 @@ function ItineraryPage() {
                       </ul>
                     </div>
                   ))}
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
+            
           </div>
           <div className={view === "map" ? "block" : "hidden lg:block"}>
             <div className="lg:sticky lg:top-24">
@@ -605,41 +605,37 @@ function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
       <div className="relative flex flex-col items-center text-center">
         <div className="relative h-32 w-32">
           {dots.map((_, i) => (
-            <motion.span
+            <span
               key={i}
               className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1E6B9A]"
-              animate={{
-                x: Math.cos((i / 12) * Math.PI * 2) * 56,
-                y: Math.sin((i / 12) * Math.PI * 2) * 56,
-                opacity: [0.2, 1, 0.2],
-              }}
-              transition={{ duration: 1.6, repeat: Infinity, delay: i * 0.1 }}
+              
+              
             />
           ))}
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          <div
+            
+            
             className="absolute inset-0 flex items-center justify-center"
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-xl shadow-[#1E6B9A]/30">
               <MapIcon className="h-6 w-6 text-white" />
             </div>
-          </motion.div>
+          </div>
         </div>
 
         <Sparkles className="mt-8 h-5 w-5 text-[#1E6B9A]" />
-        <AnimatePresence mode="wait">
-          <motion.h2
+        
+          <h2
             key={msg}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.4 }}
+            
+            
+            
+            
             className="mt-3 font-display text-xl font-bold text-sky-900 md:text-2xl"
           >
             {msg}
-          </motion.h2>
-        </AnimatePresence>
+          </h2>
+        
         <p className="mt-2 max-w-xs text-sm text-sky-600">{subtitle}</p>
       </div>
     </div>

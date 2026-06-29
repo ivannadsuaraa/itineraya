@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { ArrowRight, Loader2, Check } from "lucide-react";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
@@ -96,33 +96,33 @@ function WelcomePage() {
           ))}
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+        <div
+          
+          
           className="w-full rounded-3xl bg-white/85 p-8 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60"
         >
-          <AnimatePresence mode="wait">
+          
             {step === 0 && (
-              <motion.div
+              <div
                 key="age"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25 }}
+                
+                
+                
+                
               >
                 <p className="text-sm font-semibold text-sky-600">{t("welcome.step", { n: 1 })}</p>
                 <h1 className="font-display text-2xl font-bold text-sky-900">{t("welcome.ageTitle")}</h1>
                 <p className="mt-1 text-sm text-sky-600">{t("welcome.ageSubtitle")}</p>
 
                 <div className="mt-10 text-center">
-                  <motion.div
+                  <div
                     key={ageLabel}
-                    initial={{ scale: 0.9, opacity: 0.6 }}
-                    animate={{ scale: 1, opacity: 1 }}
+                    
+                    
                     className="font-display text-7xl font-bold text-[#1E6B9A]"
                   >
                     {ageLabel}
-                  </motion.div>
+                  </div>
                   <div className="mt-1 text-xs font-semibold uppercase tracking-wider text-sky-500">
                     {t("welcome.years")}
                   </div>
@@ -150,16 +150,16 @@ function WelcomePage() {
                 >
                   {t("welcome.next")} <ArrowRight className="h-4 w-4" />
                 </button>
-              </motion.div>
+              </div>
             )}
 
             {step === 1 && (
-              <motion.div
+              <div
                 key="lang"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25 }}
+                
+                
+                
+                
               >
                 <p className="text-sm font-semibold text-sky-600">{t("welcome.step", { n: 2 })}</p>
                 <h1 className="font-display text-2xl font-bold text-sky-900">{t("welcome.langTitle")}</h1>
@@ -205,10 +205,10 @@ function WelcomePage() {
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("welcome.start")}
                   </button>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
-        </motion.div>
+          
+        </div>
       </div>
 
       <style>{`

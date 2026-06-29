@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+
 import { ArrowLeft, ArrowRight, MapPin, Compass, Lock, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
@@ -89,17 +89,17 @@ function NewTripPage() {
           <BrandLogo size="md" />
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+        <div
+          
+          
+          
           className="text-center"
         >
           <h1 className="font-display text-3xl font-bold text-sky-900 md:text-4xl">
             {t("newTrip.title")}
           </h1>
           <p className="mt-2 text-sm text-sky-600 md:text-base">{t("newTrip.subtitle")}</p>
-        </motion.div>
+        </div>
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
           <ModeCard
@@ -180,13 +180,13 @@ function ModeCard({
   delay: number;
 }) {
   return (
-    <motion.button
+    <button
       type="button"
       onClick={onClick}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay }}
-      whileHover={{ y: -4 }}
+      
+      
+      
+      
       className={
         "group relative flex flex-col items-start gap-4 overflow-hidden rounded-3xl p-6 text-left shadow-xl ring-1 transition-all sm:p-8 " +
         (highlight
@@ -224,6 +224,6 @@ function ModeCard({
       {highlight && (
         <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
       )}
-    </motion.button>
+    </button>
   );
 }
