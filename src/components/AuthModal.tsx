@@ -1,24 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { X, Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
+import { X, Loader2, Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+
+export type AuthModalMode = "signup" | "login" | "forgot";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   title?: string;
   description?: string;
-  /** Where to send the user after successful auth. */
+  /** Initial tab to show when the modal opens. Defaults to "signup". */
+  initialMode?: AuthModalMode;
+  /** Where to send the user after successful auth (default: /dashboard). */
+  returnTo?: string;
+  /** Called instead of the default returnTo navigation, when provided. */
   onAuthed?: () => void;
 };
 
-export function AuthModal({ open, onClose, title, description, onAuthed }: Props) {
+export function AuthModal({ open, onClose, title, description, initialMode, returnTo, onAuthed }: Props) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<"signup" | "login" | "forgot">("signup");
+  const [mode, setMode] = useState<AuthModalMode>(initialMode ?? "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
@@ -26,11 +34,35 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
   const [resending, setResending] = useState(false);
   const [lastResendAt, setLastResendAt] = useState(0);
 
+  // Reset to a clean slate every time the modal is (re)opened.
+  useEffect(() => {
+    if (!open) return;
+    setMode(initialMode ?? "signup");
+    setEmail("");
+    setPassword("");
+    setFullName("");
+    setShowPassword(false);
+    setSignupSent(false);
+    setForgotSent(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   if (!open) return null;
 
   const resetPanels = () => {
     setSignupSent(false);
     setForgotSent(false);
+  };
+
+  const goToReturnTo = () => {
+    onClose();
+    if (onAuthed) {
+      onAuthed();
+      return;
+    }
+    // Full reload so the _authenticated layout's beforeLoad guard re-runs
+    // against the freshly-established session.
+    window.location.assign(returnTo ?? "/dashboard");
   };
 
   const mapAuthError = (raw: string): string => {
@@ -70,7 +102,10 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/email-confirmed` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/email-confirmed`,
+            data: { full_name: fullName },
+          },
         });
         if (error) throw error;
         if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
@@ -82,7 +117,10 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        if (data.user) onAuthed?.();
+        if (data.user) {
+          toast.success(t("auth.welcomeBack"));
+          goToReturnTo();
+        }
       }
     } catch (err) {
       toast.error(err instanceof Error ? mapAuthError(err.message) : t("auth.somethingWrong"));
@@ -108,7 +146,7 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
         return;
       }
       toast.success(t("auth.emailVerified"));
-      if (data.user) onAuthed?.();
+      if (data.user) goToReturnTo();
     } finally {
       setVerifyChecking(false);
     }
@@ -145,7 +183,7 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo: `${window.location.origin}${returnTo ?? "/dashboard"}` },
       });
       if (error) {
         toast.error(error.message);
@@ -164,7 +202,7 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl"
+        className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl"
       >
         <button
           type="button"
@@ -287,6 +325,19 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
               </div>
 
               <form onSubmit={handleEmail} className="space-y-3">
+                {mode === "signup" && (
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder={t("auth.fullNamePh")}
+                      className="w-full rounded-2xl border border-sky-200 bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                    />
+                  </div>
+                )}
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
@@ -301,14 +352,22 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t("authModal.password", { defaultValue: "Password" })}
-                    className="w-full rounded-2xl border border-sky-200 bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                    className="w-full rounded-2xl border border-sky-200 bg-white py-3 pl-10 pr-9 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
                 {mode === "login" && (
                   <div className="flex justify-end">
@@ -319,6 +378,21 @@ export function AuthModal({ open, onClose, title, description, onAuthed }: Props
                     >
                       {t("auth.forgot")}
                     </button>
+                  </div>
+                )}
+                {mode === "signup" && (
+                  <div className="space-y-1 px-1">
+                    {[
+                      { label: t("auth.req6"), met: password.length >= 6 },
+                      { label: t("auth.reqUpper"), met: /[A-Z]/.test(password) },
+                      { label: t("auth.reqDigit"), met: /[0-9]/.test(password) },
+                      { label: t("auth.reqSymbol"), met: /[^A-Za-z0-9]/.test(password) },
+                    ].map((req) => (
+                      <div key={req.label} className="flex items-center gap-2 text-xs">
+                        <div className={`h-1.5 w-1.5 rounded-full ${req.met ? "bg-green-500" : "bg-red-500"}`} />
+                        <span className={req.met ? "text-green-600" : "text-red-500"}>{req.label}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
                 <button

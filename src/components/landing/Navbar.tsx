@@ -6,9 +6,11 @@ import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 
 export function Navbar() {
   const { t } = useTranslation();
+  const { openAuthModal } = useAuthModal();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -67,22 +69,22 @@ export function Navbar() {
               </Link>
             ) : (
               <>
-                <Link
-                  to="/auth"
-                  search={{ mode: "login" }}
+                <button
+                  type="button"
+                  onClick={() => openAuthModal({ mode: "login" })}
                   className="text-sm font-semibold text-sky-700 transition-colors hover:text-sky-900"
                   suppressHydrationWarning
                 >
                   {t("nav.login")}
-                </Link>
-                <Link
-                  to="/auth"
-                  search={{ mode: "signup" }}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAuthModal({ mode: "signup" })}
                   className="rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30 hover:scale-[1.02]"
                   suppressHydrationWarning
                 >
                   {t("nav.startFree")}
-                </Link>
+                </button>
               </>
             )}
           </div>
@@ -131,22 +133,20 @@ export function Navbar() {
                 </Link>
               ) : (
                 <>
-                  <Link
-                    to="/auth"
-                    search={{ mode: "login" }}
-                    onClick={() => setOpen(false)}
+                  <button
+                    type="button"
+                    onClick={() => { setOpen(false); openAuthModal({ mode: "login" }); }}
                     className="rounded-xl px-4 py-3 text-center text-sm font-semibold text-sky-700 hover:bg-sky-50"
                   >
                     {t("nav.login")}
-                  </Link>
-                  <Link
-                    to="/auth"
-                    search={{ mode: "signup" }}
-                    onClick={() => setOpen(false)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setOpen(false); openAuthModal({ mode: "signup" }); }}
                     className="mt-1 rounded-full bg-[#1E6B9A] px-5 py-3 text-center text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30"
                   >
                     {t("nav.startFree")}
-                  </Link>
+                  </button>
                 </>
               )}
             </div>

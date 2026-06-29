@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, LogIn } from "lucide-react";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 
 export const Route = createFileRoute("/email-confirmed")({
   ssr: false,
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/email-confirmed")({
 
 function EmailConfirmedPage() {
   const { t } = useTranslation();
+  const { openAuthModal } = useAuthModal();
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
@@ -63,14 +65,14 @@ function EmailConfirmedPage() {
           
           className="mt-8"
         >
-          <Link
-            to="/auth"
-            search={{ mode: "login" }}
+          <button
+            type="button"
+            onClick={() => openAuthModal({ mode: "login" })}
             className="inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/30 transition hover:bg-[#185a83]"
           >
             <LogIn className="h-5 w-5" />
             {t("emailConfirmed.cta")}
-          </Link>
+          </button>
         </div>
       </div>
     </div>

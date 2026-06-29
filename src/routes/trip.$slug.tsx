@@ -6,6 +6,7 @@ import { getPublicTrip, type PublicTripDay } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaywallGate } from "@/components/trip/PaywallGate";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useAuthStatus } from "@/lib/use-auth-status";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import ItineraryView from "@/components/trip/ItineraryView"; // Import ItineraryView here
@@ -78,6 +79,7 @@ export const Route = createFileRoute("/trip/$slug")({
 function PublicTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openAuthModal } = useAuthModal();
   const trip = Route.useLoaderData();
   const { authed, checked } = useAuthStatus();
   const [saving, setSaving] = useState(false);
@@ -111,7 +113,7 @@ function PublicTripPage() {
   const requireAuth = (e?: MouseEvent) => {
     if (!checked || authed) return true;
     e?.preventDefault();
-    navigate({ to: "/auth", search: { mode: "login" } });
+    openAuthModal({ mode: "login" });
     return false;
   };
 
@@ -160,7 +162,7 @@ function PublicTripPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
         toast.info(t("publicTrip.saveLoginPrompt"));
-        navigate({ to: "/auth", search: { mode: "login" } });
+        openAuthModal({ mode: "login" });
         return;
       }
       const { error } = await supabase
@@ -219,14 +221,14 @@ function PublicTripPage() {
           <Link to="/" className="flex items-center gap-2">
             <img src={logoFull.url} alt="Itineraya" className="h-7 w-auto" />
           </Link>
-          <Link
-            to="/auth"
-            search={{ mode: "login" }}
+          <button
+            type="button"
+            onClick={() => openAuthModal({ mode: "login" })}
             className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-4 py-2 text-xs font-semibold text-white shadow hover:bg-[#15577E] sm:text-sm"
           >
             {t("publicTrip.ctaShort")}
             <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -365,14 +367,14 @@ function PublicTripPage() {
           <Sparkles className="mx-auto h-10 w-10 opacity-90" />
           <h2 className="mt-4 font-display text-3xl font-bold md:text-4xl">{t("publicTrip.ctaTitle")}</h2>
           <p className="mx-auto mt-3 max-w-xl text-white/90">{t("publicTrip.ctaSubtitle")}</p>
-          <Link
-            to="/auth"
-            search={{ mode: "login" }}
+          <button
+            type="button"
+            onClick={() => openAuthModal({ mode: "login" })}
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 font-bold text-[#1E6B9A] shadow-lg transition hover:bg-sky-50"
           >
             {t("publicTrip.cta")}
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </button>
           <p className="mt-3 text-xs text-white/70">{t("publicTrip.ctaFooter")}</p>
         </div>
 

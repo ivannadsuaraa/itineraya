@@ -1,7 +1,7 @@
-import { Link } from "@tanstack/react-router";
 import { Lock, Sparkles, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ReactNode } from "react";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 
 /**
  * Wraps the lower half of a shared itinerary with a progressive blur and a
@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
  */
 export function PaywallGate({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
+  const { openAuthModal } = useAuthModal();
   return (
     <div className="relative">
       {/* Blurred, non-interactive preview */}
@@ -37,15 +38,15 @@ export function PaywallGate({ children }: { children: ReactNode }) {
             {t("paywall.title")}
           </h3>
           <p className="mt-2 text-sm text-sky-700">{t("paywall.subtitle")}</p>
-          <Link
-            to="/auth"
-            search={{ mode: "login" }}
+          <button
+            type="button"
+            onClick={() => openAuthModal({ mode: "login" })}
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl"
           >
             <Sparkles className="h-4 w-4" />
             {t("paywall.cta")}
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </button>
           <p className="mt-3 text-xs text-sky-500">{t("paywall.footer")}</p>
         </div>
       </div>

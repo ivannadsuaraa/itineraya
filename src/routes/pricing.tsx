@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Check, ArrowLeft, Sparkles, BadgeCheck, X, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { isPaymentsConfigured } from "@/lib/stripe";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/pricing")({
@@ -96,7 +97,7 @@ function PricingPage() {
       priceId: "explorador_yearly",
     },
   ];
-  const navigate = useNavigate();
+  const { openAuthModal } = useAuthModal();
   const { openCheckout, closeCheckout, checkoutElement, isOpen } = useStripeCheckout();
   const { subscription, isActive, priceId: currentPriceId, loading } = useSubscription();
   const [authedUserId, setAuthedUserId] = useState<string | null>(null);
@@ -114,14 +115,11 @@ function PricingPage() {
 
   const handleSelect = (plan: Plan) => {
     if (!plan.priceId) {
-      navigate({ to: "/auth", search: { mode: "signup" } });
+      openAuthModal({ mode: "signup" });
       return;
     }
     if (!authedUserId) {
-      navigate({
-        to: "/auth",
-        search: { mode: "signup", redirect: `/pricing?plan=${plan.id}` } as never,
-      });
+      openAuthModal({ mode: "signup", returnTo: `/pricing?plan=${plan.id}` });
       return;
     }
     if (!isPaymentsConfigured()) {

@@ -74,6 +74,10 @@ function InvitePage() {
         onClose={() => setAuthOpen(false)}
         title="Sign in to join this trip"
         description="Create an account or log in to start collaborating."
+        returnTo={`/invite/${token}`}
+        // This page already watches onAuthStateChange and accepts the invite
+        // itself once a session exists — the modal just needs to close.
+        onAuthed={() => setAuthOpen(false)}
       />
     </div>
   );

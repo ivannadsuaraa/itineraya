@@ -125,6 +125,7 @@ export function PopularDestinationsSection() {
         onClose={() => setPending(null)}
         title={pending ? t("popular.modalTitle", { dest: pending.name }) : undefined}
         description={pending ? t("popular.modalDesc") : undefined}
+        returnTo={pending ? `/onboarding?prefill=${encodePrefill(`${pending.name}, ${pending.country}`)}` : undefined}
         onAuthed={onAuthed}
       />
 

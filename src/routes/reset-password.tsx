@@ -1,9 +1,10 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Lock, Loader2, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 
 export const Route = createFileRoute("/reset-password")({
   ssr: false,
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPasswordPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openAuthModal } = useAuthModal();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
@@ -43,7 +45,9 @@ function ResetPasswordPage() {
       if (error) throw error;
       setDone(true);
       toast.success(t("auth.resetSuccess"));
-      setTimeout(() => navigate({ to: "/auth", search: { mode: "login" } as never }), 1500);
+      setTimeout(() => {
+        navigate({ to: "/" }).then(() => openAuthModal({ mode: "login" }));
+      }, 1500);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error";
       setError(msg);
@@ -64,9 +68,13 @@ function ResetPasswordPage() {
         ) : !ready ? (
           <div className="text-center py-6 text-sm text-sky-700">
             <p>{t("auth.resetInvalidLink")}</p>
-            <Link to="/auth" search={{ mode: "forgot" } as never} className="mt-4 inline-block text-sm font-semibold text-[#1E6B9A] hover:underline">
+            <button
+              type="button"
+              onClick={() => openAuthModal({ mode: "forgot" })}
+              className="mt-4 inline-block text-sm font-semibold text-[#1E6B9A] hover:underline"
+            >
               {t("auth.forgot")}
-            </Link>
+            </button>
           </div>
         ) : (
           <>

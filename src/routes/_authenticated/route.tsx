@@ -6,9 +6,14 @@ import logoMark from "@/assets/itineraya-mark.svg";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth", search: { mode: "login" } });
+    if (error || !data.user) {
+      throw redirect({
+        to: "/",
+        search: { authModal: "login", return_to: location.pathname } as never,
+      });
+    }
     return { user: data.user };
   },
   component: AuthenticatedLayout,

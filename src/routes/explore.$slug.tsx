@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthStatus } from "@/lib/use-auth-status";
 import { PaywallGate } from "@/components/trip/PaywallGate";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 const TripMap = lazy(() =>
@@ -96,6 +97,7 @@ function FallbackPage({ title, message }: { title: string; message: string }) {
 function DiscoverableTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { openAuthModal } = useAuthModal();
   const trip = Route.useLoaderData();
   const { authed, checked } = useAuthStatus();
   const [saving, setSaving] = useState(false);
@@ -126,7 +128,7 @@ function DiscoverableTripPage() {
   const requireAuth = (e?: MouseEvent) => {
     if (!checked || authed) return true;
     e?.preventDefault();
-    navigate({ to: "/auth", search: { mode: "login" } });
+    openAuthModal({ mode: "login" });
     return false;
   };
 
@@ -152,7 +154,7 @@ function DiscoverableTripPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) {
         toast.info(t("publicTrip.saveLoginPrompt"));
-        navigate({ to: "/auth", search: { mode: "login" } });
+        openAuthModal({ mode: "login" });
         return;
       }
       const { error } = await supabase
@@ -388,14 +390,14 @@ function DiscoverableTripPage() {
           <p className="mx-auto mt-3 max-w-xl text-white/90">
             {t("publicTrip.ctaSubtitle")}
           </p>
-          <Link
-            to="/auth"
-            search={{ mode: "login" }}
+          <button
+            type="button"
+            onClick={() => openAuthModal({ mode: "login" })}
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 font-bold text-[#1E6B9A] shadow-lg transition hover:bg-sky-50"
           >
             {t("publicTrip.cta")}
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </button>
           <p className="mt-3 text-xs text-white/70">{t("publicTrip.ctaFooter")}</p>
         </div>
 

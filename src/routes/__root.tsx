@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { CookieBanner } from "@/components/CookieBanner";
+import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
+import { AuthModalRouteSync } from "@/components/auth/AuthModalRouteSync";
 import "@/i18n";
 
 function NotFoundComponent() {
@@ -140,9 +142,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <CookieBanner />
+        <AuthModalProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+          <AuthModalRouteSync />
+          <CookieBanner />
+        </AuthModalProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
