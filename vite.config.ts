@@ -15,7 +15,14 @@ export default defineConfig(async ({ command }) => {
 
   if (command === "build") {
     const { nitro } = await import("nitro/vite");
-    plugins.push(nitro({ preset: "cloudflare-module" }));
+    // Let Nitro auto-detect the platform (Vercel, Netlify, etc.) from its own
+    // env vars; only force Cloudflare Workers when nothing else is detected.
+    const preset = process.env.VERCEL
+      ? "vercel"
+      : process.env.NETLIFY
+        ? "netlify"
+        : "cloudflare-module";
+    plugins.push(nitro({ preset }));
   }
 
   plugins.push(viteReact());
