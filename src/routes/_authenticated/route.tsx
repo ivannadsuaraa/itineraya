@@ -1,8 +1,12 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileBottomBar } from "@/components/DashboardSidebar";
 import logoMark from "@/assets/itineraya-mark.svg";
+import { consumePendingAuthToast } from "@/lib/post-auth-toast";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -26,10 +30,26 @@ const HIDE_BACK_PATHS = new Set<string>(["/dashboard", "/explore", "/new-trip", 
 
 function AuthenticatedLayout() {
   const router = useRouter();
+  const { t } = useTranslation();
+  const { user } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   const hideChrome = HIDE_CHROME_PREFIXES.some((p) => pathname.startsWith(p));
   const hideBack = hideChrome || HIDE_BACK_PATHS.has(pathname);
+
+  // Fired once after a fresh login/signup lands here (set by AuthModal right
+  // before its redirect, since a toast can't survive a full page reload).
+  useEffect(() => {
+    const kind = consumePendingAuthToast();
+    if (!kind) return;
+    let resolved = kind;
+    if (kind === "loggedIn" && user.created_at && user.last_sign_in_at) {
+      const justCreated = Math.abs(new Date(user.last_sign_in_at).getTime() - new Date(user.created_at).getTime()) < 10_000;
+      if (justCreated) resolved = "accountCreated";
+    }
+    toast.success(resolved === "accountCreated" ? t("auth.accountReadyToast") : t("auth.loggedInToast"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

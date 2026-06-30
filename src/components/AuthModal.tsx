@@ -4,6 +4,7 @@ import { X, Loader2, Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-rea
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { setPendingAuthToast } from "@/lib/post-auth-toast";
 
 export type AuthModalMode = "signup" | "login" | "forgot";
 
@@ -54,7 +55,8 @@ export function AuthModal({ open, onClose, title, description, initialMode, retu
     setForgotSent(false);
   };
 
-  const goToReturnTo = () => {
+  const goToReturnTo = (toastKind: "loggedIn" | "accountCreated") => {
+    setPendingAuthToast(toastKind);
     onClose();
     if (onAuthed) {
       onAuthed();
@@ -117,10 +119,7 @@ export function AuthModal({ open, onClose, title, description, initialMode, retu
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        if (data.user) {
-          toast.success(t("auth.welcomeBack"));
-          goToReturnTo();
-        }
+        if (data.user) goToReturnTo("loggedIn");
       }
     } catch (err) {
       toast.error(err instanceof Error ? mapAuthError(err.message) : t("auth.somethingWrong"));
@@ -145,8 +144,7 @@ export function AuthModal({ open, onClose, title, description, initialMode, retu
         }
         return;
       }
-      toast.success(t("auth.emailVerified"));
-      if (data.user) goToReturnTo();
+      if (data.user) goToReturnTo("accountCreated");
     } finally {
       setVerifyChecking(false);
     }
@@ -181,6 +179,10 @@ export function AuthModal({ open, onClose, title, description, initialMode, retu
   const handleGoogle = async () => {
     setBusy(true);
     try {
+      // Google hasn't responded yet, so we don't know if this is a brand
+      // new account or a returning user. The authenticated layout refines
+      // this to "accountCreated" if the resulting user was just created.
+      setPendingAuthToast("loggedIn");
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: `${window.location.origin}${returnTo ?? "/dashboard"}` },

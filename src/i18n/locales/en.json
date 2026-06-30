@@ -122,6 +122,8 @@
     "accountCreated": "Account created! Check your email to confirm.",
     "welcomeBack": "Welcome back!",
     "emailVerified": "Email verified!",
+    "loggedInToast": "Signed in!",
+    "accountReadyToast": "Account created!",
     "notVerifiedYet": "We haven't detected the verification yet. Check your inbox.",
     "invalidLogin": "Wrong email or password",
     "googleFail": "Couldn't sign in with Google",
