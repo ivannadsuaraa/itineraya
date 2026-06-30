@@ -152,9 +152,19 @@ function OnboardingPage() {
         .select("id")
         .single();
 
-      if (error || !trip) throw error ?? new Error(t("onboarding.saveFail"));
+      if (error) {
+        // PostgrestError is not an Error instance — log the full object so the
+        // real DB error (message/hint/code) appears in Vercel logs.
+        console.error("[onboarding] trips INSERT failed", error);
+        const msg = (error as { message?: string }).message ?? t("onboarding.saveFail");
+        toast.error(msg);
+        setLoading(false);
+        return;
+      }
+      if (!trip) throw new Error(t("onboarding.saveFail"));
       navigate({ to: "/trip/$tripId", params: { tripId: trip.id } });
     } catch (error) {
+      console.error("[onboarding] unexpected error", error);
       toast.error(error instanceof Error ? error.message : t("onboarding.saveFail"));
       setLoading(false);
     }
