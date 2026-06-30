@@ -15,6 +15,7 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
 import { AuthModalRouteSync } from "@/components/auth/AuthModalRouteSync";
+import { Toaster } from "@/components/ui/sonner";
 import "@/i18n";
 
 function NotFoundComponent() {
@@ -147,6 +148,7 @@ function RootComponent() {
           <Outlet />
           <AuthModalRouteSync />
           <CookieBanner />
+          <Toaster position="top-center" richColors />
         </AuthModalProvider>
       </LanguageProvider>
     </QueryClientProvider>
