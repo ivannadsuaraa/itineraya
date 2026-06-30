@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
+import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 import { AuthModalRouteSync } from "@/components/auth/AuthModalRouteSync";
 import { Toaster } from "@/components/ui/sonner";
 import "@/i18n";
@@ -142,15 +143,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
-        <AuthModalProvider>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <AuthModalRouteSync />
-          <CookieBanner />
-          <Toaster position="top-center" richColors />
-        </AuthModalProvider>
-      </LanguageProvider>
+      <AuthSessionProvider>
+        <LanguageProvider>
+          <AuthModalProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <AuthModalRouteSync />
+            <CookieBanner />
+            <Toaster position="top-center" richColors />
+          </AuthModalProvider>
+        </LanguageProvider>
+      </AuthSessionProvider>
     </QueryClientProvider>
   );
 }

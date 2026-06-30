@@ -1,16 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Check, ArrowLeft, Sparkles, BadgeCheck, X, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BrandLogo } from "@/components/BrandLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useSubscription } from "@/hooks/useSubscription";
-import { supabase } from "@/integrations/supabase/client";
 import { isPaymentsConfigured } from "@/lib/stripe";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/pricing")({
@@ -100,12 +100,9 @@ function PricingPage() {
   const { openAuthModal } = useAuthModal();
   const { openCheckout, closeCheckout, checkoutElement, isOpen } = useStripeCheckout();
   const { subscription, isActive, priceId: currentPriceId, loading } = useSubscription();
-  const [authedUserId, setAuthedUserId] = useState<string | null>(null);
+  const { user } = useAuthSession();
+  const authedUserId = user?.id ?? null;
   const [starting, setStarting] = useState<string | null>(null);
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setAuthedUserId(data.user?.id ?? null));
-  }, []);
 
   const planActiveFor = (plan: Plan): boolean => {
     if (!isActive) return plan.id === "free" && !!authedUserId;

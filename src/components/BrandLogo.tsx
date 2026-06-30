@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import logoMark from "@/assets/itineraya-mark.png.asset.json";
 
@@ -25,17 +24,9 @@ export function BrandLogo({
   className?: string;
   linkTo?: string;
 }) {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const { user } = useAuthSession();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setIsLoggedIn(!!session);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const to = linkTo ?? (isLoggedIn ? "/dashboard" : "/");
+  const to = linkTo ?? (user ? "/dashboard" : "/");
   const src = variant === "mark" ? logoMark.url : logoFull.url;
 
   return (

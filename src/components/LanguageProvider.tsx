@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import i18n, { normalizeLang, type AppLang } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 
 const STORAGE_KEY = "itineraya:lang";
 
@@ -29,43 +30,39 @@ function applyLang(lang: AppLang) {
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    // Apply locally cached language immediately.
-    applyLang(readInitialLang());
+  const { user, session, loading } = useAuthSession();
+  const userId = user?.id ?? null;
+  const accessToken = session?.access_token ?? null;
 
-    // Then try to sync from the authenticated user's profile.
+  // Apply locally cached language immediately, before auth resolves.
+  useEffect(() => {
+    applyLang(readInitialLang());
+  }, []);
+
+  // Then sync from the authenticated user's profile once auth is known, and
+  // again whenever it changes (login/logout). Reads `userId`/`accessToken`
+  // off the shared AuthSessionProvider listener instead of running its own
+  // getUser()/onAuthStateChange — see AuthSessionProvider for why concurrent
+  // auth calls from multiple components can deadlock the client. The token is
+  // passed explicitly so this query doesn't fall back to postgrest-js's
+  // internal `getSession()` lookup either.
+  useEffect(() => {
+    if (loading || !userId) return;
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await supabase.auth.getUser();
-        if (!data.user) return;
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("language")
-          .eq("id", data.user.id)
-          .maybeSingle();
-        if (cancelled) return;
-        if (profile?.language) applyLang(normalizeLang(profile.language));
+        let query = supabase.from("profiles").select("language").eq("id", userId);
+        if (accessToken) query = query.setHeader("Authorization", `Bearer ${accessToken}`);
+        const { data: profile } = await query.maybeSingle();
+        if (!cancelled && profile?.language) applyLang(normalizeLang(profile.language));
       } catch {
         /* ignore */
       }
     })();
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session?.user) return;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("language")
-        .eq("id", session.user.id)
-        .maybeSingle();
-      if (profile?.language) applyLang(normalizeLang(profile.language));
-    });
-
     return () => {
       cancelled = true;
-      sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [loading, userId, accessToken]);
 
   return <>{children}</>;
 }
