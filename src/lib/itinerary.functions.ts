@@ -282,6 +282,8 @@ Genera exactamente ${dayCount} días. 5–7 actividades/día (menos en días con
 
     let aiRes: Response | null = null;
 for (let attempt = 1; attempt <= 3; attempt++) {
+  const t0 = Date.now();
+  console.log(`[itinerary] API call start (attempt ${attempt}) — ${dayCount} days, prompt ~${prompt.length} chars`);
   aiRes = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -290,12 +292,13 @@ for (let attempt = 1; attempt <= 3; attempt++) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5",
       max_tokens: 10000,
       system: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
       messages: [{ role: "user", content: prompt }],
     }),
   });
+  console.log(`[itinerary] API call end — ${Date.now() - t0}ms — status ${aiRes.status}`);
   if (aiRes.status !== 429) break;
   if (attempt < 3) await new Promise((r) => setTimeout(r, 5000 * attempt));
 }
