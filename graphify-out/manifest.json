@@ -35,9 +35,9 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "package.json": {
-    "mtime": 1782821808.315379,
-    "ast_hash": "b91d36e184ac082f18504ab042b66455",
-    "semantic_hash": "b91d36e184ac082f18504ab042b66455"
+    "mtime": 1782844620.8716989,
+    "ast_hash": "cfca1d38ff51525573188ad594b59d8e",
+    "semantic_hash": "cfca1d38ff51525573188ad594b59d8e"
   },
   "src/assets/itineraya-logo.jpg.asset.json": {
     "mtime": 1782415187.4132588,
@@ -75,9 +75,9 @@
     "semantic_hash": "9b206efbcacbdac4599e0f2cc858ef44"
   },
   "src/components/BrandLogo.tsx": {
-    "mtime": 1782415187.418182,
-    "ast_hash": "387304fd2e196304c1298ad2ac198c89",
-    "semantic_hash": "387304fd2e196304c1298ad2ac198c89"
+    "mtime": 1782844890.4147727,
+    "ast_hash": "7b384bb087395915577c4075ac925d4f",
+    "semantic_hash": "7b384bb087395915577c4075ac925d4f"
   },
   "src/components/Button.js": {
     "mtime": 1782657423.7557275,
@@ -110,9 +110,9 @@
     "semantic_hash": "bc4f7d8292abe00f8f0a7037cc5174af"
   },
   "src/components/LanguageProvider.tsx": {
-    "mtime": 1782415187.421556,
-    "ast_hash": "7a6d32f01844d74ab4463072b792e457",
-    "semantic_hash": "7a6d32f01844d74ab4463072b792e457"
+    "mtime": 1782844881.3745189,
+    "ast_hash": "80587e6e6550384a3e679011debaf647",
+    "semantic_hash": "80587e6e6550384a3e679011debaf647"
   },
   "src/components/LanguageSwitcher.tsx": {
     "mtime": 1782415187.4220846,
@@ -475,9 +475,9 @@
     "semantic_hash": "3526e50d8c1e4047bd939b5d38c030ad"
   },
   "src/hooks/useSubscription.ts": {
-    "mtime": 1782415187.4635744,
-    "ast_hash": "c2eec8072106eabe94fd45bc2724eb91",
-    "semantic_hash": "c2eec8072106eabe94fd45bc2724eb91"
+    "mtime": 1782844660.89413,
+    "ast_hash": "cb6979b7e0c6721cba24c6a4f2a0587e",
+    "semantic_hash": "cb6979b7e0c6721cba24c6a4f2a0587e"
   },
   "src/i18n/index.ts": {
     "mtime": 1782415187.464731,
@@ -615,9 +615,9 @@
     "semantic_hash": "b49ff1965eef0c8a30e88ae6d2b54fb9"
   },
   "src/lib/payments.functions.ts": {
-    "mtime": 1782415187.4864724,
-    "ast_hash": "c5be6f13ee5fa389e15910a1a81f4dcd",
-    "semantic_hash": "c5be6f13ee5fa389e15910a1a81f4dcd"
+    "mtime": 1782842750.4002197,
+    "ast_hash": "b93b46875c7c76e58761f7ab92f5960b",
+    "semantic_hash": "b93b46875c7c76e58761f7ab92f5960b"
   },
   "src/lib/post-auth-toast.ts": {
     "mtime": 1782812528.8354166,
@@ -635,9 +635,9 @@
     "semantic_hash": "c9911aa0e81a46445f4e0f6ff68013b5"
   },
   "src/lib/stripe.server.ts": {
-    "mtime": 1782821717.7579558,
-    "ast_hash": "f8d169cedaab47e4ab603dc34b097cd6",
-    "semantic_hash": "f8d169cedaab47e4ab603dc34b097cd6"
+    "mtime": 1782842760.837677,
+    "ast_hash": "eaffad2c2e60df30237511d6a6511f19",
+    "semantic_hash": "eaffad2c2e60df30237511d6a6511f19"
   },
   "src/lib/stripe.ts": {
     "mtime": 1782415187.488784,
@@ -670,9 +670,9 @@
     "semantic_hash": "d4cd8cc0eee8a96fa5346f9663d9124d"
   },
   "src/routes/__root.tsx": {
-    "mtime": 1782821122.0106616,
-    "ast_hash": "33832ecb8fa05600709c1dec2b253dd6",
-    "semantic_hash": "33832ecb8fa05600709c1dec2b253dd6"
+    "mtime": 1782844852.365179,
+    "ast_hash": "df336c92e9f22f8caff0929d37ff3889",
+    "semantic_hash": "df336c92e9f22f8caff0929d37ff3889"
   },
   "src/routes/_authenticated/assistant.tsx": {
     "mtime": 1782767659.1544542,
@@ -795,9 +795,9 @@
     "semantic_hash": "ea3739fb43ea12cae33c080c39ef6de7"
   },
   "src/routes/pricing.tsx": {
-    "mtime": 1782772089.949995,
-    "ast_hash": "479fa10d7e2fc048ccd8a047e4a54430",
-    "semantic_hash": "479fa10d7e2fc048ccd8a047e4a54430"
+    "mtime": 1782844196.901137,
+    "ast_hash": "414e6ffece92d5cd9c1c40df4ba3f9be",
+    "semantic_hash": "414e6ffece92d5cd9c1c40df4ba3f9be"
   },
   "src/routes/privacy.tsx": {
     "mtime": 1782415187.5148869,
@@ -1008,5 +1008,10 @@
     "mtime": 1782415187.4156263,
     "ast_hash": "a126f7b7bad95843f52e581460958ed9",
     "semantic_hash": "a126f7b7bad95843f52e581460958ed9"
+  },
+  "src/components/auth/AuthSessionProvider.tsx": {
+    "mtime": 1782844164.807225,
+    "ast_hash": "746d532784c95b6943ba4af085623f43",
+    "semantic_hash": "746d532784c95b6943ba4af085623f43"
   }
 }
