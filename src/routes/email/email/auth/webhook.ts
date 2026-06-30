@@ -41,7 +41,7 @@ function redactEmail(email: string | null | undefined): string {
   return `${localPart[0]}***@${domain}`
 }
 
-export const Route = createFileRoute('/lovable/email/auth/webhook')({
+export const Route = createFileRoute('/email/email/auth/webhook')({
   server: {
     handlers: {
       POST: async ({ request }) => {
