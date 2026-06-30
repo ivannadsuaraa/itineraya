@@ -146,96 +146,85 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
       : (trip.trip_style ?? "unspecified");
 
     const accommodationBlock = hasHotelCoords
-      ? `ACCOMMODATION (FIXED ANCHOR): The traveler is staying at "${hotelName ?? "their accommodation"}"${hotelAddress ? ` (${hotelAddress})` : ""}, coordinates ${hotelLat!.toFixed(5)}, ${hotelLng!.toFixed(5)}. This is the MANDATORY center of every day. EVERY activity, restaurant and meeting point MUST be within ~3 km (walking + short transit). Each day must START and END at the hotel. NEVER suggest activities in a different city/region. DO NOT recommend any other hotels. Order activities to minimize distance from the hotel.`
+      ? `ALOJAMIENTO (ANCLA FIJA): "${hotelName ?? "alojamiento"}"${hotelAddress ? ` (${hotelAddress})` : ""}, coords ${hotelLat!.toFixed(5)},${hotelLng!.toFixed(5)}. TODAS las actividades deben estar a ≤3 km. Cada día empieza y termina aquí. Sin actividades en otra ciudad ni otros hoteles.`
       : hasAccommodation
-        ? `ACCOMMODATION: The traveler ALREADY HAS a place to stay but did not pin its location. Treat it as a generic base in the city center. DO NOT recommend other hotels. Start/end each day from "your accommodation".`
-        : `ACCOMMODATION: The traveler does NOT yet have a place to stay. You MAY include one short "check-in" or accommodation-area note on day 1; the focus is the itinerary, not hotel listings.`;
+        ? `ALOJAMIENTO: Ya tiene donde alojarse (sin ubicación). Base en el centro. Sin recomendar otros hoteles. Empezar/terminar cada día desde "tu alojamiento".`
+        : `ALOJAMIENTO: Sin confirmar. Puedes incluir "check-in" breve el día 1.`;
 
-    const isCoastalCity = (dest: string): boolean => {
-          const inland = new Set([
-            "madrid", "toledo", "granada", "sevilla", "córdoba", "salamanca", "valladolid",
-            "zaragoza", "pamplona", "burgos", "segovia", "ávila", "mérida", "cáceres",
-            "león", "santiago", "london", "paris", "prague", "vienna", "budapest", "berlin",
-            "munich", "milan", "rome", "florence", "venice", "siena", "verona", "bologna",
-            "turin", "dublin", "edinburgh", "york", "oxford", "cambridge", "bath",
-            "moscow", "kyiv", "warsaw", "krakow", "bucharest", "sofia", "belgrade",
-            "luxembourg", "brussels", "amsterdam", "copenhagen", "stockholm", "oslo",
-            "helsinki", "reykjavik", "innsbruck", "salzburg", "zurich", "geneva",
-            "luxor", "cairo", "jaipur", "agra", "delhi", "kathmandu",
-            "mexico city", "guadalajara", "quito", "bogotá", "cusco", "la paz",
-            "lima", "santiago de chile", "buenos aires", "asunción",
-          ]);
-          return !inland.has(dest.toLowerCase().trim());
-        };
-        const isCoastal = isCoastalCity(trip.destination);
+    const inlandSet = new Set([
+      "madrid","toledo","granada","sevilla","córdoba","salamanca","valladolid","zaragoza",
+      "pamplona","burgos","segovia","ávila","mérida","cáceres","león","santiago",
+      "london","paris","prague","vienna","budapest","berlin","munich","milan","rome",
+      "florence","venice","siena","verona","bologna","turin","dublin","edinburgh",
+      "york","oxford","cambridge","bath","moscow","kyiv","warsaw","krakow","bucharest",
+      "sofia","belgrade","luxembourg","brussels","amsterdam","copenhagen","stockholm",
+      "oslo","helsinki","reykjavik","innsbruck","salzburg","zurich","geneva",
+      "luxor","cairo","jaipur","agra","delhi","kathmandu",
+      "mexico city","guadalajara","quito","bogotá","cusco","la paz","lima",
+      "santiago de chile","buenos aires","asunción",
+    ]);
+    const isCoastal = !inlandSet.has(trip.destination.toLowerCase().trim());
 
-        const prompt = `You are an expert travel planner. Build a personalized, geographically coherent, time-realistic itinerary.
+    const prompt = `Eres un planificador de viajes experto. Genera un itinerario personalizado, geográficamente coherente y realista en tiempos.
 
-LANGUAGE LOCK (ABSOLUTE — HIGHEST PRIORITY)
-Output language: ${langName} (${lang.toUpperCase()}). 100% of user-facing strings (summary, title, subtitle, activity title, place, description, meal labels, transport hints, day themes) MUST be in ${langName}. Zero exceptions.
+IDIOMA (PRIORIDAD MÁXIMA — ABSOLUTA)
+Idioma de salida: ${langName} (${lang.toUpperCase()}). El 100% del texto visible (resumen, títulos, descripciones, comidas, transporte) debe estar en ${langName}. Cero excepciones.
 ${lang === "en"
-  ? `FORBIDDEN Spanish words (NEVER use): Desayuno, Almuerzo, Comida, Merienda, Cena, "a pie", "en metro", "en bus", dirección, Visita, Paseo, Tarde, Mañana, Noche, "y luego". Use ONLY English: Breakfast, Lunch, Dinner, Snack, "on foot", "by metro", "by bus", "towards", Visit, Walk, Afternoon, Morning, Evening, "and then". Transport hints in English: "🚶 8 min walk", "🚇 Metro Line 4 towards Trafalgar, 12 min", "🚌 Bus 24, 15 min", "🚕 Taxi 10 min".`
-  : `FORBIDDEN English words (NEVER use): Breakfast, Lunch, Dinner, Visit, Walk, towards, Morning, Afternoon, Evening. Use ONLY Spanish (peninsular): Desayuno, Comida, Cena, Visita, Paseo, dirección, Mañana, Tarde, Noche.`}
-Proper nouns (real venue/street/neighborhood names) stay in their native form — that is the ONLY allowed non-${langName} text.
-The "place" field MUST be the real venue name in its native language (e.g. "Museo del Prado" not "Prado Museum" in Spanish; "Eiffel Tower" not "Torre Eiffel" in English).
+  ? `PROHIBIDO en inglés usar palabras españolas: Desayuno, Comida, Cena, Visita, Paseo, "a pie", "en metro". Usa SOLO inglés: Breakfast, Lunch, Dinner, Visit, Walk, "on foot", "by metro".`
+  : `PROHIBIDO usar palabras inglesas: Breakfast, Lunch, Dinner, Visit, Walk, Morning, Afternoon. Usa SOLO español peninsular: Desayuno, Comida, Cena, Visita, Paseo, Mañana, Tarde, Noche.`}
+Los nombres propios reales (locales, calles, monumentos) permanecen en su idioma original. El campo "place" DEBE ser el nombre real del local en su idioma nativo.
 
-GEOGRAPHIC COHERENCE — STRICT
-- ${trip.destination} is a ${isCoastal ? "coastal city with beaches — you MAY include beach/coastal activities if seasonally appropriate" : "NON-COASTAL city — ABSOLUTELY NO beach, seaside, or coastal activities. No 'beach day', 'sunbathing', 'swimming at the beach', 'playa', 'spiaggia', 'kayak', 'snorkel', or any water/coastal activity. This is a hard rule."}
-- Each day focuses on EXACTLY ONE neighborhood/zone (or two adjacent). The distance between the furthest activities in a single day MUST be under 3 km unless a metro/train connects them in <15 min.
-- Order activities to form a logical LOOP or LINE: consecutive stops should be ≤1.2 km apart (walkable) or connected by direct transit.
-- NEVER send the traveler to a neighborhood on one side of the city and then back to the other side later the same day. Group meals within the same zone.
-- Meals MUST be within the day's zone — no crossing the city for lunch/dinner.
-- The day's first activity sets the anchor zone; all subsequent activities stay in or adjacent to that zone.
+COHERENCIA GEOGRÁFICA
+- ${trip.destination} es una ciudad ${isCoastal ? "costera — puedes incluir actividades de playa si la época lo permite" : "NO costera — PROHIBIDAS actividades de playa, mar o costa (playa, snorkel, kayak, baño en el mar). Regla estricta."}.
+- Cada día se centra en UN barrio/zona (o dos adyacentes). Máx. 3 km entre el punto más lejano del día salvo que el metro los conecte en <15 min.
+- Ordena las actividades en línea o bucle lógico: paradas consecutivas ≤1.2 km o con transporte directo. Nunca ir al otro extremo de la ciudad y volver el mismo día.
+- Las comidas deben estar dentro de la zona del día.
+${isCoastal ? "PLAYA: solo si el mes lo permite. Nunca como única actividad; combinar con otros puntos cercanos. Evitar horas de máximo calor (12–16h) en verano.\n" : ""}
+HORARIOS Y DURACIÓN
+- Duraciones realistas: museo 1.5–2h, comida 1–1.5h, monumento 45–60 min, café 20–30 min. Deja 15–30 min de margen entre paradas.
+- Respeta horarios de apertura y horarios de comidas locales.
+- Adapta al clima de ${monthName} (frío/lluvia → interior; calor verano → exterior mañana/tarde, interior mediodía).
+- ${arrivalLine}
+- ${departureLine}
 
-${isCoastal ? "BEACH ACTIVITIES — ONLY include beaches if the month and weather are suitable. Never list a beach as the sole activity of a day; pair with nearby sights/restaurants. Avoid peak-heat hours (12:00–16:00) for beach in summer.\n" : ""}TEMPORAL COHERENCE
-- Realistic durations: museum 1.5–2h, lunch 1–1.5h, sight 45–60 min, shopping 45 min, cafe 20–30 min. Leave 15–30 min buffer between stops for transit + photos.
-- Respect opening hours and local meal times. Do NOT schedule activities back-to-back without travel time.
-- Respect arrival/departure constraints and climate for ${monthName} (cold/rainy → indoor; hot summer → outdoor early/late, indoor midday).
+TRANSPORTE (OBLIGATORIO EN CADA ACTIVIDAD)
+Cada actividad (salvo la primera del día) debe empezar su "description" con una línea de transporte: modo + ruta + minutos desde la parada anterior.
+Formato: "🚶 8 min a pie" | "🚇 Metro L4 dirección X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Tren, 18 min" | "⛴️ Ferry, 20 min".
+Walks <1.2 km → siempre a pie. Nunca taxi para <1.2 km.
 
-TRANSPORT — MANDATORY EVERY ACTIVITY
-- EVERY activity after the first of each day MUST begin its "description" with a transport hint on its own line: transport mode + route info + estimated minutes from the PREVIOUS stop.
-- Use REAL local transport networks with line numbers/names (e.g. "🚶 8 min walk", "🚇 Metro L4 dirección Trafalgar, 12 min", "🚌 Bus 24, 15 min", "🚕 Taxi ~10 min", "🚆 Renfe C3, 18 min", "🚋 Tram 2, 8 min", "⛴️ Ferry, 20 min").
-- Walks under 1.2 km: always "🚶 X min walk". Never use taxi for <1.2 km. For longer walks, mention "pleasant walk" or "scenic route" if applicable.
-- Include official transport site in the day subtitle or first activity when relevant (e.g. tmb.cat for Barcelona, ratp.fr for Paris, mta.info for NYC, atac.roma.it for Rome, bvg.de for Berlin, tfl.gov.uk for London).
+EVENTOS LOCALES
+Si hay festivales, ferias o festivos en ${trip.destination} entre ${trip.start_date ?? "las fechas del viaje"} y ${trip.end_date ?? "las fechas del viaje"}, inclúyelos como actividad con nombre real, lugar y hora. URL al evento oficial en el campo "url".
 
-LOCAL EVENTS & FESTIVALS
-- Research and verify real events, festivals, and public holidays overlapping EXACTLY with ${trip.start_date ?? "the trip dates"} through ${trip.end_date ?? "the trip dates"}. Include at least one if the destination has a known event during that window.
-- Consider: Carnaval, Semana Santa, San Juan (23 Jun), Fallas, La Mercè, Oktoberfest, Carnevale di Venezia, Holi, Sakura/Cherry Blossom, Christmas markets, Diwali, Lunar New Year, local patron saint festivals (fiestas patronales), national holidays, music festivals, food festivals, sporting events.
-- When a real event overlaps, INCLUDE it as a dedicated activity on the correct day with the real event name, the actual venue/route, and realistic time. In the "url" field, link to the official event page or official tourism site.
+COMIDAS
+${lang === "es"
+  ? 'Usa nomenclatura peninsular: Desayuno (07:30–10:00), Comida (13:30–16:00, comida principal — nunca "almuerzo"/"lunch"), Cena (20:30–23:00). El título DEBE empezar con la palabra de comida ("Comida en …", "Cena en …").'
+  : 'Use English meal names only: Breakfast / Lunch / Dinner / Snack. Title MUST start with the meal word ("Lunch at …"). Adapt times to local culture.'}
+Cada actividad de categoría "restaurant" debe tener un nombre de local real y específico en "place". Incluye "url" con enlace directo al local (web oficial o Google Maps).
 
-MEALS
-- Culturally-correct meal hours. ${lang === "es" ? 'In Spanish use peninsular naming: Desayuno (07:30–10:00), Comida (13:30–16:00, MAIN midday meal — never "almuerzo"/"lunch"), Cena (20:30–23:00). Titles MUST start with the meal word ("Comida en …", "Cena en …").' : 'Use ONLY English meal names: Breakfast / Lunch / Dinner / Snack. Titles MUST start with the meal word ("Lunch at …", "Dinner at …"). Never write "Desayuno", "Comida", "Cena". Adapt times to local culture (Spain lunch 13:30-16:00, dinner 20:30-23:00; Italy similar; UK lunch 12:30, dinner 19:00; Japan dinner 18:30).'}
-- Every "restaurant" category activity MUST have a real, specific venue name in the "place" field (e.g. "Casa Lucio" not just "tapas restaurant"). Include the "url" field with a direct link to the establishment.
+ENLACES (campo "url")
+Restaurantes y hoteles: enlace directo al local (web propia, Google Maps, TheFork, etc.). Atracciones con web oficial (museos, monumentos): enlace a la página de visita/tickets. Omite el campo si no conoces el enlace exacto.
 
-LINKS (url FIELD) — CRITICAL QUALITY RULE
-- For EVERY activity with category "restaurant" or "hotel", provide a "url" field with a DIRECT link to that SPECIFIC establishment (not the homepage).
-  - Restaurants: direct link to the restaurant's official website, their Google Maps page (https://maps.google.com/?q=Restaurant+Name+City), or a specific page on TheFork/TripAdvisor/OpenTable. NEVER just thecity or generic tourism site.
-  - Hotels: direct link to the hotel's official booking page, or a specific Booking.com/Agoda/etc. listing for THAT hotel.
-  - Events: link to the official event or festival page.
-- For sights/activities with a prominent official website (major museums, landmarks), include a "url" with the official ticket/visit page.
-- If no specific URL is known, omit the field.
-
-OUTPUT — return ONLY valid JSON, no markdown:
+SALIDA — devuelve ÚNICAMENTE JSON válido, sin markdown:
 {
-  "summary": "1-2 inspiring sentences in ${langName}",
+  "summary": "1-2 frases inspiradoras en ${langName}",
   "days": [{
     "day": 1,
-    "title": "Short zone/theme title in ${langName}",
-    "subtitle": "1-sentence recap in ${langName}",
-    "image_query": "2-3 English words",
+    "title": "Título corto zona/tema en ${langName}",
+    "subtitle": "1 frase resumen en ${langName}",
+    "image_query": "2-3 palabras en inglés",
     "activities": [{
       "time": "HH:MM (24h)",
-      "emoji": "single emoji",
-      "title": "3-6 words in ${langName}",
-      "place": "Real venue name — native language",
-      "description": "1-2 lines in ${langName}. If not the first stop, BEGIN with transport hint on its own line.",
+      "emoji": "un único emoji",
+      "title": "3-6 palabras en ${langName}",
+      "place": "Nombre real del local en su idioma",
+      "description": "1-2 líneas en ${langName}. Si no es la primera parada, EMPIEZA con la línea de transporte.",
       "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other",
-      "url": "https://direct-link-to-establishment-or-event (omit if unknown)"
+      "url": "https://enlace-directo (omitir si desconocido)"
     }]
   }]
 }
 
-Generate exactly ${dayCount} days. 5–7 activities/day (fewer on tight arrival/departure days). ${hasAccommodation ? 'NEVER use category "hotel".' : ""} Pure JSON only. Remember: 100% ${langName}. ALL rules above are mandatory — do not skip any.`;
+Genera exactamente ${dayCount} días. 5–7 actividades/día (menos en días con llegada/salida ajustada). ${hasAccommodation ? 'NUNCA uses categoría "hotel".' : ""} Solo JSON puro. Todo en ${langName}.`;
 
 
     let aiRes: Response | null = null;
@@ -249,7 +238,7 @@ for (let attempt = 1; attempt <= 3; attempt++) {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5",
-      max_tokens: 16000,
+      max_tokens: 8000,
       system: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
       messages: [{ role: "user", content: prompt }],
     }),

@@ -35,9 +35,9 @@
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
   "package.json": {
-    "mtime": 1782844620.8716989,
-    "ast_hash": "cfca1d38ff51525573188ad594b59d8e",
-    "semantic_hash": "cfca1d38ff51525573188ad594b59d8e"
+    "mtime": 1782845734.3940377,
+    "ast_hash": "1d8f2cf29c77f0372b5626417ca3ea9f",
+    "semantic_hash": "1d8f2cf29c77f0372b5626417ca3ea9f"
   },
   "src/assets/itineraya-logo.jpg.asset.json": {
     "mtime": 1782415187.4132588,
@@ -519,11 +519,6 @@
     "ast_hash": "8992d29ef250e7b6cd975a87e4da3b2a",
     "semantic_hash": "8992d29ef250e7b6cd975a87e4da3b2a"
   },
-  "src/lib/ai-gateway.server.ts": {
-    "mtime": 1782415187.4729087,
-    "ast_hash": "a1fb02aaf9dfcd8c4ebaf0738a35a10a",
-    "semantic_hash": "a1fb02aaf9dfcd8c4ebaf0738a35a10a"
-  },
   "src/lib/api/example.functions.ts": {
     "mtime": 1782415187.474154,
     "ast_hash": "c4f33b4e14ce87161874de189d9fe0e2",
@@ -584,11 +579,6 @@
     "ast_hash": "c2350fdeb42c043c4552b2481b0ad266",
     "semantic_hash": "c2350fdeb42c043c4552b2481b0ad266"
   },
-  "src/lib/geocode.functions.ts": {
-    "mtime": 1782415187.4821868,
-    "ast_hash": "2ac7636d67352085427313155a109048",
-    "semantic_hash": "2ac7636d67352085427313155a109048"
-  },
   "src/lib/inspire.functions.ts": {
     "mtime": 1782415187.4828212,
     "ast_hash": "521f6d0753d28b06cf77d80fd2010031",
@@ -610,9 +600,9 @@
     "semantic_hash": "e7c2b131f25b879a546132018f39e89d"
   },
   "src/lib/lovable-error-reporting.ts": {
-    "mtime": 1782415187.485939,
-    "ast_hash": "b49ff1965eef0c8a30e88ae6d2b54fb9",
-    "semantic_hash": "b49ff1965eef0c8a30e88ae6d2b54fb9"
+    "mtime": 1782846082.3891242,
+    "ast_hash": "73e0813450eb005d5a4b1f72463168b8",
+    "semantic_hash": "73e0813450eb005d5a4b1f72463168b8"
   },
   "src/lib/payments.functions.ts": {
     "mtime": 1782842750.4002197,
@@ -660,9 +650,9 @@
     "semantic_hash": "e3f848f1b39f863e6164cf58b5a8e752"
   },
   "src/routeTree.gen.ts": {
-    "mtime": 1782767140.8745825,
-    "ast_hash": "3ea4cb476564c9b3897528bf06236ba4",
-    "semantic_hash": "3ea4cb476564c9b3897528bf06236ba4"
+    "mtime": 1782846151.793648,
+    "ast_hash": "6404aacef1cc0d6981175837c3f3b092",
+    "semantic_hash": "6404aacef1cc0d6981175837c3f3b092"
   },
   "src/router.tsx": {
     "mtime": 1782663572.5283208,
@@ -700,9 +690,9 @@
     "semantic_hash": "9b980821d43a9be1cc6eedbb20bacf42"
   },
   "src/routes/_authenticated/onboarding.tsx": {
-    "mtime": 1782767682.7534778,
-    "ast_hash": "24562b7a6865837a90055f48359602a3",
-    "semantic_hash": "24562b7a6865837a90055f48359602a3"
+    "mtime": 1782852155.867526,
+    "ast_hash": "e9f35319adc8207c7d2fbe3a1a808d1c",
+    "semantic_hash": "e9f35319adc8207c7d2fbe3a1a808d1c"
   },
   "src/routes/_authenticated/profile.tsx": {
     "mtime": 1782415187.4983747,
@@ -778,21 +768,6 @@
     "mtime": 1782772280.858626,
     "ast_hash": "b7dfdd7320448ab0f1f7827dbbf965a1",
     "semantic_hash": "b7dfdd7320448ab0f1f7827dbbf965a1"
-  },
-  "src/routes/lovable/email/auth/preview.ts": {
-    "mtime": 1782415187.5110862,
-    "ast_hash": "d8e8f19389dcb3a23d3cfb5291ece0ed",
-    "semantic_hash": "d8e8f19389dcb3a23d3cfb5291ece0ed"
-  },
-  "src/routes/lovable/email/auth/webhook.ts": {
-    "mtime": 1782502481.6911263,
-    "ast_hash": "5267fbf49a2f96425c87ebe9243a9239",
-    "semantic_hash": "5267fbf49a2f96425c87ebe9243a9239"
-  },
-  "src/routes/lovable/email/queue/process.ts": {
-    "mtime": 1782502349.9626548,
-    "ast_hash": "ea3739fb43ea12cae33c080c39ef6de7",
-    "semantic_hash": "ea3739fb43ea12cae33c080c39ef6de7"
   },
   "src/routes/pricing.tsx": {
     "mtime": 1782844196.901137,
@@ -1013,5 +988,20 @@
     "mtime": 1782844164.807225,
     "ast_hash": "746d532784c95b6943ba4af085623f43",
     "semantic_hash": "746d532784c95b6943ba4af085623f43"
+  },
+  "src/routes/email/email/auth/preview.ts": {
+    "mtime": 1782846124.5549905,
+    "ast_hash": "b4e2dd2a335e43e7bd589702e5ead22f",
+    "semantic_hash": "b4e2dd2a335e43e7bd589702e5ead22f"
+  },
+  "src/routes/email/email/auth/webhook.ts": {
+    "mtime": 1782846113.5165966,
+    "ast_hash": "ad9ae0866954a7cfeb0a0b0b70edd784",
+    "semantic_hash": "ad9ae0866954a7cfeb0a0b0b70edd784"
+  },
+  "src/routes/email/email/queue/process.ts": {
+    "mtime": 1782846127.4031043,
+    "ast_hash": "2b3fcef7d6c2913706e0a72bf4ea57de",
+    "semantic_hash": "2b3fcef7d6c2913706e0a72bf4ea57de"
   }
 }
