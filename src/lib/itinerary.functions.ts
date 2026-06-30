@@ -29,6 +29,59 @@ async function unsplashImage(query: string): Promise<string | null> {
   }
 }
 
+function extractJson<T>(raw: string): T {
+  // 1. Strip markdown fences
+  let text = raw.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+
+  // 2. Extract the outermost JSON object (first { … last })
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    text = text.slice(start, end + 1);
+  }
+
+  // 3. Try direct parse
+  try {
+    return JSON.parse(text) as T;
+  } catch {/* continue to repair */}
+
+  // 4. Repair common LLM JSON mistakes
+  const repaired = text
+    // trailing commas before ] or }
+    .replace(/,\s*([}\]])/g, "$1")
+    // unescaped newlines inside string values
+    .replace(/("(?:[^"\\]|\\.)*")|(\n)/g, (m, str) => str ? str : " ")
+    // single-quoted keys/values → double-quoted (careful: only bare single quotes)
+    .replace(/'([^']+)'(\s*:)/g, '"$1"$2')
+    .replace(/:\s*'([^']*)'/g, ': "$1"');
+
+  try {
+    return JSON.parse(repaired) as T;
+  } catch {/* continue to truncation recovery */}
+
+  // 5. Truncation recovery: close any open arrays/objects and retry
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  for (const ch of repaired) {
+    if (escaped) { escaped = false; continue; }
+    if (ch === "\\" && inString) { escaped = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{" || ch === "[") stack.push(ch === "{" ? "}" : "]");
+    else if (ch === "}" || ch === "]") stack.pop();
+  }
+  // Drop incomplete last string or value by trimming to last clean comma/brace
+  let truncated = repaired.replace(/,\s*$/, "").replace(/:\s*"[^"]*$/, ': ""');
+  while (stack.length) truncated += stack.pop();
+
+  try {
+    return JSON.parse(truncated) as T;
+  } catch (e) {
+    throw new Error(`No se pudo parsear el JSON del modelo: ${(e as Error).message}`);
+  }
+}
+
 export const generateItinerary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
@@ -238,7 +291,7 @@ for (let attempt = 1; attempt <= 3; attempt++) {
     },
     body: JSON.stringify({
       model: "claude-haiku-4-5",
-      max_tokens: 8000,
+      max_tokens: 10000,
       system: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
       messages: [{ role: "user", content: prompt }],
     }),
@@ -279,12 +332,7 @@ if (!content) throw new Error("Respuesta vacía del modelo");
       }>;
     };
     let parsed: ParsedItin;
-    try {
-      parsed = JSON.parse(content) as ParsedItin;
-    } catch {
-      const cleaned = content.replace(/```json\n?/gi, "").replace(/```/g, "").trim();
-      parsed = JSON.parse(cleaned) as ParsedItin;
-    }
+    parsed = extractJson<ParsedItin>(content);
 
 
     // Hero image
