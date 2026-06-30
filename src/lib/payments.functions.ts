@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import {
   type StripeEnv,
-  createStripeClient,
+  createNativeStripeClient,
   getStripeErrorMessage,
 } from "@/lib/stripe.server";
 
@@ -10,7 +10,7 @@ type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
 
 async function resolveOrCreateCustomer(
-  stripe: ReturnType<typeof createStripeClient>,
+  stripe: ReturnType<typeof createNativeStripeClient>,
   options: { email?: string; userId?: string },
 ): Promise<string> {
   if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) {
@@ -59,7 +59,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<CheckoutSessionResult> => {
     try {
-      const stripe = createStripeClient(data.environment);
+      const stripe = createNativeStripeClient(data.environment);
       const userId = context.userId;
       const email = (context.claims?.email as string | undefined) ?? undefined;
 
@@ -108,7 +108,7 @@ export const createPortalSession = createServerFn({ method: "POST" })
       return { error: "No tienes una suscripción activa" };
     }
     try {
-      const stripe = createStripeClient(data.environment);
+      const stripe = createNativeStripeClient(data.environment);
       const portal = await stripe.billingPortal.sessions.create({
         customer: sub.stripe_customer_id,
         ...(data.returnUrl && { return_url: data.returnUrl }),
