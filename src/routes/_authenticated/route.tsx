@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileBottomBar } from "@/components/DashboardSidebar";
-import logoMark from "@/assets/itineraya-mark.svg";
 import { consumePendingAuthToast } from "@/lib/post-auth-toast";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -67,7 +66,7 @@ function AuthenticatedLayout() {
             </button>
           )}
           <Link to="/" className="flex items-center gap-1.5" aria-label="Inicio Itineraya">
-            <img src={logoMark} alt="" className="h-7 w-7" draggable={false} />
+            <img src="/itineraya-mark.png" alt="" className="h-7 w-7" draggable={false} />
             <span className="font-display text-base font-bold text-sky-900">Itineraya</span>
           </Link>
           <span className="h-9 w-9" aria-hidden />

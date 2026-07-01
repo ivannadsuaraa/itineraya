@@ -3,7 +3,6 @@ import { Map, Plus, Sparkles, Compass, LogOut, Home, User, PlusCircle, Lock } fr
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import logoMark from "@/assets/itineraya-mark.svg";
 
 export type NavItem = {
   to: string;
@@ -55,7 +54,7 @@ export function DashboardSidebar() {
     <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-slate-200 bg-white/80 backdrop-blur-xl">
       <div className="flex items-center justify-between px-5 py-5">
         <Link to="/" className="flex items-center gap-2" title="Volver al inicio">
-          <img src={logoMark} alt="" className="h-8 w-8" draggable={false} />
+          <img src="/itineraya-mark.png" alt="" className="h-8 w-8" draggable={false} />
           <span className="font-display text-lg font-bold text-sky-900">Itineraya</span>
         </Link>
         <Link
