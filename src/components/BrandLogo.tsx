@@ -1,7 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
-import logoFull from "@/assets/itineraya-logo.png.asset.json";
-import logoMark from "@/assets/itineraya-mark.png.asset.json";
 
 type Size = "sm" | "md" | "lg" | "xl";
 type Variant = "full" | "mark";
@@ -27,7 +25,7 @@ export function BrandLogo({
   const { user } = useAuthSession();
 
   const to = linkTo ?? (user ? "/dashboard" : "/");
-  const src = variant === "mark" ? logoMark.url : logoFull.url;
+  const src = variant === "mark" ? "/itineraya-mark.png" : "/itineraya-logo.png";
 
   return (
     <Link to={to} className={`inline-flex items-center transition hover:opacity-80 ${className}`}>

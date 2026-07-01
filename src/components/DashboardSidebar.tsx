@@ -19,6 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const MOBILE_NAV_ITEMS: NavItem[] = [
+  { to: "/", labelKey: "sidebar.home", icon: Home },
   { to: "/explore", labelKey: "sidebar.feed", icon: Compass },
   { to: "/new-trip", labelKey: "sidebar.createShort", icon: PlusCircle },
   { to: "/dashboard", labelKey: "sidebar.tripsShort", icon: Map },
@@ -126,7 +127,7 @@ export function MobileBottomBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active =

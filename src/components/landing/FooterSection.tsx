@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 export function FooterSection() {
   const { t } = useTranslation();
@@ -9,7 +8,7 @@ export function FooterSection() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8">
           {/* Logo */}
-          <img src={logoFull.url} alt="Itineraya" className="h-10 w-auto select-none" draggable={false} />
+          <img src="/itineraya-logo.png" alt="Itineraya" className="h-10 w-auto select-none" draggable={false} />
 
           {/* Social links */}
           <div className="flex items-center gap-5">

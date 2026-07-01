@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
 import { ArrowRight, Loader2, Check } from "lucide-react";
-import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -82,7 +81,7 @@ function WelcomePage() {
 
       <div className="relative mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-12">
         <Link to="/dashboard" className="mb-8 inline-flex">
-          <img src={logoFull.url} alt="Itineraya" className="h-14 w-auto select-none" draggable={false} />
+          <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-14 w-auto select-none" draggable={false} />
         </Link>
 
         <div className="mb-6 flex w-full max-w-xs items-center gap-2">

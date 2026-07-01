@@ -266,7 +266,8 @@
     "profile": "Profile",
     "feed": "Feed",
     "createShort": "Create",
-    "tripsShort": "Trips"
+    "tripsShort": "Trips",
+    "home": "Home"
   },
   "onboarding": {
     "metaTitle": "Tell us about your trip – Itineraya",

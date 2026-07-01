@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { CheckCircle2, LogIn, Loader2 } from "lucide-react";
-import logoFull from "@/assets/itineraya-logo.png.asset.json";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +51,7 @@ function EmailConfirmedPage() {
 
       <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-12 text-center">
         <Link to="/" className="mb-8 inline-flex">
-          <img src={logoFull.url} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
+          <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
         </Link>
 
         {checking ? (

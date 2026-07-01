@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { useAuthStatus } from "@/lib/use-auth-status";
 import { PaywallGate } from "@/components/trip/PaywallGate";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import logoFull from "@/assets/itineraya-logo.png.asset.json";
 
 const TripMap = lazy(() =>
   import("@/components/trip/TripMap").then((m) => ({ default: m.TripMap })),
@@ -249,7 +248,7 @@ function DiscoverableTripPage() {
       <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/explore" className="flex items-center gap-2">
-            <img src={logoFull.url} alt="Itineraya" className="h-7 w-auto" />
+            <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-7 w-auto" />
           </Link>
           <button
             onClick={handleRemix}
@@ -402,7 +401,7 @@ function DiscoverableTripPage() {
         </div>
 
         <footer className="mt-10 flex items-center justify-center gap-2 pb-6 text-xs text-sky-600">
-          <img src={logoFull.url} alt="Itineraya" className="h-4 w-auto opacity-80" />
+          <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-4 w-auto opacity-80" />
           <span>itineraya.com</span>
         </footer>
       </div>

@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { Check, ArrowLeft, Sparkles, BadgeCheck, X, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
@@ -99,15 +100,27 @@ function PricingPage() {
   ];
   const { openAuthModal } = useAuthModal();
   const { openCheckout, closeCheckout, checkoutElement, isOpen } = useStripeCheckout();
-  const { subscription, isActive, priceId: currentPriceId, loading } = useSubscription();
+  const { subscription, loading } = useSubscription();
   const { user } = useAuthSession();
   const authedUserId = user?.id ?? null;
   const [starting, setStarting] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authedUserId) { setUserPlan(null); return; }
+    supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", authedUserId)
+      .maybeSingle()
+      .then(({ data }) => {
+        setUserPlan((data as { plan?: string } | null)?.plan ?? "free");
+      });
+  }, [authedUserId]);
 
   const planActiveFor = (plan: Plan): boolean => {
-    if (!isActive) return plan.id === "free" && !!authedUserId;
-    if (plan.id === "free") return false;
-    return currentPriceId === plan.priceId;
+    if (!authedUserId || userPlan === null) return false;
+    return plan.id === userPlan;
   };
 
   const handleSelect = (plan: Plan) => {
