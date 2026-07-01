@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { MobileBottomBar } from "@/components/DashboardSidebar";
+import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 import { consumePendingAuthToast } from "@/lib/post-auth-toast";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -52,6 +52,7 @@ function AuthenticatedLayout() {
 
   return (
     <>
+      {!hideChrome && <DesktopTopNav />}
       {!hideChrome && (
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-white/85 px-3 py-2 backdrop-blur-xl">
           {hideBack ? (
@@ -72,7 +73,7 @@ function AuthenticatedLayout() {
           <span className="h-9 w-9" aria-hidden />
         </header>
       )}
-      <div className={hideChrome ? "" : "pb-16 md:pb-0"}>
+      <div className={hideChrome ? "" : "pb-16 md:pb-0 md:pt-14"}>
         <Outlet />
       </div>
       {!hideChrome && <MobileBottomBar />}

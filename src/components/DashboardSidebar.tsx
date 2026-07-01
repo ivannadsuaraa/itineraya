@@ -1,7 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Plus, Sparkles, Compass, LogOut, Home, User, PlusCircle, Lock } from "lucide-react";
+import { Map, Home, User, PlusCircle, Compass, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export type NavItem = {
@@ -9,13 +8,6 @@ export type NavItem = {
   labelKey: string;
   icon: React.ComponentType<{ className?: string }>;
 };
-
-export const NAV_ITEMS: NavItem[] = [
-  { to: "/dashboard", labelKey: "sidebar.trips", icon: Map },
-  { to: "/new-trip", labelKey: "sidebar.create", icon: Plus },
-  { to: "/assistant", labelKey: "sidebar.assistant", icon: Sparkles },
-  { to: "/inspire", labelKey: "sidebar.inspire", icon: Compass },
-];
 
 export const MOBILE_NAV_ITEMS: NavItem[] = [
   { to: "/", labelKey: "sidebar.home", icon: Home },
@@ -25,25 +17,18 @@ export const MOBILE_NAV_ITEMS: NavItem[] = [
   { to: "/profile", labelKey: "sidebar.profile", icon: User },
 ];
 
-export function DashboardSidebar() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [isFree, setIsFree] = useState(false);
+function isActive(pathname: string, to: string) {
+  if (to === "/") return pathname === "/";
+  if (to === "/dashboard") return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+  if (to === "/explore") return pathname.startsWith("/explore");
+  if (to === "/profile") return pathname.startsWith("/profile");
+  return pathname === to;
+}
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: u }) => {
-      if (!u.user) return;
-      supabase
-        .from("profiles")
-        .select("plan")
-        .eq("id", u.user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          setIsFree((data as { plan?: string } | null)?.plan === "free" || !data?.plan);
-        });
-    });
-  }, []);
+export function DesktopTopNav() {
+  const { t } = useTranslation();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -51,73 +36,46 @@ export function DashboardSidebar() {
   };
 
   return (
-    <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-60 flex-col border-r border-slate-200 bg-white/80 backdrop-blur-xl">
-      <div className="flex items-center justify-between px-5 py-5">
-        <Link to="/" className="flex items-center gap-2" title="Volver al inicio">
-          <img src="/itineraya-mark.png" alt="" className="h-8 w-8" draggable={false} />
-          <span className="font-display text-lg font-bold text-sky-900">Itineraya</span>
+    <header className="hidden md:flex fixed top-0 inset-x-0 z-40 h-14 items-center border-b border-slate-100 bg-white/95 backdrop-blur-xl shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-4 px-6">
+        <Link to="/" className="flex shrink-0 items-center gap-2">
+          <img src="/itineraya-mark.png" alt="" className="h-7 w-7" draggable={false} />
+          <span className="font-display text-base font-bold text-sky-900">Itineraya</span>
         </Link>
-        <Link
-          to="/"
-          aria-label="Inicio"
-          title="Inicio"
-          className="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-sky-900"
-        >
-          <Home className="h-4 w-4" />
-        </Link>
-      </div>
-      <nav className="flex-1 px-3 py-2">
-        <ul className="space-y-1">
-          {NAV_ITEMS.map((item) => {
+
+        <nav className="flex flex-1 items-center justify-center gap-0.5">
+          {MOBILE_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.to || (item.to === "/dashboard" && pathname.startsWith("/dashboard"));
-            const isAssistant = item.to === "/assistant";
-            const locked = isAssistant && isFree;
-
-            if (locked) {
-              return (
-                <li key={item.to}>
-                  <Link
-                    to="/pricing"
-                    title={t("sidebar.assistantLocked")}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-50"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="flex-1">{t(item.labelKey)}</span>
-                    <Lock className="h-3.5 w-3.5 shrink-0" />
-                  </Link>
-                </li>
-              );
-            }
-
+            const active = isActive(pathname, item.to);
             return (
-              <li key={item.to}>
-                <Link
-                  to={item.to}
-                  className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                    active
-                      ? "bg-sky-100 text-sky-900"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-sky-900"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  {t(item.labelKey)}
-                </Link>
-              </li>
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`relative flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                  active
+                    ? "bg-sky-50 text-[#1E6B9A]"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-sky-900"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {t(item.labelKey)}
+                {active && (
+                  <span className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[#1E6B9A]" />
+                )}
+              </Link>
             );
           })}
-        </ul>
-      </nav>
-      <div className="border-t border-slate-200 p-3">
+        </nav>
+
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-sky-900"
+          title={t("dashboard.logout")}
+          className="flex shrink-0 items-center gap-1.5 rounded-xl p-2 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
         >
           <LogOut className="h-4 w-4" />
-          {t("dashboard.logout")}
         </button>
       </div>
-    </aside>
+    </header>
   );
 }
 
@@ -125,15 +83,11 @@ export function MobileBottomBar() {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
       <ul className="grid grid-cols-5">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
-          const active =
-            pathname === item.to ||
-            (item.to === "/dashboard" && pathname.startsWith("/dashboard")) ||
-            (item.to === "/explore" && pathname.startsWith("/explore")) ||
-            (item.to === "/profile" && pathname.startsWith("/profile"));
+          const active = isActive(pathname, item.to);
           return (
             <li key={item.to} className="flex">
               <Link

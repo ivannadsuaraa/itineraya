@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import {
   User as UserIcon,
@@ -104,8 +103,7 @@ function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardSidebar />
-      <div className="md:pl-60">
+      <div>
         <main className="mx-auto max-w-2xl px-5 py-8 md:px-10 md:py-12">
           <h1 className="font-display text-3xl font-bold text-slate-900">Perfil</h1>
           <p className="mt-1 text-sm text-slate-500">Tu cuenta, plan y ajustes.</p>

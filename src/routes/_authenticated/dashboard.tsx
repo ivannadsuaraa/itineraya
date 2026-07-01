@@ -19,7 +19,6 @@ import { es, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { ShareDialog } from "@/components/trip/ShareDialog";
 import {
   getSeasonalInspirations,
@@ -144,10 +143,7 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardSidebar />
-
-
-      <div className="md:pl-60 pb-24 md:pb-12">
+      <div className="pb-24 md:pb-12">
         <main className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-10">
           {/* Greeting */}
           <div >
