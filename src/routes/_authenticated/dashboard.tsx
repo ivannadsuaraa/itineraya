@@ -204,8 +204,18 @@ function DashboardPage() {
             )}
 
             {trips?.length === 0 && (
-              <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center">
-                <p className="text-sm text-slate-500">{t("dashboard.empty")}</p>
+              <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
+                  <MapPin className="h-6 w-6 text-[#1E6B9A]" />
+                </div>
+                <p className="mt-4 font-display text-base font-semibold text-slate-900">{t("dashboard.empty")}</p>
+                <Link
+                  to="/new-trip"
+                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-[0.98]"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("dashboard.newTrip")}
+                </Link>
               </div>
             )}
 
@@ -375,7 +385,7 @@ function TripCard({
       className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
     >
       <Link to="/trip/$tripId" params={{ tripId: trip.id }} className="block">
-        <div className="relative h-44 w-full overflow-hidden">
+        <div className="relative h-56 w-full overflow-hidden">
           {trip.hero_image_url ? (
             <img
               src={trip.hero_image_url}
@@ -427,7 +437,7 @@ function TripCard({
             <span className="ml-1 text-slate-400">· {days}d</span>
           )}
         </div>
-        <div className="flex items-center gap-1 opacity-0 transition group-hover:opacity-100">
+        <div className="flex items-center gap-1 transition md:opacity-0 md:group-hover:opacity-100">
           <Link
             to="/trip/$tripId"
             params={{ tripId: trip.id }}

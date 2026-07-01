@@ -63,7 +63,22 @@ export function PublishToggle({ tripId }: Props) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (isPublic === null) return null;
+  if (isPublic === null) {
+    return (
+      <div className="rounded-3xl border border-sky-100 bg-white/85 p-5 shadow-sm backdrop-blur">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 shrink-0 animate-pulse rounded-2xl bg-slate-200" />
+            <div className="space-y-2 pt-1">
+              <div className="h-4 w-32 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-3 w-48 animate-pulse rounded-full bg-slate-200" />
+            </div>
+          </div>
+          <div className="h-6 w-11 shrink-0 animate-pulse rounded-full bg-slate-200" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-3xl border border-sky-100 bg-white/85 p-5 shadow-sm backdrop-blur">
@@ -115,7 +130,7 @@ export function PublishToggle({ tripId }: Props) {
             />
             <button
               onClick={copy}
-              className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+              className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.97]"
             >
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               {copied ? t("share.copied") : t("share.copy")}

@@ -21,17 +21,18 @@ export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
 // Skeleton for a Card (e.g., TripCard)
 export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) => {
   return (
-    <div className={cn("rounded-xl bg-white p-6 shadow-md", className)}>
-      {/* Image Placeholder */}
-      <Skeleton className="mb-4 h-48 w-full rounded-lg" />
-      {/* Title Placeholder */}
-      <Skeleton className="mb-2 h-6 w-3/4 rounded" />
-      {/* Description Placeholder */}
-      <Skeleton className="mb-4 h-16 w-full rounded" />
-      {/* Footer/Meta Placeholder */}
-      <div className="flex justify-between">
-        <Skeleton className="h-4 w-1/4 rounded" />
-        <Skeleton className="h-4 w-1/4 rounded" />
+    <div className={cn("overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm", className)}>
+      <Skeleton className="h-56 w-full rounded-none" />
+      <div className="space-y-2.5 p-4">
+        <Skeleton className="h-4 w-3/4 rounded-full" />
+        <Skeleton className="h-3 w-1/2 rounded-full" />
+      </div>
+      <div className="flex items-center justify-between px-4 pb-4">
+        <Skeleton className="h-3 w-20 rounded-full" />
+        <div className="flex gap-1.5">
+          <Skeleton className="h-7 w-7 rounded-md" />
+          <Skeleton className="h-7 w-7 rounded-md" />
+        </div>
       </div>
     </div>
   );

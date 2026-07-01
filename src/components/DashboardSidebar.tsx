@@ -125,7 +125,7 @@ export function MobileBottomBar() {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
       <ul className="grid grid-cols-4">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
@@ -135,14 +135,17 @@ export function MobileBottomBar() {
             (item.to === "/explore" && pathname.startsWith("/explore")) ||
             (item.to === "/profile" && pathname.startsWith("/profile"));
           return (
-            <li key={item.to}>
+            <li key={item.to} className="flex">
               <Link
                 to={item.to}
-                className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] font-semibold transition ${
-                  active ? "text-sky-700" : "text-slate-500 hover:text-sky-700"
+                className={`relative flex flex-1 flex-col items-center justify-center gap-1 py-3 text-[10px] font-semibold transition-colors ${
+                  active ? "text-[#1E6B9A]" : "text-slate-400"
                 }`}
               >
-                <Icon className={`h-5 w-5 ${active ? "scale-110" : ""} transition-transform`} />
+                {active && (
+                  <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[#1E6B9A]" />
+                )}
+                <Icon className={`h-5 w-5 transition-transform duration-150 ${active ? "scale-110" : ""}`} />
                 {t(item.labelKey)}
               </Link>
             </li>

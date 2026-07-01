@@ -9,7 +9,6 @@ import {
   Search,
   ArrowRight,
   Compass,
-  Loader2,
 } from "lucide-react";
 import { listPublicTrips, type PublicFeedItem } from "@/lib/explore.functions";
 import { Navbar } from "@/components/landing/Navbar";
@@ -139,8 +138,20 @@ function ExplorePage() {
           {/* Feed */}
           <div className="mt-10 pb-20">
             {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <Loader2 className="h-7 w-7 animate-spin text-sky-500" />
+              <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [column-fill:_balance]">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="mb-5 break-inside-avoid overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-sky-100">
+                    <div className="h-72 w-full animate-pulse bg-slate-200" />
+                    <div className="space-y-2 p-4">
+                      <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
+                      <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200" />
+                    </div>
+                    <div className="flex gap-2 px-4 pb-4">
+                      <div className="h-8 w-24 animate-pulse rounded-full bg-slate-200" />
+                      <div className="h-8 w-16 animate-pulse rounded-full bg-slate-200" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : items.length === 0 ? (
               <div className="rounded-3xl bg-white/80 p-12 text-center shadow ring-1 ring-sky-100">
@@ -155,6 +166,7 @@ function ExplorePage() {
                 ))}
               </div>
             )}
+
           </div>
         </section>
       </main>
@@ -184,29 +196,28 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
     : item.destination;
 
   return (
-    <article className="mb-5 break-inside-avoid overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-sky-100 transition hover:-translate-y-0.5 hover:shadow-xl">
+    <article className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-sky-100 transition hover:-translate-y-1 hover:shadow-xl">
       <Link to="/explore/$slug" params={{ slug: item.slug }} className="block">
-        <div className="relative">
+        <div className="relative overflow-hidden">
           <img
             src={img}
             alt={item.destination}
             loading="lazy"
             onError={() => setImg(fallback)}
-            className="h-56 w-full object-cover"
+            className="h-72 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           />
-
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-            <h3 className="font-display text-lg font-bold drop-shadow">{title}</h3>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] opacity-95">
+            <h3 className="font-display text-xl font-bold leading-tight drop-shadow">{title}</h3>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] opacity-95">
               {item.n_days && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2 py-0.5 backdrop-blur">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-0.5 backdrop-blur-sm">
                   <CalendarIcon className="h-3 w-3" />
                   {t("explore.days", { count: item.n_days })}
                 </span>
               )}
               {item.trip_style && (
-                <span className="rounded-full bg-white/25 px-2 py-0.5 backdrop-blur">
+                <span className="rounded-full bg-white/25 px-2.5 py-0.5 capitalize backdrop-blur-sm">
                   {item.trip_style}
                 </span>
               )}
@@ -214,15 +225,20 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
           </div>
         </div>
       </Link>
-      <div className="flex items-center justify-between gap-2 p-3">
-        <div className="flex items-center gap-1 text-xs font-medium text-sky-700">
-          <MapPin className="h-3 w-3" />
-          {item.destination}
+      {item.summary && (
+        <Link to="/explore/$slug" params={{ slug: item.slug }} className="block px-4 pt-3 pb-1">
+          <p className="line-clamp-2 text-xs leading-relaxed text-slate-500">{item.summary}</p>
+        </Link>
+      )}
+      <div className="flex items-center justify-between gap-2 px-4 py-3">
+        <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
+          <MapPin className="h-3 w-3 shrink-0 text-sky-400" />
+          <span className="truncate">{item.destination}</span>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           <button
             onClick={onRemix}
-            className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-1.5 text-[11px] font-bold text-white shadow hover:shadow-md"
+            className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-1.5 text-[11px] font-bold text-white shadow transition hover:shadow-md active:scale-[0.97]"
           >
             <Sparkles className="h-3 w-3" />
             {t("explore.remix")}
@@ -230,7 +246,7 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
           <Link
             to="/explore/$slug"
             params={{ slug: item.slug }}
-            className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1.5 text-[11px] font-semibold text-sky-800 ring-1 ring-sky-200 hover:bg-sky-100"
+            className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1.5 text-[11px] font-semibold text-sky-800 ring-1 ring-sky-200 transition hover:bg-sky-100 active:scale-[0.97]"
           >
             {t("explore.view")}
             <ArrowRight className="h-3 w-3" />

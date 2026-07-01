@@ -60,7 +60,7 @@ export function PopularDestinationsSection() {
   };
 
   return (
-    <section className="relative py-16 sm:py-20 bg-white">
+    <section className="relative py-20 sm:py-28 bg-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div
           
@@ -91,7 +91,7 @@ export function PopularDestinationsSection() {
               
               
               
-              className="group relative overflow-hidden rounded-2xl text-left shadow-sm transition hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-sky-400"
+              className="group relative overflow-hidden rounded-2xl text-left shadow-sm transition hover:shadow-xl active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-400"
             >
               <div className="relative aspect-[4/5] w-full overflow-hidden">
                 <img
@@ -110,7 +110,7 @@ export function PopularDestinationsSection() {
                     {d.country}
                   </div>
                   <div className="font-display text-2xl font-bold drop-shadow">{d.name}</div>
-                  <div className="mt-2 inline-flex items-center gap-1 text-sm font-semibold opacity-0 transition group-hover:opacity-100">
+                  <div className="mt-2 inline-flex items-center gap-1 text-sm font-semibold transition sm:opacity-0 sm:group-hover:opacity-100">
                     {t("popular.cta")} →
                   </div>
                 </div>

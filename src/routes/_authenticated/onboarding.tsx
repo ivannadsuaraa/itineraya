@@ -287,8 +287,8 @@ function OnboardingPage() {
                           }))
                         }
                         className={cn(
-                          "rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition",
-                          selected ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg" : "border-sky-200 bg-white/70 text-sky-800 hover:bg-white",
+                          "rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.97]",
+                          selected ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20" : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
                         )}
                       >
                         {t(`onboarding.tripTypes.${id}`)}
@@ -339,7 +339,7 @@ function OnboardingPage() {
             type="button"
             onClick={prev}
             disabled={step === 0 || loading}
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-white disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
@@ -348,7 +348,7 @@ function OnboardingPage() {
             type="button"
             onClick={step === totalSteps - 1 ? finish : next}
             disabled={!canContinue || loading}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             {step === totalSteps - 1 ? t("onboarding.generate") : t("onboarding.next")}
@@ -362,10 +362,10 @@ function OnboardingPage() {
 
 function StepShell({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <h1 className="font-display text-2xl font-bold text-sky-900 sm:text-3xl">{title}</h1>
-        <p className="mt-2 text-sm text-sky-600">{subtitle}</p>
+        <h1 className="font-display text-3xl font-bold leading-tight text-sky-900 sm:text-4xl">{title}</h1>
+        <p className="mt-2.5 text-base text-sky-600">{subtitle}</p>
       </div>
       {children}
     </div>
@@ -390,12 +390,12 @@ function OptionGrid({ value, onChange, options }: { value: string; onChange: (va
           type="button"
           onClick={() => onChange(id)}
           className={cn(
-            "rounded-2xl border p-4 text-left transition",
-            value === id ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg" : "border-sky-200 bg-white/70 text-sky-900 hover:bg-white",
+            "rounded-2xl border p-5 text-left transition active:scale-[0.97]",
+            value === id ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20" : "border-sky-200 bg-white/70 text-sky-900 hover:border-sky-300 hover:bg-white hover:shadow-sm",
           )}
         >
           <span className="text-2xl">{icon}</span>
-          <span className="mt-2 block text-sm font-bold">{label}</span>
+          <span className="mt-2.5 block text-sm font-bold">{label}</span>
         </button>
       ))}
     </div>
