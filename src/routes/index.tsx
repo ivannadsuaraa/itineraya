@@ -31,7 +31,12 @@ export const Route = createFileRoute("/")({
 function LandingPage() {
   const { t } = useTranslation();
   const { openAuthModal } = useAuthModal();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return Object.keys(localStorage).some(
+      (k) => k.startsWith("sb-") && k.endsWith("-auth-token"),
+    );
+  });
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);

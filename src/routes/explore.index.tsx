@@ -75,7 +75,12 @@ function ExplorePage() {
   const [durationBucket, setDurationBucket] = useState<(typeof DURATIONS)[number]>("all");
   const [items, setItems] = useState<PublicFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return Object.keys(localStorage).some(
+      (k) => k.startsWith("sb-") && k.endsWith("-auth-token"),
+    );
+  });
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setIsAuthenticated(!!data.user));

@@ -6,13 +6,13 @@ import {
   MapPin,
   Calendar,
   Sparkles,
-  Loader2,
   Bookmark,
   Wand2,
   X,
   Eye,
   Share2,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
@@ -26,7 +26,6 @@ import {
   weatherEmoji,
   type Inspiration,
 } from "@/lib/dashboard-helpers";
-import { SkeletonCard } from "@/components/ui/skeleton"; // Import SkeletonCard
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "My trips – Itineraya" }] }),
@@ -142,202 +141,209 @@ function DashboardPage() {
   const inspirations = useMemo(() => getSeasonalInspirations(), []);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="pb-24 md:pb-12">
-        <main className="mx-auto max-w-6xl px-5 py-8 md:px-10 md:py-10">
-          {/* Greeting */}
-          <div >
-            <p className="text-sm font-semibold text-sky-600">{t("dashboard.hello", { name })}</p>
-            <h1 className="font-display text-3xl font-bold text-slate-900 md:text-4xl">
-              {t("dashboard.where")}
-            </h1>
-          </div>
+    <div className="min-h-dvh bg-slate-50">
 
-          {/* Hero next trip */}
-          {upcoming && upcoming.start_date && (
-            <NextTripHero trip={upcoming} locale={locale} />
-          )}
-
-          {/* New trip CTA */}
-          <div
-            
-            
-            
-            className="mt-6"
-          >
+      {/* ── Dark header ── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10 lg:px-8">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-sky-700/25 blur-3xl" />
+          <div className="absolute -bottom-8 left-0 h-48 w-80 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
+        </div>
+        <div className="relative mx-auto max-w-6xl">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-sky-300">{t("dashboard.hello", { name })}</p>
+              <h1 className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">
+                {t("dashboard.where")}
+              </h1>
+            </div>
             <Link
               to="/new-trip"
-              className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-sky-300 hover:shadow-md"
+              className="inline-flex items-center gap-2 self-start rounded-full bg-white px-5 py-2.5 text-sm font-bold text-sky-900 shadow-md transition hover:bg-sky-50 active:scale-[0.97] sm:self-auto"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white shadow-md">
-                <Plus className="h-6 w-6" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-display text-lg font-bold text-slate-900">
-                  {t("dashboard.newTrip")}
-                </div>
-                <div className="text-sm text-slate-500">{t("dashboard.newTripDesc")}</div>
-              </div>
-              <ArrowRight className="h-5 w-5 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-sky-600" />
+              <Plus className="h-4 w-4" />
+              {t("dashboard.newTrip")}
             </Link>
           </div>
 
-          {/* My trips */}
-          <section className="mt-10">
-            <h2 className="font-display text-xl font-bold text-slate-900">
+          {/* Next trip hero inside header */}
+          {upcoming && upcoming.start_date && (
+            <div className="mt-6">
+              <NextTripHero trip={upcoming} locale={locale} />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Content ── */}
+      <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 md:pb-12 lg:px-8">
+
+        {/* My trips */}
+        <section className="mt-8">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-lg font-bold text-slate-900">
               {t("dashboard.savedTrips")}
             </h2>
-
-            {trips === null && (
-              // --- REPLACED LOADER WITH SKELETON CARDS ---
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                 {/* Render SkeletonCards while fetching data (e.g., 6 cards for a 3-column layout) */}
-                 {Array.from({ length: 6 }).map((_, i) => (
-                   <SkeletonCard key={i} className="h-full" /> // Use h-full to ensure they fill grid cells
-                 ))}
-              </div>
-              // --- END SKELETON REPLACEMENT ---
+            {trips && trips.length > 0 && (
+              <Link
+                to="/new-trip"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {t("dashboard.newTrip")}
+              </Link>
             )}
+          </div>
 
-            {trips?.length === 0 && (
-              <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50">
-                  <MapPin className="h-6 w-6 text-[#1E6B9A]" />
-                </div>
-                <p className="mt-4 font-display text-base font-semibold text-slate-900">{t("dashboard.empty")}</p>
-                <Link
-                  to="/new-trip"
-                  className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-[0.98]"
-                >
-                  <Plus className="h-4 w-4" />
-                  {t("dashboard.newTrip")}
-                </Link>
-              </div>
-            )}
-
-            {otherTrips.length > 0 && (
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {otherTrips.map((trip, i) => (
-                  <TripCard
-                    key={trip.id}
-                    trip={trip}
-                    locale={locale}
-                    index={i}
-                    onShare={() => setShareTrip(trip)}
-                    isFree={isFree}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Saved inspirations */}
-          {saved && saved.length > 0 && (
-            <section className="mt-10">
-              <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-900">
-                <Bookmark className="h-5 w-5 text-[#1E6B9A]" />
-                {t("dashboard.saved")}
-              </h2>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {saved.map((s) => (
-                  <div
-                    key={s.id}
-                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
-                  >
-                    <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
-                      <div className="relative h-40 w-full overflow-hidden">
-                        {s.hero_image_url ? (
-                          <img
-                            src={s.hero_image_url}
-                            alt={s.destination}
-                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                            
-                            
-                            
-                          />
-                        ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-                        <div className="absolute bottom-3 left-4 right-4 text-white">
-                          <div className="font-display text-lg font-bold drop-shadow">{s.destination}</div>
-                        </div>
-                      </div>
-                    </Link>
-                    <div className="flex items-center justify-between gap-2 px-3 py-3">
-                      <button
-                        type="button"
-                        onClick={() => remixSaved(s)}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-2 text-xs font-bold text-white shadow-sm"
-                      >
-                        <Wand2 className="h-3.5 w-3.5" />
-                        {t("dashboard.savedRemix")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeSaved(s.id)}
-                        aria-label={t("dashboard.savedRemove")}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+          {trips === null && (
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                  <div className="aspect-[4/3] animate-pulse bg-slate-200" />
+                  <div className="space-y-2 p-4">
+                    <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
+                    <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200" />
                   </div>
-                ))}
-              </div>
-            </section>
+                </div>
+              ))}
+            </div>
           )}
 
-          {/* Seasonal inspiration */}
-          <section className="mt-12">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <h2 className="font-display text-xl font-bold text-slate-900">
-                  {t("dashboard.inspirationTitle")}
-                </h2>
-                <p className="text-sm text-slate-500">{t("dashboard.inspirationSub")}</p>
+          {trips?.length === 0 && (
+            <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
+              <div className="grid h-14 w-14 place-items-center rounded-full bg-sky-50 ring-1 ring-sky-100">
+                <MapPin className="h-6 w-6 text-sky-500" />
               </div>
+              <p className="mt-4 font-semibold text-slate-800">{t("dashboard.empty")}</p>
+              <Link
+                to="/new-trip"
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-[0.97]"
+              >
+                <Plus className="h-4 w-4" />
+                {t("dashboard.newTrip")}
+              </Link>
             </div>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {inspirations.map((insp, i) => (
+          )}
+
+          {otherTrips.length > 0 && (
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {otherTrips.map((trip) => (
+                <TripCard
+                  key={trip.id}
+                  trip={trip}
+                  locale={locale}
+                  onShare={() => setShareTrip(trip)}
+                  isFree={isFree}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Saved inspirations */}
+        {saved && saved.length > 0 && (
+          <section className="mt-10">
+            <h2 className="flex items-center gap-2 font-display text-lg font-bold text-slate-900">
+              <Bookmark className="h-4.5 w-4.5 text-[#1E6B9A]" />
+              {t("dashboard.saved")}
+            </h2>
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {saved.map((s) => (
                 <div
-                  key={insp.destination}
-                  
-                  
-                  
-                  className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
+                  key={s.id}
+                  className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className="relative h-44 w-full overflow-hidden">
-                    <img
-                      src={insp.image}
-                      alt={insp.destination}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-800">
-                      {insp.tag}
-                    </span>
-                    <div className="absolute bottom-3 left-4 right-4 text-white">
-                      <div className="font-display text-lg font-bold drop-shadow">{insp.destination}</div>
-                      <div className="text-xs opacity-90">{insp.country}</div>
+                  <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      {s.hero_image_url ? (
+                        <img
+                          src={s.hero_image_url}
+                          alt={s.destination}
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                      <div className="absolute bottom-3 left-4 right-4 text-white">
+                        <div className="font-display text-base font-bold drop-shadow">{s.destination}</div>
+                        {s.n_days && (
+                          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
+                            <Calendar className="h-2.5 w-2.5" />
+                            {s.n_days} días
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-3">
+                  </Link>
+                  <div className="flex items-center gap-2 px-3 py-3">
                     <button
                       type="button"
-                      onClick={() => planInspiration(insp)}
-                      className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+                      onClick={() => remixSaved(s)}
+                      className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
                     >
-                      <Sparkles className="h-3.5 w-3.5" />
-                      {t("dashboard.plan")}
+                      <Wand2 className="h-3 w-3" />
+                      {t("dashboard.savedRemix")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSaved(s.id)}
+                      aria-label={t("dashboard.savedRemove")}
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
           </section>
-        </main>
+        )}
+
+        {/* Seasonal inspiration */}
+        <section className="mt-10">
+          <div>
+            <h2 className="font-display text-lg font-bold text-slate-900">
+              {t("dashboard.inspirationTitle")}
+            </h2>
+            <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.inspirationSub")}</p>
+          </div>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {inspirations.map((insp) => (
+              <div
+                key={insp.destination}
+                className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden">
+                  <img
+                    src={insp.image}
+                    alt={insp.destination}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-800">
+                    {insp.tag}
+                  </span>
+                  <div className="absolute bottom-3 left-4 right-4 text-white">
+                    <div className="font-display text-sm font-bold drop-shadow">{insp.destination}</div>
+                    <div className="text-[11px] opacity-80">{insp.country}</div>
+                  </div>
+                </div>
+                <div className="p-3">
+                  <button
+                    type="button"
+                    onClick={() => planInspiration(insp)}
+                    className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-sky-800 active:scale-95"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    {t("dashboard.plan")}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
       {shareTrip && (
@@ -352,16 +358,16 @@ function DashboardPage() {
   );
 }
 
+/* ─── Trip Card ─── */
+
 function TripCard({
   trip,
   locale,
-  index,
   onShare,
   isFree,
 }: {
   trip: Trip;
   locale: Locale;
-  index: number;
   onShare: () => void;
   isFree: boolean;
 }) {
@@ -374,108 +380,98 @@ function TripCard({
       : null;
 
   return (
-    <div
-      
-      
-      
-      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
-    >
+    <article className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-lg">
       <Link to="/trip/$tripId" params={{ tripId: trip.id }} className="block">
-        <div className="relative h-56 w-full overflow-hidden">
+        <div className="relative aspect-[4/3] overflow-hidden">
           {trip.hero_image_url ? (
             <img
               src={trip.hero_image_url}
               alt={trip.destination}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-              
-              
-              
             />
           ) : (
-            <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
+            <div className="h-full w-full bg-gradient-to-br from-sky-400 to-sky-700" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-          <div className="absolute right-3 top-3 flex gap-1.5">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
+
+          {/* Status badge */}
+          <div className="absolute right-3 top-3">
             {trip.status !== "ready" && (
-              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+              <span className="rounded-full bg-amber-100/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 backdrop-blur-sm">
                 {t("dashboard.generating")}
               </span>
             )}
             {isUpcoming && trip.status === "ready" && (
-              <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+              <span className="rounded-full bg-emerald-100/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 backdrop-blur-sm">
                 {t("dashboard.upcoming")}
               </span>
             )}
             {isPast && (
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+              <span className="rounded-full bg-white/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 backdrop-blur-sm">
                 {t("dashboard.past")}
               </span>
             )}
           </div>
-          <div className="absolute bottom-3 left-4 right-4 text-white">
-            <div className="flex items-center gap-1.5 text-xs opacity-90">
-              <MapPin className="h-3 w-3" />
-              <span className="truncate">{trip.destination}</span>
+
+          {/* Bottom overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+            <h3 className="font-display text-base font-bold leading-tight drop-shadow">{trip.destination}</h3>
+            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/80">
+              <Calendar className="h-2.5 w-2.5" />
+              <span>
+                {trip.start_date && trip.end_date
+                  ? `${format(parseISO(trip.start_date), "d MMM", { locale })} – ${format(parseISO(trip.end_date), "d MMM", { locale })}`
+                  : t("dashboard.flexible")}
+              </span>
+              {days != null && <span className="text-white/60">· {days}d</span>}
             </div>
-            <div className="font-display text-lg font-bold drop-shadow">{trip.destination}</div>
           </div>
         </div>
       </Link>
-      <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-1.5 text-xs text-slate-600">
-          <Calendar className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">
-            {trip.start_date && trip.end_date
-              ? `${format(parseISO(trip.start_date), "d MMM", { locale })} – ${format(parseISO(trip.end_date), "d MMM", { locale })}`
-              : t("dashboard.flexible")}
-          </span>
-          {days != null && (
-            <span className="ml-1 text-slate-400">· {days}d</span>
-          )}
-        </div>
-        <div className="flex items-center gap-1 transition md:opacity-0 md:group-hover:opacity-100">
-          <Link
-            to="/trip/$tripId"
-            params={{ tripId: trip.id }}
-            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-700"
-            aria-label={t("dashboard.view")}
-            title={t("dashboard.view")}
-          >
-            <Eye className="h-4 w-4" />
-          </Link>
+
+      {/* Actions */}
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <Link
+          to="/trip/$tripId"
+          params={{ tripId: trip.id }}
+          className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
+        >
+          <Eye className="h-3 w-3" />
+          {t("dashboard.view")}
+        </Link>
+        <div className="flex items-center gap-0.5">
           {isFree ? (
             <Link
               to="/pricing"
-              className="rounded-md p-1.5 text-slate-300"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100"
               aria-label={t("sidebar.assistantLocked")}
-              title={t("sidebar.assistantLocked")}
             >
-              <Wand2 className="h-4 w-4" />
+              <Lock className="h-3.5 w-3.5" />
             </Link>
           ) : (
             <Link
               to="/assistant"
-              className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-700"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
               aria-label={t("dashboard.editAi")}
-              title={t("dashboard.editAi")}
             >
-              <Wand2 className="h-4 w-4" />
+              <Wand2 className="h-3.5 w-3.5" />
             </Link>
           )}
           <button
             type="button"
             onClick={onShare}
-            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-700"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
             aria-label={t("dashboard.share")}
-            title={t("dashboard.share")}
           >
-            <Share2 className="h-4 w-4" />
+            <Share2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
+
+/* ─── Next Trip Hero ─── */
 
 function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
   const { t } = useTranslation();
@@ -509,85 +505,78 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
     fetchWeather(trip.destination).then((w) => {
       if (!cancelled) setWeather(w);
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [trip.destination]);
 
   const isEs = locale === es;
   const fmt = isEs ? "d 'de' MMMM" : "MMM d";
 
   return (
-    <div
-      
-      
-      
-      className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
-    >
-      <Link to="/trip/$tripId" params={{ tripId: trip.id }} className="block">
+    <Link to="/trip/$tripId" params={{ tripId: trip.id }}>
+      <div className="group overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15">
         <div className="grid md:grid-cols-[1.4fr_1fr]">
-          <div className="relative h-56 md:h-72">
+          {/* Image */}
+          <div className="relative h-44 overflow-hidden md:h-56 md:rounded-l-2xl">
             {trip.hero_image_url ? (
               <img
                 src={trip.hero_image_url}
                 alt={trip.destination}
-                className="h-full w-full object-cover"
-                
-                
-                
+                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
               />
             ) : (
-              <div className="h-full w-full bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2]" />
+              <div className="h-full w-full bg-gradient-to-br from-sky-600 to-sky-800" />
             )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent md:bg-gradient-to-r" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent md:bg-gradient-to-r" />
             <div className="absolute bottom-4 left-5 right-5 text-white">
-              <p className="text-xs font-semibold uppercase tracking-widest opacity-90">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/70">
                 {t("dashboard.nextTrip")}
               </p>
-              <h3 className="font-display text-2xl font-bold drop-shadow md:text-3xl">
+              <h3 className="font-display text-xl font-bold drop-shadow md:text-2xl">
                 {trip.destination}
               </h3>
               {trip.start_date && trip.end_date && (
-                <p className="mt-1 text-sm opacity-95">
+                <p className="mt-0.5 text-xs text-white/85">
                   {format(parseISO(trip.start_date), fmt, { locale })} –{" "}
                   {format(parseISO(trip.end_date), fmt + " yyyy", { locale })}
                 </p>
               )}
             </div>
           </div>
+
+          {/* Countdown + weather */}
           <div className="flex flex-col justify-center gap-4 p-5 md:p-6">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-[#1E6B9A]">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-300">
                 {t("dashboard.countdown")}
               </p>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="font-display text-5xl font-bold tabular-nums text-slate-900 md:text-6xl">
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className="font-display text-4xl font-bold tabular-nums text-white md:text-5xl">
                   {displayed}
                 </span>
-                <span className="text-base font-semibold text-slate-500">
+                <span className="text-sm font-medium text-white/60">
                   {days === 1 ? t("dashboard.day") : t("dashboard.days")}
                 </span>
               </div>
             </div>
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            <div className="rounded-xl bg-white/10 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-300">
                 {t("dashboard.weatherNow")}
               </p>
               {weather ? (
-                <div className="mt-1 flex items-center gap-3">
-                  <span className="text-3xl">{weatherEmoji(weather.code)}</span>
-                  <span className="font-display text-2xl font-bold text-slate-900">
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-2xl">{weatherEmoji(weather.code)}</span>
+                  <span className="font-display text-xl font-bold text-white">
                     {weather.tempC}°C
                   </span>
                 </div>
               ) : (
-                <div className="mt-2 h-7 w-24 animate-pulse rounded bg-slate-200" />
+                <div className="mt-2 h-6 w-20 animate-pulse rounded bg-white/20" />
               )}
             </div>
           </div>
         </div>
-      </Link>
-    </div>
+      </div>
+    </Link>
   );
 }
 

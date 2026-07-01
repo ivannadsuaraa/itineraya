@@ -15,6 +15,7 @@ import {
   Wand2,
   Map as MapIcon,
   Users,
+  Clock,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,7 +84,6 @@ function bookingForCategory(
   destination: string,
   aiUrl?: string,
 ): BookingInfo | null {
-  // Prefer AI-generated direct link when available
   if (aiUrl) {
     const brand =
       category === "hotel" ? "Booking" :
@@ -101,21 +101,18 @@ function bookingForCategory(
         brand: "Booking",
         url: `https://www.booking.com/search.html?ss=${encodeURIComponent(placeOrTitle)}`,
       };
-
     case "restaurant":
       return {
         kind: "book",
         brand: "TheFork",
         url: `https://www.thefork.com/search?cityName=${encodeURIComponent(destination)}&searchText=${encodeURIComponent(placeOrTitle)}`,
       };
-
     case "nightlife":
       return {
         kind: "view",
         brand: "TripAdvisor",
         url: `https://www.tripadvisor.com/Search?q=${encodeURIComponent(q)}`,
       };
-
     case "activity":
     case "sight":
       return {
@@ -123,12 +120,10 @@ function bookingForCategory(
         brand: "GetYourGuide",
         url: `https://www.getyourguide.com/s/?q=${encodeURIComponent(q)}`,
       };
-
     default:
       return null;
   }
 }
-
 
 function ItineraryPage() {
   const { t, i18n } = useTranslation();
@@ -222,18 +217,19 @@ function ItineraryPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] flex items-center justify-center p-6">
-        <div className="max-w-md rounded-3xl bg-white/80 p-8 text-center shadow-xl backdrop-blur-xl">
-          <h1 className="font-display text-xl font-bold text-sky-900">{t("trip.errorTitle")}</h1>
-          <p className="mt-2 text-sm text-sky-700">{error}</p>
-          <div className="mt-6 flex gap-2 justify-center">
-            <button
-              onClick={() => navigate({ to: "/dashboard" })}
-              className="rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white"
-            >
-              {t("trip.errorBack")}
-            </button>
+      <div className="min-h-dvh bg-gradient-to-b from-sky-950 to-sky-900 flex items-center justify-center p-6">
+        <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+            <MapIcon className="h-6 w-6" />
           </div>
+          <h1 className="font-display text-xl font-bold text-slate-900">{t("trip.errorTitle")}</h1>
+          <p className="mt-2 text-sm text-slate-500">{error}</p>
+          <button
+            onClick={() => navigate({ to: "/dashboard" })}
+            className="mt-6 rounded-full bg-sky-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-800"
+          >
+            {t("trip.errorBack")}
+          </button>
         </div>
       </div>
     );
@@ -243,59 +239,51 @@ function ItineraryPage() {
   const itin = trip.itinerary;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
+    <div className="min-h-dvh bg-slate-50">
+      {/* ── Sticky toolbar ── */}
+      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-5">
           <Link
             to="/dashboard"
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-sky-800 hover:bg-white sm:text-sm"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             aria-label={t("trip.backDashboard")}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{t("trip.backDashboard")}</span>
           </Link>
+
           <div className="flex items-center gap-2">
-            <div className="flex rounded-full bg-sky-50 p-1">
-              <button
-                onClick={() => setView("cards")}
-                className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
-                  view === "cards" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
-                }`}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline sm:inline">{t("trip.viewCards")}</span>
-              </button>
-              <button
-                onClick={() => setView("text")}
-                className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
-                  view === "text" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
-                }`}
-              >
-                <FileText className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline sm:inline">{t("trip.viewText")}</span>
-              </button>
-              <button
-                onClick={() => setView("map")}
-                className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
-                  view === "map" ? "bg-[#1E6B9A] text-white shadow" : "text-sky-700"
-                }`}
-              >
-                <MapIcon className="h-3.5 w-3.5" />
-                <span className="hidden xs:inline sm:inline">{t("trip.viewMap")}</span>
-              </button>
+            {/* View toggle */}
+            <div className="flex rounded-full bg-slate-100 p-0.5">
+              {(["cards", "text", "map"] as const).map((v) => {
+                const Icon = v === "cards" ? LayoutGrid : v === "text" ? FileText : MapIcon;
+                const label = v === "cards" ? t("trip.viewCards") : v === "text" ? t("trip.viewText") : t("trip.viewMap");
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
+                      view === v ? "bg-sky-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{label}</span>
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Action buttons */}
             <button
               onClick={() => setTripmatesOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-md shadow-pink-500/25 transition hover:shadow-lg"
-              aria-label="Invite tripmates"
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
             >
               <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Invite tripmates</span>
+              <span className="hidden sm:inline">Invite</span>
             </button>
             <button
               onClick={() => setShareOpen(true)}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/80 px-3 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
-              aria-label={t("trip.share")}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <Share2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.share")}</span>
@@ -303,8 +291,7 @@ function ItineraryPage() {
             {plan && plan !== "free" ? (
               <button
                 onClick={() => setAssistantOpen(true)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 text-xs font-semibold text-white shadow-md shadow-[#1E6B9A]/25 transition hover:shadow-lg"
-                aria-label={t("trip.editAssistant")}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800"
               >
                 <Wand2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t("trip.editAssistant")}</span>
@@ -312,9 +299,8 @@ function ItineraryPage() {
             ) : plan === "free" ? (
               <Link
                 to="/pricing"
-                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/80 px-3 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition hover:bg-white"
+                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200"
                 title={t("trip.editAssistantLocked")}
-                aria-label={t("trip.editAssistant")}
               >
                 <Wand2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t("trip.editAssistant")}</span>
@@ -324,69 +310,89 @@ function ItineraryPage() {
         </div>
       </div>
 
-      <div className="relative h-64 w-full overflow-hidden md:h-80">
+      {/* ── Hero image ── */}
+      <div className="relative h-72 w-full overflow-hidden md:h-96">
         {trip.hero_image_url ? (
           <img src={trip.hero_image_url} alt={trip.destination} className="h-full w-full object-cover" />
         ) : (
-          <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
+          <div className="h-full w-full bg-gradient-to-br from-sky-950 to-sky-800" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-          <div className="mx-auto max-w-4xl text-white">
-            <p className="text-xs font-semibold uppercase tracking-widest opacity-90">{t("trip.heroTag")}</p>
-            <h1 className="mt-1 font-display text-3xl font-bold drop-shadow-md md:text-4xl">{trip.destination}</h1>
-            {itin.summary && <p className="mt-2 max-w-2xl text-sm opacity-90 md:text-base">{itin.summary}</p>}
+          <div className="mx-auto max-w-5xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-white backdrop-blur-md">
+              <MapPin className="h-3 w-3" />
+              {t("trip.heroTag")}
+            </span>
+            <h1 className="mt-2 font-display text-3xl font-bold text-white drop-shadow-md md:text-4xl lg:text-5xl">
+              {trip.destination}
+            </h1>
+            {itin.summary && (
+              <p className="mt-2 max-w-2xl text-sm text-white/80 md:text-base">{itin.summary}</p>
+            )}
+            <div className="mt-3 flex items-center gap-3 text-xs text-white/70">
+              <span className="flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                {itin.days.length} {itin.days.length === 1 ? "día" : "días"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-4 py-8 md:px-6">
-        <div className="mb-6">
+      {/* ── Content ── */}
+      <div className="mx-auto max-w-5xl px-4 py-6 md:px-6 md:py-8">
+        <div className="mb-5">
           <PublishToggle tripId={trip.id} />
         </div>
-        <div className="grid gap-6 lg:grid-cols-2">
+
+        <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
+          {/* Cards / Text panel */}
           <div className={view === "map" ? "hidden lg:block" : ""}>
-            
-              {view !== "text" ? (
-                <div key="cards" className="space-y-6">
-                  {itin.days.map((day) => (
-                    <DayCard key={day.day} day={day} destination={trip.destination} />
-                  ))}
-                </div>
-              ) : (
-                <div key="text" className="rounded-3xl bg-white/80 p-6 shadow-xl backdrop-blur-xl md:p-8">
-                  {itin.days.map((day) => (
-                    <div key={day.day} className="mb-6 last:mb-0">
-                      <h2 className="font-display text-lg font-bold text-sky-900">
-                        {t("trip.dayHeading", { n: day.day, title: day.title })}
-                      </h2>
-                      {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
-                      <ul className="mt-3 space-y-2">
-                        {day.activities.map((a, i) => (
-                          <li key={i} className="text-sm text-sky-900">
-                            <span className="mr-1">{a.emoji ?? "📍"}</span>
-                            <span className="font-semibold text-[#1E6B9A]">{a.time}</span>{" "}
-                            — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
-                            <span className="text-sky-700">{a.description}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-            
+            {view !== "text" ? (
+              <div className="space-y-5">
+                {itin.days.map((day) => (
+                  <DayCard key={day.day} day={day} destination={trip.destination} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
+                {itin.days.map((day) => (
+                  <div key={day.day} className="mb-6 last:mb-0">
+                    <h2 className="font-display text-lg font-bold text-sky-900">
+                      {t("trip.dayHeading", { n: day.day, title: day.title })}
+                    </h2>
+                    {day.subtitle && <p className="text-sm text-slate-500">{day.subtitle}</p>}
+                    <ul className="mt-3 space-y-2">
+                      {day.activities.map((a, i) => (
+                        <li key={i} className="text-sm text-slate-700">
+                          <span className="mr-1">{a.emoji ?? "📍"}</span>
+                          <span className="font-semibold text-sky-700">{a.time}</span>{" "}
+                          — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
+                          <span className="text-slate-500">{a.description}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Map panel */}
           <div className={view === "map" ? "block" : "hidden lg:block"}>
-            <div className="lg:sticky lg:top-24">
-              <Suspense fallback={<div className="flex h-[70vh] items-center justify-center rounded-3xl bg-white/80"><Loader2 className="h-6 w-6 animate-spin text-sky-500" /></div>}>
+            <div className="lg:sticky lg:top-[60px]">
+              <Suspense fallback={
+                <div className="flex h-[60vh] items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                  <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+                </div>
+              }>
                 <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
               </Suspense>
             </div>
           </div>
         </div>
       </div>
-
 
       <AssistantEditPanel
         open={assistantOpen}
@@ -397,14 +403,12 @@ function ItineraryPage() {
           setTrip((prev) => (prev ? { ...prev, itinerary: itinerary as Itinerary } : prev))
         }
       />
-
       <ShareDialog
         open={shareOpen}
         onClose={() => setShareOpen(false)}
         tripId={trip.id}
         destination={trip.destination}
       />
-
       <TripmatesModal
         open={tripmatesOpen}
         onClose={() => setTripmatesOpen(false)}
@@ -482,58 +486,63 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-3xl bg-white/85 shadow-xl backdrop-blur-xl ring-1 ring-white/60">
-      <div className="bg-white">
-        {day.image_url && (
-          <div className="relative h-48 w-full overflow-hidden md:h-56">
-            <img src={day.image_url} alt={day.title} className="h-full w-full object-cover" crossOrigin="anonymous" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-              <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-                {t("trip.dayLabel", { n: day.day })}
-              </span>
-              <h3 className="mt-2 font-display text-2xl font-bold drop-shadow">{day.title}</h3>
-              {day.subtitle && <p className="text-sm opacity-90">{day.subtitle}</p>}
-            </div>
-          </div>
-        )}
-        {!day.image_url && (
-          <div className="p-6 pb-2">
-            <span className="inline-block rounded-full bg-sky-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#1E6B9A]">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:shadow-md">
+      {/* Day image */}
+      {day.image_url ? (
+        <div className="relative aspect-[16/7] w-full overflow-hidden">
+          <img
+            src={day.image_url}
+            alt={day.title}
+            className="h-full w-full object-cover"
+            crossOrigin="anonymous"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+            <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-sm">
               {t("trip.dayLabel", { n: day.day })}
             </span>
-            <h3 className="mt-2 font-display text-2xl font-bold text-sky-900">{day.title}</h3>
-            {day.subtitle && <p className="text-sm text-sky-600">{day.subtitle}</p>}
+            <h3 className="mt-1.5 font-display text-xl font-bold text-white drop-shadow sm:text-2xl">{day.title}</h3>
+            {day.subtitle && <p className="text-xs text-white/80 sm:text-sm">{day.subtitle}</p>}
           </div>
-        )}
-
-        <div className="space-y-3 p-5 md:p-6">
-          {day.activities.map((a, i) => (
-            <ActivityRow key={i} activity={a} destination={destination} />
-          ))}
         </div>
-
-        <div className="flex items-center justify-between border-t border-sky-100 px-5 py-3 text-xs text-sky-500">
-          <span className="font-semibold text-sky-700">Itineraya</span>
-          <span>{destination}</span>
+      ) : (
+        <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-sky-50 to-slate-50 px-5 py-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-900 text-white">
+            <span className="text-sm font-bold">{day.day}</span>
+          </div>
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600">
+              {t("trip.dayLabel", { n: day.day })}
+            </span>
+            <h3 className="font-display text-lg font-bold text-slate-900">{day.title}</h3>
+            {day.subtitle && <p className="text-xs text-slate-500">{day.subtitle}</p>}
+          </div>
         </div>
+      )}
+
+      {/* Activities */}
+      <div className="space-y-2.5 p-4 sm:p-5">
+        {day.activities.map((a, i) => (
+          <ActivityRow key={i} activity={a} destination={destination} />
+        ))}
       </div>
 
-      <div className="flex gap-2 border-t border-sky-100 bg-white/60 p-3">
+      {/* Footer actions */}
+      <div className="flex gap-2 border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
         <button
           onClick={download}
           disabled={busy !== null}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-semibold text-sky-800 shadow-sm ring-1 ring-sky-200 transition hover:bg-sky-50 disabled:opacity-60"
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-60 sm:text-sm"
         >
-          {busy === "download" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {busy === "download" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
           {t("trip.postcardDownloaded")}
         </button>
         <button
           onClick={share}
           disabled={busy !== null}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#1E6B9A] px-4 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#15577E] disabled:opacity-60"
+          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800 disabled:opacity-60 sm:text-sm"
         >
-          {busy === "share" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+          {busy === "share" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
           {t("trip.share")}
         </button>
       </div>
@@ -546,33 +555,35 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
   const placeQuery = `${activity.place || activity.title}, ${destination}`;
   const booking = bookingForCategory(activity.category, activity.place || activity.title, destination, activity.url);
   const bookingLabel = booking?.kind === "view" ? t("trip.viewVerb") : t("trip.book");
+
   return (
-    <div className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/40 p-3">
-      <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-[#1E6B9A] text-white">
-        <CalendarIcon className="h-3 w-3 opacity-70" />
+    <div className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 transition hover:bg-slate-50">
+      {/* Time chip */}
+      <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-sky-900 text-white">
+        <CalendarIcon className="h-3 w-3 opacity-60" />
         <span className="mt-0.5 text-xs font-bold leading-none">{activity.time}</span>
       </div>
+
+      {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-start gap-2">
-          <span className="text-lg leading-none">{activity.emoji ?? "📍"}</span>
+          <span className="text-base leading-tight">{activity.emoji ?? "📍"}</span>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-sky-900">{activity.title}</div>
+            <p className="font-semibold leading-tight text-slate-900">{activity.title}</p>
             {activity.place && (
-              <div className="truncate text-xs font-medium text-sky-700/90">{activity.place}</div>
+              <p className="truncate text-xs text-slate-500">{activity.place}</p>
             )}
           </div>
         </div>
-        <div className="mt-1 text-sm text-sky-700">{activity.description}</div>
-
-        <div className="mt-2 flex flex-wrap gap-2">
+        <p className="mt-1 text-sm leading-relaxed text-slate-600">{activity.description}</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
           <a
             href={googleMapsUrl(placeQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 transition hover:bg-sky-50"
-            title={t("trip.mapsTitle")}
+            className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
           >
-            <MapPin className="h-3.5 w-3.5" />
+            <MapPin className="h-3 w-3 text-slate-500" />
             {t("trip.maps")}
           </a>
           {booking && (
@@ -580,10 +591,9 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
               href={booking.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[#15577E]"
-              title={t("trip.bookOn", { label: bookingLabel, brand: booking.brand })}
+              className="inline-flex items-center gap-1 rounded-full bg-sky-900 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-sky-800"
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-3 w-3" />
               {bookingLabel} · {booking.brand}
             </a>
           )}
@@ -594,49 +604,35 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
 }
 
 function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
-  const dots = useMemo(() => Array.from({ length: 12 }), []);
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }} />
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl" style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }} />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 p-6">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-700/25 blur-3xl" />
+        <div className="absolute -bottom-16 left-0 h-48 w-72 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
       </div>
 
       <div className="relative flex flex-col items-center text-center">
-        <div className="relative h-32 w-32">
-          {dots.map((_, i) => (
-            <span
-              key={i}
-              className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1E6B9A]"
-              
-              
-            />
-          ))}
-          <div
-            
-            
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-xl shadow-[#1E6B9A]/30">
-              <MapIcon className="h-6 w-6 text-white" />
-            </div>
-          </div>
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
+          <MapIcon className="h-7 w-7 text-white" />
         </div>
 
-        <Sparkles className="mt-8 h-5 w-5 text-[#1E6B9A]" />
-        
-          <h2
-            key={msg}
-            
-            
-            
-            
-            className="mt-3 font-display text-xl font-bold text-sky-900 md:text-2xl"
-          >
-            {msg}
-          </h2>
-        
-        <p className="mt-2 max-w-xs text-sm text-sky-600">{subtitle}</p>
+        <div className="mt-6 flex items-center gap-1.5">
+          <Loader2 className="h-4 w-4 animate-spin text-sky-300" />
+          <Sparkles className="h-4 w-4 text-sky-400" />
+        </div>
+
+        <h2 className="mt-3 font-display text-xl font-bold text-white md:text-2xl">{msg}</h2>
+        <p className="mt-2 max-w-xs text-sm text-sky-300">{subtitle}</p>
+
+        <div className="mt-6 flex gap-1">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="h-1.5 w-1.5 rounded-full bg-white/40"
+              style={{ animationDelay: `${i * 0.2}s` }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

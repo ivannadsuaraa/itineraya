@@ -102,33 +102,36 @@ function ProfilePage() {
     plan === "explorador" ? "Explorador" : plan === "viajero" ? "Viajero" : "Gratis";
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div>
-        <main className="mx-auto max-w-2xl px-5 py-8 md:px-10 md:py-12">
-          <h1 className="font-display text-3xl font-bold text-slate-900">Perfil</h1>
-          <p className="mt-1 text-sm text-slate-500">Tu cuenta, plan y ajustes.</p>
-
-          <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-4">
-              {avatar ? (
-                <img src={avatar} alt="" className="h-16 w-16 rounded-full object-cover" />
-              ) : (
-                <div className="grid h-16 w-16 place-items-center rounded-full bg-sky-100 text-sky-700">
-                  <UserIcon className="h-7 w-7" />
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="truncate font-display text-lg font-bold text-slate-900">
-                  {fullName || email.split("@")[0] || "Viajero"}
-                </p>
-                <p className="flex items-center gap-1.5 truncate text-sm text-slate-500">
-                  <Mail className="h-3.5 w-3.5" /> {email}
-                </p>
+    <div className="min-h-dvh bg-slate-50">
+      {/* Dark header */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-12 pt-6 sm:px-6 sm:pb-14 sm:pt-8 lg:px-8">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-sky-700/25 blur-3xl" />
+          <div className="absolute -bottom-8 left-0 h-48 w-80 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
+        </div>
+        <div className="relative mx-auto max-w-2xl">
+          <div className="flex items-center gap-4">
+            {avatar ? (
+              <img src={avatar} alt="" className="h-14 w-14 rounded-full object-cover ring-2 ring-white/30" />
+            ) : (
+              <div className="grid h-14 w-14 place-items-center rounded-full bg-white/15 text-white ring-2 ring-white/20">
+                <UserIcon className="h-6 w-6" />
               </div>
+            )}
+            <div>
+              <p className="font-display text-xl font-bold text-white">
+                {fullName || email.split("@")[0] || "Viajero"}
+              </p>
+              <p className="text-sm text-sky-300">{email}</p>
             </div>
-          </section>
+          </div>
+        </div>
+      </section>
 
-          <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div>
+        <main className="mx-auto max-w-2xl px-5 py-6 md:px-10 md:py-8">
+
+          <section className="mt-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">

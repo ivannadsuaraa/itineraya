@@ -145,48 +145,38 @@ function PricingPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] pb-20">
+    <div className="min-h-dvh bg-slate-50 pb-20">
       <PaymentTestModeBanner />
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute -top-40 -left-40 h-[28rem] w-[28rem] rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-40 -right-40 h-[28rem] w-[28rem] rounded-full opacity-40 blur-3xl"
-          style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }}
-        />
-      </div>
 
-      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-5 sm:py-5">
-        <Link
-          to={authedUserId ? "/dashboard" : "/"}
-          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-3 text-xs font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white sm:text-sm"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {authedUserId ? "Dashboard" : "Inicio"}
-        </Link>
-        <BrandLogo size="md" />
-      </header>
-
-      <main className="relative mx-auto max-w-6xl px-4 sm:px-5">
-        <div
-          
-          
-          className="mx-auto max-w-2xl text-center"
-        >
-          <p className="text-sm font-semibold uppercase tracking-widest text-[#1E6B9A]">
-            Planes
-          </p>
-          <h1 className="mt-2 font-display text-4xl font-bold text-sky-900 md:text-5xl">
+      {/* ── Dark header ── */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-14 pt-6 sm:px-6 sm:pb-16 sm:pt-8 lg:px-8">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-700/25 blur-3xl" />
+          <div className="absolute -bottom-10 left-0 h-48 w-72 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
+        </div>
+        <div className="relative mx-auto flex max-w-6xl items-center justify-between">
+          <Link
+            to={authedUserId ? "/dashboard" : "/"}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/20 sm:text-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {authedUserId ? "Dashboard" : "Inicio"}
+          </Link>
+          <BrandLogo size="md" />
+          <LanguageSwitcher />
+        </div>
+        <div className="relative mx-auto mt-10 max-w-2xl text-center">
+          <h1 className="font-display text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Elige cómo viajar
           </h1>
-          <p className="mt-3 text-sky-700">
+          <p className="mt-3 text-sky-200">
             Empieza gratis. Sube de plan cuando quieras más itinerarios, IA y herramientas avanzadas.
           </p>
         </div>
+      </section>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3 md:items-stretch">
+      <main className="relative mx-auto max-w-6xl px-4 sm:px-5">
+        <div className="-mt-6 grid gap-5 md:grid-cols-3 md:items-stretch">
           {plans.map((plan, i) => {
             const current = planActiveFor(plan);
             const isStarting = starting === plan.id;
@@ -288,6 +278,7 @@ function PricingPage() {
       </main>
 
       {/* Embedded checkout modal */}
+
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-sky-950/60 p-4 backdrop-blur-sm">
           <div className="relative w-full max-w-2xl rounded-3xl bg-white p-2 shadow-2xl">
