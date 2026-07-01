@@ -60,6 +60,10 @@ function AssistantPage() {
     );
   }
 
+  if (plan === "free") {
+    return <UpgradeGate onBack={() => window.history.back()} />;
+  }
+
   return (
     <ChatSurface
       plan={plan}

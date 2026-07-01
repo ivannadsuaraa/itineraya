@@ -64,6 +64,7 @@ function DashboardPage() {
   const [saved, setSaved] = useState<SavedInspo[] | null>(null);
   const [name, setName] = useState<string>("");
   const [shareTrip, setShareTrip] = useState<Trip | null>(null);
+  const [isFree, setIsFree] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -79,9 +80,11 @@ function DashboardPage() {
 
       const { data: prof } = await supabase
         .from("profiles")
-        .select("welcome_completed")
+        .select("welcome_completed, plan")
         .eq("id", u.user.id)
         .maybeSingle();
+      const userPlan = (prof as { plan?: string } | null)?.plan ?? "free";
+      setIsFree(userPlan === "free");
       if (prof && !prof.welcome_completed) {
         navigate({ to: "/welcome", replace: true });
         return;
@@ -215,6 +218,7 @@ function DashboardPage() {
                     locale={locale}
                     index={i}
                     onShare={() => setShareTrip(trip)}
+                    isFree={isFree}
                   />
                 ))}
               </div>
@@ -347,11 +351,13 @@ function TripCard({
   locale,
   index,
   onShare,
+  isFree,
 }: {
   trip: Trip;
   locale: Locale;
   index: number;
   onShare: () => void;
+  isFree: boolean;
 }) {
   const { t } = useTranslation();
   const isPast = trip.end_date ? new Date(trip.end_date) < new Date(new Date().toDateString()) : false;
@@ -431,14 +437,25 @@ function TripCard({
           >
             <Eye className="h-4 w-4" />
           </Link>
-          <Link
-            to="/assistant"
-            className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-700"
-            aria-label={t("dashboard.editAi")}
-            title={t("dashboard.editAi")}
-          >
-            <Wand2 className="h-4 w-4" />
-          </Link>
+          {isFree ? (
+            <Link
+              to="/pricing"
+              className="rounded-md p-1.5 text-slate-300"
+              aria-label={t("sidebar.assistantLocked")}
+              title={t("sidebar.assistantLocked")}
+            >
+              <Wand2 className="h-4 w-4" />
+            </Link>
+          ) : (
+            <Link
+              to="/assistant"
+              className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-sky-700"
+              aria-label={t("dashboard.editAi")}
+              title={t("dashboard.editAi")}
+            >
+              <Wand2 className="h-4 w-4" />
+            </Link>
+          )}
           <button
             type="button"
             onClick={onShare}

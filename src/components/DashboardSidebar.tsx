@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Plus, Sparkles, Compass, LogOut, Home, User, PlusCircle } from "lucide-react";
+import { Map, Plus, Sparkles, Compass, LogOut, Home, User, PlusCircle, Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import logoMark from "@/assets/itineraya-mark.svg";
 
@@ -28,6 +29,21 @@ export function DashboardSidebar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [isFree, setIsFree] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: u }) => {
+      if (!u.user) return;
+      supabase
+        .from("profiles")
+        .select("plan")
+        .eq("id", u.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setIsFree((data as { plan?: string } | null)?.plan === "free" || !data?.plan);
+        });
+    });
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -55,6 +71,25 @@ export function DashboardSidebar() {
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.to || (item.to === "/dashboard" && pathname.startsWith("/dashboard"));
+            const isAssistant = item.to === "/assistant";
+            const locked = isAssistant && isFree;
+
+            if (locked) {
+              return (
+                <li key={item.to}>
+                  <Link
+                    to="/pricing"
+                    title={t("sidebar.assistantLocked")}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-50"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="flex-1">{t(item.labelKey)}</span>
+                    <Lock className="h-3.5 w-3.5 shrink-0" />
+                  </Link>
+                </li>
+              );
+            }
+
             return (
               <li key={item.to}>
                 <Link
