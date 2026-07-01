@@ -122,6 +122,9 @@ export function Navbar() {
                   {link.label}
                 </a>
               ))}
+              <div className="px-4 py-2">
+                <LanguageSwitcher />
+              </div>
               {mounted && isLoggedIn ? (
                 <Link
                   to="/dashboard"

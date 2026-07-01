@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components/landing/Navbar";
-import { MobileBottomBar } from "@/components/DashboardSidebar";
+import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { PopularDestinationsSection } from "@/components/landing/PopularDestinationsSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
@@ -43,7 +43,7 @@ function LandingPage() {
   }, []);
   return (
     <div className={`min-h-screen bg-white ${isLoggedIn ? "pb-16 md:pb-0" : ""}`}>
-      <Navbar />
+      {isLoggedIn ? <DesktopTopNav /> : <Navbar />}
       <HeroSection />
 
       <PopularDestinationsSection />
