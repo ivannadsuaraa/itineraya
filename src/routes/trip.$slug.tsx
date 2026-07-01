@@ -218,7 +218,7 @@ function PublicTripPage() {
       <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center gap-2">
-            <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-7 w-auto" />
+            <img src="/itineraya-mark.png" alt="Itineraya" className="h-7 w-auto" />
           </Link>
           <button
             type="button"
@@ -378,7 +378,7 @@ function PublicTripPage() {
         </div>
 
         <footer className="mt-10 flex items-center justify-center gap-2 pb-6 text-xs text-sky-600">
-          <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-4 w-auto opacity-80" />
+          <img src="/itineraya-wordmark.png" alt="Itineraya" className="h-4 w-auto opacity-70" />
           <span>itineraya.com</span>
         </footer>
       </div>

@@ -43,7 +43,8 @@ export function Navbar() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" suppressHydrationWarning>
         <nav className="mt-4 flex items-center justify-between rounded-full bg-white/80 px-6 py-3 shadow-[0_4px_24px_rgba(46,107,138,0.08)] backdrop-blur-md" suppressHydrationWarning>
           <Link to={mounted && isLoggedIn ? "/dashboard" : "/"} className="inline-flex items-center">
-            <img src="/itineraya-logo.png" alt="Itineraya" className="h-8 w-auto select-none" draggable={false} />
+            <img src="/itineraya-logo.png" alt="Itineraya" className="hidden h-8 w-auto select-none sm:block" draggable={false} />
+            <img src="/itineraya-mark.png" alt="Itineraya" className="h-8 w-auto select-none sm:hidden" draggable={false} />
           </Link>
 
           <div className="hidden items-center gap-6 md:flex" suppressHydrationWarning>

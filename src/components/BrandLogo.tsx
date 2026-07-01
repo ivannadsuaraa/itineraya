@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 
 type Size = "sm" | "md" | "lg" | "xl";
-type Variant = "full" | "mark";
+type Variant = "full" | "mark" | "wordmark";
 
 const HEIGHTS: Record<Size, string> = {
   sm: "h-7",
@@ -25,7 +25,7 @@ export function BrandLogo({
   const { user } = useAuthSession();
 
   const to = linkTo ?? (user ? "/dashboard" : "/");
-  const src = variant === "mark" ? "/itineraya-mark.png" : "/itineraya-logo.png";
+  const src = variant === "mark" ? "/itineraya-mark.png" : variant === "wordmark" ? "/itineraya-wordmark.png" : "/itineraya-logo.png";
 
   return (
     <Link to={to} className={`inline-flex items-center transition hover:opacity-80 ${className}`}>
