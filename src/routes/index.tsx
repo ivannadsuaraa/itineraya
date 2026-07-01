@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components/landing/Navbar";
+import { MobileBottomBar } from "@/components/DashboardSidebar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { PopularDestinationsSection } from "@/components/landing/PopularDestinationsSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
@@ -41,7 +42,7 @@ function LandingPage() {
     return () => subscription.unsubscribe();
   }, []);
   return (
-    <div className="min-h-screen bg-white">
+    <div className={`min-h-screen bg-white ${isLoggedIn ? "pb-16 md:pb-0" : ""}`}>
       <Navbar />
       <HeroSection />
 
@@ -96,6 +97,7 @@ function LandingPage() {
       </section>
 
       <FooterSection />
+      {isLoggedIn && <MobileBottomBar />}
     </div>
   );
 }

@@ -13,7 +13,7 @@ import {
 import { listPublicTrips, type PublicFeedItem } from "@/lib/explore.functions";
 import { Navbar } from "@/components/landing/Navbar";
 import { FooterSection } from "@/components/landing/FooterSection";
-import { MobileBottomBar } from "@/components/DashboardSidebar";
+import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/explore/")({
@@ -54,7 +54,7 @@ function ExplorePage() {
   const [durationBucket, setDurationBucket] = useState<(typeof DURATIONS)[number]>("all");
   const [items, setItems] = useState<PublicFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setIsAuthenticated(!!data.user));
@@ -92,9 +92,9 @@ function ExplorePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#EAF4FB] via-white to-[#D6EAF8] pb-16 md:pb-0">
-      <Navbar />
-      <main className="pt-28">
+    <div className={`min-h-screen bg-gradient-to-br from-[#EAF4FB] via-white to-[#D6EAF8] ${isAuthenticated ? "pb-16 md:pb-0" : ""}`}>
+      {isAuthenticated ? <DesktopTopNav /> : <Navbar />}
+      <main className={isAuthenticated ? "md:pt-14 pt-4" : "pt-28"}>
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[#1E6B9A] ring-1 ring-sky-200 backdrop-blur">
@@ -177,7 +177,7 @@ function ExplorePage() {
           </div>
         </section>
       </main>
-      <FooterSection />
+      {!isAuthenticated && <FooterSection />}
       {isAuthenticated && <MobileBottomBar />}
     </div>
   );
