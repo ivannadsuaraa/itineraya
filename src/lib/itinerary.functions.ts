@@ -292,7 +292,7 @@ for (let attempt = 1; attempt <= 3; attempt++) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "claude-haiku-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 10000,
       system: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
       messages: [{ role: "user", content: prompt }],
