@@ -5,6 +5,7 @@ import { MapPin, Loader2 } from "lucide-react";
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  onEnter?: () => void;
   placeholder?: string;
   className?: string;
 };
@@ -44,7 +45,7 @@ function loadGoogleMaps(): Promise<void> {
 
 type Suggestion = { description: string; placeId: string };
 
-export function DestinationAutocomplete({ value, onChange, placeholder, className }: Props) {
+export function DestinationAutocomplete({ value, onChange, onEnter, placeholder, className }: Props) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -140,6 +141,15 @@ export function DestinationAutocomplete({ value, onChange, placeholder, classNam
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={(e) => {
+          if (e.key !== "Enter") return;
+          e.preventDefault();
+          if (open && suggestions.length > 0) {
+            pick(suggestions[0]);
+          } else {
+            onEnter?.();
+          }
+        }}
         placeholder={placeholder}
         className={
           className ??

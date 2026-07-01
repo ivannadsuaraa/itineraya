@@ -197,14 +197,19 @@ function OnboardingPage() {
           </div>
         </div>
 
-        
+
           <div
             key={step}
-            
-            
-            
-            
-            
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" || e.shiftKey) return;
+              const tag = (e.target as HTMLElement).tagName;
+              // Buttons handle Enter natively; textareas have their own handlers
+              if (tag === "BUTTON" || tag === "TEXTAREA") return;
+              e.preventDefault();
+              if (!canContinue) return;
+              if (step === totalSteps - 1) void finish();
+              else next();
+            }}
             className="rounded-3xl bg-white/85 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur-xl sm:p-8"
           >
             {step === 0 && (
@@ -212,6 +217,7 @@ function OnboardingPage() {
                 <DestinationAutocomplete
                   value={data.destination}
                   onChange={(destination) => setData((prevData) => ({ ...prevData, destination }))}
+                  onEnter={() => { if (canContinue) next(); }}
                   placeholder={t("onboarding.destPh")}
                 />
               </StepShell>
@@ -293,6 +299,7 @@ function OnboardingPage() {
                 <textarea
                   value={data.tripStyle}
                   onChange={(event) => setData((prevData) => ({ ...prevData, tripStyle: event.target.value }))}
+                  onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); next(); } }}
                   placeholder={t("onboarding.stylePh")}
                   className="min-h-28 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-sm text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
                 />
@@ -318,6 +325,7 @@ function OnboardingPage() {
                 <textarea
                   value={data.avoid}
                   onChange={(event) => setData((prevData) => ({ ...prevData, avoid: event.target.value }))}
+                  onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void finish(); } }}
                   placeholder={t("onboarding.avoidPh")}
                   className="min-h-32 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-sm text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
                 />
