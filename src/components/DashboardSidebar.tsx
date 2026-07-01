@@ -125,7 +125,7 @@ export function MobileBottomBar() {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
+    <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
       <ul className="grid grid-cols-5">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
