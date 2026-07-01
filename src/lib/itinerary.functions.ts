@@ -338,13 +338,11 @@ if (!content) throw new Error("Respuesta vacía del modelo");
     parsed = extractJson<ParsedItin>(content);
 
 
-    // Hero image
-    const hero = await unsplashImage(`${trip.destination} travel landscape`);
-
-    // Day images in parallel
-    const dayImages = await Promise.all(
-      parsed.days.map((d) => unsplashImage(`${d.image_query || trip.destination} ${trip.destination}`)),
-    );
+    // Hero + all day images in parallel
+    const [hero, ...dayImages] = await Promise.all([
+      unsplashImage(`${trip.destination} travel landscape`),
+      ...parsed.days.map((d) => unsplashImage(`${d.image_query || trip.destination} ${trip.destination}`)),
+    ]);
     parsed.days = parsed.days.map((d, i) => ({ ...d, image_url: dayImages[i] }));
 
     const { error: updateErr } = await supabase
