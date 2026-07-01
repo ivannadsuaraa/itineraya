@@ -559,6 +559,7 @@
     "days_other": "{{count}} días",
     "remix": "Remix",
     "view": "Ver viaje",
+    "emptyAction": "Crear mi viaje",
     "viralCta": "Crea el tuyo en 10 segundos",
     "heroEyebrow": "Itinerario publicado por la comunidad"
   },

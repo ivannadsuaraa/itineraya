@@ -9,6 +9,16 @@ import {
   Search,
   ArrowRight,
   Compass,
+  Mountain,
+  Waves,
+  Landmark,
+  Heart,
+  Users,
+  Music,
+  TreePine,
+  Globe,
+  Clock,
+  PlusCircle,
 } from "lucide-react";
 import { listPublicTrips, type PublicFeedItem } from "@/lib/explore.functions";
 import { Navbar } from "@/components/landing/Navbar";
@@ -44,6 +54,17 @@ export const Route = createFileRoute("/explore/")({
 const STYLES = ["all", "adventure", "relax", "cultural", "romantic", "family", "party", "nature"] as const;
 const DURATIONS = ["all", "short", "medium", "long"] as const;
 
+const STYLE_ICONS: Record<(typeof STYLES)[number], React.ElementType> = {
+  all: Globe,
+  adventure: Mountain,
+  relax: Waves,
+  cultural: Landmark,
+  romantic: Heart,
+  family: Users,
+  party: Music,
+  nature: TreePine,
+};
+
 function ExplorePage() {
   const { t } = useTranslation();
   const list = useServerFn(listPublicTrips);
@@ -64,18 +85,10 @@ function ExplorePage() {
     let cancel = false;
     setLoading(true);
     list({ data: { destination, style, durationBucket, limit: 60 } })
-      .then((res) => {
-        if (!cancel) setItems(res);
-      })
-      .catch(() => {
-        if (!cancel) setItems([]);
-      })
-      .finally(() => {
-        if (!cancel) setLoading(false);
-      });
-    return () => {
-      cancel = true;
-    };
+      .then((res) => { if (!cancel) setItems(res); })
+      .catch(() => { if (!cancel) setItems([]); })
+      .finally(() => { if (!cancel) setLoading(false); });
+    return () => { cancel = true; };
   }, [list, destination, style, durationBucket]);
 
   const handleRemix = (item: PublicFeedItem) => {
@@ -92,96 +105,171 @@ function ExplorePage() {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-[#EAF4FB] via-white to-[#D6EAF8] ${isAuthenticated ? "pb-16 md:pb-0" : ""}`}>
+    <div className={`min-h-dvh bg-slate-50 ${isAuthenticated ? "pb-16 md:pb-0" : ""}`}>
       {isAuthenticated ? <DesktopTopNav /> : <Navbar />}
-      <main className={isAuthenticated ? "md:pt-14 pt-4" : "pt-28"}>
-        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[#1E6B9A] ring-1 ring-sky-200 backdrop-blur">
+
+      <main className={isAuthenticated ? "md:pt-14" : "pt-28"}>
+
+        {/* ── Header ── */}
+        <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 py-12 sm:py-16">
+          {/* decorative blobs */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-sky-700/30 blur-3xl" />
+            <div className="absolute -bottom-10 right-0 h-64 w-64 rounded-full bg-[#1E6B9A]/40 blur-3xl" />
+          </div>
+
+          <div className="relative mx-auto max-w-3xl text-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-sky-200 ring-1 ring-white/20 backdrop-blur">
               <Compass className="h-3.5 w-3.5" />
               {t("explore.eyebrow")}
             </span>
-            <h1 className="mt-4 font-display text-4xl font-bold tracking-tight text-sky-900 sm:text-5xl">
+            <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-white sm:text-5xl">
               {t("explore.title")}
             </h1>
-            <p className="mt-3 text-base text-sky-700 sm:text-lg">{t("explore.subtitle")}</p>
-          </div>
+            <p className="mt-3 text-base text-sky-200 sm:text-lg">
+              {t("explore.subtitle")}
+            </p>
 
-          {/* Filters */}
-          <div className="mx-auto mt-8 flex max-w-4xl flex-col gap-3 rounded-3xl bg-white/80 p-3 shadow-lg ring-1 ring-sky-100 backdrop-blur md:flex-row md:items-center">
-            <div className="flex flex-1 items-center gap-2 rounded-2xl bg-sky-50/70 px-3 py-2">
-              <Search className="h-4 w-4 text-sky-500" />
+            {/* Search bar */}
+            <div className="mx-auto mt-8 flex max-w-xl items-center gap-2.5 rounded-full bg-white px-4 py-2.5 shadow-xl ring-1 ring-white/10">
+              <Search className="h-4 w-4 shrink-0 text-slate-400" />
               <input
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 placeholder={t("explore.searchPlaceholder")}
-                className="w-full bg-transparent text-sm text-sky-900 outline-none placeholder:text-sky-500"
+                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
+              {destination && (
+                <button
+                  type="button"
+                  onClick={() => setDestination("")}
+                  className="h-5 w-5 shrink-0 rounded-full bg-slate-200 text-slate-500 text-xs font-bold leading-5 transition hover:bg-slate-300"
+                  aria-label="Clear"
+                >
+                  ×
+                </button>
+              )}
             </div>
-            <select
-              value={style}
-              onChange={(e) => setStyle(e.target.value as (typeof STYLES)[number])}
-              className="rounded-2xl border-0 bg-sky-50/70 px-3 py-2 text-sm font-medium text-sky-900 outline-none"
-            >
-              {STYLES.map((s) => (
-                <option key={s} value={s}>
-                  {t(`explore.style.${s}`)}
-                </option>
-              ))}
-            </select>
-            <select
-              value={durationBucket}
-              onChange={(e) => setDurationBucket(e.target.value as (typeof DURATIONS)[number])}
-              className="rounded-2xl border-0 bg-sky-50/70 px-3 py-2 text-sm font-medium text-sky-900 outline-none"
-            >
-              {DURATIONS.map((d) => (
-                <option key={d} value={d}>
-                  {t(`explore.duration.${d}`)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Feed */}
-          <div className="mt-10 pb-20">
-            {loading ? (
-              <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [column-fill:_balance]">
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <div key={i} className="mb-5 break-inside-avoid overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-sky-100">
-                    <div className="h-72 w-full animate-pulse bg-slate-200" />
-                    <div className="space-y-2 p-4">
-                      <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
-                      <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200" />
-                    </div>
-                    <div className="flex gap-2 px-4 pb-4">
-                      <div className="h-8 w-24 animate-pulse rounded-full bg-slate-200" />
-                      <div className="h-8 w-16 animate-pulse rounded-full bg-slate-200" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : items.length === 0 ? (
-              <div className="rounded-3xl bg-white/80 p-12 text-center shadow ring-1 ring-sky-100">
-                <Sparkles className="mx-auto h-8 w-8 text-sky-400" />
-                <p className="mt-3 font-semibold text-sky-900">{t("explore.empty")}</p>
-                <p className="mt-1 text-sm text-sky-600">{t("explore.emptyHint")}</p>
-              </div>
-            ) : (
-              <div className="columns-1 gap-5 sm:columns-2 lg:columns-3 xl:columns-4 [column-fill:_balance]">
-                {items.map((item) => (
-                  <FeedCard key={item.slug} item={item} onRemix={() => handleRemix(item)} />
-                ))}
-              </div>
-            )}
-
           </div>
         </section>
+
+        {/* ── Filters ── */}
+        <div className="sticky top-14 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {/* Style chips */}
+            <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
+              {STYLES.map((s) => {
+                const Icon = STYLE_ICONS[s];
+                const active = style === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStyle(s)}
+                    className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                      active
+                        ? "bg-sky-900 text-white shadow-md"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <Icon className="h-3 w-3" />
+                    {t(`explore.style.${s}`)}
+                  </button>
+                );
+              })}
+
+              <div className="mx-2 h-5 w-px shrink-0 bg-slate-200" />
+
+              {/* Duration chips */}
+              {DURATIONS.filter((d) => d !== "all").map((d) => {
+                const active = durationBucket === d;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setDurationBucket(active ? "all" : d)}
+                    className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                      active
+                        ? "bg-[#1E6B9A] text-white shadow-md"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
+                  >
+                    <Clock className="h-3 w-3" />
+                    {t(`explore.duration.${d}`)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Feed ── */}
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+          {loading ? (
+            <SkeletonGrid />
+          ) : items.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {items.map((item) => (
+                <FeedCard key={item.slug} item={item} onRemix={() => handleRemix(item)} />
+              ))}
+            </div>
+          )}
+        </section>
       </main>
+
       {!isAuthenticated && <FooterSection />}
       {isAuthenticated && <MobileBottomBar />}
     </div>
   );
 }
+
+/* ─── Skeleton ─── */
+
+function SkeletonGrid() {
+  return (
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+          <div className="aspect-[4/3] w-full animate-pulse bg-slate-200" />
+          <div className="p-4 space-y-3">
+            <div className="h-5 w-3/4 animate-pulse rounded-full bg-slate-200" />
+            <div className="h-3.5 w-1/2 animate-pulse rounded-full bg-slate-200" />
+            <div className="flex items-center gap-2 pt-1">
+              <div className="h-7 w-20 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-7 w-16 animate-pulse rounded-full bg-slate-200" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── Empty state ─── */
+
+function EmptyState() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-20 text-center">
+      <div className="grid h-16 w-16 place-items-center rounded-full bg-sky-50 ring-1 ring-sky-100">
+        <Compass className="h-7 w-7 text-sky-500" />
+      </div>
+      <p className="mt-5 text-lg font-semibold text-slate-800">{t("explore.empty")}</p>
+      <p className="mt-1.5 max-w-xs text-sm text-slate-500">{t("explore.emptyHint")}</p>
+      <Link
+        to="/new-trip"
+        className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-[#15577E]"
+      >
+        <PlusCircle className="h-4 w-4" />
+        {t("explore.emptyAction")}
+      </Link>
+    </div>
+  );
+}
+
+/* ─── Feed card ─── */
 
 function hashString(s: string): number {
   let h = 0;
@@ -189,11 +277,19 @@ function hashString(s: string): number {
   return h;
 }
 
+function initials(destination: string): string {
+  return destination
+    .split(/[\s,]+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void }) {
   const { t } = useTranslation();
   const fallback = useMemo(
     () =>
-      `https://loremflickr.com/800/1000/${encodeURIComponent(
+      `https://loremflickr.com/800/600/${encodeURIComponent(
         item.destination.split(",")[0].trim() + ",travel",
       )}?lock=${Math.abs(hashString(item.slug)) % 1000}`,
     [item.destination, item.slug],
@@ -204,49 +300,66 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
     : item.destination;
 
   return (
-    <article className="group mb-5 break-inside-avoid overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-sky-100 transition hover:-translate-y-1 hover:shadow-xl">
+    <article className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-slate-200">
+      {/* Image */}
       <Link to="/explore/$slug" params={{ slug: item.slug }} className="block">
-        <div className="relative overflow-hidden">
+        <div className="relative aspect-[4/3] overflow-hidden">
           <img
             src={img}
             alt={item.destination}
             loading="lazy"
             onError={() => setImg(fallback)}
-            className="h-72 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-            <h3 className="font-display text-xl font-bold leading-tight drop-shadow">{title}</h3>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px] opacity-95">
-              {item.n_days && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-0.5 backdrop-blur-sm">
-                  <CalendarIcon className="h-3 w-3" />
-                  {t("explore.days", { count: item.n_days })}
-                </span>
-              )}
-              {item.trip_style && (
-                <span className="rounded-full bg-white/25 px-2.5 py-0.5 capitalize backdrop-blur-sm">
-                  {item.trip_style}
-                </span>
-              )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+
+          {/* Top badges */}
+          <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+            {item.trip_style && (
+              <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-semibold capitalize text-slate-800 shadow-sm backdrop-blur-sm">
+                {item.trip_style}
+              </span>
+            )}
+            {item.n_days && (
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
+                <CalendarIcon className="h-2.5 w-2.5" />
+                {t("explore.days", { count: item.n_days })}
+              </span>
+            )}
+          </div>
+
+          {/* Bottom overlay: title + avatar */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-4">
+            <div className="min-w-0">
+              <h3 className="font-display text-base font-bold leading-tight text-white drop-shadow-sm line-clamp-2">
+                {title}
+              </h3>
+              <div className="mt-1 flex items-center gap-1 text-[11px] text-white/80">
+                <MapPin className="h-2.5 w-2.5 shrink-0" />
+                <span className="truncate">{item.destination}</span>
+              </div>
+            </div>
+            {/* Author avatar placeholder */}
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#1E6B9A] text-[11px] font-bold text-white ring-2 ring-white/50 shadow">
+              {initials(item.destination)}
             </div>
           </div>
         </div>
       </Link>
-      {item.summary && (
-        <Link to="/explore/$slug" params={{ slug: item.slug }} className="block px-4 pt-3 pb-1">
-          <p className="line-clamp-2 text-xs leading-relaxed text-slate-500">{item.summary}</p>
-        </Link>
-      )}
-      <div className="flex items-center justify-between gap-2 px-4 py-3">
-        <div className="flex items-center gap-1 text-xs font-medium text-slate-500">
-          <MapPin className="h-3 w-3 shrink-0 text-sky-400" />
-          <span className="truncate">{item.destination}</span>
-        </div>
-        <div className="flex shrink-0 items-center gap-1.5">
+
+      {/* Card body */}
+      <div className="p-4">
+        {item.summary && (
+          <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-slate-500">
+            {item.summary}
+          </p>
+        )}
+        <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={onRemix}
-            className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-3 py-1.5 text-[11px] font-bold text-white shadow transition hover:shadow-md active:scale-[0.97]"
+            className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-sky-900 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
           >
             <Sparkles className="h-3 w-3" />
             {t("explore.remix")}
@@ -254,7 +367,7 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
           <Link
             to="/explore/$slug"
             params={{ slug: item.slug }}
-            className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-3 py-1.5 text-[11px] font-semibold text-sky-800 ring-1 ring-sky-200 transition hover:bg-sky-100 active:scale-[0.97]"
+            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
           >
             {t("explore.view")}
             <ArrowRight className="h-3 w-3" />
