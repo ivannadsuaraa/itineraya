@@ -24,13 +24,24 @@ type Props = {
 
 const MAX_SUGGESTIONS = 5;
 const DEBOUNCE_MS = 300;
+// Countries and major cities/first-level regions only — deliberately excludes
+// administrative_area_level_2 (US counties, etc.), sublocality and postal_code,
+// which is what the "(regions)" bracket collection pulls in. Without this, typing
+// "Patagonia" can surface "Patagonia, Santa Cruz County, Arizona" instead of the
+// South American region.
+const PLACE_TYPES = ["locality", "administrative_area_level_1", "country"];
 
 type Suggestion = { description: string; secondary: string; placeId: string };
 
 async function nominatimFallback(query: string): Promise<Suggestion[]> {
   try {
+    // No `featuretype` restriction here — that param only accepts one value
+    // and "city" alone excludes countries and broad named regions (e.g.
+    // "Patagonia"). Instead, over-fetch and filter client-side by class/type
+    // so both cities and countries/regions survive, while shops, restaurants
+    // and other POIs that happen to match the query text are dropped.
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=${MAX_SUGGESTIONS}&featuretype=city&q=${encodeURIComponent(query)}`,
+      `https://nominatim.openstreetmap.org/search?format=json&addressdetails=0&limit=${MAX_SUGGESTIONS * 3}&q=${encodeURIComponent(query)}`,
       { headers: { "Accept-Language": "es,en" } },
     );
     if (!res.ok) return [];
@@ -39,15 +50,22 @@ async function nominatimFallback(query: string): Promise<Suggestion[]> {
       lat: string;
       lon: string;
       place_id: number;
+      class: string;
+      type: string;
     }>;
-    return data.map((d) => {
-      const parts = d.display_name.split(",").map((p) => p.trim());
-      return {
-        description: parts[0] || d.display_name,
-        secondary: parts.slice(1).join(", "),
-        placeId: `nominatim:${d.place_id}:${d.lat}:${d.lon}`,
-      };
-    });
+    const isPlaceLike = (d: (typeof data)[number]) =>
+      d.class === "place" || (d.class === "boundary" && d.type === "administrative");
+    return data
+      .filter(isPlaceLike)
+      .slice(0, MAX_SUGGESTIONS)
+      .map((d) => {
+        const parts = d.display_name.split(",").map((p) => p.trim());
+        return {
+          description: parts[0] || d.display_name,
+          secondary: parts.slice(1).join(", "),
+          placeId: `nominatim:${d.place_id}:${d.lat}:${d.lon}`,
+        };
+      });
   } catch {
     return [];
   }
@@ -158,7 +176,7 @@ export function DestinationAutocomplete({
           const res = await placesAny.AutocompleteSuggestion.fetchAutocompleteSuggestions({
             input: q,
             sessionToken: sessionTokenRef.current,
-            includedPrimaryTypes: ["(regions)"],
+            includedPrimaryTypes: PLACE_TYPES,
           });
           if (requestIdRef.current !== myRequestId) return;
           const mapped: Suggestion[] = (res.suggestions || [])
@@ -176,7 +194,7 @@ export function DestinationAutocomplete({
         } else if (placesAny.AutocompleteService) {
           const svc = new placesAny.AutocompleteService();
           svc.getPlacePredictions(
-            { input: q, types: ["(regions)"], sessionToken: sessionTokenRef.current },
+            { input: q, types: PLACE_TYPES, sessionToken: sessionTokenRef.current },
             (preds, status) => {
               if (requestIdRef.current !== myRequestId) return;
               // The callback API never throws — a dead key surfaces as a non-OK

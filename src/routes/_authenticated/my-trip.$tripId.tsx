@@ -16,6 +16,7 @@ import {
   Map as MapIcon,
   Users,
   Clock,
+  X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +28,9 @@ import { TripmatesModal } from "@/components/trip/TripmatesModal";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 
-const TripMap = lazy(() => import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })));
+const TripMap = lazy(() =>
+  import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })),
+);
 
 export const Route = createFileRoute("/_authenticated/my-trip/$tripId")({
   component: ItineraryPage,
@@ -35,14 +38,7 @@ export const Route = createFileRoute("/_authenticated/my-trip/$tripId")({
 });
 
 type ActivityCategory =
-  | "hotel"
-  | "restaurant"
-  | "activity"
-  | "transport"
-  | "sight"
-  | "nightlife"
-  | "shopping"
-  | "other";
+  "hotel" | "restaurant" | "activity" | "transport" | "sight" | "nightlife" | "shopping" | "other";
 
 type Activity = {
   time: string;
@@ -86,10 +82,13 @@ function bookingForCategory(
 ): BookingInfo | null {
   if (aiUrl) {
     const brand =
-      category === "hotel" ? "Booking" :
-      category === "restaurant" ? "TheFork" :
-      category === "nightlife" ? "TripAdvisor" :
-      "GetYourGuide";
+      category === "hotel"
+        ? "Booking"
+        : category === "restaurant"
+          ? "TheFork"
+          : category === "nightlife"
+            ? "TripAdvisor"
+            : "GetYourGuide";
     return { kind: "book", brand, url: aiUrl };
   }
   const q = `${placeOrTitle} ${destination}`.trim();
@@ -145,7 +144,8 @@ function ItineraryPage() {
     itinerary: Itinerary | null;
     status: string;
   } | null>(null);
-  const [view, setView] = useState<"cards" | "text" | "map">("cards");
+  const [view, setView] = useState<"cards" | "text">("cards");
+  const [mapModalOpen, setMapModalOpen] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -161,7 +161,10 @@ function ItineraryPage() {
         .select("plan")
         .eq("id", u.user.id)
         .maybeSingle();
-      setPlan((((profile as { plan?: string } | null)?.plan ?? "free") as "free" | "viajero" | "explorador"));
+      setPlan(
+        ((profile as { plan?: string } | null)?.plan ?? "free") as
+          "free" | "viajero" | "explorador",
+      );
     })();
   }, []);
 
@@ -210,10 +213,13 @@ function ItineraryPage() {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [tripId, generate, t, i18n.language]);
 
-  if (loading) return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} subtitle={t("trip.loadingSubtitle")} />;
+  if (loading)
+    return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} subtitle={t("trip.loadingSubtitle")} />;
 
   if (error) {
     return (
@@ -255,15 +261,17 @@ function ItineraryPage() {
           <div className="flex items-center gap-2">
             {/* View toggle */}
             <div className="flex rounded-full bg-slate-100 p-0.5">
-              {(["cards", "text", "map"] as const).map((v) => {
-                const Icon = v === "cards" ? LayoutGrid : v === "text" ? FileText : MapIcon;
-                const label = v === "cards" ? t("trip.viewCards") : v === "text" ? t("trip.viewText") : t("trip.viewMap");
+              {(["cards", "text"] as const).map((v) => {
+                const Icon = v === "cards" ? LayoutGrid : FileText;
+                const label = v === "cards" ? t("trip.viewCards") : t("trip.viewText");
                 return (
                   <button
                     key={v}
                     onClick={() => setView(v)}
                     className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
-                      view === v ? "bg-sky-900 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"
+                      view === v
+                        ? "bg-sky-900 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5" />
@@ -272,6 +280,15 @@ function ItineraryPage() {
                 );
               })}
             </div>
+
+            {/* Fullscreen map */}
+            <button
+              onClick={() => setMapModalOpen(true)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            >
+              <MapIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("trip.viewMap")}</span>
+            </button>
 
             {/* Action buttons */}
             <button
@@ -313,7 +330,11 @@ function ItineraryPage() {
       {/* ── Hero image ── */}
       <div className="relative h-72 w-full overflow-hidden md:h-96">
         {trip.hero_image_url ? (
-          <img src={trip.hero_image_url} alt={trip.destination} className="h-full w-full object-cover" />
+          <img
+            src={trip.hero_image_url}
+            alt={trip.destination}
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-sky-950 to-sky-800" />
         )}
@@ -348,7 +369,7 @@ function ItineraryPage() {
 
         <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
           {/* Cards / Text panel */}
-          <div className={view === "map" ? "hidden lg:block" : ""}>
+          <div>
             {view !== "text" ? (
               <div className="space-y-5">
                 {itin.days.map((day) => (
@@ -367,8 +388,8 @@ function ItineraryPage() {
                       {day.activities.map((a, i) => (
                         <li key={i} className="text-sm text-slate-700">
                           <span className="mr-1">{a.emoji ?? "📍"}</span>
-                          <span className="font-semibold text-sky-700">{a.time}</span>{" "}
-                          — <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
+                          <span className="font-semibold text-sky-700">{a.time}</span> —{" "}
+                          <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
                           <span className="text-slate-500">{a.description}</span>
                         </li>
                       ))}
@@ -379,20 +400,53 @@ function ItineraryPage() {
             )}
           </div>
 
-          {/* Map panel */}
-          <div className={view === "map" ? "block" : "hidden lg:block"}>
+          {/* Map panel (persistent preview on desktop) */}
+          <div className="hidden lg:block">
             <div className="lg:sticky lg:top-[60px]">
-              <Suspense fallback={
-                <div className="flex h-[60vh] items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                  <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
-                </div>
-              }>
+              <Suspense
+                fallback={
+                  <div className="flex h-[60vh] items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                    <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+                  </div>
+                }
+              >
                 <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
               </Suspense>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Fullscreen map modal */}
+      {mapModalOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-sm">
+          <div className="flex items-center justify-between bg-white px-4 py-3 shadow-sm sm:px-6">
+            <h2 className="flex items-center gap-2 font-display text-base font-bold text-sky-900">
+              <MapIcon className="h-4.5 w-4.5 text-[#1E6B9A]" />
+              {t("trip.mapTitle")}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setMapModalOpen(false)}
+              aria-label={t("layout.back")}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white p-3 sm:p-5">
+            <Suspense
+              fallback={
+                <div className="flex h-full min-h-[60vh] items-center justify-center rounded-2xl bg-white">
+                  <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+                </div>
+              }
+            >
+              <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
+            </Suspense>
+          </div>
+        </div>
+      )}
 
       <AssistantEditPanel
         open={assistantOpen}
@@ -437,6 +491,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
         place: a.place,
         description: a.description,
         url: a.url,
+        category: a.category,
       })),
     });
   };
@@ -501,7 +556,9 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
             <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-sm">
               {t("trip.dayLabel", { n: day.day })}
             </span>
-            <h3 className="mt-1.5 font-display text-xl font-bold text-white drop-shadow sm:text-2xl">{day.title}</h3>
+            <h3 className="mt-1.5 font-display text-xl font-bold text-white drop-shadow sm:text-2xl">
+              {day.title}
+            </h3>
             {day.subtitle && <p className="text-xs text-white/80 sm:text-sm">{day.subtitle}</p>}
           </div>
         </div>
@@ -534,7 +591,11 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           disabled={busy !== null}
           className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-60 sm:text-sm"
         >
-          {busy === "download" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+          {busy === "download" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Download className="h-3.5 w-3.5" />
+          )}
           {t("trip.postcardDownloaded")}
         </button>
         <button
@@ -542,7 +603,11 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           disabled={busy !== null}
           className="flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800 disabled:opacity-60 sm:text-sm"
         >
-          {busy === "share" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Share2 className="h-3.5 w-3.5" />}
+          {busy === "share" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Share2 className="h-3.5 w-3.5" />
+          )}
           {t("trip.share")}
         </button>
       </div>
@@ -553,7 +618,12 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
 function ActivityRow({ activity, destination }: { activity: Activity; destination: string }) {
   const { t } = useTranslation();
   const placeQuery = `${activity.place || activity.title}, ${destination}`;
-  const booking = bookingForCategory(activity.category, activity.place || activity.title, destination, activity.url);
+  const booking = bookingForCategory(
+    activity.category,
+    activity.place || activity.title,
+    destination,
+    activity.url,
+  );
   const bookingLabel = booking?.kind === "view" ? t("trip.viewVerb") : t("trip.book");
 
   return (
@@ -570,9 +640,7 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
           <span className="text-base leading-tight">{activity.emoji ?? "📍"}</span>
           <div className="min-w-0 flex-1">
             <p className="font-semibold leading-tight text-slate-900">{activity.title}</p>
-            {activity.place && (
-              <p className="truncate text-xs text-slate-500">{activity.place}</p>
-            )}
+            {activity.place && <p className="truncate text-xs text-slate-500">{activity.place}</p>}
           </div>
         </div>
         <p className="mt-1 text-sm leading-relaxed text-slate-600">{activity.description}</p>

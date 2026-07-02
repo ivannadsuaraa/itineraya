@@ -1,4 +1,5 @@
-// Generates a travel-postcard style PNG for a day of the itinerary, using HTML Canvas.
+// Generates a downloadable travel-postcard PNG for a day of the itinerary,
+// using HTML Canvas. Landscape 16:9, dark-navy background, built for sharing.
 
 export type PostcardActivity = {
   time: string;
@@ -6,6 +7,7 @@ export type PostcardActivity = {
   title: string;
   place?: string;
   description?: string;
+  category?: string;
 };
 
 export type PostcardInput = {
@@ -17,21 +19,11 @@ export type PostcardInput = {
   activities: PostcardActivity[];
 };
 
-const PALETTES = [
-  { from: "#FF7E5F", to: "#FEB47B", accent: "#FFFFFF", ink: "#2A1B0E" }, // sunset coral
-  { from: "#2E8B8B", to: "#6FB3B8", accent: "#FFE9A8", ink: "#0F2A2A" }, // tropical teal
-  { from: "#5B6FE0", to: "#A88BE0", accent: "#FFD3B6", ink: "#0F1647" }, // dusk lavender
-  { from: "#E94B6A", to: "#F4A261", accent: "#FFF1D0", ink: "#3A0E1A" }, // warm rouge
-  { from: "#1E6B9A", to: "#6FB3D2", accent: "#FFE2A8", ink: "#0B2335" }, // brand sky
-  { from: "#264653", to: "#2A9D8F", accent: "#E9C46A", ink: "#0E1F22" }, // forest sea
-  { from: "#7B2CBF", to: "#E0AAFF", accent: "#FFD6E0", ink: "#1B0033" }, // violet pop
-];
-
-function hashCode(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
+// Brand palette — dark navy canvas, white text, sky-400 accent.
+const NAVY_DARK = "#050b16";
+const NAVY = "#0b1a2e";
+const SKY_ACCENT = "#38bdf8"; // sky-400
+const SKY_SOFT = "#7dd3fc"; // sky-300
 
 function loadImage(src: string): Promise<HTMLImageElement | null> {
   return new Promise((resolve) => {
@@ -91,199 +83,346 @@ function wrapText(
   return lines;
 }
 
+function hexToRgba(hex: string, a: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ---------------------------------------------------------------------------
+// Activity icon system — one monoline SVG per category, matched from the
+// AI-assigned category first, then from keywords in the title/description so
+// older itineraries without a category still get a sensible icon.
+// ---------------------------------------------------------------------------
+
+type IconId =
+  | "museum"
+  | "beach"
+  | "mountain"
+  | "restaurant"
+  | "shopping"
+  | "theater"
+  | "temple"
+  | "sunset"
+  | "walk"
+  | "pin";
+
+const ICON_PATHS: Record<IconId, string> = {
+  // Museum / monument: columns + pediment
+  museum: '<path d="M3 21h18M4 21V10M20 21V10M2 10l10-6 10 6M6 10v7M10 10v7M14 10v7M18 10v7"/>',
+  // Beach: palm + waves
+  beach:
+    '<path d="M5 12c2-6 6-8 6-8s-1 4 1 6 6 1 6 1-3 3-7 2c0 3-1 6-1 6M2 19c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 4.5 0 3 1 4.5 0"/>',
+  // Mountain / nature
+  mountain: '<path d="M2 20l6.5-11L13 15l2.5-4L22 20H2z"/><circle cx="17" cy="6" r="2.2"/>',
+  // Restaurant: fork + knife
+  restaurant: '<path d="M7 2v8M5 2v5a2 2 0 0 0 4 0V2M9 2v20M17 2c-1.5 0-3 1.5-3 4s1.5 5 3 5v11"/>',
+  // Shopping bag
+  shopping: '<path d="M6 8h12l-1 13H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  // Theater / culture masks
+  theater:
+    '<circle cx="9" cy="9" r="5.5"/><circle cx="15" cy="15" r="5.5"/><path d="M7 8.2c.5.5 1.5.5 2 0M11 10.6c.4-.7 1.4-.7 1.8 0M13 14.2c.5.5 1.5.5 2 0M17 16.6c.4-.7 1.4-.7 1.8 0"/>',
+  // Temple / religious building
+  temple: '<path d="M12 2 3 8h18L12 2z"/><path d="M5 8v12M19 8v12M9 20v-6h6v6M3 20h18"/>',
+  // Sunset / viewpoint
+  sunset:
+    '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/><path d="M2 21h20"/>',
+  // Walk / street
+  walk: '<circle cx="12" cy="4.5" r="1.8"/><path d="M9 21l2-7-2-2 1-5 2 2 3-1 2 3-3 1 1 4 3 5"/>',
+  // Default pin
+  pin: '<path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+};
+
+const CATEGORY_ICON: Record<string, IconId> = {
+  hotel: "pin",
+  restaurant: "restaurant",
+  sight: "museum",
+  activity: "mountain",
+  nightlife: "theater",
+  shopping: "shopping",
+  transport: "walk",
+  other: "pin",
+};
+
+const KEYWORD_ICON: Array<[RegExp, IconId]> = [
+  [/playa|beach|costa|mar\b|snorkel|kayak/i, "beach"],
+  [/montañ|mountain|hiking|senderismo|volc[aá]n|natural/i, "mountain"],
+  [/templo|iglesia|catedral|temple|church|mezquita|sinagoga/i, "temple"],
+  [/atardecer|sunset|mirador|vista|amanecer|viewpoint/i, "sunset"],
+  [/museo|monumento|museum|galer[ií]a|palacio|castillo/i, "museum"],
+  [/restaurante|cena|comida|almuerzo|desayuno|dinner|lunch|breakfast|bar\b|caf[eé]/i, "restaurant"],
+  [/compras|mercado|shopping|tienda|market/i, "shopping"],
+  [/teatro|show|espect[aá]culo|concierto|m[uú]sica|theater|music/i, "theater"],
+  [/paseo|barrio|calle|walk|stroll|neighbo/i, "walk"],
+];
+
+function matchIcon(activity: PostcardActivity): IconId {
+  const text = `${activity.title} ${activity.description ?? ""}`;
+  for (const [re, icon] of KEYWORD_ICON) {
+    if (re.test(text)) return icon;
+  }
+  if (activity.category && CATEGORY_ICON[activity.category]) {
+    return CATEGORY_ICON[activity.category];
+  }
+  return "pin";
+}
+
+function iconSvgDataUrl(icon: IconId, color: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[icon]}</svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+async function preloadIcons(
+  activities: PostcardActivity[],
+): Promise<Map<IconId, HTMLImageElement>> {
+  const needed = new Set<IconId>(activities.map(matchIcon));
+  const entries = await Promise.all(
+    Array.from(needed).map(async (icon) => {
+      const img = await loadImage(iconSvgDataUrl(icon, SKY_ACCENT));
+      return [icon, img] as const;
+    }),
+  );
+  const map = new Map<IconId, HTMLImageElement>();
+  for (const [icon, img] of entries) if (img) map.set(icon, img);
+  return map;
+}
+
+// ---------------------------------------------------------------------------
+// Schematic day map — abstract numbered points joined by a dotted line, laid
+// out deterministically from the activity index (no real geo data needed).
+// ---------------------------------------------------------------------------
+
+function drawSchematicMap(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  count: number,
+) {
+  roundRect(ctx, x, y, w, h, 20);
+  ctx.fillStyle = hexToRgba("#ffffff", 0.06);
+  ctx.fill();
+  ctx.strokeStyle = hexToRgba("#ffffff", 0.14);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  const n = Math.max(1, Math.min(count, 8));
+  const pad = 34;
+  const innerW = w - pad * 2;
+  const innerH = h - pad * 2 - 8;
+  const points: Array<{ x: number; y: number }> = [];
+  for (let i = 0; i < n; i++) {
+    const t = n === 1 ? 0.5 : i / (n - 1);
+    // gentle zig-zag so the route doesn't read as a straight line
+    const wob = Math.sin(i * 2.4) * 0.28 + 0.5;
+    points.push({
+      x: x + pad + t * innerW,
+      y: y + pad + wob * innerH,
+    });
+  }
+
+  ctx.save();
+  ctx.strokeStyle = hexToRgba(SKY_ACCENT, 0.85);
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 7]);
+  ctx.beginPath();
+  points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+  ctx.stroke();
+  ctx.restore();
+
+  points.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 13, 0, Math.PI * 2);
+    ctx.fillStyle = i === 0 ? SKY_ACCENT : NAVY;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = SKY_ACCENT;
+    ctx.stroke();
+    ctx.fillStyle = i === 0 ? NAVY_DARK : "#ffffff";
+    ctx.font = "700 13px 'Inter', system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(i + 1), p.x, p.y + 1);
+  });
+}
+
 export async function generatePostcardDataUrl(input: PostcardInput): Promise<string> {
-  const W = 1200;
-  const H = 1600;
-  const palette = PALETTES[hashCode(input.destination) % PALETTES.length];
+  const W = 1920;
+  const H = 1080;
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  // Outer background — ivory paper
-  ctx.fillStyle = "#FBF7F0";
+  // ===== Background: destination photo + dark navy overlay =====
+  ctx.fillStyle = NAVY_DARK;
   ctx.fillRect(0, 0, W, H);
-
-  // Subtle paper grain dots
-  ctx.fillStyle = "rgba(0,0,0,0.025)";
-  for (let i = 0; i < 800; i++) {
-    ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
-  }
-
-  // Margin / inner card
-  const M = 56;
-  const innerX = M;
-  const innerY = M;
-  const innerW = W - M * 2;
-  const innerH = H - M * 2;
-
-  // Stamp-like dashed border
-  ctx.save();
-  ctx.strokeStyle = "rgba(20,20,20,0.18)";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 6]);
-  roundRect(ctx, innerX, innerY, innerW, innerH, 32);
-  ctx.stroke();
-  ctx.restore();
-
-  // ===== Hero image area =====
-  const heroH = 620;
-  const heroX = innerX + 28;
-  const heroY = innerY + 28;
-  const heroW = innerW - 56;
-
-  ctx.save();
-  roundRect(ctx, heroX, heroY, heroW, heroH, 24);
-  ctx.clip();
 
   const heroImg = input.imageUrl ? await loadImage(input.imageUrl) : null;
   if (heroImg) {
-    // cover
     const ir = heroImg.width / heroImg.height;
-    const tr = heroW / heroH;
-    let dw = heroW;
-    let dh = heroH;
-    let dx = heroX;
-    let dy = heroY;
+    const tr = W / H;
+    let dw = W;
+    let dh = H;
+    let dx = 0;
+    let dy = 0;
     if (ir > tr) {
-      dw = heroH * ir;
-      dx = heroX - (dw - heroW) / 2;
+      dw = H * ir;
+      dx = (W - dw) / 2;
     } else {
-      dh = heroW / ir;
-      dy = heroY - (dh - heroH) / 2;
+      dh = W / ir;
+      dy = (H - dh) / 2;
     }
     ctx.drawImage(heroImg, dx, dy, dw, dh);
   } else {
-    const g = ctx.createLinearGradient(heroX, heroY, heroX + heroW, heroY + heroH);
-    g.addColorStop(0, palette.from);
-    g.addColorStop(1, palette.to);
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, NAVY_DARK);
+    g.addColorStop(1, NAVY);
     ctx.fillStyle = g;
-    ctx.fillRect(heroX, heroY, heroW, heroH);
+    ctx.fillRect(0, 0, W, H);
   }
 
-  // Color overlay
-  const overlay = ctx.createLinearGradient(0, heroY, 0, heroY + heroH);
-  overlay.addColorStop(0, "rgba(0,0,0,0.05)");
-  overlay.addColorStop(1, "rgba(0,0,0,0.55)");
-  ctx.fillStyle = overlay;
-  ctx.fillRect(heroX, heroY, heroW, heroH);
+  // Uniform dark-navy scrim so the photo never fights the text
+  ctx.fillStyle = hexToRgba(NAVY_DARK, 0.5);
+  ctx.fillRect(0, 0, W, H);
+  // Extra gradient toward the bottom, where the activity list sits
+  const scrim = ctx.createLinearGradient(0, H * 0.28, 0, H);
+  scrim.addColorStop(0, hexToRgba(NAVY_DARK, 0.15));
+  scrim.addColorStop(1, hexToRgba(NAVY_DARK, 0.92));
+  ctx.fillStyle = scrim;
+  ctx.fillRect(0, 0, W, H);
 
-  // Color wash from palette
-  const wash = ctx.createLinearGradient(heroX, heroY, heroX, heroY + heroH);
-  wash.addColorStop(0, hexToRgba(palette.from, 0.18));
-  wash.addColorStop(1, hexToRgba(palette.to, 0.32));
-  ctx.fillStyle = wash;
-  ctx.fillRect(heroX, heroY, heroW, heroH);
+  // ===== Icons (preload before drawing rows) =====
+  const iconImages = await preloadIcons(input.activities);
+  const logoImg = await loadImage("/itineraya-mark.png");
 
-  // Day chip
+  // ===== Top-left: small Itineraya logo =====
+  const M = 56;
+  if (logoImg) {
+    const logoH = 44;
+    const logoW = (logoImg.width / logoImg.height) * logoH;
+    ctx.drawImage(logoImg, M, M, logoW, logoH);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 26px 'Outfit', 'Inter', system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Itineraya", M + logoW + 14, M + logoH / 2 + 1);
+  } else {
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "700 26px 'Outfit', 'Inter', system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText("✈ Itineraya", M, M + 22);
+  }
+
+  // ===== Day chip + destination =====
+  const chipY = M + 78;
   const chipText = `DÍA ${input.dayNumber}`;
-  ctx.font = "700 24px 'Inter', system-ui, sans-serif";
-  const chipW = ctx.measureText(chipText).width + 36;
-  const chipH = 44;
-  const chipX = heroX + 28;
-  const chipY = heroY + 28;
-  ctx.fillStyle = "rgba(255,255,255,0.95)";
-  roundRect(ctx, chipX, chipY, chipW, chipH, 22);
+  ctx.font = "700 20px 'Inter', system-ui, sans-serif";
+  const chipW = ctx.measureText(chipText).width + 30;
+  roundRect(ctx, M, chipY, chipW, 38, 19);
+  ctx.fillStyle = SKY_ACCENT;
   ctx.fill();
-  ctx.fillStyle = palette.ink;
-  ctx.textBaseline = "middle";
-  ctx.fillText(chipText, chipX + 18, chipY + chipH / 2 + 1);
-
-  // Destination (top-right)
-  ctx.font = "600 22px 'Inter', system-ui, sans-serif";
-  ctx.fillStyle = "rgba(255,255,255,0.92)";
-  ctx.textAlign = "right";
-  ctx.fillText(input.destination.toUpperCase(), heroX + heroW - 28, chipY + chipH / 2 + 1);
+  ctx.fillStyle = NAVY_DARK;
   ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(chipText, M + 15, chipY + 20);
 
-  // Title
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "800 64px 'Outfit', 'Inter', system-ui, sans-serif";
-  const titleLines = wrapText(ctx, input.dayTitle, heroW - 56, 2);
-  let ty = heroY + heroH - 60 - (titleLines.length - 1) * 70;
+  ctx.font = "600 20px 'Inter', system-ui, sans-serif";
+  ctx.fillStyle = hexToRgba("#ffffff", 0.85);
+  ctx.fillText(input.destination.toUpperCase(), M + chipW + 16, chipY + 20);
+
+  // ===== Big title =====
+  const titleX = M;
+  let titleY = chipY + 90;
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 58px 'Outfit', 'Inter', system-ui, sans-serif";
+  const titleLines = wrapText(ctx, `Día ${input.dayNumber} en ${input.destination}`, W * 0.56, 2);
   for (const line of titleLines) {
-    ctx.fillText(line, heroX + 28, ty);
-    ty += 70;
+    ctx.fillText(line, titleX, titleY);
+    titleY += 62;
   }
   if (input.subtitle) {
-    ctx.font = "500 24px 'Inter', system-ui, sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.88)";
-    const subLines = wrapText(ctx, input.subtitle, heroW - 56, 1);
-    ctx.fillText(subLines[0], heroX + 28, ty + 4);
+    ctx.font = "500 22px 'Inter', system-ui, sans-serif";
+    ctx.fillStyle = hexToRgba("#ffffff", 0.75);
+    const subLines = wrapText(ctx, input.subtitle, W * 0.5, 1);
+    ctx.fillText(subLines[0], titleX, titleY + 6);
   }
-  ctx.restore();
 
-  // ===== Activities list =====
-  const listX = innerX + 56;
-  const listY = heroY + heroH + 60;
-  const listW = innerW - 112;
+  // ===== Mini schematic map (top-right) =====
+  const mapW = 380;
+  const mapH = 300;
+  const mapX = W - M - mapW;
+  const mapY = M;
+  ctx.font = "700 13px 'Inter', system-ui, sans-serif";
+  ctx.fillStyle = hexToRgba("#ffffff", 0.55);
+  ctx.textAlign = "left";
+  ctx.fillText("RECORRIDO DEL DÍA", mapX + 4, mapY - 12);
+  drawSchematicMap(ctx, mapX, mapY, mapW, mapH, input.activities.length);
 
-  // Section label
-  ctx.fillStyle = palette.from;
-  ctx.font = "800 14px 'Inter', system-ui, sans-serif";
-  ctx.fillText("PLAN DEL DÍA · ITINERAYA", listX, listY);
-
-  // Accent rule
-  ctx.strokeStyle = hexToRgba(palette.from, 0.4);
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(listX, listY + 14);
-  ctx.lineTo(listX + 60, listY + 14);
-  ctx.stroke();
-
-  let cy = listY + 42;
+  // ===== Activity list =====
+  const listX = M;
+  const listY = Math.max(titleY + 60, 430);
+  const listW = W - M * 2;
   const maxItems = Math.min(input.activities.length, 6);
-  const rowH = Math.min(108, Math.floor((innerY + innerH - 100 - cy) / maxItems));
+  const rowH = Math.min(84, Math.floor((H - 130 - listY) / Math.max(maxItems, 1)));
 
+  let cy = listY;
   for (let i = 0; i < maxItems; i++) {
     const a = input.activities[i];
-    // Time bubble
-    const timeText = (a.time || "").slice(0, 5);
-    ctx.fillStyle = hexToRgba(palette.from, 0.12);
-    roundRect(ctx, listX, cy, 88, rowH - 16, 18);
+    const icon = matchIcon(a);
+    const iconImg = iconImages.get(icon);
+
+    // Icon in a soft circular badge
+    const badgeR = 22;
+    const badgeCx = listX + badgeR;
+    const badgeCy = cy + rowH / 2 - 10;
+    ctx.beginPath();
+    ctx.arc(badgeCx, badgeCy, badgeR, 0, Math.PI * 2);
+    ctx.fillStyle = hexToRgba(SKY_ACCENT, 0.16);
     ctx.fill();
-    ctx.fillStyle = palette.ink;
-    ctx.font = "700 22px 'Inter', system-ui, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(timeText || "—", listX + 44, cy + (rowH - 16) / 2);
-
-    // Emoji
-    ctx.font = "36px 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji', sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(a.emoji || "📍", listX + 130, cy + (rowH - 16) / 2 + 2);
-
-    // Title + place + desc
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
-    const tx = listX + 168;
-    const tw = listW - 168;
-
-    ctx.fillStyle = "#1B2A36";
-    ctx.font = "800 24px 'Outfit','Inter',system-ui,sans-serif";
-    const titleStr = a.place ? `${a.title} · ${a.place}` : a.title;
-    const ttLines = wrapText(ctx, titleStr, tw, 1);
-    ctx.fillText(ttLines[0], tx, cy + 28);
-
-    if (a.description) {
-      ctx.fillStyle = "#4B6478";
-      ctx.font = "400 18px 'Inter',system-ui,sans-serif";
-      const dl = wrapText(ctx, a.description, tw, 2);
-      let dy = cy + 56;
-      for (const l of dl) {
-        ctx.fillText(l, tx, dy);
-        dy += 22;
-      }
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = hexToRgba(SKY_ACCENT, 0.5);
+    ctx.stroke();
+    if (iconImg) {
+      const iw = 22;
+      ctx.drawImage(iconImg, badgeCx - iw / 2, badgeCy - iw / 2, iw, iw);
     }
 
-    // Divider
+    // Time
+    const timeX = listX + badgeR * 2 + 24;
+    ctx.font = "700 18px 'Inter', system-ui, sans-serif";
+    ctx.fillStyle = SKY_SOFT;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    ctx.fillText((a.time || "").slice(0, 5), timeX, cy + rowH / 2 - 12);
+
+    // Title + place
+    const textX = timeX + 78;
+    const textW = listW - (textX - listX) - 8;
+    ctx.font = "700 22px 'Outfit', 'Inter', system-ui, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    const titleStr = a.place ? `${a.title} · ${a.place}` : a.title;
+    const ttLines = wrapText(ctx, titleStr, textW, 1);
+    ctx.fillText(ttLines[0], textX, cy + rowH / 2 - 10);
+
+    if (a.description) {
+      ctx.font = "400 16px 'Inter', system-ui, sans-serif";
+      ctx.fillStyle = hexToRgba("#ffffff", 0.6);
+      const dl = wrapText(ctx, a.description, textW, 1);
+      ctx.fillText(dl[0], textX, cy + rowH / 2 + 16);
+    }
+
     if (i < maxItems - 1) {
-      ctx.strokeStyle = "rgba(20,40,60,0.08)";
+      ctx.strokeStyle = hexToRgba("#ffffff", 0.08);
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(listX, cy + rowH - 4);
-      ctx.lineTo(listX + listW, cy + rowH - 4);
+      ctx.moveTo(listX, cy + rowH - 6);
+      ctx.lineTo(listX + listW, cy + rowH - 6);
       ctx.stroke();
     }
 
@@ -291,46 +430,18 @@ export async function generatePostcardDataUrl(input: PostcardInput): Promise<str
   }
 
   // ===== Footer =====
-  const footY = innerY + innerH - 56;
-  ctx.fillStyle = palette.ink;
-  ctx.font = "800 18px 'Outfit','Inter',system-ui,sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText("✈  Itineraya", listX, footY);
-
-  ctx.textAlign = "right";
-  ctx.fillStyle = "#6F8595";
-  ctx.font = "500 14px 'Inter',system-ui,sans-serif";
-  ctx.fillText("itineraya.com", innerX + innerW - 56, footY);
-
-  // Stamp circle (top-right of card)
-  const stampCX = innerX + innerW - 110;
-  const stampCY = innerY + 110;
-  ctx.save();
-  ctx.translate(stampCX, stampCY);
-  ctx.rotate(-0.18);
-  ctx.strokeStyle = hexToRgba(palette.from, 0.6);
-  ctx.lineWidth = 3;
+  const footY = H - 46;
+  ctx.strokeStyle = hexToRgba("#ffffff", 0.12);
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(0, 0, 56, 0, Math.PI * 2);
+  ctx.moveTo(M, footY - 22);
+  ctx.lineTo(W - M, footY - 22);
   ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(0, 0, 48, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.fillStyle = hexToRgba(palette.from, 0.85);
-  ctx.font = "800 14px 'Inter',system-ui,sans-serif";
+
+  ctx.font = "600 16px 'Inter', system-ui, sans-serif";
+  ctx.fillStyle = hexToRgba("#ffffff", 0.55);
   ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("VISITED", 0, -10);
-  ctx.fillText(input.destination.toUpperCase().slice(0, 10), 0, 10);
-  ctx.restore();
+  ctx.fillText("Creado con Itineraya  ·  itineraya.com", W / 2, footY);
 
   return canvas.toDataURL("image/png");
-}
-
-function hexToRgba(hex: string, a: number): string {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${a})`;
 }

@@ -12,8 +12,10 @@ declare global {
   }
 }
 
-const GOOGLE_KEY = (import.meta as { env: Record<string, string | undefined> }).env
-  .VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+const ENV = (import.meta as { env: Record<string, string | undefined> }).env;
+// VITE_GOOGLE_MAPS_KEY is the canonical name; VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY
+// is kept as a fallback for environments that haven't migrated the env var yet.
+const GOOGLE_KEY = ENV.VITE_GOOGLE_MAPS_KEY || ENV.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
 
 // Google's loader does not reject the script promise on bad-key/expired-key/referrer
 // restrictions — it silently renders a broken grey map and calls this global callback
