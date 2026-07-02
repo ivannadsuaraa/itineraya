@@ -228,7 +228,7 @@ function OnboardingPage() {
         return;
       }
       if (!trip) throw new Error(t("onboarding.saveFail"));
-      navigate({ to: "/trip/$tripId", params: { tripId: trip.id } });
+      navigate({ to: "/my-trip/$tripId", params: { tripId: trip.id } });
     } catch (error) {
       console.error("[onboarding] unexpected error", error);
       toast.error(error instanceof Error ? error.message : t("onboarding.saveFail"));

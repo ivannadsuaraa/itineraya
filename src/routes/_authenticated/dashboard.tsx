@@ -389,7 +389,7 @@ function TripCard({
 
   return (
     <article className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-lg">
-      <Link to="/trip/$tripId" params={{ tripId: trip.id }} className="block">
+      <Link to="/my-trip/$tripId" params={{ tripId: trip.id }} className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
           {trip.hero_image_url ? (
             <img
@@ -441,7 +441,7 @@ function TripCard({
       {/* Actions */}
       <div className="flex items-center justify-between gap-2 px-3 py-2.5">
         <Link
-          to="/trip/$tripId"
+          to="/my-trip/$tripId"
           params={{ tripId: trip.id }}
           className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
         >
@@ -521,7 +521,7 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
   const fmt = isEs ? "d 'de' MMMM" : "MMM d";
 
   return (
-    <Link to="/trip/$tripId" params={{ tripId: trip.id }}>
+    <Link to="/my-trip/$tripId" params={{ tripId: trip.id }}>
       <div className="group overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15">
         <div className="grid md:grid-cols-[1.4fr_1fr]">
           {/* Image */}

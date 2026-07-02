@@ -29,7 +29,7 @@ import { toast } from "sonner";
 
 const TripMap = lazy(() => import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })));
 
-export const Route = createFileRoute("/_authenticated/trip/$tripId")({
+export const Route = createFileRoute("/_authenticated/my-trip/$tripId")({
   component: ItineraryPage,
   head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
 });

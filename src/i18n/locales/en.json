@@ -259,12 +259,24 @@
     "upcoming": "Upcoming",
     "past": "Past"
   },
+  "saved": {
+    "metaTitle": "Saved – Itineraya",
+    "title": "Your saved inspirations",
+    "subtitle": "Itineraries you've saved from the feed, all in one place.",
+    "emptyTitle": "Nothing saved yet",
+    "emptyDesc": "Explore trips shared by the community and save the ones that inspire you to see them here.",
+    "emptyCta": "Explore the feed",
+    "loadFail": "We couldn't load your saved trips",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days"
+  },
   "sidebar": {
     "trips": "My trips",
     "create": "New trip",
     "assistant": "AI Assistant",
     "assistantLocked": "AI Assistant — premium feature (Viajero or Explorador plan)",
     "inspire": "Inspiration",
+    "saved": "Saved",
     "profile": "Profile",
     "feed": "Feed",
     "createShort": "Create",

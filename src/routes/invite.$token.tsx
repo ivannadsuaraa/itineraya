@@ -33,7 +33,7 @@ function InvitePage() {
     try {
       const res = await accept({ data: { token } });
       toast.success(t("invite.accepted"));
-      navigate({ to: "/trip/$tripId", params: { tripId: res.tripId } });
+      navigate({ to: "/my-trip/$tripId", params: { tripId: res.tripId } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("invite.error"));
       setWorking(false);

@@ -1,6 +1,11 @@
 /// <reference types="google.maps" />
 import { useEffect, useRef, useState } from "react";
 import { MapPin, Loader2 } from "lucide-react";
+import {
+  loadGoogleMaps,
+  isGoogleMapsAuthFailed,
+  reportGoogleMapsFailure,
+} from "@/lib/google-maps-loader";
 
 export type DestinationSelection = {
   description: string;
@@ -17,41 +22,8 @@ type Props = {
   className?: string;
 };
 
-declare global {
-  interface Window {
-    google?: typeof google;
-    __itineraya_gmap_loaded__?: Promise<void>;
-  }
-}
-
-const GOOGLE_KEY = (import.meta as { env: Record<string, string | undefined> }).env
-  .VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
 const MAX_SUGGESTIONS = 5;
 const DEBOUNCE_MS = 300;
-
-function loadGoogleMaps(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (window.google?.maps?.places) return Promise.resolve();
-  if (window.__itineraya_gmap_loaded__) return window.__itineraya_gmap_loaded__;
-  window.__itineraya_gmap_loaded__ = new Promise((resolve, reject) => {
-    if (!GOOGLE_KEY) return reject(new Error("Missing Google Maps key"));
-    const existing = document.querySelector<HTMLScriptElement>('script[data-itineraya="gmaps"]');
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Failed to load Google Maps")));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places&loading=async&v=weekly`;
-    s.async = true;
-    s.defer = true;
-    s.dataset.itineraya = "gmaps";
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error("Failed to load Google Maps"));
-    document.head.appendChild(s);
-  });
-  return window.__itineraya_gmap_loaded__;
-}
 
 type Suggestion = { description: string; secondary: string; placeId: string };
 
@@ -114,15 +86,23 @@ export function DestinationAutocomplete({
       return;
     }
     const myRequestId = ++requestIdRef.current;
+
+    const runFallback = async () => {
+      const results = await nominatimFallback(q);
+      if (requestIdRef.current !== myRequestId) return;
+      setSuggestions(results.slice(0, MAX_SUGGESTIONS));
+      setOpen(true);
+      setActiveIndex(-1);
+    };
+
     tRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        if (usingFallback) {
-          const results = await nominatimFallback(q);
-          if (requestIdRef.current !== myRequestId) return;
-          setSuggestions(results.slice(0, MAX_SUGGESTIONS));
-          setOpen(true);
-          setActiveIndex(-1);
+        // Once we know the Google key is dead, skip straight to the fallback
+        // instead of paying the latency of a doomed request on every keystroke.
+        if (usingFallback || isGoogleMapsAuthFailed()) {
+          if (!usingFallback) setUsingFallback(true);
+          await runFallback();
           return;
         }
 
@@ -130,6 +110,7 @@ export function DestinationAutocomplete({
         const places = window.google?.maps?.places;
         if (!places) {
           setUsingFallback(true);
+          await runFallback();
           return;
         }
         if (!sessionTokenRef.current) {
@@ -149,6 +130,7 @@ export function DestinationAutocomplete({
                 place_id: string;
                 structured_formatting?: { main_text: string; secondary_text: string };
               }> | null,
+              status: string,
             ) => void,
           ) => void;
         };
@@ -195,8 +177,17 @@ export function DestinationAutocomplete({
           const svc = new placesAny.AutocompleteService();
           svc.getPlacePredictions(
             { input: q, types: ["(regions)"], sessionToken: sessionTokenRef.current },
-            (preds) => {
+            (preds, status) => {
               if (requestIdRef.current !== myRequestId) return;
+              // The callback API never throws — a dead key surfaces as a non-OK
+              // status with an empty array, which looks identical to "no matches"
+              // unless we check status explicitly.
+              if (status !== "OK" && status !== "ZERO_RESULTS") {
+                reportGoogleMapsFailure();
+                setUsingFallback(true);
+                void runFallback();
+                return;
+              }
               setSuggestions(
                 (preds || []).slice(0, MAX_SUGGESTIONS).map((p) => ({
                   description: p.structured_formatting?.main_text ?? p.description,
@@ -210,7 +201,9 @@ export function DestinationAutocomplete({
           );
         }
       } catch {
+        reportGoogleMapsFailure();
         setUsingFallback(true);
+        await runFallback();
       } finally {
         if (requestIdRef.current === myRequestId) setLoading(false);
       }

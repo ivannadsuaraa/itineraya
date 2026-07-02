@@ -26,6 +26,7 @@ import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
+import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNewTripRouteImport } from './routes/_authenticated/new-trip'
@@ -33,7 +34,7 @@ import { Route as AuthenticatedInspireRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCopilotRouteImport } from './routes/_authenticated/copilot'
 import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
-import { Route as AuthenticatedTripTripIdRouteImport } from './routes/_authenticated/trip.$tripId'
+import { Route as AuthenticatedMyTripTripIdRouteImport } from './routes/_authenticated/my-trip.$tripId'
 import { Route as EmailEmailQueueProcessRouteImport } from './routes/email/email/queue/process'
 import { Route as EmailEmailAuthWebhookRouteImport } from './routes/email/email/auth/webhook'
 import { Route as EmailEmailAuthPreviewRouteImport } from './routes/email/email/auth/preview'
@@ -123,6 +124,11 @@ const AuthenticatedWelcomeRoute = AuthenticatedWelcomeRouteImport.update({
   path: '/welcome',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -158,11 +164,12 @@ const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
   path: '/assistant',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedTripTripIdRoute = AuthenticatedTripTripIdRouteImport.update({
-  id: '/trip/$tripId',
-  path: '/trip/$tripId',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedMyTripTripIdRoute =
+  AuthenticatedMyTripTripIdRouteImport.update({
+    id: '/my-trip/$tripId',
+    path: '/my-trip/$tripId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const EmailEmailQueueProcessRoute = EmailEmailQueueProcessRouteImport.update({
   id: '/email/email/queue/process',
   path: '/email/email/queue/process',
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/new-trip': typeof AuthenticatedNewTripRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/saved': typeof AuthenticatedSavedRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -209,7 +217,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
   '/explore/': typeof ExploreIndexRoute
-  '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
+  '/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
@@ -232,6 +240,7 @@ export interface FileRoutesByTo {
   '/new-trip': typeof AuthenticatedNewTripRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/saved': typeof AuthenticatedSavedRoute
   '/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -239,7 +248,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
   '/explore': typeof ExploreIndexRoute
-  '/trip/$tripId': typeof AuthenticatedTripTripIdRoute
+  '/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
@@ -264,6 +273,7 @@ export interface FileRoutesById {
   '/_authenticated/new-trip': typeof AuthenticatedNewTripRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/saved': typeof AuthenticatedSavedRoute
   '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/api/chat': typeof ApiChatRoute
   '/checkout/return': typeof CheckoutReturnRoute
@@ -271,7 +281,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
   '/explore/': typeof ExploreIndexRoute
-  '/_authenticated/trip/$tripId': typeof AuthenticatedTripTripIdRoute
+  '/_authenticated/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
@@ -296,6 +306,7 @@ export interface FileRouteTypes {
     | '/new-trip'
     | '/onboarding'
     | '/profile'
+    | '/saved'
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
@@ -303,7 +314,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/trip/$slug'
     | '/explore/'
-    | '/trip/$tripId'
+    | '/my-trip/$tripId'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/new-trip'
     | '/onboarding'
     | '/profile'
+    | '/saved'
     | '/welcome'
     | '/api/chat'
     | '/checkout/return'
@@ -333,7 +345,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/trip/$slug'
     | '/explore'
-    | '/trip/$tripId'
+    | '/my-trip/$tripId'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
@@ -357,6 +369,7 @@ export interface FileRouteTypes {
     | '/_authenticated/new-trip'
     | '/_authenticated/onboarding'
     | '/_authenticated/profile'
+    | '/_authenticated/saved'
     | '/_authenticated/welcome'
     | '/api/chat'
     | '/checkout/return'
@@ -364,7 +377,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/trip/$slug'
     | '/explore/'
-    | '/_authenticated/trip/$tripId'
+    | '/_authenticated/my-trip/$tripId'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
@@ -515,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWelcomeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/saved': {
+      id: '/_authenticated/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof AuthenticatedSavedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/profile': {
       id: '/_authenticated/profile'
       path: '/profile'
@@ -564,11 +584,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/trip/$tripId': {
-      id: '/_authenticated/trip/$tripId'
-      path: '/trip/$tripId'
-      fullPath: '/trip/$tripId'
-      preLoaderRoute: typeof AuthenticatedTripTripIdRouteImport
+    '/_authenticated/my-trip/$tripId': {
+      id: '/_authenticated/my-trip/$tripId'
+      path: '/my-trip/$tripId'
+      fullPath: '/my-trip/$tripId'
+      preLoaderRoute: typeof AuthenticatedMyTripTripIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/email/email/queue/process': {
@@ -610,8 +630,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNewTripRoute: typeof AuthenticatedNewTripRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedSavedRoute: typeof AuthenticatedSavedRoute
   AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
-  AuthenticatedTripTripIdRoute: typeof AuthenticatedTripTripIdRoute
+  AuthenticatedMyTripTripIdRoute: typeof AuthenticatedMyTripTripIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -622,8 +643,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNewTripRoute: AuthenticatedNewTripRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedSavedRoute: AuthenticatedSavedRoute,
   AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
-  AuthenticatedTripTripIdRoute: AuthenticatedTripTripIdRoute,
+  AuthenticatedMyTripTripIdRoute: AuthenticatedMyTripTripIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

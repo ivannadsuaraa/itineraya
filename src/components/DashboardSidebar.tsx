@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Home, User, PlusCircle, Compass, LogOut } from "lucide-react";
+import { Map, Home, User, PlusCircle, Compass, LogOut, Bookmark } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +14,7 @@ export const MOBILE_NAV_ITEMS: NavItem[] = [
   { to: "/explore", labelKey: "sidebar.feed", icon: Compass },
   { to: "/new-trip", labelKey: "sidebar.createShort", icon: PlusCircle },
   { to: "/dashboard", labelKey: "sidebar.tripsShort", icon: Map },
+  { to: "/saved", labelKey: "sidebar.saved", icon: Bookmark },
   { to: "/profile", labelKey: "sidebar.profile", icon: User },
 ];
 
@@ -22,6 +23,7 @@ function isActive(pathname: string, to: string) {
   if (to === "/dashboard") return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   if (to === "/explore") return pathname.startsWith("/explore");
   if (to === "/profile") return pathname.startsWith("/profile");
+  if (to === "/saved") return pathname.startsWith("/saved");
   return pathname === to;
 }
 
@@ -84,7 +86,7 @@ export function MobileBottomBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-6">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(pathname, item.to);
@@ -99,7 +101,9 @@ export function MobileBottomBar() {
                 {active && (
                   <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[#1E6B9A]" />
                 )}
-                <Icon className={`h-5 w-5 transition-transform duration-150 ${active ? "scale-110" : ""}`} />
+                <Icon
+                  className={`h-5 w-5 transition-transform duration-150 ${active ? "scale-110" : ""}`}
+                />
                 {t(item.labelKey)}
               </Link>
             </li>

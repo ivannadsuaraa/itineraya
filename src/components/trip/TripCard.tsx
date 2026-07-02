@@ -22,7 +22,7 @@ export const TripCard = ({ trip, index }: { trip: TripCardTrip; index?: number }
   const title = trip.name ?? trip.destination ?? '';
 
   const handleClick = () => {
-    navigate({ to: '/trip/$tripId', params: { tripId: trip.id } });
+    navigate({ to: '/my-trip/$tripId', params: { tripId: trip.id } });
   };
 
   return (

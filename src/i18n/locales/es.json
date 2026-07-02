@@ -259,12 +259,24 @@
     "upcoming": "Próximo",
     "past": "Pasado"
   },
+  "saved": {
+    "metaTitle": "Guardados – Itineraya",
+    "title": "Tus inspiraciones guardadas",
+    "subtitle": "Los itinerarios que has guardado del feed, todos en un sitio.",
+    "emptyTitle": "Aún no has guardado nada",
+    "emptyDesc": "Explora viajes compartidos por la comunidad y guarda los que te inspiren para verlos aquí.",
+    "emptyCta": "Explorar el feed",
+    "loadFail": "No pudimos cargar tus guardados",
+    "days_one": "{{count}} día",
+    "days_other": "{{count}} días"
+  },
   "sidebar": {
     "trips": "Mis viajes",
     "create": "Crear viaje",
     "assistant": "Asistente IA",
     "assistantLocked": "Asistente IA — función premium (plan Viajero o Explorador)",
     "inspire": "Inspiración",
+    "saved": "Guardados",
     "profile": "Perfil",
     "feed": "Feed",
     "createShort": "Crear",
