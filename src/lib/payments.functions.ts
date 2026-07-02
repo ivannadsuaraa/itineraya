@@ -63,9 +63,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       const userId = context.userId;
       const email = (context.claims?.email as string | undefined) ?? undefined;
 
-      const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
-      if (!prices.data.length) throw new Error("Plan no encontrado");
-      const stripePrice = prices.data[0];
+      const stripePrice = await stripe.prices.retrieve(data.priceId);
 
       const customerId = await resolveOrCreateCustomer(stripe, { email, userId });
 

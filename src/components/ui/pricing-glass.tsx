@@ -8,12 +8,14 @@ export type TierType = {
   name: string
   priceMonthly: string
   priceAnnual: string
+  priceIdMonthly?: string
+  priceIdAnnual?: string
   description: string
   isPopular?: boolean
   isCurrent?: boolean
   features: string[]
   ctaLabel: string
-  onSelect?: () => void
+  onSelect?: (priceId?: string) => void
 }
 
 function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) {
@@ -147,7 +149,7 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={tier.onSelect}
+          onClick={() => tier.onSelect?.(isAnnual ? tier.priceIdAnnual : tier.priceIdMonthly)}
           className={[
             "mt-8 w-full rounded-2xl py-3.5 text-[15px] font-semibold transition-all duration-200",
             tier.isCurrent

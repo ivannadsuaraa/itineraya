@@ -58,7 +58,7 @@ function PricingPage() {
       });
   }, [authedUserId]);
 
-  const handleSelect = (planId: "free" | "viajero" | "explorador", priceId?: "viajero_yearly" | "explorador_yearly") => {
+  const handleSelect = (planId: "free" | "viajero" | "explorador", priceId?: string) => {
     if (!priceId) {
       openAuthModal({ mode: "signup" });
       return;
@@ -109,8 +109,10 @@ function PricingPage() {
         t("pricing.viajero.f5"),
         t("pricing.viajero.f6"),
       ],
+      priceIdMonthly: "price_1Ton51ClvzRH6emiNWNG9HXZ",
+      priceIdAnnual: "price_1Ton6DClvzRH6emiDhKYKjeb",
       ctaLabel: loading || starting === "viajero" ? "..." : t("pricing.choose"),
-      onSelect: () => handleSelect("viajero", "viajero_yearly"),
+      onSelect: (priceId?: string) => handleSelect("viajero", priceId),
     },
     {
       name: t("pricing.explorador.name"),
@@ -124,8 +126,10 @@ function PricingPage() {
         t("pricing.explorador.f3"),
         t("pricing.explorador.f4"),
       ],
+      priceIdMonthly: "price_1Ton8WClvzRH6emiPx5gxrYj",
+      priceIdAnnual: "price_1Ton9LClvzRH6emisN4JF1b9",
       ctaLabel: loading || starting === "explorador" ? "..." : t("pricing.choose"),
-      onSelect: () => handleSelect("explorador", "explorador_yearly"),
+      onSelect: (priceId?: string) => handleSelect("explorador", priceId),
     },
   ];
 
