@@ -3,27 +3,29 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
+import { DestinationCard } from "@/components/ui/destination-card";
 
 type Destination = {
   name: string;
   country: string;
   image: string;
   tag: string;
+  themeColor: string;
 };
 
 const W = "?w=900&q=75&auto=format&fit=crop";
 
 const DESTINATIONS: Destination[] = [
-  { name: "Bali", country: "Indonesia", image: `https://images.unsplash.com/photo-1537996194471-e657df975ab4${W}`, tag: "Paraíso tropical" },
-  { name: "Tokio", country: "Japón", image: `https://images.unsplash.com/photo-1540959733332-eab4deabeeaf${W}`, tag: "Ciudad vibrante" },
-  { name: "París", country: "Francia", image: `https://images.unsplash.com/photo-1502602898657-3e91760cbb34${W}`, tag: "Romántica" },
-  { name: "Nueva York", country: "EE. UU.", image: `https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9${W}`, tag: "Icónica" },
-  { name: "Tailandia", country: "Asia", image: `https://images.unsplash.com/photo-1528181304800-259b08848526${W}`, tag: "Exótica" },
-  { name: "Roma", country: "Italia", image: `https://images.unsplash.com/photo-1552832230-c0197dd311b5${W}`, tag: "Historia" },
-  { name: "Maldivas", country: "Océano Índico", image: `https://images.unsplash.com/photo-1514282401047-d79a71a590e8${W}`, tag: "Playa de ensueño" },
-  { name: "Islandia", country: "Europa", image: `https://images.unsplash.com/photo-1531366936337-7c912a4589a7${W}`, tag: "Naturaleza" },
+  { name: "Bali", country: "Indonesia", image: `https://images.unsplash.com/photo-1537996194471-e657df975ab4${W}`, tag: "Paraíso tropical", themeColor: "163 55% 25%" },
+  { name: "Tokio", country: "Japón", image: `https://images.unsplash.com/photo-1540959733332-eab4deabeeaf${W}`, tag: "Ciudad vibrante", themeColor: "345 60% 35%" },
+  { name: "París", country: "Francia", image: `https://images.unsplash.com/photo-1502602898657-3e91760cbb34${W}`, tag: "Romántica", themeColor: "280 45% 35%" },
+  { name: "Nueva York", country: "EE. UU.", image: `https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9${W}`, tag: "Icónica", themeColor: "210 70% 28%" },
+  { name: "Tailandia", country: "Asia", image: `https://images.unsplash.com/photo-1528181304800-259b08848526${W}`, tag: "Exótica", themeColor: "35 70% 35%" },
+  { name: "Roma", country: "Italia", image: `https://images.unsplash.com/photo-1552832230-c0197dd311b5${W}`, tag: "Historia", themeColor: "20 55% 32%" },
+  { name: "Maldivas", country: "Océano Índico", image: `https://images.unsplash.com/photo-1514282401047-d79a71a590e8${W}`, tag: "Playa de ensueño", themeColor: "190 65% 28%" },
+  { name: "Islandia", country: "Europa", image: `https://images.unsplash.com/photo-1531366936337-7c912a4589a7${W}`, tag: "Naturaleza", themeColor: "220 50% 30%" },
 ];
 
 function encodePrefill(destination: string) {
@@ -60,15 +62,9 @@ export function PopularDestinationsSection() {
   };
 
   return (
-    <section className="relative py-20 sm:py-28 bg-white">
+    <section className="relative bg-white py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div
-          
-          
-          
-          
-          className="mb-10 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between"
-        >
+        <div className="mb-10 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
               {t("popular.title")}
@@ -82,40 +78,17 @@ export function PopularDestinationsSection() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {DESTINATIONS.map((d, i) => (
-            <button
-              type="button"
+          {DESTINATIONS.map((d) => (
+            <DestinationCard
               key={d.name}
+              imageUrl={d.image}
+              location={d.name}
+              country={d.country}
+              tag={d.tag}
+              themeColor={d.themeColor}
               onClick={() => handlePick(d)}
-              
-              
-              
-              
-              className="group relative overflow-hidden rounded-2xl text-left shadow-sm transition hover:shadow-xl active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-400"
-            >
-              <div className="relative aspect-[4/5] w-full overflow-hidden">
-                <img
-                  src={d.image}
-                  alt={d.name}
-                  loading="lazy"
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-sky-800">
-                  {d.tag}
-                </span>
-                <div className="absolute bottom-4 left-4 right-4 text-white">
-                  <div className="flex items-center gap-1 text-xs opacity-90">
-                    <MapPin className="h-3 w-3" />
-                    {d.country}
-                  </div>
-                  <div className="font-display text-2xl font-bold drop-shadow">{d.name}</div>
-                  <div className="mt-2 inline-flex items-center gap-1 text-sm font-semibold transition sm:opacity-0 sm:group-hover:opacity-100">
-                    {t("popular.cta")} →
-                  </div>
-                </div>
-              </div>
-            </button>
+              className="h-full"
+            />
           ))}
         </div>
       </div>
@@ -128,7 +101,6 @@ export function PopularDestinationsSection() {
         returnTo={pending ? `/onboarding?prefill=${encodePrefill(`${pending.name}, ${pending.country}`)}` : undefined}
         onAuthed={onAuthed}
       />
-
     </section>
   );
 }

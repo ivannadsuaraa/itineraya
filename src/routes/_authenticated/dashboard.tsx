@@ -13,6 +13,7 @@ import {
   Share2,
   ArrowRight,
   Lock,
+  CalendarDays,
 } from "lucide-react";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
@@ -26,6 +27,8 @@ import {
   weatherEmoji,
   type Inspiration,
 } from "@/lib/dashboard-helpers";
+import { GlobePolaroids, type PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
+import { TripsCalendar } from "@/components/ui/trips-calendar";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "My trips – Itineraya" }] }),
@@ -55,6 +58,53 @@ function dateLocale(lang: string) {
   return lang.toLowerCase().startsWith("en") ? enUS : es;
 }
 
+// Approximate coordinates for common destinations
+const DEST_COORDS: Record<string, [number, number]> = {
+  "paris": [48.86, 2.35], "london": [51.51, -0.13], "new york": [40.71, -74.01],
+  "nueva york": [40.71, -74.01], "tokyo": [35.68, 139.65], "tokio": [35.68, 139.65],
+  "sydney": [-33.87, 151.21], "sídney": [-33.87, 151.21],
+  "barcelona": [41.39, 2.16], "madrid": [40.42, -3.70],
+  "rome": [41.90, 12.49], "roma": [41.90, 12.49],
+  "amsterdam": [52.37, 4.89], "berlin": [52.52, 13.40], "berlín": [52.52, 13.40],
+  "dubai": [25.20, 55.27], "bangkok": [13.75, 100.50],
+  "bali": [-8.34, 115.09], "maldives": [3.20, 73.22], "maldivas": [3.20, 73.22],
+  "cancun": [21.16, -86.85], "cancún": [21.16, -86.85],
+  "miami": [25.77, -80.19], "los angeles": [34.05, -118.24],
+  "san francisco": [37.78, -122.44],
+  "lisbon": [38.72, -9.14], "lisboa": [38.72, -9.14],
+  "athens": [37.98, 23.73], "atenas": [37.98, 23.73],
+  "istanbul": [41.01, 28.97], "estambul": [41.01, 28.97],
+  "prague": [50.08, 14.44], "praga": [50.08, 14.44],
+  "vienna": [48.21, 16.37], "viena": [48.21, 16.37],
+  "budapest": [47.50, 19.04], "mexico": [19.43, -99.13], "méxico": [19.43, -99.13],
+};
+
+const UNSPLASH_FALLBACK = [
+  "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=120&h=120&fit=crop",
+  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=120&h=120&fit=crop",
+  "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=120&h=120&fit=crop",
+  "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=120&h=120&fit=crop",
+  "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=120&h=120&fit=crop",
+];
+
+function tripsToMarkers(trips: Trip[]): PolaroidMarker[] {
+  const markers: PolaroidMarker[] = [];
+  const rotations = [-5, 4, -3, 6, -4, 3, -2, 5];
+  trips.forEach((trip, i) => {
+    const key = trip.destination.toLowerCase().split(",")[0].trim();
+    const coords = Object.entries(DEST_COORDS).find(([k]) => key.includes(k) || k.includes(key))?.[1];
+    if (!coords) return;
+    markers.push({
+      id: trip.id,
+      location: coords,
+      image: trip.hero_image_url ?? UNSPLASH_FALLBACK[i % UNSPLASH_FALLBACK.length],
+      caption: trip.destination.split(",")[0],
+      rotate: rotations[i % rotations.length],
+    });
+  });
+  return markers;
+}
+
 function DashboardPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -63,6 +113,7 @@ function DashboardPage() {
   const [name, setName] = useState<string>("");
   const [shareTrip, setShareTrip] = useState<Trip | null>(null);
   const [isFree, setIsFree] = useState(true);
+  const [activeTab, setActiveTab] = useState<"viajes" | "calendario">("viajes");
 
   useEffect(() => {
     (async () => {
@@ -147,211 +198,297 @@ function DashboardPage() {
   const locale = dateLocale(i18n.language);
   const inspirations = useMemo(() => getSeasonalInspirations(), []);
 
+  const globeMarkers = useMemo(() => {
+    if (!trips || trips.length === 0) return undefined;
+    const m = tripsToMarkers(trips);
+    return m.length > 0 ? m : undefined;
+  }, [trips]);
+
+  const calendarTrips = useMemo(
+    () =>
+      (trips ?? [])
+        .filter((t) => t.start_date && t.end_date)
+        .map((t) => ({
+          id: t.id,
+          destination: t.destination,
+          start_date: t.start_date!,
+          end_date: t.end_date!,
+          hero_image_url: t.hero_image_url,
+        })),
+    [trips],
+  );
+
   return (
     <div className="min-h-dvh bg-slate-50">
 
-      {/* ── Dark header ── */}
+      {/* ── Dark header with globe ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10 lg:px-8">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-sky-700/25 blur-3xl" />
           <div className="absolute -bottom-8 left-0 h-48 w-80 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-6xl">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid items-center gap-6 lg:grid-cols-[1fr_320px]">
+            {/* Left: text + CTA + next trip */}
             <div>
-              <p className="text-sm font-semibold text-sky-300">{t("dashboard.hello", { name })}</p>
-              <h1 className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">
-                {t("dashboard.where")}
-              </h1>
-            </div>
-            <Link
-              to="/new-trip"
-              className="inline-flex items-center gap-2 self-start rounded-full bg-white px-5 py-2.5 text-sm font-bold text-sky-900 shadow-md transition hover:bg-sky-50 active:scale-[0.97] sm:self-auto"
-            >
-              <Plus className="h-4 w-4" />
-              {t("dashboard.newTrip")}
-            </Link>
-          </div>
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-sky-300">{t("dashboard.hello", { name })}</p>
+                  <h1 className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">
+                    {t("dashboard.where")}
+                  </h1>
+                </div>
+                <Link
+                  to="/new-trip"
+                  className="inline-flex items-center gap-2 self-start rounded-full bg-white px-5 py-2.5 text-sm font-bold text-sky-900 shadow-md transition hover:bg-sky-50 active:scale-[0.97] sm:self-auto"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("dashboard.newTrip")}
+                </Link>
+              </div>
 
-          {/* Next trip hero inside header */}
-          {upcoming && upcoming.start_date && (
-            <div className="mt-6">
-              <NextTripHero trip={upcoming} locale={locale} />
+              {upcoming && upcoming.start_date && (
+                <div className="mt-6">
+                  <NextTripHero trip={upcoming} locale={locale} />
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Right: Globe */}
+            <div className="mx-auto w-full max-w-[300px] lg:max-w-none">
+              <GlobePolaroids
+                markers={globeMarkers}
+                className="w-full"
+                speed={0.003}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
       {/* ── Content ── */}
       <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 md:pb-12 lg:px-8">
 
-        {/* My trips */}
-        <section className="mt-8">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-bold text-slate-900">
-              {t("dashboard.savedTrips")}
-            </h2>
-            {trips && trips.length > 0 && (
-              <Link
-                to="/new-trip"
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
+        {/* Tab bar */}
+        <div className="mt-6 flex items-center gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-100 w-fit">
+          {(["viajes", "calendario"] as const).map((tab) => {
+            const Icon = tab === "viajes" ? MapPin : CalendarDays;
+            const label = tab === "viajes" ? t("dashboard.savedTrips") : "Calendario";
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                  activeTab === tab
+                    ? "bg-sky-900 text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
               >
-                <Plus className="h-3.5 w-3.5" />
-                {t("dashboard.newTrip")}
-              </Link>
-            )}
-          </div>
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
-          {trips === null && (
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                  <div className="aspect-[4/3] animate-pulse bg-slate-200" />
-                  <div className="space-y-2 p-4">
-                    <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
-                    <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {trips?.length === 0 && (
-            <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-              <div className="grid h-14 w-14 place-items-center rounded-full bg-sky-50 ring-1 ring-sky-100">
-                <MapPin className="h-6 w-6 text-sky-500" />
+        {/* My trips tab */}
+        {activeTab === "viajes" && (
+          <>
+            <section className="mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-display text-lg font-bold text-slate-900">
+                  {t("dashboard.savedTrips")}
+                </h2>
+                {trips && trips.length > 0 && (
+                  <Link
+                    to="/new-trip"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {t("dashboard.newTrip")}
+                  </Link>
+                )}
               </div>
-              <p className="mt-4 font-semibold text-slate-800">{t("dashboard.empty")}</p>
-              <Link
-                to="/new-trip"
-                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-[0.97]"
-              >
-                <Plus className="h-4 w-4" />
-                {t("dashboard.newTrip")}
-              </Link>
-            </div>
-          )}
 
-          {otherTrips.length > 0 && (
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {otherTrips.map((trip) => (
-                <TripCard
-                  key={trip.id}
-                  trip={trip}
-                  locale={locale}
-                  onShare={() => setShareTrip(trip)}
-                  isFree={isFree}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Saved inspirations */}
-        {saved && saved.length > 0 && (
-          <section className="mt-10">
-            <h2 className="flex items-center gap-2 font-display text-lg font-bold text-slate-900">
-              <Bookmark className="h-4.5 w-4.5 text-[#1E6B9A]" />
-              {t("dashboard.saved")}
-            </h2>
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {saved.map((s) => (
-                <div
-                  key={s.id}
-                  className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
-                    <div className="relative aspect-[4/3] overflow-hidden">
-                      {s.hero_image_url ? (
-                        <img
-                          src={s.hero_image_url}
-                          alt={s.destination}
-                          loading="lazy"
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-                      <div className="absolute bottom-3 left-4 right-4 text-white">
-                        <div className="font-display text-base font-bold drop-shadow">{s.destination}</div>
-                        {s.n_days && (
-                          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
-                            <Calendar className="h-2.5 w-2.5" />
-                            {s.n_days} días
-                          </div>
-                        )}
+              {trips === null && (
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                      <div className="aspect-[4/3] animate-pulse bg-slate-200" />
+                      <div className="space-y-2 p-4">
+                        <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
+                        <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200" />
                       </div>
                     </div>
-                  </Link>
-                  <div className="flex items-center gap-2 px-3 py-3">
-                    <button
-                      type="button"
-                      onClick={() => remixSaved(s)}
-                      className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
-                    >
-                      <Wand2 className="h-3 w-3" />
-                      {t("dashboard.savedRemix")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeSaved(s.id)}
-                      aria-label={t("dashboard.savedRemove")}
-                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </section>
+              )}
+
+              {trips?.length === 0 && (
+                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
+                  <div className="grid h-14 w-14 place-items-center rounded-full bg-sky-50 ring-1 ring-sky-100">
+                    <MapPin className="h-6 w-6 text-sky-500" />
+                  </div>
+                  <p className="mt-4 font-semibold text-slate-800">{t("dashboard.empty")}</p>
+                  <Link
+                    to="/new-trip"
+                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-[0.97]"
+                  >
+                    <Plus className="h-4 w-4" />
+                    {t("dashboard.newTrip")}
+                  </Link>
+                </div>
+              )}
+
+              {otherTrips.length > 0 && (
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {otherTrips.map((trip) => (
+                    <TripCard
+                      key={trip.id}
+                      trip={trip}
+                      locale={locale}
+                      onShare={() => setShareTrip(trip)}
+                      isFree={isFree}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Saved inspirations */}
+            {saved && saved.length > 0 && (
+              <section className="mt-10">
+                <h2 className="flex items-center gap-2 font-display text-lg font-bold text-slate-900">
+                  <Bookmark className="h-4.5 w-4.5 text-[#1E6B9A]" />
+                  {t("dashboard.saved")}
+                </h2>
+                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  {saved.map((s) => (
+                    <div
+                      key={s.id}
+                      className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
+                        <div className="relative aspect-[4/3] overflow-hidden">
+                          {s.hero_image_url ? (
+                            <img
+                              src={s.hero_image_url}
+                              alt={s.destination}
+                              loading="lazy"
+                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                          <div className="absolute bottom-3 left-4 right-4 text-white">
+                            <div className="font-display text-base font-bold drop-shadow">{s.destination}</div>
+                            {s.n_days && (
+                              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
+                                <Calendar className="h-2.5 w-2.5" />
+                                {s.n_days} días
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                      <div className="flex items-center gap-2 px-3 py-3">
+                        <button
+                          type="button"
+                          onClick={() => remixSaved(s)}
+                          className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
+                        >
+                          <Wand2 className="h-3 w-3" />
+                          {t("dashboard.savedRemix")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeSaved(s.id)}
+                          aria-label={t("dashboard.savedRemove")}
+                          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Seasonal inspiration */}
+            <section className="mt-10">
+              <div>
+                <h2 className="font-display text-lg font-bold text-slate-900">
+                  {t("dashboard.inspirationTitle")}
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.inspirationSub")}</p>
+              </div>
+              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {inspirations.map((insp) => (
+                  <div
+                    key={insp.destination}
+                    className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <img
+                        src={insp.image}
+                        alt={insp.destination}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-800">
+                        {insp.tag}
+                      </span>
+                      <div className="absolute bottom-3 left-4 right-4 text-white">
+                        <div className="font-display text-sm font-bold drop-shadow">{insp.destination}</div>
+                        <div className="text-[11px] opacity-80">{insp.country}</div>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <button
+                        type="button"
+                        onClick={() => planInspiration(insp)}
+                        className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-sky-800 active:scale-95"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        {t("dashboard.plan")}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
         )}
 
-        {/* Seasonal inspiration */}
-        <section className="mt-10">
-          <div>
-            <h2 className="font-display text-lg font-bold text-slate-900">
-              {t("dashboard.inspirationTitle")}
-            </h2>
-            <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.inspirationSub")}</p>
-          </div>
-          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {inspirations.map((insp) => (
-              <div
-                key={insp.destination}
-                className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <img
-                    src={insp.image}
-                    alt={insp.destination}
-                    loading="lazy"
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-800">
-                    {insp.tag}
-                  </span>
-                  <div className="absolute bottom-3 left-4 right-4 text-white">
-                    <div className="font-display text-sm font-bold drop-shadow">{insp.destination}</div>
-                    <div className="text-[11px] opacity-80">{insp.country}</div>
-                  </div>
-                </div>
-                <div className="p-3">
-                  <button
-                    type="button"
-                    onClick={() => planInspiration(insp)}
-                    className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-sky-800 active:scale-95"
-                  >
-                    <Sparkles className="h-3 w-3" />
-                    {t("dashboard.plan")}
-                  </button>
-                </div>
+        {/* Calendar tab */}
+        {activeTab === "calendario" && (
+          <section className="mt-6">
+            <div className="mb-5">
+              <h2 className="font-display text-lg font-bold text-slate-900">Calendario de viajes</h2>
+              <p className="mt-0.5 text-sm text-slate-500">Todos tus viajes planificados de un vistazo</p>
+            </div>
+            <div className="max-w-lg">
+              <TripsCalendar trips={calendarTrips} />
+            </div>
+            {calendarTrips.length === 0 && trips !== null && (
+              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center">
+                <CalendarDays className="mx-auto h-8 w-8 text-slate-300" />
+                <p className="mt-3 text-sm text-slate-500">Aún no tienes viajes planificados con fechas</p>
+                <Link
+                  to="/new-trip"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E]"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t("dashboard.newTrip")}
+                </Link>
               </div>
-            ))}
-          </div>
-        </section>
+            )}
+          </section>
+        )}
       </div>
 
       {shareTrip && (
@@ -403,7 +540,6 @@ function TripCard({
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
 
-          {/* Status badge */}
           <div className="absolute right-3 top-3">
             {trip.status !== "ready" && (
               <span className="rounded-full bg-amber-100/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800 backdrop-blur-sm">
@@ -422,7 +558,6 @@ function TripCard({
             )}
           </div>
 
-          {/* Bottom overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
             <h3 className="font-display text-base font-bold leading-tight drop-shadow">{trip.destination}</h3>
             <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/80">
@@ -438,7 +573,6 @@ function TripCard({
         </div>
       </Link>
 
-      {/* Actions */}
       <div className="flex items-center justify-between gap-2 px-3 py-2.5">
         <Link
           to="/my-trip/$tripId"
@@ -524,7 +658,6 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
     <Link to="/my-trip/$tripId" params={{ tripId: trip.id }}>
       <div className="group overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15">
         <div className="grid md:grid-cols-[1.4fr_1fr]">
-          {/* Image */}
           <div className="relative h-44 overflow-hidden md:h-56 md:rounded-l-2xl">
             {trip.hero_image_url ? (
               <img
@@ -552,7 +685,6 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
             </div>
           </div>
 
-          {/* Countdown + weather */}
           <div className="flex flex-col justify-center gap-4 p-5 md:p-6">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-300">

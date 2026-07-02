@@ -17,7 +17,10 @@ import {
   Users,
   Clock,
   X,
+  AlignLeft,
 } from "lucide-react";
+import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
+import { Timeline, type TimelineEntry } from "@/components/ui/timeline";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
@@ -144,7 +147,7 @@ function ItineraryPage() {
     itinerary: Itinerary | null;
     status: string;
   } | null>(null);
-  const [view, setView] = useState<"cards" | "text">("cards");
+  const [view, setView] = useState<"cards" | "text" | "timeline">("cards");
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [msgIdx, setMsgIdx] = useState(0);
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
@@ -261,9 +264,9 @@ function ItineraryPage() {
           <div className="flex items-center gap-2">
             {/* View toggle */}
             <div className="flex rounded-full bg-slate-100 p-0.5">
-              {(["cards", "text"] as const).map((v) => {
-                const Icon = v === "cards" ? LayoutGrid : FileText;
-                const label = v === "cards" ? t("trip.viewCards") : t("trip.viewText");
+              {(["cards", "text", "timeline"] as const).map((v) => {
+                const Icon = v === "cards" ? LayoutGrid : v === "text" ? FileText : AlignLeft;
+                const label = v === "cards" ? t("trip.viewCards") : v === "text" ? t("trip.viewText") : "Timeline";
                 return (
                   <button
                     key={v}
@@ -368,15 +371,16 @@ function ItineraryPage() {
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
-          {/* Cards / Text panel */}
+          {/* Cards / Text / Timeline panel */}
           <div>
-            {view !== "text" ? (
+            {view === "cards" && (
               <div className="space-y-5">
                 {itin.days.map((day) => (
                   <DayCard key={day.day} day={day} destination={trip.destination} />
                 ))}
               </div>
-            ) : (
+            )}
+            {view === "text" && (
               <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
                 {itin.days.map((day) => (
                   <div key={day.day} className="mb-6 last:mb-0">
@@ -397,6 +401,23 @@ function ItineraryPage() {
                   </div>
                 ))}
               </div>
+            )}
+            {view === "timeline" && (
+              <Timeline
+                data={itin.days.map((day): TimelineEntry => ({
+                  title: t("trip.dayHeading", { n: day.day, title: day.title }),
+                  content: (
+                    <div className="space-y-3">
+                      {day.subtitle && (
+                        <p className="text-sm text-slate-500 italic">{day.subtitle}</p>
+                      )}
+                      {day.activities.map((a, i) => (
+                        <ActivityRow key={i} activity={a} destination={trip.destination} />
+                      ))}
+                    </div>
+                  ),
+                }))}
+              />
             )}
           </div>
 
@@ -677,6 +698,7 @@ function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-700/25 blur-3xl" />
         <div className="absolute -bottom-16 left-0 h-48 w-72 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-800/10 blur-3xl" />
       </div>
 
       <div className="relative flex flex-col items-center text-center">
@@ -684,22 +706,22 @@ function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
           <MapIcon className="h-7 w-7 text-white" />
         </div>
 
-        <div className="mt-6 flex items-center gap-1.5">
-          <Loader2 className="h-4 w-4 animate-spin text-sky-300" />
-          <Sparkles className="h-4 w-4 text-sky-400" />
+        <div className="mt-8">
+          <TextShimmerWave
+            className="font-display text-xl font-bold md:text-2xl"
+            duration={1.4}
+            spread={1.1}
+            zDistance={14}
+          >
+            {msg}
+          </TextShimmerWave>
         </div>
 
-        <h2 className="mt-3 font-display text-xl font-bold text-white md:text-2xl">{msg}</h2>
-        <p className="mt-2 max-w-xs text-sm text-sky-300">{subtitle}</p>
+        <p className="mt-4 max-w-xs text-sm text-sky-400/80">{subtitle}</p>
 
-        <div className="mt-6 flex gap-1">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="h-1.5 w-1.5 rounded-full bg-white/40"
-              style={{ animationDelay: `${i * 0.2}s` }}
-            />
-          ))}
+        <div className="mt-7 flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin text-sky-400" />
+          <Sparkles className="h-4 w-4 text-sky-300 animate-pulse" />
         </div>
       </div>
     </div>
