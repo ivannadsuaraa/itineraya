@@ -111,9 +111,7 @@ export function HeroSection() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-sky-300">
-                +2,000 viajeros ya usan Itineraya
-              </p>
+              <p className="text-xs text-sky-300">{t("hero.socialProof")}</p>
             </div>
           </div>
 

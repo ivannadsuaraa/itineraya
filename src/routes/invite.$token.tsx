@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { useTranslation } from "react-i18next";
 import { acceptInvite } from "@/lib/tripmates.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthModal } from "@/components/AuthModal";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/invite/$token")({
 });
 
 function InvitePage() {
+  const { t } = useTranslation();
   const { token } = Route.useParams();
   const navigate = useNavigate();
   const accept = useServerFn(acceptInvite);
@@ -30,10 +32,10 @@ function InvitePage() {
     setWorking(true);
     try {
       const res = await accept({ data: { token } });
-      toast.success("You're in!");
+      toast.success(t("invite.accepted"));
       navigate({ to: "/trip/$tripId", params: { tripId: res.tripId } });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : t("invite.error"));
       setWorking(false);
     }
   };
@@ -49,14 +51,12 @@ function InvitePage() {
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white shadow-lg">
           <Users className="h-6 w-6" />
         </div>
-        <h1 className="font-display text-2xl font-bold text-sky-900">You've been invited</h1>
-        <p className="mt-2 text-sm text-sky-700">
-          A friend invited you to collaborate on a trip on Itineraya.
-        </p>
+        <h1 className="font-display text-2xl font-bold text-sky-900">{t("invite.heading")}</h1>
+        <p className="mt-2 text-sm text-sky-700">{t("invite.subtitle")}</p>
         {authed === null || working ? (
           <div className="mt-6 flex items-center justify-center gap-2 text-sky-600">
             <Loader2 className="h-5 w-5 animate-spin" />
-            {working ? "Joining trip…" : "Loading…"}
+            {working ? t("invite.joining") : t("invite.loading")}
           </div>
         ) : authed === false ? (
           <button
@@ -65,15 +65,15 @@ function InvitePage() {
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:bg-[#15577E]"
           >
             <Sparkles className="h-4 w-4" />
-            Sign in to accept
+            {t("invite.signInToAccept")}
           </button>
         ) : null}
       </div>
       <AuthModal
         open={authOpen}
         onClose={() => setAuthOpen(false)}
-        title="Sign in to join this trip"
-        description="Create an account or log in to start collaborating."
+        title={t("invite.modalTitle")}
+        description={t("invite.modalDesc")}
         returnTo={`/invite/${token}`}
         // This page already watches onAuthStateChange and accepts the invite
         // itself once a session exists — the modal just needs to close.

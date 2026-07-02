@@ -188,7 +188,7 @@ function DiscoverableTripPage() {
     <article key={day.day} className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60">
       {day.image_url ? (
         <div className="relative h-48 w-full overflow-hidden md:h-64">
-          <img src={day.image_url} alt={day.title} className="h-full w-full object-cover" />
+          <img src={day.image_url} alt={day.title} loading="lazy" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
             <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">

@@ -18,19 +18,21 @@ interface Props {
   destination: string;
   days: Day[];
   tripId: string;
+  onError?: () => void;
 }
 
-const GOOGLE_KEY = (import.meta as { env: Record<string, string | undefined> }).env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+const GOOGLE_KEY = (import.meta as { env: Record<string, string | undefined> }).env
+  .VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
 
 const CATEGORY_COLORS: Record<string, string> = {
-  hotel: "#7C3AED",        // purple
-  restaurant: "#EF4444",   // red
-  sight: "#3B82F6",        // blue
-  activity: "#10B981",     // green
-  nightlife: "#EC4899",    // pink
-  transport: "#6B7280",    // gray
-  shopping: "#F59E0B",     // amber
-  other: "#1E6B9A",        // sky
+  hotel: "#7C3AED", // purple
+  restaurant: "#EF4444", // red
+  sight: "#3B82F6", // blue
+  activity: "#10B981", // green
+  nightlife: "#EC4899", // pink
+  transport: "#6B7280", // gray
+  shopping: "#F59E0B", // amber
+  other: "#1E6B9A", // sky
 };
 
 type Geo = { lat: number; lng: number };
@@ -42,10 +44,27 @@ declare global {
   interface Window {
     google?: typeof google;
     __itineraya_gmap_loaded__?: Promise<void>;
+    gm_authFailure?: () => void;
   }
 }
 
+// Google's loader does not reject the script promise on bad-key/referrer
+// restrictions — it silently renders a broken grey map and calls this global
+// callback instead. We turn that into a proper failure the component can react to.
+const authFailureListeners = new Set<() => void>();
+let authFailed = false;
+window.gm_authFailure = () => {
+  authFailed = true;
+  authFailureListeners.forEach((cb) => cb());
+};
+
+function onGoogleMapsAuthFailure(cb: () => void): () => void {
+  authFailureListeners.add(cb);
+  return () => authFailureListeners.delete(cb);
+}
+
 function loadGoogleMaps(): Promise<void> {
+  if (authFailed) return Promise.reject(new Error("Google Maps auth failure"));
   if (window.google?.maps) return Promise.resolve();
   if (window.__itineraya_gmap_loaded__) return window.__itineraya_gmap_loaded__;
   window.__itineraya_gmap_loaded__ = new Promise((resolve, reject) => {
@@ -89,7 +108,7 @@ function pinSvg(color: string, label: string): string {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-export function GoogleTripMap({ destination, days, tripId }: Props) {
+export function GoogleTripMap({ destination, days, tripId, onError }: Props) {
   const { t } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
@@ -99,10 +118,21 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const cancelled = useRef(false);
 
+  // Google's auth-failure callback fires asynchronously and can't be caught
+  // by a try/catch around the loader promise — listen for it explicitly.
+  useEffect(() => {
+    return onGoogleMapsAuthFailure(() => onError?.());
+  }, [onError]);
+
   const tasks = useMemo(
     () =>
       days.flatMap((d) =>
-        d.activities.map((a, idx) => ({ day: d.day, dayTitle: d.title, index: idx + 1, activity: a })),
+        d.activities.map((a, idx) => ({
+          day: d.day,
+          dayTitle: d.title,
+          index: idx + 1,
+          activity: a,
+        })),
       ),
     [days],
   );
@@ -123,12 +153,13 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
         });
         infoRef.current = new google.maps.InfoWindow();
       } catch {
-        // ignore
+        onError?.();
       }
     })();
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // geocode + place markers
@@ -156,7 +187,12 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
     const collected: Pin[] = [];
 
     (async () => {
-      await loadGoogleMaps();
+      try {
+        await loadGoogleMaps();
+      } catch {
+        onError?.();
+        return;
+      }
       if (cancelled.current || !mapInstance.current) return;
       const geocoder = new google.maps.Geocoder();
 
@@ -182,7 +218,13 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
           continue;
         }
         const placed = spread(g);
-        collected.push({ geo: placed, activity: item.activity, day: item.day, dayTitle: item.dayTitle, index: item.index });
+        collected.push({
+          geo: placed,
+          activity: item.activity,
+          day: item.day,
+          dayTitle: item.dayTitle,
+          index: item.index,
+        });
         setPins([...collected]);
         setProgress((p) => ({ done: p.done + 1, total: p.total }));
       }
@@ -197,6 +239,7 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
     return () => {
       cancelled.current = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tasks, destination, tripId]);
 
   // render markers
@@ -211,7 +254,11 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
       const marker = new google.maps.Marker({
         position: p.geo,
         map: mapInstance.current!,
-        icon: { url: pinSvg(color, String(p.index)), scaledSize: new google.maps.Size(36, 46), anchor: new google.maps.Point(18, 46) },
+        icon: {
+          url: pinSvg(color, String(p.index)),
+          scaledSize: new google.maps.Size(36, 46),
+          anchor: new google.maps.Point(18, 46),
+        },
         title: p.activity.title,
       });
       const q = encodeURIComponent(`${p.activity.place || p.activity.title}, ${destination}`);
@@ -260,8 +307,14 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {categories.map((c) => (
-                <div key={c} className="inline-flex items-center gap-1.5 rounded-full bg-sky-50/80 px-2 py-0.5 text-[11px] font-semibold text-sky-800">
-                  <span className="h-2.5 w-2.5 rounded-full ring-2 ring-white" style={{ background: CATEGORY_COLORS[c] ?? CATEGORY_COLORS.other }} />
+                <div
+                  key={c}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-sky-50/80 px-2 py-0.5 text-[11px] font-semibold text-sky-800"
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full ring-2 ring-white"
+                    style={{ background: CATEGORY_COLORS[c] ?? CATEGORY_COLORS.other }}
+                  />
                   {t(`trip.category.${c}`, { defaultValue: c })}
                 </div>
               ))}
@@ -274,5 +327,8 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
 }

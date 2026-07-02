@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Navbar } from "@/components/landing/Navbar";
-import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { PopularDestinationsSection } from "@/components/landing/PopularDestinationsSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
@@ -14,14 +13,23 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { MobileBottomBar } from "@/components/DashboardSidebar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Itineraya – Viajes personalizados con IA" },
-      { name: "description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos." },
+      {
+        name: "description",
+        content:
+          "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos.",
+      },
       { property: "og:title", content: "Itineraya – Viajes personalizados con IA" },
-      { property: "og:description", content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos." },
+      {
+        property: "og:description",
+        content:
+          "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos.",
+      },
       { property: "og:type", content: "website" },
     ],
   }),
@@ -33,22 +41,20 @@ function LandingPage() {
   const { openAuthModal } = useAuthModal();
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     if (typeof window === "undefined") return false;
-    return Object.keys(localStorage).some(
-      (k) => k.startsWith("sb-") && k.endsWith("-auth-token"),
-    );
+    return Object.keys(localStorage).some((k) => k.startsWith("sb-") && k.endsWith("-auth-token"));
   });
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
     supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data.session?.user));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) =>
-      setIsLoggedIn(!!s?.user),
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_, s) => setIsLoggedIn(!!s?.user));
     return () => subscription.unsubscribe();
   }, []);
   return (
     <div className={`min-h-screen bg-white ${isLoggedIn ? "pb-16 md:pb-0" : ""}`}>
-      {isLoggedIn ? <DesktopTopNav /> : <Navbar />}
+      <Navbar />
       <HeroSection />
 
       <PopularDestinationsSection />
@@ -61,22 +67,16 @@ function LandingPage() {
         <div className="pointer-events-none absolute inset-0">
           <div
             className="absolute top-0 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full opacity-50 blur-3xl"
-            style={{ background: "radial-gradient(circle, oklch(0.856 0.041 239.082), transparent 70%)" }}
+            style={{
+              background: "radial-gradient(circle, oklch(0.856 0.041 239.082), transparent 70%)",
+            }}
           />
         </div>
-        <div
-          
-          
-          
-          
-          className="relative mx-auto max-w-3xl px-4 text-center sm:px-6"
-        >
+        <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6">
           <h2 className="font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
             {t("finalCta.title")}
           </h2>
-          <p className="mt-4 text-lg text-sky-600">
-            {t("finalCta.subtitle")}
-          </p>
+          <p className="mt-4 text-lg text-sky-600">{t("finalCta.subtitle")}</p>
           <div className="mt-8">
             {mounted && isLoggedIn ? (
               <Link
@@ -97,7 +97,6 @@ function LandingPage() {
               </button>
             )}
           </div>
-
         </div>
       </section>
 

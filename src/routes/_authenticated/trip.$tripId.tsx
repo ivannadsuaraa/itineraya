@@ -27,7 +27,7 @@ import { TripmatesModal } from "@/components/trip/TripmatesModal";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 
-const TripMap = lazy(() => import("@/components/trip/GoogleTripMap").then((m) => ({ default: m.GoogleTripMap })));
+const TripMap = lazy(() => import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })));
 
 export const Route = createFileRoute("/_authenticated/trip/$tripId")({
   component: ItineraryPage,

@@ -112,6 +112,8 @@ export const getPublicTrip = createServerFn({ method: "GET" })
       end_date: string | null;
       share_slug: string;
     };
+    // Best-effort view counter — never block or fail the page load on this.
+    void client.rpc("increment_trip_view_count" as never, { trip_slug: data.slug } as never);
     return {
       destination: r.destination,
       hero_image_url: r.hero_image_url,

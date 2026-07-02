@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /new-trip
+Disallow: /onboarding
+Disallow: /welcome
+Disallow: /assistant
+Disallow: /copilot
+Disallow: /inspire
+Disallow: /profile
+Disallow: /invite/
+Disallow: /checkout-return
+Disallow: /reset-password
+Disallow: /email-confirmed
+
+Sitemap: https://itineraya.com/sitemap.xml

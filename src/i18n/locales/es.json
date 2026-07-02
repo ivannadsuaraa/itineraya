@@ -31,7 +31,8 @@
     "cardDays": "{{count}} días",
     "cardBudget": "Presupuesto estimado",
     "cardAI": "Generado por IA en",
-    "cardAISeconds": "12 segundos"
+    "cardAISeconds": "12 segundos",
+    "socialProof": "+2.000 viajeros ya usan Itineraya"
   },
   "how": {
     "kicker": "Cómo funciona 🗺️",
@@ -179,6 +180,7 @@
     "choose": "Elegir plan",
     "startFree": "Empieza gratis",
     "notConfigured": "Los pagos aún no están configurados",
+    "close": "Cerrar",
     "free": {
       "name": "Gratuito",
       "tagline": "Para empezar tu primera aventura",
@@ -269,6 +271,36 @@
     "tripsShort": "Viajes",
     "home": "Inicio"
   },
+  "profilePrefs": {
+    "title": "Preferencias de viaje",
+    "subtitle": "Completa tu perfil para itinerarios más personalizados ✨",
+    "styleLabel": "Estilo de viaje favorito",
+    "select": "— Selecciona —",
+    "budgetLabel": "Presupuesto habitual",
+    "budgetLow": "Mochilero / Económico",
+    "budgetMedium": "Medio",
+    "budgetHigh": "Alto",
+    "budgetLuxury": "Lujo",
+    "travelerLabel": "Tipo de viajero",
+    "travelerSolo": "Solo",
+    "travelerCouple": "En pareja",
+    "travelerFamily": "En familia",
+    "travelerFriends": "Con amigos",
+    "travelerBusiness": "Negocios",
+    "destinationsLabel": "Destinos que quieres visitar",
+    "destinationsPh": "Tokio, Bali, Patagonia…",
+    "destinationsHint": "Separa con comas.",
+    "save": "Guardar preferencias",
+    "saved": "Guardado",
+    "defaultName": "Viajero",
+    "currentPlan": "Plan actual",
+    "manage": "Gestionar",
+    "upgrade": "Mejorar"
+  },
+  "layout": {
+    "back": "Atrás",
+    "homeAria": "Inicio Itineraya"
+  },
   "onboarding": {
     "metaTitle": "Cuéntanos sobre tu viaje – Itineraya",
     "back": "Atrás",
@@ -303,6 +335,34 @@
     "budgetMidDesc": "Hoteles cómodos, experiencias balanceadas",
     "budgetMax": "Sin límite",
     "budgetMaxDesc": "Lo mejor de cada destino",
+    "budgetMinLabel": "Presupuesto mínimo",
+    "budgetMaxLabel": "Presupuesto máximo",
+    "budgetTier": {
+      "backpacker": {
+        "title": "Viaje mochilero",
+        "desc": "Hostels, transporte público, comida callejera"
+      },
+      "economy": {
+        "title": "Viaje económico",
+        "desc": "Hoteles básicos, transporte mixto, restaurantes locales"
+      },
+      "comfort": {
+        "title": "Viaje confortable",
+        "desc": "Hoteles 3★, vuelos directos, restaurantes variados"
+      },
+      "premium": {
+        "title": "Viaje premium",
+        "desc": "Hoteles 4★, experiencias exclusivas, restaurantes seleccionados"
+      },
+      "luxury": {
+        "title": "Viaje de lujo",
+        "desc": "Hoteles 5★, traslados privados, experiencias VIP"
+      },
+      "ultraLuxury": {
+        "title": "Viaje ultra-lujo",
+        "desc": "Suites, traslados privados, experiencias únicas exclusivas"
+      }
+    },
     "styleTitle": "¿Qué tipo de viaje buscas?",
     "styleSubtitle": "Aventura, cultura, relax, gastronomía…",
     "stylePh": "Ej. Quiero descubrir templos y comida callejera, con algo de naturaleza.",
@@ -367,8 +427,33 @@
     "mapTitle": "Mapa del viaje",
     "mapLoading": "Localizando lugares… {{done}}/{{total}}",
     "mapReady": "{{count}} lugares en el mapa",
+    "mapFallbackNotice": "Usando mapa alternativo (OpenStreetMap) — Google Maps no está disponible ahora mismo.",
     "nights_one": "{{count}} noche",
     "nights_other": "{{count}} noches"
+  },
+  "tripmates": {
+    "tag": "Compañeros de viaje",
+    "title": "Invitar amigos",
+    "subtitle": "Planificad {{dest}} juntos. Los amigos invitados pueden ver y colaborar.",
+    "emailPh": "amigo@email.com",
+    "send": "Invitar",
+    "sent": "¡Invitación enviada!",
+    "joined": "Se unieron",
+    "invitesSent": "Invitados",
+    "accepted": "Aceptada",
+    "pending": "Pendiente"
+  },
+  "invite": {
+    "metaTitle": "Invitación de viaje – Itineraya",
+    "heading": "Has sido invitado",
+    "subtitle": "Un amigo te ha invitado a colaborar en un viaje en Itineraya.",
+    "joining": "Uniéndote al viaje…",
+    "loading": "Cargando…",
+    "signInToAccept": "Inicia sesión para aceptar",
+    "modalTitle": "Inicia sesión para unirte a este viaje",
+    "modalDesc": "Crea una cuenta o inicia sesión para empezar a colaborar.",
+    "accepted": "¡Ya estás dentro!",
+    "error": "Error"
   },
   "share": {
     "title": "Compartir tu viaje",

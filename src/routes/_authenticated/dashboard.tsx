@@ -131,11 +131,18 @@ function DashboardPage() {
     }
   };
 
-  const upcoming = (trips ?? [])
-    .filter((tr) => tr.start_date && new Date(tr.start_date) >= new Date(new Date().toDateString()))
-    .sort((a, b) => (a.start_date! < b.start_date! ? -1 : 1))[0];
+  const upcoming = useMemo(
+    () =>
+      (trips ?? [])
+        .filter((tr) => tr.start_date && new Date(tr.start_date) >= new Date(new Date().toDateString()))
+        .sort((a, b) => (a.start_date! < b.start_date! ? -1 : 1))[0],
+    [trips],
+  );
 
-  const otherTrips = (trips ?? []).filter((tr) => !upcoming || tr.id !== upcoming.id);
+  const otherTrips = useMemo(
+    () => (trips ?? []).filter((tr) => !upcoming || tr.id !== upcoming.id),
+    [trips, upcoming],
+  );
 
   const locale = dateLocale(i18n.language);
   const inspirations = useMemo(() => getSeasonalInspirations(), []);
@@ -259,6 +266,7 @@ function DashboardPage() {
                         <img
                           src={s.hero_image_url}
                           alt={s.destination}
+                          loading="lazy"
                           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                         />
                       ) : (
@@ -387,6 +395,7 @@ function TripCard({
             <img
               src={trip.hero_image_url}
               alt={trip.destination}
+              loading="lazy"
               className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             />
           ) : (

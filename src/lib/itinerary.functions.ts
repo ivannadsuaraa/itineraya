@@ -31,7 +31,10 @@ async function unsplashImage(query: string): Promise<string | null> {
 
 function extractJson<T>(raw: string): T {
   // 1. Strip markdown fences
-  let text = raw.replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+  let text = raw
+    .replace(/```json\s*/gi, "")
+    .replace(/```/g, "")
+    .trim();
 
   // 2. Extract the outermost JSON object (first { … last })
   const start = text.indexOf("{");
@@ -43,30 +46,43 @@ function extractJson<T>(raw: string): T {
   // 3. Try direct parse
   try {
     return JSON.parse(text) as T;
-  } catch {/* continue to repair */}
+  } catch {
+    /* continue to repair */
+  }
 
   // 4. Repair common LLM JSON mistakes
   const repaired = text
     // trailing commas before ] or }
     .replace(/,\s*([}\]])/g, "$1")
     // unescaped newlines inside string values
-    .replace(/("(?:[^"\\]|\\.)*")|(\n)/g, (m, str) => str ? str : " ")
+    .replace(/("(?:[^"\\]|\\.)*")|(\n)/g, (m, str) => (str ? str : " "))
     // single-quoted keys/values → double-quoted (careful: only bare single quotes)
     .replace(/'([^']+)'(\s*:)/g, '"$1"$2')
     .replace(/:\s*'([^']*)'/g, ': "$1"');
 
   try {
     return JSON.parse(repaired) as T;
-  } catch {/* continue to truncation recovery */}
+  } catch {
+    /* continue to truncation recovery */
+  }
 
   // 5. Truncation recovery: close any open arrays/objects and retry
   const stack: string[] = [];
   let inString = false;
   let escaped = false;
   for (const ch of repaired) {
-    if (escaped) { escaped = false; continue; }
-    if (ch === "\\" && inString) { escaped = true; continue; }
-    if (ch === '"') { inString = !inString; continue; }
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\" && inString) {
+      escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
     if (inString) continue;
     if (ch === "{" || ch === "[") stack.push(ch === "{" ? "}" : "]");
     else if (ch === "}" || ch === "]") stack.pop();
@@ -102,8 +118,7 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const plan = (planProfile?.plan ?? "free") as "free" | "viajero" | "explorador";
-    const planLimit: number | null =
-      plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
+    const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
 
     if (planLimit !== null) {
       // Count ALL existing trips (any status) except the one being generated.
@@ -122,14 +137,12 @@ export const generateItinerary = createServerFn({ method: "POST" })
       }
     }
 
-
     if (trip.status === "ready" && trip.itinerary) {
       return { itinerary: trip.itinerary, hero_image_url: trip.hero_image_url };
     }
 
     const key = process.env.ANTHROPIC_API_KEY;
-if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
-
+    if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     // Load user profile (language, age, travel_style, budget_range, preferred_destinations)
     const { data: profile } = await supabase
@@ -143,7 +156,9 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
     const lang: "es" | "en" =
       clientLang === "en" || clientLang === "es"
         ? (clientLang as "es" | "en")
-        : profileLang === "en" ? "en" : "es";
+        : profileLang === "en"
+          ? "en"
+          : "es";
     const langName = lang === "en" ? "English" : "Spanish";
 
     // Trip history for personalization (last 5 ready trips, excluding current)
@@ -156,9 +171,15 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
       .order("created_at", { ascending: false })
       .limit(5);
 
-    const historyLine = history && history.length > 0
-      ? history.map((t) => `${t.destination} (${t.trip_style ?? "—"}, ${t.companion ?? "—"}, ${t.budget ?? "—"})`).join("; ")
-      : "no previous trips";
+    const historyLine =
+      history && history.length > 0
+        ? history
+            .map(
+              (t) =>
+                `${t.destination} (${t.trip_style ?? "—"}, ${t.companion ?? "—"}, ${t.budget ?? "—"})`,
+            )
+            .join("; ")
+        : "no previous trips";
 
     const dayCount = (() => {
       if (!trip.start_date || !trip.end_date) return 5;
@@ -168,10 +189,47 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
       return Math.min(d, 14);
     })();
 
+    const budgetBlock = (() => {
+      const raw = (trip as { budget?: string | null }).budget;
+      const match = raw?.match(/^(\d+)-(\d+)$/);
+      if (!match) return "";
+      const lo = Number(match[1]);
+      const hi = Number(match[2]);
+      const mid = (lo + hi) / 2;
+      const tier =
+        mid < 300
+          ? "mochilero (hostels, transporte público, comida callejera)"
+          : mid < 800
+            ? "económico (hoteles básicos, transporte mixto, restaurantes locales)"
+            : mid < 2000
+              ? "confortable (hoteles 3★, restaurantes variados)"
+              : mid < 4000
+                ? "premium (hoteles 4★, experiencias exclusivas)"
+                : mid < 7000
+                  ? "lujo (hoteles 5★, traslados privados, experiencias VIP)"
+                  : "ultra-lujo (suites, experiencias exclusivas sin límite de gasto)";
+      const dailyLo = Math.round(lo / dayCount);
+      const dailyHi = Math.round(hi / dayCount);
+      return `\nPRESUPUESTO\nRango total del viaje: ${lo}€–${hi}€ (~${dailyLo}€–${dailyHi}€/día). Estilo: ${tier}. Ajusta alojamiento, restaurantes y actividades sugeridas a este nivel de gasto — no recomiendes opciones muy por encima o por debajo.\n`;
+    })();
+
     const monthName = (() => {
       if (!trip.start_date) return "unspecified";
       const d = new Date(trip.start_date);
-      const names = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+      const names = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
       return `${names[d.getMonth()]} (month ${d.getMonth() + 1})`;
     })();
 
@@ -185,7 +243,7 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
       ? `Last day (day ${dayCount}) departure time: ${departureTime}. Do NOT schedule activities after this time on the last day; leave at least 2-3h before departure for transfer to airport/station. If departure is early morning (before 10:00) plan ONLY transfer; if morning (before 13:00) keep it to breakfast + a single light activity.`
       : `Last day departure: unknown — assume a normal evening end.`;
 
-    const tripTypes = ((trip as { trip_types?: string[] | null }).trip_types) ?? [];
+    const tripTypes = (trip as { trip_types?: string[] | null }).trip_types ?? [];
     const hasAccommodation = !!(trip as { has_accommodation?: boolean | null }).has_accommodation;
     const hotelName = (trip as { hotel_name?: string | null }).hotel_name ?? null;
     const hotelAddress = (trip as { hotel_address?: string | null }).hotel_address ?? null;
@@ -193,10 +251,10 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
     const hotelLngRaw = (trip as { hotel_lng?: number | string | null }).hotel_lng;
     const hotelLat = hotelLatRaw != null ? Number(hotelLatRaw) : null;
     const hotelLng = hotelLngRaw != null ? Number(hotelLngRaw) : null;
-    const hasHotelCoords = hotelLat != null && hotelLng != null && !Number.isNaN(hotelLat) && !Number.isNaN(hotelLng);
-    const tripTypesLine = tripTypes.length > 0
-      ? tripTypes.join(", ")
-      : (trip.trip_style ?? "unspecified");
+    const hasHotelCoords =
+      hotelLat != null && hotelLng != null && !Number.isNaN(hotelLat) && !Number.isNaN(hotelLng);
+    const tripTypesLine =
+      tripTypes.length > 0 ? tripTypes.join(", ") : (trip.trip_style ?? "unspecified");
 
     const accommodationBlock = hasHotelCoords
       ? `ALOJAMIENTO (ANCLA FIJA): "${hotelName ?? "alojamiento"}"${hotelAddress ? ` (${hotelAddress})` : ""}, coords ${hotelLat!.toFixed(5)},${hotelLng!.toFixed(5)}. TODAS las actividades deben estar a ≤3 km. Cada día empieza y termina aquí. Sin actividades en otra ciudad ni otros hoteles.`
@@ -205,16 +263,78 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
         : `ALOJAMIENTO: Sin confirmar. Puedes incluir "check-in" breve el día 1.`;
 
     const inlandSet = new Set([
-      "madrid","toledo","granada","sevilla","córdoba","salamanca","valladolid","zaragoza",
-      "pamplona","burgos","segovia","ávila","mérida","cáceres","león","santiago",
-      "london","paris","prague","vienna","budapest","berlin","munich","milan","rome",
-      "florence","venice","siena","verona","bologna","turin","dublin","edinburgh",
-      "york","oxford","cambridge","bath","moscow","kyiv","warsaw","krakow","bucharest",
-      "sofia","belgrade","luxembourg","brussels","amsterdam","copenhagen","stockholm",
-      "oslo","helsinki","reykjavik","innsbruck","salzburg","zurich","geneva",
-      "luxor","cairo","jaipur","agra","delhi","kathmandu",
-      "mexico city","guadalajara","quito","bogotá","cusco","la paz","lima",
-      "santiago de chile","buenos aires","asunción",
+      "madrid",
+      "toledo",
+      "granada",
+      "sevilla",
+      "córdoba",
+      "salamanca",
+      "valladolid",
+      "zaragoza",
+      "pamplona",
+      "burgos",
+      "segovia",
+      "ávila",
+      "mérida",
+      "cáceres",
+      "león",
+      "santiago",
+      "london",
+      "paris",
+      "prague",
+      "vienna",
+      "budapest",
+      "berlin",
+      "munich",
+      "milan",
+      "rome",
+      "florence",
+      "venice",
+      "siena",
+      "verona",
+      "bologna",
+      "turin",
+      "dublin",
+      "edinburgh",
+      "york",
+      "oxford",
+      "cambridge",
+      "bath",
+      "moscow",
+      "kyiv",
+      "warsaw",
+      "krakow",
+      "bucharest",
+      "sofia",
+      "belgrade",
+      "luxembourg",
+      "brussels",
+      "amsterdam",
+      "copenhagen",
+      "stockholm",
+      "oslo",
+      "helsinki",
+      "reykjavik",
+      "innsbruck",
+      "salzburg",
+      "zurich",
+      "geneva",
+      "luxor",
+      "cairo",
+      "jaipur",
+      "agra",
+      "delhi",
+      "kathmandu",
+      "mexico city",
+      "guadalajara",
+      "quito",
+      "bogotá",
+      "cusco",
+      "la paz",
+      "lima",
+      "santiago de chile",
+      "buenos aires",
+      "asunción",
     ]);
     const isCoastal = !inlandSet.has(trip.destination.toLowerCase().trim());
 
@@ -222,9 +342,11 @@ if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
 IDIOMA (PRIORIDAD MÁXIMA — ABSOLUTA)
 Idioma de salida: ${langName} (${lang.toUpperCase()}). El 100% del texto visible (resumen, títulos, descripciones, comidas, transporte) debe estar en ${langName}. Cero excepciones.
-${lang === "en"
-  ? `PROHIBIDO en inglés usar palabras españolas: Desayuno, Comida, Cena, Visita, Paseo, "a pie", "en metro". Usa SOLO inglés: Breakfast, Lunch, Dinner, Visit, Walk, "on foot", "by metro".`
-  : `PROHIBIDO usar palabras inglesas: Breakfast, Lunch, Dinner, Visit, Walk, Morning, Afternoon. Usa SOLO español peninsular: Desayuno, Comida, Cena, Visita, Paseo, Mañana, Tarde, Noche.`}
+${
+  lang === "en"
+    ? `PROHIBIDO en inglés usar palabras españolas: Desayuno, Comida, Cena, Visita, Paseo, "a pie", "en metro". Usa SOLO inglés: Breakfast, Lunch, Dinner, Visit, Walk, "on foot", "by metro".`
+    : `PROHIBIDO usar palabras inglesas: Breakfast, Lunch, Dinner, Visit, Walk, Morning, Afternoon. Usa SOLO español peninsular: Desayuno, Comida, Cena, Visita, Paseo, Mañana, Tarde, Noche.`
+}
 Los nombres propios reales (locales, calles, monumentos) permanecen en su idioma original. El campo "place" DEBE ser el nombre real del local en su idioma nativo.
 
 COHERENCIA GEOGRÁFICA
@@ -247,11 +369,14 @@ Walks <1.2 km → siempre a pie. Nunca taxi para <1.2 km.
 
 EVENTOS LOCALES
 Si hay festivales, ferias o festivos en ${trip.destination} entre ${trip.start_date ?? "las fechas del viaje"} y ${trip.end_date ?? "las fechas del viaje"}, inclúyelos como actividad con nombre real, lugar y hora. URL al evento oficial en el campo "url".
+${budgetBlock}
 
 COMIDAS
-${lang === "es"
-  ? 'Usa nomenclatura peninsular: Desayuno (07:30–10:00), Comida (13:30–16:00, comida principal — nunca "almuerzo"/"lunch"), Cena (20:30–23:00). El título DEBE empezar con la palabra de comida ("Comida en …", "Cena en …").'
-  : 'Use English meal names only: Breakfast / Lunch / Dinner / Snack. Title MUST start with the meal word ("Lunch at …"). Adapt times to local culture.'}
+${
+  lang === "es"
+    ? 'Usa nomenclatura peninsular: Desayuno (07:30–10:00), Comida (13:30–16:00, comida principal — nunca "almuerzo"/"lunch"), Cena (20:30–23:00). El título DEBE empezar con la palabra de comida ("Comida en …", "Cena en …").'
+    : 'Use English meal names only: Breakfast / Lunch / Dinner / Snack. Title MUST start with the meal word ("Lunch at …"). Adapt times to local culture.'
+}
 Cada actividad de categoría "restaurant" debe tener un nombre de local real y específico en "place". Incluye "url" con enlace directo al local (web oficial o Google Maps).
 
 ENLACES (campo "url")
@@ -279,41 +404,42 @@ SALIDA — devuelve ÚNICAMENTE JSON válido, sin markdown:
 
 Genera exactamente ${dayCount} días. 5–7 actividades/día (menos en días con llegada/salida ajustada). ${hasAccommodation ? 'NUNCA uses categoría "hotel".' : ""} Solo JSON puro. Todo en ${langName}.`;
 
-
     let aiRes: Response | null = null;
-for (let attempt = 1; attempt <= 3; attempt++) {
-  const t0 = Date.now();
-  console.log(`[itinerary] API call start (attempt ${attempt}) — ${dayCount} days, prompt ~${prompt.length} chars`);
-  aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5",
-      max_tokens: 10000,
-      system: "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-  console.log(`[itinerary] API call end — ${Date.now() - t0}ms — status ${aiRes.status}`);
-  if (aiRes.status !== 429) break;
-  if (attempt < 3) await new Promise((r) => setTimeout(r, 5000 * attempt));
-}
-if (!aiRes) throw new Error("Error al conectar con la IA.");
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const t0 = Date.now();
+      console.log(
+        `[itinerary] API call start (attempt ${attempt}) — ${dayCount} days, prompt ~${prompt.length} chars`,
+      );
+      aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": key,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5",
+          max_tokens: 10000,
+          system:
+            "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+      console.log(`[itinerary] API call end — ${Date.now() - t0}ms — status ${aiRes.status}`);
+      if (aiRes.status !== 429) break;
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 5000 * attempt));
+    }
+    if (!aiRes) throw new Error("Error al conectar con la IA.");
 
-if (!aiRes.ok) {
-  const text = await aiRes.text();
-  if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
-  throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
-}
+    if (!aiRes.ok) {
+      const text = await aiRes.text();
+      if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
+      throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
+    }
 
-const aiJson = (await aiRes.json()) as { content?: Array<{ text?: string }> };
-const content = aiJson.content?.[0]?.text ?? "";
-if (!content) throw new Error("Respuesta vacía del modelo");
-
+    const aiJson = (await aiRes.json()) as { content?: Array<{ text?: string }> };
+    const content = aiJson.content?.[0]?.text ?? "";
+    if (!content) throw new Error("Respuesta vacía del modelo");
 
     type ParsedActivity = {
       time: string;
@@ -334,14 +460,14 @@ if (!content) throw new Error("Respuesta vacía del modelo");
         activities: ParsedActivity[];
       }>;
     };
-    let parsed: ParsedItin;
-    parsed = extractJson<ParsedItin>(content);
-
+    const parsed: ParsedItin = extractJson<ParsedItin>(content);
 
     // Hero + all day images in parallel
     const [hero, ...dayImages] = await Promise.all([
       unsplashImage(`${trip.destination} travel landscape`),
-      ...parsed.days.map((d) => unsplashImage(`${d.image_query || trip.destination} ${trip.destination}`)),
+      ...parsed.days.map((d) =>
+        unsplashImage(`${d.image_query || trip.destination} ${trip.destination}`),
+      ),
     ]);
     parsed.days = parsed.days.map((d, i) => ({ ...d, image_url: dayImages[i] }));
 
@@ -353,4 +479,3 @@ if (!content) throw new Error("Respuesta vacía del modelo");
 
     return { itinerary: parsed, hero_image_url: hero };
   });
- 

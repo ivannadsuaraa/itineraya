@@ -62,7 +62,9 @@ function ProfilePage() {
       setTravelStyle((p?.travel_style as string) ?? "");
       setBudgetRange((p?.budget_range as string) ?? "");
       setPreferredDestinations(
-        Array.isArray(p?.preferred_destinations) ? (p!.preferred_destinations as string[]).join(", ") : "",
+        Array.isArray(p?.preferred_destinations)
+          ? (p!.preferred_destinations as string[]).join(", ")
+          : "",
       );
       setTravelerType(((p as { traveler_type?: string } | null)?.traveler_type as string) ?? "");
     })();
@@ -95,11 +97,17 @@ function ProfilePage() {
     setTimeout(() => setSaved(false), 2200);
   };
 
-  const filledCount = [travelStyle, budgetRange, travelerType, preferredDestinations.trim()].filter(Boolean).length;
+  const filledCount = [travelStyle, budgetRange, travelerType, preferredDestinations.trim()].filter(
+    Boolean,
+  ).length;
   const completion = Math.round((filledCount / 4) * 100);
 
   const planLabel =
-    plan === "explorador" ? "Explorador" : plan === "viajero" ? "Viajero" : "Gratis";
+    plan === "explorador"
+      ? t("pricing.explorador.name")
+      : plan === "viajero"
+        ? t("pricing.viajero.name")
+        : t("pricing.free.name");
 
   return (
     <div className="min-h-dvh bg-slate-50">
@@ -112,7 +120,11 @@ function ProfilePage() {
         <div className="relative mx-auto max-w-2xl">
           <div className="flex items-center gap-4">
             {avatar ? (
-              <img src={avatar} alt="" className="h-14 w-14 rounded-full object-cover ring-2 ring-white/30" />
+              <img
+                src={avatar}
+                alt=""
+                className="h-14 w-14 rounded-full object-cover ring-2 ring-white/30"
+              />
             ) : (
               <div className="grid h-14 w-14 place-items-center rounded-full bg-white/15 text-white ring-2 ring-white/20">
                 <UserIcon className="h-6 w-6" />
@@ -120,7 +132,7 @@ function ProfilePage() {
             )}
             <div>
               <p className="font-display text-xl font-bold text-white">
-                {fullName || email.split("@")[0] || "Viajero"}
+                {fullName || email.split("@")[0] || t("profilePrefs.defaultName")}
               </p>
               <p className="text-sm text-sky-300">{email}</p>
             </div>
@@ -130,18 +142,17 @@ function ProfilePage() {
 
       <div>
         <main className="mx-auto max-w-2xl px-5 py-6 md:px-10 md:py-8">
-
           <section className="mt-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Plan actual
+                  {t("profilePrefs.currentPlan")}
                 </p>
                 <p className="mt-1 font-display text-xl font-bold text-slate-900">
                   {planLabel}
                   {isActive && (
                     <span className="ml-2 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-                      activo
+                      {t("pricing.active")}
                     </span>
                   )}
                 </p>
@@ -151,7 +162,7 @@ function ProfilePage() {
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-md hover:opacity-95"
               >
                 <Sparkles className="h-4 w-4" />
-                {plan === "explorador" ? "Gestionar" : "Mejorar"}
+                {plan === "explorador" ? t("profilePrefs.manage") : t("profilePrefs.upgrade")}
               </Link>
             </div>
           </section>
@@ -161,11 +172,9 @@ function ProfilePage() {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="flex items-center gap-2 font-display text-lg font-bold text-sky-900">
-                  <Heart className="h-4 w-4 text-sky-600" /> Preferencias de viaje
+                  <Heart className="h-4 w-4 text-sky-600" /> {t("profilePrefs.title")}
                 </p>
-                <p className="mt-1 text-xs text-sky-700">
-                  Completa tu perfil para itinerarios más personalizados ✨
-                </p>
+                <p className="mt-1 text-xs text-sky-700">{t("profilePrefs.subtitle")}</p>
               </div>
               <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-sky-700 ring-1 ring-sky-200">
                 {completion}%
@@ -174,61 +183,71 @@ function ProfilePage() {
 
             <div className="mt-4 grid gap-3">
               <div>
-                <label className="text-xs font-semibold text-slate-700">Estilo de viaje favorito</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  {t("profilePrefs.styleLabel")}
+                </label>
                 <select
                   value={travelStyle}
                   onChange={(e) => setTravelStyle(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
                 >
-                  <option value="">— Selecciona —</option>
+                  <option value="">{t("profilePrefs.select")}</option>
                   {TRAVEL_STYLES.map((s) => (
-                    <option key={s} value={s}>{t(`explore.style.${s}`, s)}</option>
+                    <option key={s} value={s}>
+                      {t(`explore.style.${s}`, s)}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700">Presupuesto habitual</label>
+                <label className="text-xs font-semibold text-slate-700">
+                  {t("profilePrefs.budgetLabel")}
+                </label>
                 <select
                   value={budgetRange}
                   onChange={(e) => setBudgetRange(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
                 >
-                  <option value="">— Selecciona —</option>
-                  <option value="low">Mochilero / Económico</option>
-                  <option value="medium">Medio</option>
-                  <option value="high">Alto</option>
-                  <option value="luxury">Lujo</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-700">Tipo de viajero</label>
-                <select
-                  value={travelerType}
-                  onChange={(e) => setTravelerType(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
-                >
-                  <option value="">— Selecciona —</option>
-                  <option value="solo">Solo</option>
-                  <option value="couple">En pareja</option>
-                  <option value="family">En familia</option>
-                  <option value="friends">Con amigos</option>
-                  <option value="business">Negocios</option>
+                  <option value="">{t("profilePrefs.select")}</option>
+                  <option value="low">{t("profilePrefs.budgetLow")}</option>
+                  <option value="medium">{t("profilePrefs.budgetMedium")}</option>
+                  <option value="high">{t("profilePrefs.budgetHigh")}</option>
+                  <option value="luxury">{t("profilePrefs.budgetLuxury")}</option>
                 </select>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-slate-700">
-                  Destinos que quieres visitar
+                  {t("profilePrefs.travelerLabel")}
+                </label>
+                <select
+                  value={travelerType}
+                  onChange={(e) => setTravelerType(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
+                >
+                  <option value="">{t("profilePrefs.select")}</option>
+                  <option value="solo">{t("profilePrefs.travelerSolo")}</option>
+                  <option value="couple">{t("profilePrefs.travelerCouple")}</option>
+                  <option value="family">{t("profilePrefs.travelerFamily")}</option>
+                  <option value="friends">{t("profilePrefs.travelerFriends")}</option>
+                  <option value="business">{t("profilePrefs.travelerBusiness")}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700">
+                  {t("profilePrefs.destinationsLabel")}
                 </label>
                 <input
                   value={preferredDestinations}
                   onChange={(e) => setPreferredDestinations(e.target.value)}
-                  placeholder="Tokio, Bali, Patagonia…"
+                  placeholder={t("profilePrefs.destinationsPh")}
                   className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
                 />
-                <p className="mt-1 text-[11px] text-slate-500">Separa con comas.</p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  {t("profilePrefs.destinationsHint")}
+                </p>
               </div>
 
               <Button
@@ -240,10 +259,10 @@ function ProfilePage() {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : saved ? (
                   <>
-                    <Check className="h-4 w-4" /> Guardado
+                    <Check className="h-4 w-4" /> {t("profilePrefs.saved")}
                   </>
                 ) : (
-                  "Guardar preferencias"
+                  t("profilePrefs.save")
                 )}
               </Button>
             </div>

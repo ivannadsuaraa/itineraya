@@ -20,8 +20,7 @@ export const Route = createFileRoute("/pricing")({
       { title: "Planes y precios – Itineraya" },
       {
         name: "description",
-        content:
-          "Elige el plan que mejor se adapta a tus viajes: Gratuito, Viajero o Explorador.",
+        content: "Elige el plan que mejor se adapta a tus viajes: Gratuito, Viajero o Explorador.",
       },
       { property: "og:title", content: "Planes y precios – Itineraya" },
       {
@@ -107,7 +106,10 @@ function PricingPage() {
   const [userPlan, setUserPlan] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authedUserId) { setUserPlan(null); return; }
+    if (!authedUserId) {
+      setUserPlan(null);
+      return;
+    }
     supabase
       .from("profiles")
       .select("plan")
@@ -133,7 +135,7 @@ function PricingPage() {
       return;
     }
     if (!isPaymentsConfigured()) {
-      toast.error("Los pagos aún no están configurados");
+      toast.error(t("pricing.notConfigured"));
       return;
     }
     setStarting(plan.id);
@@ -160,18 +162,16 @@ function PricingPage() {
             className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/10 px-3 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/20 sm:text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
-            {authedUserId ? "Dashboard" : "Inicio"}
+            {authedUserId ? t("pricing.dashboard") : t("pricing.back")}
           </Link>
           <BrandLogo size="md" />
           <LanguageSwitcher />
         </div>
         <div className="relative mx-auto mt-10 max-w-2xl text-center">
           <h1 className="font-display text-3xl font-bold text-white sm:text-4xl md:text-5xl">
-            Elige cómo viajar
+            {t("pricing.title")}
           </h1>
-          <p className="mt-3 text-sky-200">
-            Empieza gratis. Sube de plan cuando quieras más itinerarios, IA y herramientas avanzadas.
-          </p>
+          <p className="mt-3 text-sky-200">{t("pricing.subtitle")}</p>
         </div>
       </section>
 
@@ -183,16 +183,14 @@ function PricingPage() {
             return (
               <div
                 key={plan.id}
-                
-                
-                
+
                 className="relative flex"
               >
                 {plan.highlighted && !current && (
                   <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
                     <div className="inline-flex items-center gap-1 rounded-full bg-[#1E6B9A] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-[#1E6B9A]/30">
                       <Sparkles className="h-3 w-3" />
-                      Más popular
+                      {t("pricing.popular")}
                     </div>
                   </div>
                 )}
@@ -200,7 +198,7 @@ function PricingPage() {
                   <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2">
                     <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-500/30">
                       <BadgeCheck className="h-3 w-3" />
-                      Tu plan actual
+                      {t("pricing.current")}
                     </div>
                   </div>
                 )}
@@ -286,13 +284,11 @@ function PricingPage() {
               type="button"
               onClick={closeCheckout}
               className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-sky-700 shadow-md ring-1 ring-sky-100 hover:bg-sky-50"
-              aria-label="Cerrar"
+              aria-label={t("pricing.close")}
             >
               <X className="h-4 w-4" />
             </button>
-            <div className="max-h-[85vh] overflow-y-auto rounded-2xl">
-              {checkoutElement}
-            </div>
+            <div className="max-h-[85vh] overflow-y-auto rounded-2xl">{checkoutElement}</div>
           </div>
         </div>
       )}

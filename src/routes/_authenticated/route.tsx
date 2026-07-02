@@ -1,4 +1,11 @@
-import { createFileRoute, Outlet, redirect, Link, useRouter, useRouterState } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  Link,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,10 +50,14 @@ function AuthenticatedLayout() {
     if (!kind) return;
     let resolved = kind;
     if (kind === "loggedIn" && user.created_at && user.last_sign_in_at) {
-      const justCreated = Math.abs(new Date(user.last_sign_in_at).getTime() - new Date(user.created_at).getTime()) < 10_000;
+      const justCreated =
+        Math.abs(new Date(user.last_sign_in_at).getTime() - new Date(user.created_at).getTime()) <
+        10_000;
       if (justCreated) resolved = "accountCreated";
     }
-    toast.success(resolved === "accountCreated" ? t("auth.accountReadyToast") : t("auth.loggedInToast"));
+    toast.success(
+      resolved === "accountCreated" ? t("auth.accountReadyToast") : t("auth.loggedInToast"),
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -60,13 +71,13 @@ function AuthenticatedLayout() {
           ) : (
             <button
               onClick={() => router.history.back()}
-              aria-label="Atrás"
+              aria-label={t("layout.back")}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-sky-900"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <Link to="/" className="flex items-center gap-1.5" aria-label="Inicio Itineraya">
+          <Link to="/" className="flex items-center gap-1.5" aria-label={t("layout.homeAria")}>
             <img src="/itineraya-mark.png" alt="" className="h-7 w-7" draggable={false} />
             <span className="font-display text-base font-bold text-sky-900">Itineraya</span>
           </Link>

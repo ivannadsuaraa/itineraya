@@ -325,7 +325,7 @@ function DestinationCard({
       className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60 backdrop-blur-xl"
     >
       <div className="relative h-40 sm:h-48">
-        <img src={d.imageUrl} alt={d.name} className="h-full w-full object-cover" />
+        <img src={d.imageUrl} alt={d.name} loading="lazy" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
         <div className="absolute left-4 top-4 inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-sky-800 backdrop-blur-sm">
           <Trophy className="h-3 w-3" /> {d.score}/100
