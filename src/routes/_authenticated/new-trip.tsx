@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, MapPin, Compass, Lock, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Compass, Lock, Sparkles, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -28,7 +28,7 @@ function NewTripPage() {
       if (cancelled || !uid) return;
       const [{ data: profile }, { count }] = await Promise.all([
         supabase.from("profiles").select("plan").eq("id", uid).maybeSingle(),
-        supabase.from("trips").select("id", { count: "exact", head: true }).eq("user_id", uid),
+        supabase.from("trips").select("id", { count: "exact", head: true }).eq("user_id", uid).eq("status", "ready"),
       ]);
       if (cancelled) return;
       setPlan((profile?.plan as Plan | undefined) ?? "free");
@@ -77,6 +77,28 @@ function NewTripPage() {
 
       {/* Cards */}
       <div className="mx-auto max-w-4xl px-4 pb-12 sm:px-6 lg:px-8">
+        {/* Plan limit banner */}
+        {loaded && planLimit !== null && (
+          <div className={`-mt-4 mb-4 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm ${
+            overLimit
+              ? "bg-amber-50 border border-amber-200 text-amber-800"
+              : "bg-sky-50 border border-sky-100 text-sky-700"
+          }`}>
+            {overLimit ? (
+              <Lock className="h-4 w-4 shrink-0 text-amber-500" />
+            ) : (
+              <AlertCircle className="h-4 w-4 shrink-0 text-sky-400" />
+            )}
+            <span>
+              {t("newTrip.limitBanner", { count: tripCount ?? 0, limit: planLimit })}
+            </span>
+            {overLimit && (
+              <Link to="/pricing" className="ml-auto shrink-0 text-xs font-bold text-amber-700 hover:underline">
+                {t("newTrip.limitUpgrade")} →
+              </Link>
+            )}
+          </div>
+        )}
         <div className="-mt-8 grid gap-5 sm:grid-cols-2">
           <ModeCard
             emoji="✅"

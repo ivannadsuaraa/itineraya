@@ -17,7 +17,7 @@ import {
   Users,
   Clock,
   X,
-  AlignLeft,
+  GanttChartSquare,
 } from "lucide-react";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { Timeline, type TimelineEntry } from "@/components/ui/timeline";
@@ -140,6 +140,7 @@ function ItineraryPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [trip, setTrip] = useState<{
     id: string;
     destination: string;
@@ -219,7 +220,7 @@ function ItineraryPage() {
     return () => {
       cancelled = true;
     };
-  }, [tripId, generate, t, i18n.language]);
+  }, [tripId, generate, t, i18n.language, retryKey]);
 
   if (loading)
     return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} subtitle={t("trip.loadingSubtitle")} />;
@@ -233,12 +234,20 @@ function ItineraryPage() {
           </div>
           <h1 className="font-display text-xl font-bold text-slate-900">{t("trip.errorTitle")}</h1>
           <p className="mt-2 text-sm text-slate-500">{error}</p>
-          <button
-            onClick={() => navigate({ to: "/dashboard" })}
-            className="mt-6 rounded-full bg-sky-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-800"
-          >
-            {t("trip.errorBack")}
-          </button>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <button
+              onClick={() => { setError(null); setRetryKey((k) => k + 1); }}
+              className="rounded-full bg-sky-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-800"
+            >
+              {t("trip.errorRetry")}
+            </button>
+            <button
+              onClick={() => navigate({ to: "/dashboard" })}
+              className="rounded-full bg-slate-100 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+            >
+              {t("trip.errorBack")}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -265,8 +274,8 @@ function ItineraryPage() {
             {/* View toggle */}
             <div className="flex rounded-full bg-slate-100 p-0.5">
               {(["cards", "text", "timeline"] as const).map((v) => {
-                const Icon = v === "cards" ? LayoutGrid : v === "text" ? FileText : AlignLeft;
-                const label = v === "cards" ? t("trip.viewCards") : v === "text" ? t("trip.viewText") : "Timeline";
+                const Icon = v === "cards" ? LayoutGrid : v === "text" ? FileText : GanttChartSquare;
+                const label = v === "cards" ? t("trip.viewCards") : v === "text" ? t("trip.viewText") : t("trip.viewTimeline");
                 return (
                   <button
                     key={v}
@@ -617,7 +626,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
           ) : (
             <Download className="h-3.5 w-3.5" />
           )}
-          {t("trip.postcardDownloaded")}
+          {t("trip.downloadPostcard")}
         </button>
         <button
           onClick={share}

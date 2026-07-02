@@ -32,7 +32,7 @@
     "cardBudget": "Presupuesto estimado",
     "cardAI": "Generado por IA en",
     "cardAISeconds": "12 segundos",
-    "socialProof": "+2.000 viajeros ya usan Itineraya"
+    "socialProof": "Itinerarios personalizados generados en segundos"
   },
   "how": {
     "kicker": "Cómo funciona 🗺️",
@@ -209,7 +209,10 @@
       "f3": "Exportar itinerario en PDF",
       "f4": "Acceso prioritario a nuevas funciones"
     },
-    "perYear": "/año"
+    "perYear": "/año",
+    "trust1": "Sin permanencia",
+    "trust2": "Cancela cuando quieras",
+    "trust3": "Pago seguro con Stripe"
   },
   "welcome": {
     "step": "Paso {{n}} de 2",
@@ -257,7 +260,14 @@
     "countdown": "Faltan",
     "weatherNow": "Clima ahora",
     "upcoming": "Próximo",
-    "past": "Pasado"
+    "past": "Pasado",
+    "calendarTitle": "Calendario de viajes",
+    "calendarSub": "Todos tus viajes planificados de un vistazo",
+    "calendarEmpty": "Aún no tienes viajes planificados con fechas",
+    "deleteTrip": "Eliminar viaje",
+    "deleteTripConfirm": "¿Eliminar?",
+    "deleteTripYes": "Sí",
+    "deleteFail": "No se pudo eliminar el viaje"
   },
   "saved": {
     "metaTitle": "Guardados – Itineraya",
@@ -408,10 +418,12 @@
     "backDashboard": "Dashboard",
     "viewCards": "Tarjetas",
     "viewText": "Texto",
+    "viewTimeline": "Línea de tiempo",
     "editAssistant": "Editar con asistente",
     "editAssistantLocked": "Disponible en planes Viajero y Explorador",
     "heroTag": "Tu itinerario",
     "errorTitle": "No pudimos crear tu itinerario",
+    "errorRetry": "Reintentar",
     "errorBack": "Volver",
     "notFound": "Viaje no encontrado",
     "somethingWrong": "Algo salió mal",
@@ -547,7 +559,8 @@
     "limitTitle": "Has alcanzado el límite de 1 itinerario en el plan gratuito",
     "limitDesc": "Actualiza a Viajero para crear itinerarios ilimitados, desbloquear el asistente IA y mucho más.",
     "limitUpgrade": "Actualizar a plan Viajero",
-    "limitCancel": "Volver"
+    "limitCancel": "Volver",
+    "limitBanner": "{{count}} de {{limit}} viaje usado · "
   },
   "inspire": {
     "back": "Atrás",

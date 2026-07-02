@@ -111,7 +111,7 @@ export function HeroSection() {
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-sky-300">{t("hero.socialProof")}</p>
+              <p className="text-xs text-sky-300/80">{t("hero.socialProof")}</p>
             </div>
           </div>
 

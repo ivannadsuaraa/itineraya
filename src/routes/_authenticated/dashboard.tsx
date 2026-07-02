@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Lock,
   CalendarDays,
+  Trash2,
 } from "lucide-react";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
@@ -73,17 +74,13 @@ async function geocodeDestination(destination: string): Promise<[number, number]
   const key = destination.toLowerCase().trim();
   if (geocodeCache.has(key)) return geocodeCache.get(key)!;
   try {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY as string;
     const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(destination)}&key=${apiKey}`,
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(destination)}&count=1&language=en&format=json`,
     );
-    const data = (await res.json()) as {
-      status: string;
-      results: Array<{ geometry: { location: { lat: number; lng: number } } }>;
-    };
-    if (data.status === "OK" && data.results[0]?.geometry?.location) {
-      const { lat, lng } = data.results[0].geometry.location;
-      const coords: [number, number] = [lat, lng];
+    const data = (await res.json()) as { results?: Array<{ latitude: number; longitude: number }> };
+    const loc = data.results?.[0];
+    if (loc) {
+      const coords: [number, number] = [loc.latitude, loc.longitude];
       geocodeCache.set(key, coords);
       return coords;
     }
@@ -99,6 +96,7 @@ function DashboardPage() {
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[] | null>(null);
   const [saved, setSaved] = useState<SavedInspo[] | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState<string>("");
   const [shareTrip, setShareTrip] = useState<Trip | null>(null);
   const [isFree, setIsFree] = useState(true);
@@ -107,6 +105,7 @@ function DashboardPage() {
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
+      setUserId(u.user?.id ?? null);
       const meta = u.user?.user_metadata as { full_name?: string; name?: string } | undefined;
       setName(meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? t("dashboard.traveler"));
 
@@ -159,6 +158,17 @@ function DashboardPage() {
     const payload = { destination: `${i.destination}, ${i.country}` };
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     navigate({ to: "/onboarding", search: { prefill: encoded } });
+  };
+
+  const deleteTrip = async (id: string) => {
+    if (!userId) return;
+    const prev = trips ?? [];
+    setTrips(prev.filter((tr) => tr.id !== id));
+    const { error } = await supabase.from("trips").delete().eq("id", id).eq("user_id", userId);
+    if (error) {
+      setTrips(prev);
+      toast.error(t("dashboard.deleteFail"));
+    }
   };
 
   const removeSaved = async (id: string) => {
@@ -359,6 +369,7 @@ function DashboardPage() {
                       trip={trip}
                       locale={locale}
                       onShare={() => setShareTrip(trip)}
+                      onDelete={() => deleteTrip(trip.id)}
                       isFree={isFree}
                     />
                   ))}
@@ -478,8 +489,8 @@ function DashboardPage() {
         {activeTab === "calendario" && (
           <section className="mt-6">
             <div className="mb-5">
-              <h2 className="font-display text-lg font-bold text-slate-900">Calendario de viajes</h2>
-              <p className="mt-0.5 text-sm text-slate-500">Todos tus viajes planificados de un vistazo</p>
+              <h2 className="font-display text-lg font-bold text-slate-900">{t("dashboard.calendarTitle")}</h2>
+              <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.calendarSub")}</p>
             </div>
             <div className="max-w-lg">
               <TripsCalendar trips={calendarTrips} />
@@ -487,7 +498,7 @@ function DashboardPage() {
             {calendarTrips.length === 0 && trips !== null && (
               <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center">
                 <CalendarDays className="mx-auto h-8 w-8 text-slate-300" />
-                <p className="mt-3 text-sm text-slate-500">Aún no tienes viajes planificados con fechas</p>
+                <p className="mt-3 text-sm text-slate-500">{t("dashboard.calendarEmpty")}</p>
                 <Link
                   to="/new-trip"
                   className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E]"
@@ -519,14 +530,17 @@ function TripCard({
   trip,
   locale,
   onShare,
+  onDelete,
   isFree,
 }: {
   trip: Trip;
   locale: Locale;
   onShare: () => void;
+  onDelete: () => void;
   isFree: boolean;
 }) {
   const { t } = useTranslation();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const isPast = trip.end_date ? new Date(trip.end_date) < new Date(new Date().toDateString()) : false;
   const isUpcoming = trip.start_date && new Date(trip.start_date) >= new Date(new Date().toDateString());
   const days =
@@ -593,31 +607,61 @@ function TripCard({
           {t("dashboard.view")}
         </Link>
         <div className="flex items-center gap-0.5">
-          {isFree ? (
-            <Link
-              to="/pricing"
-              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100"
-              aria-label={t("sidebar.assistantLocked")}
-            >
-              <Lock className="h-3.5 w-3.5" />
-            </Link>
+          {confirmDelete ? (
+            <div className="flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1">
+              <span className="text-[11px] text-red-600">{t("dashboard.deleteTripConfirm")}</span>
+              <button
+                type="button"
+                onClick={() => { setConfirmDelete(false); onDelete(); }}
+                className="text-[11px] font-bold text-red-600 hover:text-red-700"
+              >
+                {t("dashboard.deleteTripYes")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="text-[11px] font-semibold text-slate-400 hover:text-slate-600"
+              >
+                ✕
+              </button>
+            </div>
           ) : (
-            <Link
-              to="/assistant"
-              className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
-              aria-label={t("dashboard.editAi")}
-            >
-              <Wand2 className="h-3.5 w-3.5" />
-            </Link>
+            <>
+              {isFree ? (
+                <Link
+                  to="/pricing"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100"
+                  aria-label={t("sidebar.assistantLocked")}
+                >
+                  <Lock className="h-3.5 w-3.5" />
+                </Link>
+              ) : (
+                <Link
+                  to="/assistant"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
+                  aria-label={t("dashboard.editAi")}
+                >
+                  <Wand2 className="h-3.5 w-3.5" />
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={onShare}
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
+                aria-label={t("dashboard.share")}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-300 transition hover:bg-red-50 hover:text-red-500"
+                aria-label={t("dashboard.deleteTrip")}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            onClick={onShare}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
-            aria-label={t("dashboard.share")}
-          >
-            <Share2 className="h-3.5 w-3.5" />
-          </button>
         </div>
       </div>
     </article>
@@ -632,7 +676,7 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
     Math.max(0, differenceInCalendarDays(parseISO(trip.start_date!), new Date())),
   );
   const [displayed, setDisplayed] = useState(0);
-  const [weather, setWeather] = useState<{ tempC: number; code: number } | null>(null);
+  const [weather, setWeather] = useState<{ tempC: number; code: number } | null | undefined>(undefined);
 
   useEffect(() => {
     setDays(Math.max(0, differenceInCalendarDays(parseISO(trip.start_date!), new Date())));
@@ -713,7 +757,9 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
               <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-300">
                 {t("dashboard.weatherNow")}
               </p>
-              {weather ? (
+              {weather === undefined ? (
+                <div className="mt-2 h-6 w-20 animate-pulse rounded bg-white/20" />
+              ) : weather ? (
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-2xl">{weatherEmoji(weather.code)}</span>
                   <span className="font-display text-xl font-bold text-white">
@@ -721,7 +767,7 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
                   </span>
                 </div>
               ) : (
-                <div className="mt-2 h-6 w-20 animate-pulse rounded bg-white/20" />
+                <p className="mt-1 text-sm text-sky-300">—</p>
               )}
             </div>
           </div>

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react"
 import createGlobe from "cobe"
+import { Link } from "@tanstack/react-router"
+import { ArrowRight, X } from "lucide-react"
 
 export interface PolaroidMarker {
   id: string
@@ -16,29 +18,26 @@ interface GlobePolaoridsProps {
 }
 
 const defaultMarkers: PolaroidMarker[] = [
-  { id: "sf", location: [37.78, -122.44], image: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=120&h=120&fit=crop", caption: "San Francisco", rotate: -5 },
-  { id: "nyc", location: [40.71, -74.01], image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=120&h=120&fit=crop", caption: "New York", rotate: 4 },
-  { id: "tokyo", location: [35.68, 139.65], image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=120&h=120&fit=crop", caption: "Tokyo", rotate: -3 },
-  { id: "sydney", location: [-33.87, 151.21], image: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=120&h=120&fit=crop", caption: "Sydney", rotate: 6 },
-  { id: "paris", location: [48.86, 2.35], image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=120&h=120&fit=crop", caption: "Paris", rotate: -4 },
-  { id: "london", location: [51.51, -0.13], image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=120&h=120&fit=crop", caption: "London", rotate: 3 },
+  { id: "sf", location: [37.78, -122.44], image: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&h=280&fit=crop", caption: "San Francisco", rotate: -5 },
+  { id: "nyc", location: [40.71, -74.01], image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=280&fit=crop", caption: "New York", rotate: 4 },
+  { id: "tokyo", location: [35.68, 139.65], image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=280&fit=crop", caption: "Tokyo", rotate: -3 },
+  { id: "sydney", location: [-33.87, 151.21], image: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400&h=280&fit=crop", caption: "Sydney", rotate: 6 },
+  { id: "paris", location: [48.86, 2.35], image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=280&fit=crop", caption: "Paris", rotate: -4 },
+  { id: "london", location: [51.51, -0.13], image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=280&fit=crop", caption: "London", rotate: 3 },
 ]
 
 function projectMarker(lat: number, lon: number, phi: number, theta: number, size: number) {
   const latR = (lat * Math.PI) / 180
   const lonR = (lon * Math.PI) / 180
 
-  // Point on unit sphere in globe-local system
   const px = Math.cos(latR) * Math.cos(lonR)
   const py = Math.sin(latR)
   const pz = Math.cos(latR) * Math.sin(lonR)
 
-  // Apply phi rotation (globe spinning around Y axis)
   const x1 = px * Math.cos(phi) + pz * Math.sin(phi)
   const y1 = py
   const z1 = -px * Math.sin(phi) + pz * Math.cos(phi)
 
-  // Apply theta tilt (around X axis)
   const y2 = y1 * Math.cos(theta) - z1 * Math.sin(theta)
   const z2 = y1 * Math.sin(theta) + z1 * Math.cos(theta)
   const x2 = x1
@@ -52,6 +51,13 @@ function projectMarker(lat: number, lon: number, phi: number, theta: number, siz
   }
 }
 
+function popupTransform(x: number, y: number, containerW: number): string {
+  const popupW = 192
+  if (x < popupW / 2) return "translate(0%, -110%)"
+  if (x > containerW - popupW / 2) return "translate(-100%, -110%)"
+  return "translate(-50%, -110%)"
+}
+
 export function GlobePolaroids({
   markers = defaultMarkers,
   className = "",
@@ -60,21 +66,65 @@ export function GlobePolaroids({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const pointerInteracting = useRef<{ x: number; y: number } | null>(null)
+  const pointerDownClient = useRef<{ x: number; y: number } | null>(null)
+  const pointerDownCanvas = useRef<{ x: number; y: number } | null>(null)
   const dragOffset = useRef({ phi: 0, theta: 0 })
   const phiOffsetRef = useRef(0)
   const thetaOffsetRef = useRef(0.2)
   const isPausedRef = useRef(false)
   const phiRef = useRef(0)
-  const polaroidRefs = useRef<(HTMLDivElement | null)[]>([])
+  const markersRef = useRef(markers)
   const [ready, setReady] = useState(false)
+  const [popup, setPopup] = useState<{ marker: PolaroidMarker; x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    markersRef.current = markers
+  }, [markers])
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    const canvas = canvasRef.current
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect()
+      pointerDownCanvas.current = { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    }
+    pointerDownClient.current = { x: e.clientX, y: e.clientY }
     pointerInteracting.current = { x: e.clientX, y: e.clientY }
     if (canvasRef.current) canvasRef.current.style.cursor = "grabbing"
     isPausedRef.current = true
+    setPopup(null)
   }, [])
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: PointerEvent) => {
+    if (pointerDownClient.current && pointerDownCanvas.current) {
+      const dx = e.clientX - pointerDownClient.current.x
+      const dy = e.clientY - pointerDownClient.current.y
+      const wasDrag = Math.sqrt(dx * dx + dy * dy) > 5
+
+      if (!wasDrag) {
+        const canvas = canvasRef.current
+        if (canvas) {
+          const { x: clickX, y: clickY } = pointerDownCanvas.current
+          const size = canvas.offsetWidth
+          const phi = phiRef.current + phiOffsetRef.current + dragOffset.current.phi
+          const theta = thetaOffsetRef.current + dragOffset.current.theta
+
+          let closest: { marker: PolaroidMarker; dist: number; x: number; y: number } | null = null
+          for (const marker of markersRef.current) {
+            const { screenX, screenY, visible } = projectMarker(
+              marker.location[0], marker.location[1], phi, theta, size
+            )
+            if (!visible) continue
+            const d = Math.sqrt((clickX - screenX) ** 2 + (clickY - screenY) ** 2)
+            if (d < 26 && (!closest || d < closest.dist)) {
+              closest = { marker, dist: d, x: screenX, y: screenY }
+            }
+          }
+
+          setPopup(closest ? { marker: closest.marker, x: closest.x, y: closest.y } : null)
+        }
+      }
+    }
+
     if (pointerInteracting.current !== null) {
       phiOffsetRef.current += dragOffset.current.phi
       thetaOffsetRef.current = Math.max(-0.5, Math.min(0.5,
@@ -82,6 +132,8 @@ export function GlobePolaroids({
       ))
       dragOffset.current = { phi: 0, theta: 0 }
     }
+    pointerDownClient.current = null
+    pointerDownCanvas.current = null
     pointerInteracting.current = null
     if (canvasRef.current) canvasRef.current.style.cursor = "grab"
     isPausedRef.current = false
@@ -111,26 +163,6 @@ export function GlobePolaroids({
     let globe: ReturnType<typeof createGlobe> | null = null
     let animationId: number
 
-    function updatePolaroids(phi: number, theta: number, size: number) {
-      markers.forEach((m, idx) => {
-        const el = polaroidRefs.current[idx]
-        if (!el) return
-        const { screenX, screenY, visible, depth } = projectMarker(
-          m.location[0], m.location[1], phi, theta, size
-        )
-        if (visible) {
-          el.style.opacity = String(Math.min(1, (depth - 0.15) * 3))
-          el.style.left = `${screenX}px`
-          el.style.top = `${screenY}px`
-          el.style.display = "block"
-          el.style.zIndex = String(Math.round(depth * 10))
-        } else {
-          el.style.opacity = "0"
-          el.style.display = "none"
-        }
-      })
-    }
-
     function init() {
       const width = canvas!.offsetWidth
       if (width === 0 || globe) return
@@ -146,9 +178,9 @@ export function GlobePolaroids({
         mapSamples: 16000,
         mapBrightness: 9,
         baseColor: [1, 1, 1],
-        markerColor: [0.24, 0.42, 0.72],
+        markerColor: [0.12, 0.42, 0.60],
         glowColor: [0.94, 0.93, 0.91],
-        markers: markers.map((m) => ({ location: m.location, size: 0.04 })),
+        markers: markers.map((m) => ({ location: m.location, size: 0.06 })),
       })
 
       function animate() {
@@ -156,7 +188,6 @@ export function GlobePolaroids({
         const phi = phiRef.current + phiOffsetRef.current + dragOffset.current.phi
         const theta = thetaOffsetRef.current + dragOffset.current.theta
         globe!.update({ phi, theta })
-        updatePolaroids(phi, theta, width)
         animationId = requestAnimationFrame(animate)
       }
       animate()
@@ -184,6 +215,8 @@ export function GlobePolaroids({
     }
   }, [markers, speed])
 
+  const containerW = canvasRef.current?.offsetWidth ?? 300
+
   return (
     <div
       ref={containerRef}
@@ -194,7 +227,7 @@ export function GlobePolaroids({
         ref={canvasRef}
         onPointerDown={handlePointerDown}
         onPointerEnter={() => { isPausedRef.current = true }}
-        onPointerLeave={() => { isPausedRef.current = false }}
+        onPointerLeave={() => { isPausedRef.current = false; setPopup(null) }}
         style={{
           width: "100%",
           height: "100%",
@@ -206,44 +239,50 @@ export function GlobePolaroids({
         }}
       />
 
-      {markers.map((m, idx) => (
+      {/* Trip popup on dot click */}
+      {popup && (
         <div
-          key={m.id}
-          ref={(el) => { polaroidRefs.current[idx] = el }}
           style={{
             position: "absolute",
-            opacity: 0,
-            display: "none",
-            transform: `translate(-50%, -110%) rotate(${m.rotate}deg)`,
-            background: "#fff",
-            padding: "6px 6px 22px",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.12)",
-            pointerEvents: "none",
-            transition: "opacity 0.25s ease",
-            willChange: "opacity, left, top",
+            left: popup.x,
+            top: popup.y,
+            transform: popupTransform(popup.x, popup.y, containerW),
+            zIndex: 20,
+            pointerEvents: "auto",
           }}
         >
-          <img
-            src={m.image}
-            alt={m.caption}
-            style={{ display: "block", width: 64, height: 64, objectFit: "cover" }}
-          />
-          <span style={{
-            position: "absolute",
-            bottom: 4,
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            fontFamily: "system-ui, sans-serif",
-            fontSize: "0.55rem",
-            color: "#444",
-            letterSpacing: "0.02em",
-            fontWeight: 600,
-          }}>
-            {m.caption}
-          </span>
+          <div className="w-48 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/8">
+            {popup.marker.image && (
+              <div className="relative h-28 overflow-hidden">
+                <img
+                  src={popup.marker.image}
+                  alt={popup.marker.caption}
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/35 to-transparent" />
+              </div>
+            )}
+            <div className="p-3">
+              <p className="truncate text-sm font-bold text-slate-900">{popup.marker.caption}</p>
+              <Link
+                to="/my-trip/$tripId"
+                params={{ tripId: popup.marker.id }}
+                className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#1E6B9A] transition hover:underline"
+              >
+                Ver itinerario
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPopup(null)}
+              className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition hover:bg-black/40"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
         </div>
-      ))}
+      )}
 
       {!ready && (
         <div className="absolute inset-0 flex items-center justify-center rounded-full">

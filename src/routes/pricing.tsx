@@ -170,13 +170,13 @@ function PricingPage() {
         {/* Trust signals */}
         <div className="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-center">
           {[
-            { label: "Sin permanencia", icon: "✓" },
-            { label: "Cancela cuando quieras", icon: "✓" },
-            { label: "Pago seguro con Stripe", icon: "🔒" },
+            { labelKey: "pricing.trust1", icon: "✓" },
+            { labelKey: "pricing.trust2", icon: "✓" },
+            { labelKey: "pricing.trust3", icon: "🔒" },
           ].map((item) => (
-            <span key={item.label} className="flex items-center gap-1.5 text-xs font-medium text-white/35">
+            <span key={item.labelKey} className="flex items-center gap-1.5 text-xs font-medium text-white/35">
               <span>{item.icon}</span>
-              {item.label}
+              {t(item.labelKey)}
             </span>
           ))}
         </div>
