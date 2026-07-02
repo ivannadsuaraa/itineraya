@@ -111,6 +111,11 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
           )}
         </div>
 
+        {isAnnual && !isZero && (
+          <p className="mt-1.5 text-[11px] font-medium text-amber-400/80 leading-snug">
+            Pago único anual · sin cancelación
+          </p>
+        )}
         <p className="mt-2 text-sm leading-relaxed text-white/40">{tier.description}</p>
 
         <div className="my-7 h-px w-full bg-white/10" />

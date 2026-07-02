@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import {
@@ -58,27 +58,6 @@ function dateLocale(lang: string) {
   return lang.toLowerCase().startsWith("en") ? enUS : es;
 }
 
-// Approximate coordinates for common destinations
-const DEST_COORDS: Record<string, [number, number]> = {
-  "paris": [48.86, 2.35], "london": [51.51, -0.13], "new york": [40.71, -74.01],
-  "nueva york": [40.71, -74.01], "tokyo": [35.68, 139.65], "tokio": [35.68, 139.65],
-  "sydney": [-33.87, 151.21], "sídney": [-33.87, 151.21],
-  "barcelona": [41.39, 2.16], "madrid": [40.42, -3.70],
-  "rome": [41.90, 12.49], "roma": [41.90, 12.49],
-  "amsterdam": [52.37, 4.89], "berlin": [52.52, 13.40], "berlín": [52.52, 13.40],
-  "dubai": [25.20, 55.27], "bangkok": [13.75, 100.50],
-  "bali": [-8.34, 115.09], "maldives": [3.20, 73.22], "maldivas": [3.20, 73.22],
-  "cancun": [21.16, -86.85], "cancún": [21.16, -86.85],
-  "miami": [25.77, -80.19], "los angeles": [34.05, -118.24],
-  "san francisco": [37.78, -122.44],
-  "lisbon": [38.72, -9.14], "lisboa": [38.72, -9.14],
-  "athens": [37.98, 23.73], "atenas": [37.98, 23.73],
-  "istanbul": [41.01, 28.97], "estambul": [41.01, 28.97],
-  "prague": [50.08, 14.44], "praga": [50.08, 14.44],
-  "vienna": [48.21, 16.37], "viena": [48.21, 16.37],
-  "budapest": [47.50, 19.04], "mexico": [19.43, -99.13], "méxico": [19.43, -99.13],
-};
-
 const UNSPLASH_FALLBACK = [
   "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=120&h=120&fit=crop",
   "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=120&h=120&fit=crop",
@@ -87,22 +66,32 @@ const UNSPLASH_FALLBACK = [
   "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=120&h=120&fit=crop",
 ];
 
-function tripsToMarkers(trips: Trip[]): PolaroidMarker[] {
-  const markers: PolaroidMarker[] = [];
-  const rotations = [-5, 4, -3, 6, -4, 3, -2, 5];
-  trips.forEach((trip, i) => {
-    const key = trip.destination.toLowerCase().split(",")[0].trim();
-    const coords = Object.entries(DEST_COORDS).find(([k]) => key.includes(k) || k.includes(key))?.[1];
-    if (!coords) return;
-    markers.push({
-      id: trip.id,
-      location: coords,
-      image: trip.hero_image_url ?? UNSPLASH_FALLBACK[i % UNSPLASH_FALLBACK.length],
-      caption: trip.destination.split(",")[0],
-      rotate: rotations[i % rotations.length],
-    });
-  });
-  return markers;
+// Module-level cache so geocoding persists across re-renders
+const geocodeCache = new Map<string, [number, number] | null>();
+
+async function geocodeDestination(destination: string): Promise<[number, number] | null> {
+  const key = destination.toLowerCase().trim();
+  if (geocodeCache.has(key)) return geocodeCache.get(key)!;
+  try {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY as string;
+    const res = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(destination)}&key=${apiKey}`,
+    );
+    const data = (await res.json()) as {
+      status: string;
+      results: Array<{ geometry: { location: { lat: number; lng: number } } }>;
+    };
+    if (data.status === "OK" && data.results[0]?.geometry?.location) {
+      const { lat, lng } = data.results[0].geometry.location;
+      const coords: [number, number] = [lat, lng];
+      geocodeCache.set(key, coords);
+      return coords;
+    }
+  } catch {
+    // fall through to null
+  }
+  geocodeCache.set(key, null);
+  return null;
 }
 
 function DashboardPage() {
@@ -198,10 +187,31 @@ function DashboardPage() {
   const locale = dateLocale(i18n.language);
   const inspirations = useMemo(() => getSeasonalInspirations(), []);
 
-  const globeMarkers = useMemo(() => {
-    if (!trips || trips.length === 0) return undefined;
-    const m = tripsToMarkers(trips);
-    return m.length > 0 ? m : undefined;
+  const [globeMarkers, setGlobeMarkers] = useState<PolaroidMarker[] | undefined>(undefined);
+  const geocodeAbortRef = useRef(false);
+
+  useEffect(() => {
+    if (!trips || trips.length === 0) { setGlobeMarkers(undefined); return; }
+    geocodeAbortRef.current = false;
+    const rotations = [-5, 4, -3, 6, -4, 3, -2, 5];
+    Promise.all(
+      trips.map(async (trip, i): Promise<PolaroidMarker | null> => {
+        const coords = await geocodeDestination(trip.destination);
+        if (!coords) return null;
+        return {
+          id: trip.id,
+          location: coords,
+          image: trip.hero_image_url ?? UNSPLASH_FALLBACK[i % UNSPLASH_FALLBACK.length],
+          caption: trip.destination.split(",")[0],
+          rotate: rotations[i % rotations.length],
+        };
+      }),
+    ).then((results) => {
+      if (geocodeAbortRef.current) return;
+      const valid = results.filter((m): m is PolaroidMarker => m !== null);
+      setGlobeMarkers(valid.length > 0 ? valid : undefined);
+    });
+    return () => { geocodeAbortRef.current = true; };
   }, [trips]);
 
   const calendarTrips = useMemo(

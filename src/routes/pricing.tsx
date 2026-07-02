@@ -97,8 +97,8 @@ function PricingPage() {
     },
     {
       name: t("pricing.viajero.name"),
-      priceMonthly: "9.99",
-      priceAnnual: "7.99",
+      priceMonthly: "7.99",
+      priceAnnual: "5.99",
       description: t("pricing.viajero.tagline"),
       isPopular: true,
       isCurrent: userPlan === "viajero",
@@ -114,8 +114,8 @@ function PricingPage() {
     },
     {
       name: t("pricing.explorador.name"),
-      priceMonthly: "19.99",
-      priceAnnual: "15.99",
+      priceMonthly: "15.99",
+      priceAnnual: "13.99",
       description: t("pricing.explorador.tagline"),
       isCurrent: userPlan === "explorador",
       features: [
