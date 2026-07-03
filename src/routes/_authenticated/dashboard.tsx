@@ -55,6 +55,8 @@ type Trip = {
   hero_image_url: string | null;
   status: string;
   created_at: string;
+  geo_lat?: number | null;
+  geo_lng?: number | null;
 };
 
 type SavedInspo = {
@@ -78,25 +80,35 @@ const UNSPLASH_FALLBACK = [
   "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=400&fit=crop&auto=format&q=75",
 ];
 
-// Module-level cache so geocoding persists across re-renders
+// Session-level cache — avoids duplicate Nominatim calls within the same page session
 const geocodeCache = new Map<string, [number, number] | null>();
 
-async function geocodeDestination(destination: string): Promise<[number, number] | null> {
+// Geocode via Nominatim (no API key required). Saves result to Supabase so future
+// loads skip the network call entirely.
+async function geocodeAndSave(
+  tripId: string,
+  destination: string,
+): Promise<[number, number] | null> {
   const key = destination.toLowerCase().trim();
   if (geocodeCache.has(key)) return geocodeCache.get(key)!;
   try {
     const res = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(destination)}&count=1&language=en&format=json`,
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`,
+      { headers: { "Accept-Language": "en" } },
     );
-    const data = (await res.json()) as { results?: Array<{ latitude: number; longitude: number }> };
-    const loc = data.results?.[0];
-    if (loc) {
-      const coords: [number, number] = [loc.latitude, loc.longitude];
+    const results = (await res.json()) as Array<{ lat: string; lon: string }>;
+    if (results[0]) {
+      const coords: [number, number] = [parseFloat(results[0].lat), parseFloat(results[0].lon)];
       geocodeCache.set(key, coords);
+      // Persist so next load uses stored values (suppress TS error for new columns)
+      void supabase
+        .from("trips")
+        .update({ geo_lat: coords[0], geo_lng: coords[1] } as never)
+        .eq("id", tripId);
       return coords;
     }
   } catch {
-    // fall through to null
+    // network failure or parse error — fall through to null
   }
   geocodeCache.set(key, null);
   return null;
@@ -149,7 +161,7 @@ function DashboardPage() {
       const [{ data, error }, { data: savedData }] = await Promise.all([
         supabase
           .from("trips")
-          .select("id,destination,start_date,end_date,hero_image_url,status,created_at")
+          .select("id,destination,start_date,end_date,hero_image_url,status,created_at,geo_lat,geo_lng")
           .eq("user_id", u.user.id)
           .order("created_at", { ascending: false }),
         supabase
@@ -161,7 +173,7 @@ function DashboardPage() {
         toast.error(t("dashboard.loadFail"));
         setTrips([]);
       } else {
-        setTrips(data ?? []);
+        setTrips((data ?? []) as unknown as Trip[]);
       }
       setSaved((savedData ?? []) as SavedInspo[]);
     })();
@@ -225,7 +237,16 @@ function DashboardPage() {
     const rotations = [-5, 4, -3, 6, -4, 3, -2, 5];
     Promise.all(
       trips.map(async (trip, i): Promise<PolaroidMarker | null> => {
-        const coords = await geocodeDestination(trip.destination);
+        // Use stored coordinates if available, otherwise geocode via Nominatim
+        const row = trip as unknown as { geo_lat?: number | null; geo_lng?: number | null };
+        let coords: [number, number] | null = null;
+        if (row.geo_lat != null && row.geo_lng != null) {
+          coords = [row.geo_lat, row.geo_lng];
+          // Prime the in-memory cache so sibling trips reuse it
+          geocodeCache.set(trip.destination.toLowerCase().trim(), coords);
+        } else {
+          coords = await geocodeAndSave(trip.id, trip.destination);
+        }
         if (!coords) return null;
         return {
           id: trip.id,
@@ -412,9 +433,9 @@ function DashboardPage() {
                   {otherTrips.map((trip, i) => (
                     <motion.div
                       key={trip.id}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.35, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.4, delay: i * 0.04 }}
                     >
                       <TripCard
                         trip={trip}

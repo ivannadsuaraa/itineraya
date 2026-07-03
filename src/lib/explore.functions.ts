@@ -189,33 +189,42 @@ export type DiscoverableTrip = PublicTrip & {
  *   ALTER TABLE trips ADD COLUMN IF NOT EXISTS rating_sum integer NOT NULL DEFAULT 0;
  *   ALTER TABLE trips ADD COLUMN IF NOT EXISTS rating_count integer NOT NULL DEFAULT 0;
  */
+/**
+ * DB setup required (run once in Supabase SQL editor):
+ *
+ *   ALTER TABLE trips ADD COLUMN IF NOT EXISTS rating_sum   integer NOT NULL DEFAULT 0;
+ *   ALTER TABLE trips ADD COLUMN IF NOT EXISTS rating_count integer NOT NULL DEFAULT 0;
+ *
+ *   CREATE OR REPLACE FUNCTION increment_trip_rating(p_slug text, p_rating int)
+ *   RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+ *   BEGIN
+ *     UPDATE trips
+ *       SET rating_sum   = COALESCE(rating_sum,   0) + p_rating,
+ *           rating_count = COALESCE(rating_count, 0) + 1
+ *       WHERE share_slug = p_slug AND is_public = true;
+ *   END;
+ *   $$;
+ *
+ *   GRANT EXECUTE ON FUNCTION increment_trip_rating(text, int) TO anon, authenticated;
+ */
 export const rateTrip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { slug: string; rating: number }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     if (data.rating < 1 || data.rating > 5) throw new Error("Rating must be 1-5");
-    const client = publicClient();
-    // Find trip id
-    const { data: found } = await client
-      .from("trips")
-      .select("id, rating_sum, rating_count")
-      .eq("share_slug" as never, data.slug)
-      .eq("is_public" as never, true)
-      .maybeSingle();
-    if (!found) return { ok: true, pending_migration: true };
-    const row = found as unknown as { id: string; rating_sum?: number | null; rating_count?: number | null };
-    const newSum = (row.rating_sum ?? 0) + data.rating;
-    const newCount = (row.rating_count ?? 0) + 1;
-    // Silently no-op if columns don't exist yet
-    try {
-      await client
-        .from("trips")
-        .update({ rating_sum: newSum, rating_count: newCount } as never)
-        .eq("id", row.id);
-    } catch {
-      // columns not migrated yet
+    // Use the authenticated supabase client from middleware context
+    const { supabase } = context;
+    // Call SECURITY DEFINER function — bypasses RLS, works even if columns were
+    // just added without a policy that permits user-driven updates.
+    const { error } = await supabase.rpc("increment_trip_rating" as never, {
+      p_slug: data.slug,
+      p_rating: data.rating,
+    } as never);
+    if (error) {
+      // Function not yet created → graceful no-op; optimistic UI already updated
+      console.warn("[rateTrip] rpc error (migration pending?):", error.message);
     }
-    return { ok: true, new_avg: newSum / newCount };
+    return { ok: true };
   });
 
 export const getDiscoverableTrip = createServerFn({ method: "GET" })

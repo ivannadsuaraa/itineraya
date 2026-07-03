@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { MobileBottomBar } from "@/components/DashboardSidebar";
+import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -63,7 +63,7 @@ function LandingPage() {
   }, []);
   return (
     <div className={`min-h-screen bg-white ${isLoggedIn ? "pb-16 md:pb-0" : ""}`}>
-      <Navbar />
+      {mounted && isLoggedIn ? <DesktopTopNav /> : <Navbar />}
       <HeroSection />
 
       <PopularDestinationsSection />

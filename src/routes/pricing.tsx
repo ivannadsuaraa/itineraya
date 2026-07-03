@@ -235,7 +235,7 @@ const FEATURES = [
   { label: "Imágenes del destino",               free: true,  viajero: true,    explorador: true },
   { label: "Mapa interactivo",                   free: true,  viajero: true,    explorador: true },
   { label: "Compartir itinerario",               free: true,  viajero: true,    explorador: true },
-  { label: "Número de viajes",                   free: "3",   viajero: "20",    explorador: "Ilimitados" },
+  { label: "Número de viajes",                   free: "2",   viajero: "15",    explorador: "Ilimitados" },
   { label: "Asistente IA para editar",           free: false, viajero: true,    explorador: true },
   { label: "Compañeros de viaje (tripmates)",    free: false, viajero: true,    explorador: true },
   { label: "Descargar postales del itinerario",  free: false, viajero: true,    explorador: true },

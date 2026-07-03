@@ -1,5 +1,6 @@
+import { useState, useRef, useEffect } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Home, User, PlusCircle, Compass, LogOut, Bookmark } from "lucide-react";
+import { Map, Home, User, PlusCircle, Compass, LogOut, Bookmark, Menu, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -27,10 +28,28 @@ function isActive(pathname: string, to: string) {
   return pathname === to;
 }
 
+const LANDING_LINKS = [
+  { labelKey: "nav.explore",     href: "/explore" },
+  { labelKey: "nav.howItWorks",  href: "/#how-it-works" },
+  { labelKey: "nav.features",    href: "/#features" },
+  { labelKey: "nav.pricing",     href: "/pricing" },
+] as const;
+
 export function DesktopTopNav() {
   const { t } = useTranslation();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -69,13 +88,41 @@ export function DesktopTopNav() {
           })}
         </nav>
 
-        <button
-          onClick={handleLogout}
-          title={t("dashboard.logout")}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl p-2 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          {/* Hamburger — landing links */}
+          <div ref={menuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              title="Menú"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+            >
+              {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-slate-100 bg-white py-2 shadow-xl">
+                {LANDING_LINKS.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-sky-50 hover:text-sky-900"
+                  >
+                    {t(link.labelKey)}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleLogout}
+            title={t("dashboard.logout")}
+            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </header>
   );

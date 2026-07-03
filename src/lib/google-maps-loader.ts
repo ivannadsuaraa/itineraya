@@ -34,6 +34,15 @@ if (typeof window !== "undefined") {
   const existing = window.gm_authFailure;
   window.gm_authFailure = () => {
     existing?.();
+    console.error(
+      "[GoogleMaps] ❌ gm_authFailure fired. This means one of:\n" +
+      "  1. The API key is invalid or expired.\n" +
+      "  2. The Maps JavaScript API is not enabled in Google Cloud Console.\n" +
+      "  3. HTTP referrer restrictions are blocking this domain " +
+      "(itineraya.com must be in the allowed referrers list).\n" +
+      "  4. Billing is not enabled on the Google Cloud project.\n" +
+      "See instructions in src/lib/google-maps-loader.ts for how to fix.",
+    );
     markAuthFailed();
   };
 }
@@ -48,18 +57,36 @@ export function onGoogleMapsAuthFailure(cb: () => void): () => void {
 }
 
 export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
-  if (authFailed) return Promise.reject(new Error("Google Maps auth failure"));
+  if (authFailed) {
+    console.warn("[GoogleMaps] Skipping load — previous auth failure recorded.");
+    return Promise.reject(new Error("Google Maps auth failure"));
+  }
   if (typeof window === "undefined") return Promise.resolve();
-  if (window.google?.maps) return Promise.resolve();
+  if (window.google?.maps) {
+    console.info("[GoogleMaps] Already loaded ✓");
+    return Promise.resolve();
+  }
   if (window.__itineraya_gmap_loaded__) return window.__itineraya_gmap_loaded__;
+
   window.__itineraya_gmap_loaded__ = new Promise((resolve, reject) => {
     if (!GOOGLE_KEY) {
+      console.error(
+        "[GoogleMaps] ❌ VITE_GOOGLE_MAPS_KEY is not set. " +
+        "Add it to your .env file and to Vercel's environment variables.",
+      );
       markAuthFailed();
       return reject(new Error("Missing Google Maps key"));
     }
+    console.info(
+      `[GoogleMaps] Loading with key …${GOOGLE_KEY.slice(-6)} | libraries: ${libraries}`,
+    );
+
     const existing = document.querySelector<HTMLScriptElement>('script[data-itineraya="gmaps"]');
     if (existing) {
-      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("load", () => {
+        console.info("[GoogleMaps] Script loaded from existing tag ✓");
+        resolve();
+      });
       existing.addEventListener("error", () => reject(new Error("Failed to load Google Maps")));
       return;
     }
@@ -68,8 +95,12 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
     s.async = true;
     s.defer = true;
     s.dataset.itineraya = "gmaps";
-    s.onload = () => resolve();
+    s.onload = () => {
+      console.info("[GoogleMaps] Script loaded ✓ — if the map still looks broken, check gm_authFailure below.");
+      resolve();
+    };
     s.onerror = () => {
+      console.error("[GoogleMaps] ❌ Script failed to load (network error or invalid key).");
       markAuthFailed();
       reject(new Error("Failed to load Google Maps"));
     };

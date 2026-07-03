@@ -37,7 +37,7 @@ function NewTripPage() {
     return () => { cancelled = true; };
   }, []);
 
-  const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
+  const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 15 : 2;
   const loaded = plan !== null && tripCount !== null;
   const overLimit = loaded && planLimit !== null && (tripCount ?? 0) >= planLimit;
 
