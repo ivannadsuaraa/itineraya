@@ -31,8 +31,15 @@ import {
   weatherEmoji,
   type Inspiration,
 } from "@/lib/dashboard-helpers";
-import { GlobePolaroids, type PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
-import { TripsCalendar } from "@/components/ui/trips-calendar";
+import { lazy, Suspense } from "react";
+import type { PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
+
+const GlobePolaroids = lazy(() =>
+  import("@/components/ui/cobe-globe-polaroids").then((m) => ({ default: m.GlobePolaroids })),
+);
+const TripsCalendar = lazy(() =>
+  import("@/components/ui/trips-calendar").then((m) => ({ default: m.TripsCalendar })),
+);
 import { PageTransition } from "@/components/ui/PageTransition";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -120,13 +127,14 @@ function DashboardPage() {
         return;
       }
 
-      const { data: prof } = await supabase
+      const { data: profRaw } = await supabase
         .from("profiles")
         .select("welcome_completed, plan, trial_ends_at")
         .eq("id", u.user.id)
         .maybeSingle();
-      const userPlan = (prof as { plan?: string } | null)?.plan ?? "free";
-      const trialEndsAt = (prof as { trial_ends_at?: string | null } | null)?.trial_ends_at ?? null;
+      const prof = profRaw as unknown as { welcome_completed?: boolean; plan?: string; trial_ends_at?: string | null } | null;
+      const userPlan = prof?.plan ?? "free";
+      const trialEndsAt = prof?.trial_ends_at ?? null;
       setIsFree(userPlan === "free");
       if (userPlan === "free" && trialEndsAt) {
         const msLeft = new Date(trialEndsAt).getTime() - Date.now();
@@ -287,11 +295,13 @@ function DashboardPage() {
 
             {/* Right: Globe */}
             <div className="mx-auto w-full max-w-[300px] lg:max-w-none">
-              <GlobePolaroids
-                markers={globeMarkers}
-                className="w-full"
-                speed={0.003}
-              />
+              <Suspense fallback={<div className="aspect-square w-full rounded-full bg-sky-100/50 animate-pulse" />}>
+                <GlobePolaroids
+                  markers={globeMarkers}
+                  className="w-full"
+                  speed={0.003}
+                />
+              </Suspense>
             </div>
           </div>
         </div>
@@ -535,7 +545,9 @@ function DashboardPage() {
               <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.calendarSub")}</p>
             </div>
             <div className="max-w-lg">
-              <TripsCalendar trips={calendarTrips} />
+              <Suspense fallback={<div className="h-72 rounded-2xl bg-sky-50 animate-pulse" />}>
+                <TripsCalendar trips={calendarTrips} />
+              </Suspense>
             </div>
             {calendarTrips.length === 0 && trips !== null && (
               <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center">

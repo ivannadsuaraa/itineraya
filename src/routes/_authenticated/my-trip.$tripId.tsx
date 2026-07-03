@@ -18,6 +18,16 @@ import {
   Clock,
   X,
   GanttChartSquare,
+  Building2,
+  UtensilsCrossed,
+  Train,
+  Landmark,
+  Zap,
+  Music,
+  ShoppingBag,
+  CheckCircle2,
+  Circle,
+  StickyNote,
 } from "lucide-react";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { Timeline, type TimelineEntry } from "@/components/ui/timeline";
@@ -52,7 +62,35 @@ type Activity = {
   description: string;
   category?: ActivityCategory;
   url?: string;
+  completed?: boolean;
+  notes?: string;
 };
+
+function getCategoryIcon(category: ActivityCategory | undefined) {
+  switch (category) {
+    case "hotel": return Building2;
+    case "restaurant": return UtensilsCrossed;
+    case "activity": return Zap;
+    case "transport": return Train;
+    case "sight": return Landmark;
+    case "nightlife": return Music;
+    case "shopping": return ShoppingBag;
+    default: return MapPin;
+  }
+}
+
+function getCategoryColor(category: ActivityCategory | undefined): string {
+  switch (category) {
+    case "hotel": return "bg-purple-100 text-purple-700";
+    case "restaurant": return "bg-orange-100 text-orange-700";
+    case "activity": return "bg-emerald-100 text-emerald-700";
+    case "transport": return "bg-blue-100 text-blue-700";
+    case "sight": return "bg-amber-100 text-amber-700";
+    case "nightlife": return "bg-pink-100 text-pink-700";
+    case "shopping": return "bg-rose-100 text-rose-700";
+    default: return "bg-slate-100 text-slate-600";
+  }
+}
 
 type Day = {
   day: number;
@@ -156,6 +194,22 @@ function ItineraryPage() {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [tripmatesOpen, setTripmatesOpen] = useState(false);
+
+  const updateActivity = (dayIdx: number, actIdx: number, updates: Partial<Activity>) => {
+    setTrip((prev) => {
+      if (!prev?.itinerary) return prev;
+      const newDays = prev.itinerary.days.map((d, di) => {
+        if (di !== dayIdx) return d;
+        return {
+          ...d,
+          activities: d.activities.map((a, ai) => (ai === actIdx ? { ...a, ...updates } : a)),
+        };
+      });
+      const newItinerary = { ...prev.itinerary, days: newDays };
+      void supabase.from("trips").update({ itinerary: newItinerary } as never).eq("id", prev.id);
+      return { ...prev, itinerary: newItinerary };
+    });
+  };
 
   useEffect(() => {
     (async () => {
@@ -385,8 +439,8 @@ function ItineraryPage() {
           <div>
             {view === "cards" && (
               <div className="space-y-5">
-                {itin.days.map((day) => (
-                  <DayCard key={day.day} day={day} destination={trip.destination} />
+                {itin.days.map((day, dayIdx) => (
+                  <DayCard key={day.day} day={day} destination={trip.destination} dayIdx={dayIdx} onActivityUpdate={updateActivity} />
                 ))}
               </div>
             )}
@@ -414,15 +468,15 @@ function ItineraryPage() {
             )}
             {view === "timeline" && (
               <Timeline
-                data={itin.days.map((day): TimelineEntry => ({
+                data={itin.days.map((day, dayIdx): TimelineEntry => ({
                   title: t("trip.dayHeading", { n: day.day, title: day.title }),
                   content: (
                     <div className="space-y-3">
                       {day.subtitle && (
                         <p className="text-sm text-slate-500 italic">{day.subtitle}</p>
                       )}
-                      {day.activities.map((a, i) => (
-                        <ActivityRow key={i} activity={a} destination={trip.destination} />
+                      {day.activities.map((a, actIdx) => (
+                        <ActivityRow key={actIdx} activity={a} destination={trip.destination} dayIdx={dayIdx} actIdx={actIdx} onUpdate={updateActivity} />
                       ))}
                     </div>
                   ),
@@ -504,7 +558,12 @@ function ItineraryPage() {
   );
 }
 
-function DayCard({ day, destination }: { day: Day; destination: string }) {
+function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
+  day: Day;
+  destination: string;
+  dayIdx: number;
+  onActivityUpdate: (dayIdx: number, actIdx: number, updates: Partial<Activity>) => void;
+}) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState<null | "download" | "share">(null);
 
@@ -611,7 +670,7 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
       {/* Activities */}
       <div className="space-y-2.5 p-4 sm:p-5">
         {day.activities.map((a, i) => (
-          <ActivityRow key={i} activity={a} destination={destination} />
+          <ActivityRow key={i} activity={a} destination={destination} dayIdx={dayIdx} actIdx={i} onUpdate={onActivityUpdate} />
         ))}
       </div>
 
@@ -646,8 +705,22 @@ function DayCard({ day, destination }: { day: Day; destination: string }) {
   );
 }
 
-function ActivityRow({ activity, destination }: { activity: Activity; destination: string }) {
+function ActivityRow({
+  activity,
+  destination,
+  dayIdx = 0,
+  actIdx = 0,
+  onUpdate = () => {},
+}: {
+  activity: Activity;
+  destination: string;
+  dayIdx?: number;
+  actIdx?: number;
+  onUpdate?: (dayIdx: number, actIdx: number, updates: Partial<Activity>) => void;
+}) {
   const { t } = useTranslation();
+  const [showNotes, setShowNotes] = useState(false);
+  const [noteDraft, setNoteDraft] = useState(activity.notes ?? "");
   const placeQuery = `${activity.place || activity.title}, ${destination}`;
   const booking = bookingForCategory(
     activity.category,
@@ -656,9 +729,24 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
     activity.url,
   );
   const bookingLabel = booking?.kind === "view" ? t("trip.viewVerb") : t("trip.book");
+  const CatIcon = getCategoryIcon(activity.category);
+  const catColor = getCategoryColor(activity.category);
+
+  const toggleCompleted = () => onUpdate(dayIdx, actIdx, { completed: !activity.completed });
+  const saveNote = () => {
+    if (noteDraft !== (activity.notes ?? "")) {
+      onUpdate(dayIdx, actIdx, { notes: noteDraft });
+    }
+  };
 
   return (
-    <div className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 transition hover:bg-slate-50">
+    <div
+      className={`group flex gap-3 rounded-xl border p-3 transition-all ${
+        activity.completed
+          ? "border-slate-100 bg-slate-50/30 opacity-55"
+          : "border-slate-100 bg-slate-50/50 hover:bg-slate-50"
+      }`}
+    >
       {/* Time chip */}
       <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-sky-900 text-white">
         <CalendarIcon className="h-3 w-3 opacity-60" />
@@ -667,14 +755,66 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <div className="flex items-start gap-2">
-          <span className="text-base leading-tight">{activity.emoji ?? "📍"}</span>
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold leading-tight text-slate-900">{activity.title}</p>
-            {activity.place && <p className="truncate text-xs text-slate-500">{activity.place}</p>}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start gap-2">
+            <span className="text-base leading-tight">{activity.emoji ?? "📍"}</span>
+            <div className="min-w-0">
+              <p
+                className={`font-semibold leading-tight ${
+                  activity.completed ? "line-through text-slate-400" : "text-slate-900"
+                }`}
+              >
+                {activity.title}
+              </p>
+              {activity.place && (
+                <p className="truncate text-xs text-slate-500">{activity.place}</p>
+              )}
+            </div>
           </div>
+          {/* Completed checkbox */}
+          <button
+            type="button"
+            onClick={toggleCompleted}
+            className="shrink-0 text-slate-300 transition hover:text-emerald-500"
+            title={activity.completed ? "Marcar como pendiente" : "Marcar como completada"}
+          >
+            {activity.completed ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+            ) : (
+              <Circle className="h-5 w-5" />
+            )}
+          </button>
         </div>
-        <p className="mt-1 text-sm leading-relaxed text-slate-600">{activity.description}</p>
+
+        {/* Category badge */}
+        {activity.category && activity.category !== "other" && (
+          <span
+            className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${catColor}`}
+          >
+            <CatIcon className="h-3 w-3" />
+            {activity.category}
+          </span>
+        )}
+
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{activity.description}</p>
+
+        {/* Inline notes */}
+        {showNotes && (
+          <div className="mt-2">
+            <textarea
+              className="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
+              rows={2}
+              placeholder="Añade una nota personal…"
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              onBlur={saveNote}
+            />
+          </div>
+        )}
+        {!showNotes && activity.notes && (
+          <p className="mt-1 text-xs italic text-slate-400">"{activity.notes}"</p>
+        )}
+
         <div className="mt-2 flex flex-wrap gap-1.5">
           <a
             href={googleMapsUrl(placeQuery)}
@@ -696,6 +836,14 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
               {bookingLabel} · {booking.brand}
             </a>
           )}
+          <button
+            type="button"
+            onClick={() => setShowNotes((s) => !s)}
+            className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50"
+          >
+            <StickyNote className="h-3 w-3" />
+            {showNotes ? "Ocultar" : activity.notes ? "Ver nota" : "Añadir nota"}
+          </button>
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
 import { ArrowRight, Loader2, Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -96,19 +97,20 @@ function WelcomePage() {
           ))}
         </div>
 
-        <div
-          
-          
-          className="w-full rounded-3xl bg-white/85 p-8 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60"
-        >
-          
+        <div className="w-full overflow-hidden rounded-3xl bg-white/85 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60">
+          <AnimatePresence mode="wait" initial={false}>
             {step === 0 && (
-              <div
+              <motion.div
                 key="age"
-                
-                
-                
-                
+                initial={{ x: -40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -40, opacity: 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(_e, info) => { if (info.offset.x < -60) setStep(1); }}
+                className="p-8"
               >
                 <p className="text-sm font-semibold text-sky-600">{t("welcome.step", { n: 1 })}</p>
                 <h1 className="font-display text-2xl font-bold text-sky-900">{t("welcome.ageTitle")}</h1>
@@ -150,16 +152,21 @@ function WelcomePage() {
                 >
                   {t("welcome.next")} <ArrowRight className="h-4 w-4" />
                 </button>
-              </div>
+              </motion.div>
             )}
 
             {step === 1 && (
-              <div
+              <motion.div
                 key="lang"
-                
-                
-                
-                
+                initial={{ x: 40, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 40, opacity: 0 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(_e, info) => { if (info.offset.x > 60) setStep(0); }}
+                className="p-8"
               >
                 <p className="text-sm font-semibold text-sky-600">{t("welcome.step", { n: 2 })}</p>
                 <h1 className="font-display text-2xl font-bold text-sky-900">{t("welcome.langTitle")}</h1>
@@ -205,9 +212,9 @@ function WelcomePage() {
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("welcome.start")}
                   </button>
                 </div>
-              </div>
+              </motion.div>
             )}
-          
+          </AnimatePresence>
         </div>
       </div>
 

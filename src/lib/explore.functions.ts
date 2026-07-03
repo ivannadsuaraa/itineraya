@@ -98,6 +98,8 @@ export type PublicFeedItem = {
   trip_types: string[];
   budget: string | null;
   published_at: string | null;
+  rating_avg: number | null;
+  rating_count: number;
 };
 
 export const listPublicTrips = createServerFn({ method: "GET" })
@@ -147,6 +149,8 @@ export const listPublicTrips = createServerFn({ method: "GET" })
       const nDays =
         daysBetween(row.start_date, row.end_date) ??
         (row.itinerary?.days?.length ?? null);
+      const ratingSum = (r as { rating_sum?: number | null }).rating_sum ?? 0;
+      const ratingCount = (r as { rating_count?: number | null }).rating_count ?? 0;
       return {
         slug: row.share_slug,
         destination: row.destination,
@@ -157,6 +161,8 @@ export const listPublicTrips = createServerFn({ method: "GET" })
         trip_types: row.trip_types ?? [],
         budget: row.budget,
         published_at: row.published_at,
+        rating_avg: ratingCount > 0 ? ratingSum / ratingCount : null,
+        rating_count: ratingCount,
       };
     });
 
@@ -176,6 +182,41 @@ export type DiscoverableTrip = PublicTrip & {
   trip_types: string[];
   budget: string | null;
 };
+
+/**
+ * Submit a 1-5 star rating for a public trip (optimistic UI, silently no-ops until DB migration runs).
+ * DB migration required:
+ *   ALTER TABLE trips ADD COLUMN IF NOT EXISTS rating_sum integer NOT NULL DEFAULT 0;
+ *   ALTER TABLE trips ADD COLUMN IF NOT EXISTS rating_count integer NOT NULL DEFAULT 0;
+ */
+export const rateTrip = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { slug: string; rating: number }) => data)
+  .handler(async ({ data }) => {
+    if (data.rating < 1 || data.rating > 5) throw new Error("Rating must be 1-5");
+    const client = publicClient();
+    // Find trip id
+    const { data: found } = await client
+      .from("trips")
+      .select("id, rating_sum, rating_count")
+      .eq("share_slug" as never, data.slug)
+      .eq("is_public" as never, true)
+      .maybeSingle();
+    if (!found) return { ok: true, pending_migration: true };
+    const row = found as unknown as { id: string; rating_sum?: number | null; rating_count?: number | null };
+    const newSum = (row.rating_sum ?? 0) + data.rating;
+    const newCount = (row.rating_count ?? 0) + 1;
+    // Silently no-op if columns don't exist yet
+    try {
+      await client
+        .from("trips")
+        .update({ rating_sum: newSum, rating_count: newCount } as never)
+        .eq("id", row.id);
+    } catch {
+      // columns not migrated yet
+    }
+    return { ok: true, new_avg: newSum / newCount };
+  });
 
 export const getDiscoverableTrip = createServerFn({ method: "GET" })
   .inputValidator((data: { slug: string }) => data)

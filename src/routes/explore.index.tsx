@@ -19,8 +19,10 @@ import {
   Globe,
   Clock,
   PlusCircle,
+  Star,
+  ArrowUpDown,
 } from "lucide-react";
-import { listPublicTrips, type PublicFeedItem } from "@/lib/explore.functions";
+import { listPublicTrips, rateTrip, type PublicFeedItem } from "@/lib/explore.functions";
 import { Navbar } from "@/components/landing/Navbar";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
@@ -68,11 +70,13 @@ const STYLE_ICONS: Record<(typeof STYLES)[number], React.ElementType> = {
 function ExplorePage() {
   const { t } = useTranslation();
   const list = useServerFn(listPublicTrips);
+  const rate = useServerFn(rateTrip);
   const navigate = useNavigate();
 
   const [destination, setDestination] = useState("");
   const [style, setStyle] = useState<(typeof STYLES)[number]>("all");
   const [durationBucket, setDurationBucket] = useState<(typeof DURATIONS)[number]>("all");
+  const [sortBy, setSortBy] = useState<"newest" | "best">("newest");
   const [items, setItems] = useState<PublicFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -110,6 +114,31 @@ function ExplorePage() {
       .slice(0, 6)
       .map((v) => v.item);
   }, [items]);
+
+  const sortedItems = useMemo(() => {
+    if (sortBy === "best") {
+      return [...items].sort((a, b) => {
+        const aAvg = a.rating_avg ?? 0;
+        const bAvg = b.rating_avg ?? 0;
+        return bAvg - aAvg;
+      });
+    }
+    return items;
+  }, [items, sortBy]);
+
+  const handleRate = async (slug: string, rating: number) => {
+    if (!isAuthenticated) return;
+    // Optimistic update
+    setItems((prev) =>
+      prev.map((it) => {
+        if (it.slug !== slug) return it;
+        const newCount = it.rating_count + 1;
+        const oldSum = (it.rating_avg ?? 0) * it.rating_count;
+        return { ...it, rating_avg: (oldSum + rating) / newCount, rating_count: newCount };
+      }),
+    );
+    await rate({ data: { slug, rating } }).catch(() => {});
+  };
 
   const handleRemix = (item: PublicFeedItem) => {
     const payload = {
@@ -219,6 +248,22 @@ function ExplorePage() {
                   </button>
                 );
               })}
+
+              <div className="mx-2 h-5 w-px shrink-0 bg-slate-200" />
+
+              {/* Sort toggle */}
+              <button
+                type="button"
+                onClick={() => setSortBy((s) => (s === "newest" ? "best" : "newest"))}
+                className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                  sortBy === "best"
+                    ? "bg-amber-500 text-white shadow-md"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {sortBy === "best" ? <Star className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3" />}
+                {sortBy === "best" ? "Mejor valorados" : "Más recientes"}
+              </button>
             </div>
           </div>
         </div>
@@ -273,8 +318,13 @@ function ExplorePage() {
             <EmptyState />
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((item) => (
-                <FeedCard key={item.slug} item={item} onRemix={() => handleRemix(item)} />
+              {sortedItems.map((item) => (
+                <FeedCard
+                  key={item.slug}
+                  item={item}
+                  onRemix={() => handleRemix(item)}
+                  onRate={isAuthenticated ? (r) => handleRate(item.slug, r) : undefined}
+                />
               ))}
             </div>
           )}
@@ -347,7 +397,37 @@ function initials(destination: string): string {
     .join("");
 }
 
-function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void }) {
+function StarRating({ avg, count, onRate }: { avg: number | null; count: number; onRate?: (r: number) => void }) {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const display = hovered ?? Math.round(avg ?? 0);
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <button
+          key={s}
+          type="button"
+          disabled={!onRate}
+          onClick={() => onRate?.(s)}
+          onMouseEnter={() => onRate && setHovered(s)}
+          onMouseLeave={() => setHovered(null)}
+          className={`transition-transform ${onRate ? "cursor-pointer hover:scale-110" : "cursor-default"}`}
+          aria-label={`${s} stars`}
+        >
+          <Star
+            className={`h-3.5 w-3.5 ${
+              s <= display ? "fill-amber-400 text-amber-400" : "fill-transparent text-slate-300"
+            }`}
+          />
+        </button>
+      ))}
+      {count > 0 && (
+        <span className="ml-1 text-[10px] font-medium text-slate-400">({count})</span>
+      )}
+    </div>
+  );
+}
+
+function FeedCard({ item, onRemix, onRate }: { item: PublicFeedItem; onRemix: () => void; onRate?: (rating: number) => void }) {
   const { t } = useTranslation();
   const fallback = useMemo(
     () =>
@@ -413,10 +493,13 @@ function FeedCard({ item, onRemix }: { item: PublicFeedItem; onRemix: () => void
       {/* Card body */}
       <div className="p-4">
         {item.summary && (
-          <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-slate-500">
+          <p className="mb-2 line-clamp-2 text-xs leading-relaxed text-slate-500">
             {item.summary}
           </p>
         )}
+        <div className="mb-3">
+          <StarRating avg={item.rating_avg} count={item.rating_count} onRate={onRate} />
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
