@@ -62,7 +62,8 @@ El acceso al asistente está bloqueado en tres puntos para usuarios free:
 ## Modelo IA
 
 `claude-haiku-4-5` — usado en `itinerary.functions.ts` para generar itinerarios.
-`max_tokens: 10000` — necesario para viajes de hasta 14 días sin truncación.
+`max_tokens: 16000` — necesario para viajes de hasta 14 días sin truncación.
+La generación usa structured outputs (`output_config.format` con JSON schema): el JSON devuelto siempre es válido y conforme al esquema; `extractJson` queda solo como red de seguridad.
 El asistente de chat (`/api/chat`) usa `claude-haiku-4-5` también.
 
 ## Convenciones

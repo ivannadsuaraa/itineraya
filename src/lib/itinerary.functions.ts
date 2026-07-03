@@ -29,6 +29,60 @@ async function unsplashImage(query: string): Promise<string | null> {
   }
 }
 
+// JSON schema enforced server-side via structured outputs (output_config.format).
+// Guarantees valid, schema-conformant JSON — extractJson below remains only as a safety net.
+const itinerarySchema = {
+  type: "object",
+  additionalProperties: false,
+  required: ["summary", "days"],
+  properties: {
+    summary: { type: "string" },
+    days: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["day", "title", "subtitle", "image_query", "activities"],
+        properties: {
+          day: { type: "integer" },
+          title: { type: "string" },
+          subtitle: { type: "string" },
+          image_query: { type: "string" },
+          activities: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["time", "emoji", "title", "place", "description", "category"],
+              properties: {
+                time: { type: "string", description: "24h HH:MM" },
+                emoji: { type: "string", description: "exactly one emoji" },
+                title: { type: "string" },
+                place: { type: "string" },
+                description: { type: "string" },
+                category: {
+                  type: "string",
+                  enum: [
+                    "hotel",
+                    "restaurant",
+                    "activity",
+                    "transport",
+                    "sight",
+                    "nightlife",
+                    "shopping",
+                    "other",
+                  ],
+                },
+                url: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as const;
+
 function extractJson<T>(raw: string): T {
   // 1. Strip markdown fences
   let text = raw
@@ -198,19 +252,19 @@ export const generateItinerary = createServerFn({ method: "POST" })
       const mid = (lo + hi) / 2;
       const tier =
         mid < 300
-          ? "mochilero (hostels, transporte público, comida callejera)"
+          ? "backpacker (hostels, public transport, street food)"
           : mid < 800
-            ? "económico (hoteles básicos, transporte mixto, restaurantes locales)"
+            ? "budget (basic hotels, mixed transport, local restaurants)"
             : mid < 2000
-              ? "confortable (hoteles 3★, restaurantes variados)"
+              ? "comfortable (3-star hotels, varied restaurants)"
               : mid < 4000
-                ? "premium (hoteles 4★, experiencias exclusivas)"
+                ? "premium (4-star hotels, exclusive experiences)"
                 : mid < 7000
-                  ? "lujo (hoteles 5★, traslados privados, experiencias VIP)"
-                  : "ultra-lujo (suites, experiencias exclusivas sin límite de gasto)";
+                  ? "luxury (5-star hotels, private transfers, VIP experiences)"
+                  : "ultra-luxury (suites, exclusive experiences, no spending limit)";
       const dailyLo = Math.round(lo / dayCount);
       const dailyHi = Math.round(hi / dayCount);
-      return `\nPRESUPUESTO\nRango total del viaje: ${lo}€–${hi}€ (~${dailyLo}€–${dailyHi}€/día). Estilo: ${tier}. Ajusta alojamiento, restaurantes y actividades sugeridas a este nivel de gasto — no recomiendes opciones muy por encima o por debajo.\n`;
+      return `- Budget: ${lo}€–${hi}€ total (~${dailyLo}€–${dailyHi}€/day). Spending style: ${tier}. Match accommodation, restaurants and activities to this level — never suggest options far above or below it.`;
     })();
 
     const monthName = (() => {
@@ -257,10 +311,10 @@ export const generateItinerary = createServerFn({ method: "POST" })
       tripTypes.length > 0 ? tripTypes.join(", ") : (trip.trip_style ?? "unspecified");
 
     const accommodationBlock = hasHotelCoords
-      ? `ALOJAMIENTO (ANCLA FIJA): "${hotelName ?? "alojamiento"}"${hotelAddress ? ` (${hotelAddress})` : ""}, coords ${hotelLat!.toFixed(5)},${hotelLng!.toFixed(5)}. TODAS las actividades deben estar a ≤3 km. Cada día empieza y termina aquí. Sin actividades en otra ciudad ni otros hoteles.`
+      ? `- Accommodation (FIXED ANCHOR): "${hotelName ?? "hotel"}"${hotelAddress ? ` (${hotelAddress})` : ""}, coordinates ${hotelLat!.toFixed(5)},${hotelLng!.toFixed(5)}. Every activity must be within ~3 km of it. Each day starts and ends here. No activities in other cities; never recommend other hotels.`
       : hasAccommodation
-        ? `ALOJAMIENTO: Ya tiene donde alojarse (sin ubicación). Base en el centro. Sin recomendar otros hoteles. Empezar/terminar cada día desde "tu alojamiento".`
-        : `ALOJAMIENTO: Sin confirmar. Puedes incluir "check-in" breve el día 1.`;
+        ? `- Accommodation: already booked (exact location unknown). Assume a central base. Never recommend other hotels; each day starts and ends at "your accommodation".`
+        : `- Accommodation: not booked yet. You may include a brief hotel check-in on day 1.`;
 
     const inlandSet = new Set([
       "madrid",
@@ -336,73 +390,70 @@ export const generateItinerary = createServerFn({ method: "POST" })
       "buenos aires",
       "asunción",
     ]);
-    const isCoastal = !inlandSet.has(trip.destination.toLowerCase().trim());
+    const isKnownInland = inlandSet.has(trip.destination.toLowerCase().trim());
 
-    const prompt = `Eres un planificador de viajes experto. Genera un itinerario personalizado, geográficamente coherente y realista en tiempos.
+    const weekdayName = trip.start_date
+      ? new Date(trip.start_date).toLocaleDateString("en-US", { weekday: "long" })
+      : null;
+    const datesLine =
+      trip.start_date && trip.end_date
+        ? `${trip.start_date} to ${trip.end_date} (day 1 is a ${weekdayName})`
+        : "not specified";
 
-IDIOMA (PRIORIDAD MÁXIMA — ABSOLUTA)
-Idioma de salida: ${langName} (${lang.toUpperCase()}). El 100% del texto visible (resumen, títulos, descripciones, comidas, transporte) debe estar en ${langName}. Cero excepciones.
-${
-  lang === "en"
-    ? `PROHIBIDO en inglés usar palabras españolas: Desayuno, Comida, Cena, Visita, Paseo, "a pie", "en metro". Usa SOLO inglés: Breakfast, Lunch, Dinner, Visit, Walk, "on foot", "by metro".`
-    : `PROHIBIDO usar palabras inglesas: Breakfast, Lunch, Dinner, Visit, Walk, Morning, Afternoon. Usa SOLO español peninsular: Desayuno, Comida, Cena, Visita, Paseo, Mañana, Tarde, Noche.`
-}
-Los nombres propios reales (locales, calles, monumentos) permanecen en su idioma original. El campo "place" DEBE ser el nombre real del local en su idioma nativo.
+    const companion = (trip as { companion?: string | null }).companion ?? null;
 
-COHERENCIA GEOGRÁFICA
-- ${trip.destination} es una ciudad ${isCoastal ? "costera — puedes incluir actividades de playa si la época lo permite" : "NO costera — PROHIBIDAS actividades de playa, mar o costa (playa, snorkel, kayak, baño en el mar). Regla estricta."}.
-- Cada día se centra en UN barrio/zona (o dos adyacentes). Máx. 3 km entre el punto más lejano del día salvo que el metro los conecte en <15 min.
-- Ordena las actividades en línea o bucle lógico: paradas consecutivas ≤1.2 km o con transporte directo. Nunca ir al otro extremo de la ciudad y volver el mismo día.
-- Las comidas deben estar dentro de la zona del día.
-${isCoastal ? "PLAYA: solo si el mes lo permite. Nunca como única actividad; combinar con otros puntos cercanos. Evitar horas de máximo calor (12–16h) en verano.\n" : ""}
-HORARIOS Y DURACIÓN
-- Duraciones realistas: museo 1.5–2h, comida 1–1.5h, monumento 45–60 min, café 20–30 min. Deja 15–30 min de margen entre paradas.
-- Respeta horarios de apertura y horarios de comidas locales.
-- Adapta al clima de ${monthName} (frío/lluvia → interior; calor verano → exterior mañana/tarde, interior mediodía).
-- ${arrivalLine}
-- ${departureLine}
+    const beachRule = isKnownInland
+      ? `${trip.destination} is an inland city — beach, sea or coastal activities (beach time, snorkeling, sea kayaking, swimming in the sea) are strictly forbidden.`
+      : `Only include beach or sea activities if ${trip.destination} genuinely has a coastline or nearby beach AND the season allows it. A beach is never the only activity of a day; combine it with nearby stops and avoid peak-heat hours (12:00–16:00) in summer.`;
 
-TRANSPORTE (OBLIGATORIO EN CADA ACTIVIDAD)
-Cada actividad (salvo la primera del día) debe empezar su "description" con una línea de transporte: modo + ruta + minutos desde la parada anterior.
-Formato: "🚶 8 min a pie" | "🚇 Metro L4 dirección X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Tren, 18 min" | "⛴️ Ferry, 20 min".
-Walks <1.2 km → siempre a pie. Nunca taxi para <1.2 km.
+    const languageBlock =
+      lang === "es"
+        ? `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Spanish from Spain (peninsular). Meal naming: "Desayuno", "Comida" (the main midday meal — never "almuerzo" or "lunch") and "Cena". Meal activity titles must start with the meal word ("Comida en …", "Cena en …").`
+        : `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in English. Meal naming: Breakfast, Lunch, Dinner, Snack. Meal activity titles must start with the meal word ("Lunch at …", "Dinner at …").`;
 
-EVENTOS LOCALES
-Si hay festivales, ferias o festivos en ${trip.destination} entre ${trip.start_date ?? "las fechas del viaje"} y ${trip.end_date ?? "las fechas del viaje"}, inclúyelos como actividad con nombre real, lugar y hora. URL al evento oficial en el campo "url".
-${budgetBlock}
+    const transportExamples =
+      lang === "es"
+        ? `"🚶 8 min a pie" | "🚇 Metro L4 dirección X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Tren, 18 min" | "⛴️ Ferry, 20 min"`
+        : `"🚶 8 min walk" | "🚇 Metro Line 4 towards X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Train, 18 min" | "⛴️ Ferry, 20 min"`;
 
-COMIDAS
-${
-  lang === "es"
-    ? 'Usa nomenclatura peninsular: Desayuno (07:30–10:00), Comida (13:30–16:00, comida principal — nunca "almuerzo"/"lunch"), Cena (20:30–23:00). El título DEBE empezar con la palabra de comida ("Comida en …", "Cena en …").'
-    : 'Use English meal names only: Breakfast / Lunch / Dinner / Snack. Title MUST start with the meal word ("Lunch at …"). Adapt times to local culture.'
-}
-Cada actividad de categoría "restaurant" debe tener un nombre de local real y específico en "place". Incluye "url" con enlace directo al local (web oficial o Google Maps).
+    const tripData = [
+      `- Destination: ${trip.destination}`,
+      `- Dates: ${datesLine} — ${dayCount} days, month: ${monthName}`,
+      `- Travelers: ${companion ?? "not specified"} | Trip style/interests: ${tripTypesLine}`,
+      `- ${arrivalLine}`,
+      `- ${departureLine}`,
+      accommodationBlock,
+      budgetBlock,
+      `- Previous trips by this user (personalization context only): ${historyLine}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-ENLACES (campo "url")
-Restaurantes y hoteles: enlace directo al local (web propia, Google Maps, TheFork, etc.). Atracciones con web oficial (museos, monumentos): enlace a la página de visita/tickets. Omite el campo si no conoces el enlace exacto.
+    const prompt = `Create a personalized ${dayCount}-day travel itinerary that is geographically coherent and realistic in its timing.
 
-SALIDA — devuelve ÚNICAMENTE JSON válido, sin markdown:
-{
-  "summary": "1-2 frases inspiradoras en ${langName}",
-  "days": [{
-    "day": 1,
-    "title": "Título corto zona/tema en ${langName}",
-    "subtitle": "1 frase resumen en ${langName}",
-    "image_query": "2-3 palabras en inglés",
-    "activities": [{
-      "time": "HH:MM (24h)",
-      "emoji": "un único emoji",
-      "title": "3-6 palabras en ${langName}",
-      "place": "Nombre real del local en su idioma",
-      "description": "1-2 líneas en ${langName}. Si no es la primera parada, EMPIEZA con la línea de transporte.",
-      "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other",
-      "url": "https://enlace-directo (omitir si desconocido)"
-    }]
-  }]
-}
+TRIP DATA
+${tripData}
 
-Genera exactamente ${dayCount} días. 5–7 actividades/día (menos en días con llegada/salida ajustada). ${hasAccommodation ? 'NUNCA uses categoría "hotel".' : ""} Solo JSON puro. Todo en ${langName}.`;
+OUTPUT LANGUAGE
+${languageBlock}
+Exception: "place" must always hold the venue's real name in its native language, and real proper nouns (streets, monuments, venues) keep their original names inside the text.
+
+RULES
+1. GEOGRAPHY — Each day focuses on ONE neighborhood/zone (or two adjacent ones). Order the stops as a logical walking line or loop: consecutive stops ≤1.2 km apart or directly connected by transit, and the whole day within ~3 km unless the metro connects points in under 15 min. Never cross to the other side of the city and come back the same day. Meals stay inside the day's zone.
+2. BEACH — ${beachRule}
+3. SCHEDULE — Activities in chronological order with realistic durations: museum 1.5–2h, meal 1–1.5h, monument 45–60 min, café 20–30 min; leave 15–30 min of slack between stops. Respect opening hours AND weekly closing days: work out the weekday of every itinerary day from the dates above and never schedule a venue on a day it is typically closed (e.g. many museums close on Mondays). Meal times follow the local dining customs of ${trip.destination}, not those of the traveler's home country.
+4. WEATHER — Adapt to typical ${monthName} weather in ${trip.destination}: cold or rain → prioritize indoor options; summer heat → outdoor in the morning/evening, indoor at midday.
+5. TRANSPORT — Every activity except the first of each day must start its "description" with a transport line (mode + route + minutes from the previous stop): ${transportExamples}. Distances under 1.2 km are always on foot — never taxi.
+6. REAL PLACES — Only real, well-established venues you are confident exist. If you are not sure a specific restaurant exists, name the dining area or venue type instead (e.g. "Trattoria in Trastevere") — never fabricate a venue name.
+7. LINKS — For the "url" field build a Google Maps link: https://www.google.com/maps/search/?api=1&query=VENUE+NAME+CITY (replace spaces with +). Use an official website instead only when you are completely certain of the exact URL. Never invent URLs; omit "url" when unsure.
+8. EVENTS — Include a local festival, fair or public holiday only if it is a well-known recurring event you are confident takes place in ${trip.destination} within the trip dates. Never invent events or their URLs.
+9. VOLUME — Exactly ${dayCount} days with 5–7 activities per day (fewer on days constrained by arrival or departure).${hasAccommodation ? ' Never use the "hotel" category.' : ""}
+
+FIELD GUIDE
+- summary: 1–2 inspiring sentences.
+- title (day): short, the day's zone or theme. subtitle: a one-sentence recap of the day.
+- image_query: 2–3 English words for a photo of the day's area (e.g. "montmartre paris street").
+- time: "HH:MM" 24h. emoji: exactly one emoji. title (activity): 3–6 words. description: 1–2 lines.`;
 
     let aiRes: Response | null = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -419,9 +470,10 @@ Genera exactamente ${dayCount} días. 5–7 actividades/día (menos en días con
         },
         body: JSON.stringify({
           model: "claude-haiku-4-5",
-          max_tokens: 10000,
+          max_tokens: 16000,
           system:
-            "You are a travel planner. You return ONLY valid JSON without markdown, explanations or extra text.",
+            "You are an expert travel planner. You create geographically coherent, time-realistic itineraries built around real venues, and you respond with a single JSON object that follows the provided schema exactly.",
+          output_config: { format: { type: "json_schema", schema: itinerarySchema } },
           messages: [{ role: "user", content: prompt }],
         }),
       });
@@ -437,7 +489,12 @@ Genera exactamente ${dayCount} días. 5–7 actividades/día (menos en días con
       throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
     }
 
-    const aiJson = (await aiRes.json()) as { content?: Array<{ text?: string }> };
+    const aiJson = (await aiRes.json()) as {
+      content?: Array<{ text?: string }>;
+      stop_reason?: string;
+    };
+    if (aiJson.stop_reason === "max_tokens")
+      throw new Error("La respuesta del modelo se truncó. Vuelve a intentarlo.");
     const content = aiJson.content?.[0]?.text ?? "";
     if (!content) throw new Error("Respuesta vacía del modelo");
 
@@ -461,6 +518,10 @@ Genera exactamente ${dayCount} días. 5–7 actividades/día (menos en días con
       }>;
     };
     const parsed: ParsedItin = extractJson<ParsedItin>(content);
+    if (!parsed.days || parsed.days.length === 0)
+      throw new Error("El modelo no devolvió ningún día de itinerario. Vuelve a intentarlo.");
+    if (parsed.days.length !== dayCount)
+      console.warn(`[itinerary] expected ${dayCount} days, model returned ${parsed.days.length}`);
 
     // Hero + all day images in parallel
     const [hero, ...dayImages] = await Promise.all([
