@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import {
@@ -15,6 +16,8 @@ import {
   Lock,
   CalendarDays,
   Trash2,
+  Clock,
+  Zap,
 } from "lucide-react";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
@@ -30,6 +33,7 @@ import {
 } from "@/lib/dashboard-helpers";
 import { GlobePolaroids, type PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
 import { TripsCalendar } from "@/components/ui/trips-calendar";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "My trips – Itineraya" }] }),
@@ -60,11 +64,11 @@ function dateLocale(lang: string) {
 }
 
 const UNSPLASH_FALLBACK = [
-  "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=120&h=120&fit=crop",
-  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=120&h=120&fit=crop",
-  "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=120&h=120&fit=crop",
-  "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=120&h=120&fit=crop",
-  "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=120&h=120&fit=crop",
+  "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&h=400&fit=crop&auto=format&q=75",
+  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&auto=format&q=75",
+  "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=400&fit=crop&auto=format&q=75",
+  "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400&h=400&fit=crop&auto=format&q=75",
+  "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=400&fit=crop&auto=format&q=75",
 ];
 
 // Module-level cache so geocoding persists across re-renders
@@ -100,6 +104,7 @@ function DashboardPage() {
   const [name, setName] = useState<string>("");
   const [shareTrip, setShareTrip] = useState<Trip | null>(null);
   const [isFree, setIsFree] = useState(true);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"viajes" | "calendario">("viajes");
 
   useEffect(() => {
@@ -117,11 +122,17 @@ function DashboardPage() {
 
       const { data: prof } = await supabase
         .from("profiles")
-        .select("welcome_completed, plan")
+        .select("welcome_completed, plan, trial_ends_at")
         .eq("id", u.user.id)
         .maybeSingle();
       const userPlan = (prof as { plan?: string } | null)?.plan ?? "free";
+      const trialEndsAt = (prof as { trial_ends_at?: string | null } | null)?.trial_ends_at ?? null;
       setIsFree(userPlan === "free");
+      if (userPlan === "free" && trialEndsAt) {
+        const msLeft = new Date(trialEndsAt).getTime() - Date.now();
+        const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+        if (daysLeft > 0) setTrialDaysLeft(daysLeft);
+      }
       if (prof && !prof.welcome_completed) {
         navigate({ to: "/welcome", replace: true });
         return;
@@ -239,7 +250,7 @@ function DashboardPage() {
   );
 
   return (
-    <div className="min-h-dvh bg-slate-50">
+    <PageTransition className="min-h-dvh bg-slate-50">
 
       {/* ── Dark header with globe ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10 lg:px-8">
@@ -285,6 +296,31 @@ function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Trial Banner ── */}
+      {trialDaysLeft !== null && (
+        <div className="border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Zap className="h-4 w-4 shrink-0 text-amber-500" />
+              <span className="font-semibold text-amber-800">
+                {trialDaysLeft === 1
+                  ? "Tu prueba gratuita acaba mañana"
+                  : `Te quedan ${trialDaysLeft} días de prueba gratuita`}
+              </span>
+              <span className="hidden text-amber-600 sm:inline">
+                — Disfruta del asistente IA y todas las funciones premium.
+              </span>
+            </div>
+            <Link
+              to="/pricing"
+              className="shrink-0 rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95"
+            >
+              Mantener acceso
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* ── Content ── */}
       <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 md:pb-12 lg:px-8">
@@ -363,15 +399,21 @@ function DashboardPage() {
 
               {otherTrips.length > 0 && (
                 <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {otherTrips.map((trip) => (
-                    <TripCard
+                  {otherTrips.map((trip, i) => (
+                    <motion.div
                       key={trip.id}
-                      trip={trip}
-                      locale={locale}
-                      onShare={() => setShareTrip(trip)}
-                      onDelete={() => deleteTrip(trip.id)}
-                      isFree={isFree}
-                    />
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, delay: i * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <TripCard
+                        trip={trip}
+                        locale={locale}
+                        onShare={() => setShareTrip(trip)}
+                        onDelete={() => deleteTrip(trip.id)}
+                        isFree={isFree}
+                      />
+                    </motion.div>
                   ))}
                 </div>
               )}
@@ -520,7 +562,7 @@ function DashboardPage() {
           destination={shareTrip.destination}
         />
       )}
-    </div>
+    </PageTransition>
   );
 }
 

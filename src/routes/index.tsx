@@ -6,6 +6,7 @@ import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FooterSection } from "@/components/landing/FooterSection";
+import { FAQSection } from "@/components/landing/FAQSection";
 
 import { ArrowRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -31,7 +32,15 @@ export const Route = createFileRoute("/")({
           "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos.",
       },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Itineraya – Viajes personalizados con IA" },
+      {
+        name: "twitter:description",
+        content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos.",
+      },
+      { name: "twitter:image", content: "https://itineraya.com/og-image.jpg" },
     ],
+    links: [{ rel: "canonical", href: "https://itineraya.com/" }],
   }),
   component: LandingPage,
 });
@@ -100,6 +109,7 @@ function LandingPage() {
         </div>
       </section>
 
+      <FAQSection />
       <FooterSection />
       {isLoggedIn && <MobileBottomBar />}
     </div>

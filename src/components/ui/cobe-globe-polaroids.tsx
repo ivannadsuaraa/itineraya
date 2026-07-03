@@ -222,12 +222,13 @@ export function GlobePolaroids({
       ref={containerRef}
       className={`relative select-none ${className}`}
       style={{ aspectRatio: "1" }}
+      onPointerLeave={() => { isPausedRef.current = false; setPopup(null) }}
     >
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}
         onPointerEnter={() => { isPausedRef.current = true }}
-        onPointerLeave={() => { isPausedRef.current = false; setPopup(null) }}
+        onPointerLeave={() => { isPausedRef.current = false }}
         style={{
           width: "100%",
           height: "100%",

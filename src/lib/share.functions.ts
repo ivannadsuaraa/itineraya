@@ -45,7 +45,15 @@ export const enableTripShare = createServerFn({ method: "POST" })
       end_date: string | null;
       share_slug: string | null;
     };
-    if (tripRow.share_slug) return { slug: tripRow.share_slug };
+    if (tripRow.share_slug) {
+      // Ensure is_public is true even if it was previously disabled
+      await supabase
+        .from("trips")
+        .update({ is_public: true } as never)
+        .eq("id", tripRow.id)
+        .eq("user_id", userId);
+      return { slug: tripRow.share_slug };
+    }
 
     const nDays = daysBetween(tripRow.start_date, tripRow.end_date);
     const base = slugify(tripRow.destination) + (nDays ? `-${nDays}-dias` : "");
@@ -54,7 +62,7 @@ export const enableTripShare = createServerFn({ method: "POST" })
       const candidate = `${base}-${randomSuffix()}`;
       const { error: upErr } = await supabase
         .from("trips")
-        .update({ share_slug: candidate } as never)
+        .update({ share_slug: candidate, is_public: true } as never)
         .eq("id", tripRow.id)
         .eq("user_id", userId);
       if (!upErr) return { slug: candidate };

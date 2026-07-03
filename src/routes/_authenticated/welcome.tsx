@@ -44,9 +44,10 @@ function WelcomePage() {
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("No user");
+      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase
         .from("profiles")
-        .update({ age, language, welcome_completed: true })
+        .update({ age, language, welcome_completed: true, trial_ends_at: trialEndsAt } as never)
         .eq("id", u.user.id);
       if (error) throw error;
       document.documentElement.lang = language;

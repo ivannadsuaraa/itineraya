@@ -671,7 +671,8 @@
     "view": "View trip",
     "emptyAction": "Create my trip",
     "viralCta": "Build yours in 10 seconds",
-    "heroEyebrow": "Itinerary shared by the community"
+    "heroEyebrow": "Itinerary shared by the community",
+    "trending": "Trending destinations this week"
   },
   "publish": {
     "title": "Publish as inspiration",

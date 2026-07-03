@@ -30,6 +30,7 @@ import { PublishToggle } from "@/components/trip/PublishToggle";
 import { TripmatesModal } from "@/components/trip/TripmatesModal";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 const TripMap = lazy(() =>
   import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })),
@@ -257,7 +258,7 @@ function ItineraryPage() {
   const itin = trip.itinerary;
 
   return (
-    <div className="min-h-dvh bg-slate-50">
+    <PageTransition className="min-h-dvh bg-slate-50">
       {/* ── Sticky toolbar ── */}
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-5">
@@ -499,7 +500,7 @@ function ItineraryPage() {
         tripId={trip.id}
         destination={trip.destination}
       />
-    </div>
+    </PageTransition>
   );
 }
 
@@ -702,6 +703,25 @@ function ActivityRow({ activity, destination }: { activity: Activity; destinatio
 }
 
 function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const steps = [
+      { target: 15, delay: 500 },
+      { target: 35, delay: 2000 },
+      { target: 55, delay: 3500 },
+      { target: 72, delay: 6000 },
+      { target: 85, delay: 10000 },
+      { target: 91, delay: 16000 },
+    ];
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (const { target, delay } of steps) {
+      timers.push(setTimeout(() => setProgress(target), delay));
+    }
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 p-6">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -710,7 +730,7 @@ function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
         <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-800/10 blur-3xl" />
       </div>
 
-      <div className="relative flex flex-col items-center text-center">
+      <div className="relative flex w-full max-w-sm flex-col items-center text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
           <MapIcon className="h-7 w-7 text-white" />
         </div>
@@ -728,9 +748,18 @@ function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
 
         <p className="mt-4 max-w-xs text-sm text-sky-400/80">{subtitle}</p>
 
-        <div className="mt-7 flex items-center gap-2">
+        {/* Progress bar */}
+        <div className="mt-8 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-1.5 rounded-full bg-gradient-to-r from-sky-400 to-sky-300 transition-all duration-700 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <p className="mt-2 text-xs tabular-nums text-sky-500">{progress}%</p>
+
+        <div className="mt-5 flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin text-sky-400" />
-          <Sparkles className="h-4 w-4 text-sky-300 animate-pulse" />
+          <Sparkles className="h-4 w-4 animate-pulse text-sky-300" />
         </div>
       </div>
     </div>

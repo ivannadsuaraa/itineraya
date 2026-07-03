@@ -96,6 +96,21 @@ function ExplorePage() {
     return () => { cancel = true; };
   }, [list, destination, style, durationBucket]);
 
+  const trending = useMemo(() => {
+    if (items.length === 0) return [];
+    const counts = new Map<string, { count: number; item: PublicFeedItem }>();
+    for (const item of items) {
+      const dest = item.destination.split(",")[0].trim();
+      const existing = counts.get(dest);
+      if (existing) { existing.count++; }
+      else { counts.set(dest, { count: 1, item }); }
+    }
+    return Array.from(counts.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+      .map((v) => v.item);
+  }, [items]);
+
   const handleRemix = (item: PublicFeedItem) => {
     const payload = {
       destination: item.destination,
@@ -207,6 +222,48 @@ function ExplorePage() {
             </div>
           </div>
         </div>
+
+        {/* ── Trending strip (shown when no active filters) ── */}
+        {!loading && trending.length > 0 && destination === "" && style === "all" && durationBucket === "all" && (
+          <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-lg">🔥</span>
+              <h2 className="font-display text-base font-bold text-slate-900">
+                {t("explore.trending", { defaultValue: "Destinos trending esta semana" })}
+              </h2>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
+              {trending.map((item) => {
+                const fallback = `https://loremflickr.com/400/280/${encodeURIComponent(item.destination.split(",")[0].trim() + ",travel")}?lock=${Math.abs(item.slug.charCodeAt(0)) % 1000}`;
+                return (
+                  <Link
+                    key={item.slug}
+                    to="/explore/$slug"
+                    params={{ slug: item.slug }}
+                    className="group relative h-28 w-44 shrink-0 overflow-hidden rounded-2xl bg-slate-200 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <img
+                      src={item.hero_image_url ?? fallback}
+                      alt={item.destination}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-2.5">
+                      <p className="text-xs font-bold leading-tight text-white drop-shadow">
+                        {item.destination.split(",")[0]}
+                      </p>
+                      {item.n_days && (
+                        <p className="text-[10px] text-white/75">{t("explore.days", { count: item.n_days })}</p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="mt-6 border-t border-slate-100" />
+          </section>
+        )}
 
         {/* ── Feed ── */}
         <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
