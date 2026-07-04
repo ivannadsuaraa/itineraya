@@ -72,6 +72,8 @@ export const setTripPublic = createServerFn({ method: "POST" })
           slug = candidate;
           break;
         }
+        // Reintentar solo ante colisión real del unique index (23505).
+        if (upErr.code !== "23505") throw new Error(upErr.message);
       }
       if (!slug) throw new Error("Could not generate share slug");
     }
@@ -100,6 +102,7 @@ export type PublicFeedItem = {
   published_at: string | null;
   rating_avg: number | null;
   rating_count: number;
+  view_count: number;
 };
 
 export const listPublicTrips = createServerFn({ method: "GET" })
@@ -116,7 +119,7 @@ export const listPublicTrips = createServerFn({ method: "GET" })
     let query = client
       .from("trips")
       .select(
-        "share_slug, destination, hero_image_url, itinerary, start_date, end_date, trip_style, trip_types, budget, published_at, is_public, rating_sum, rating_count",
+        "share_slug, destination, hero_image_url, itinerary, start_date, end_date, trip_style, trip_types, budget, published_at, is_public, rating_sum, rating_count, view_count",
       )
       .eq("is_public" as never, true)
       .not("share_slug", "is", null)
@@ -163,6 +166,7 @@ export const listPublicTrips = createServerFn({ method: "GET" })
         published_at: row.published_at,
         rating_avg: ratingCount > 0 ? ratingSum / ratingCount : null,
         rating_count: ratingCount,
+        view_count: (r as { view_count?: number | null }).view_count ?? 0,
       };
     });
 

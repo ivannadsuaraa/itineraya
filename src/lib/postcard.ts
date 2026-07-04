@@ -17,7 +17,22 @@ export type PostcardInput = {
   subtitle?: string;
   imageUrl?: string | null;
   activities: PostcardActivity[];
+  /** UI language (es/en/fr/pt) — controls the baked-in text on the image. */
+  locale?: string;
 };
+
+// La postal se comparte tal cual: su texto debe hablar el idioma del usuario.
+const POSTCARD_COPY: Record<string, { dayIn: (n: number, dest: string) => string; route: string }> = {
+  es: { dayIn: (n, d) => `Día ${n} en ${d}`, route: "RECORRIDO DEL DÍA" },
+  en: { dayIn: (n, d) => `Day ${n} in ${d}`, route: "TODAY'S ROUTE" },
+  fr: { dayIn: (n, d) => `Jour ${n} à ${d}`, route: "PARCOURS DU JOUR" },
+  pt: { dayIn: (n, d) => `Dia ${n} em ${d}`, route: "ROTEIRO DO DIA" },
+};
+
+function postcardCopy(locale: string | undefined) {
+  const code = (locale ?? "es").toLowerCase().slice(0, 2);
+  return POSTCARD_COPY[code] ?? POSTCARD_COPY.es;
+}
 
 // Brand palette — dark navy canvas, white text, sky-400 accent.
 const NAVY_DARK = "#050b16";
@@ -341,7 +356,12 @@ export async function generatePostcardDataUrl(input: PostcardInput): Promise<str
   let titleY = chipY + 90;
   ctx.fillStyle = "#ffffff";
   ctx.font = "800 58px 'Outfit', 'Inter', system-ui, sans-serif";
-  const titleLines = wrapText(ctx, `Día ${input.dayNumber} en ${input.destination}`, W * 0.56, 2);
+  const titleLines = wrapText(
+    ctx,
+    postcardCopy(input.locale).dayIn(input.dayNumber, input.destination),
+    W * 0.56,
+    2,
+  );
   for (const line of titleLines) {
     ctx.fillText(line, titleX, titleY);
     titleY += 62;
@@ -361,7 +381,7 @@ export async function generatePostcardDataUrl(input: PostcardInput): Promise<str
   ctx.font = "700 13px 'Inter', system-ui, sans-serif";
   ctx.fillStyle = hexToRgba("#ffffff", 0.55);
   ctx.textAlign = "left";
-  ctx.fillText("RECORRIDO DEL DÍA", mapX + 4, mapY - 12);
+  ctx.fillText(postcardCopy(input.locale).route, mapX + 4, mapY - 12);
   drawSchematicMap(ctx, mapX, mapY, mapW, mapH, input.activities.length);
 
   // ===== Activity list =====

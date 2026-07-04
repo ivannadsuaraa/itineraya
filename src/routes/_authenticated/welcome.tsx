@@ -10,7 +10,7 @@ import { LANGUAGE_OPTIONS } from "@/i18n";
 
 export const Route = createFileRoute("/_authenticated/welcome")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Welcome to Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Bienvenido a Itineraya" }] }),
   component: WelcomePage,
 });
 

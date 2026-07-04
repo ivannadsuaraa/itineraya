@@ -7,6 +7,27 @@ const InviteInput = z.object({
   email: z.string().email().max(255),
 });
 
+const INVITES_PER_DAY = 20;
+
+const INVITE_COPY = {
+  es: {
+    subject: (dest: string) => `Te han invitado a un viaje a ${dest} en Itineraya`,
+    title: "¡Estás invitado! ✈️",
+    body: (dest: string) =>
+      `Un amigo te ha invitado a colaborar en un viaje a <strong>${dest}</strong> en Itineraya: podréis ver y comentar el itinerario juntos.`,
+    cta: "Aceptar invitación",
+    linkHint: "O copia este enlace:",
+  },
+  en: {
+    subject: (dest: string) => `You're invited to ${dest} on Itineraya`,
+    title: "You're invited! ✈️",
+    body: (dest: string) =>
+      `A friend invited you to collaborate on a trip to <strong>${dest}</strong> on Itineraya — you'll be able to view and comment on the itinerary together.`,
+    cta: "Accept invitation",
+    linkHint: "Or copy this link:",
+  },
+} as const;
+
 export const inviteTripmate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => InviteInput.parse(d))
@@ -21,6 +42,20 @@ export const inviteTripmate = createServerFn({ method: "POST" })
     if (tErr || !trip) throw new Error("Trip not found");
     if (trip.user_id !== userId) throw new Error("Forbidden");
 
+    // Anti-abuso: sin este tope, cualquier cuenta podía usar Resend como
+    // cañón de spam con remitente de Itineraya.
+    const since = new Date(Date.now() - 86400000).toISOString();
+    const { count: sentToday } = await supabase
+      .from("trip_invites")
+      .select("id", { count: "exact", head: true })
+      .eq("invited_by", userId)
+      .gte("created_at", since);
+    if ((sentToday ?? 0) >= INVITES_PER_DAY) {
+      throw new Error(
+        `Has alcanzado el límite de ${INVITES_PER_DAY} invitaciones diarias. Inténtalo mañana.`,
+      );
+    }
+
     const token = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
     const { error: iErr } = await supabase.from("trip_invites").insert({
       trip_id: data.tripId,
@@ -30,12 +65,24 @@ export const inviteTripmate = createServerFn({ method: "POST" })
     });
     if (iErr) throw iErr;
 
-    // Send email via Resend
+    // Send email via Resend, in the inviter's language (es default, en otherwise).
     const RESEND_KEY = process.env.RESEND_API_KEY;
     const SITE_URL = process.env.SITE_URL || "https://www.itineraya.com";
     const inviteUrl = `${SITE_URL}/invite/${token}`;
     if (RESEND_KEY) {
       try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("language")
+          .eq("id", userId)
+          .maybeSingle();
+        const lang: keyof typeof INVITE_COPY = (profile?.language ?? "es")
+          .toLowerCase()
+          .startsWith("es")
+          ? "es"
+          : "en";
+        const c = INVITE_COPY[lang];
+        const dest = escapeHtml(trip.destination);
         const from = process.env.RESEND_FROM || "Itineraya <onboarding@resend.dev>";
         await fetch("https://api.resend.com/emails", {
           method: "POST",
@@ -46,12 +93,12 @@ export const inviteTripmate = createServerFn({ method: "POST" })
           body: JSON.stringify({
             from,
             to: [data.email],
-            subject: `You're invited to ${trip.destination} on Itineraya`,
+            subject: c.subject(trip.destination),
             html: `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:24px;background:#f0f9ff;border-radius:16px">
-              <h1 style="color:#0c4a6e;font-size:22px;margin:0 0 12px">You're invited! ✈️</h1>
-              <p style="color:#0369a1;font-size:14px;line-height:1.6">A friend invited you to collaborate on a trip to <strong>${escapeHtml(trip.destination)}</strong> on Itineraya.</p>
-              <a href="${inviteUrl}" style="display:inline-block;background:#1E6B9A;color:#fff;text-decoration:none;padding:12px 24px;border-radius:9999px;font-weight:700;margin-top:16px">Accept invitation</a>
-              <p style="color:#64748b;font-size:12px;margin-top:24px">Or copy this link: ${inviteUrl}</p>
+              <h1 style="color:#0c4a6e;font-size:22px;margin:0 0 12px">${c.title}</h1>
+              <p style="color:#0369a1;font-size:14px;line-height:1.6">${c.body(dest)}</p>
+              <a href="${inviteUrl}" style="display:inline-block;background:#1E6B9A;color:#fff;text-decoration:none;padding:12px 24px;border-radius:9999px;font-weight:700;margin-top:16px">${c.cta}</a>
+              <p style="color:#64748b;font-size:12px;margin-top:24px">${c.linkHint} ${inviteUrl}</p>
             </div>`,
           }),
         });

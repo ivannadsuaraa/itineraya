@@ -43,7 +43,7 @@ const TripsCalendar = lazy(() =>
 import { PageTransition } from "@/components/ui/PageTransition";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "My trips – Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Mis viajes – Itineraya" }] }),
   component: DashboardPage,
 });
 
@@ -131,7 +131,18 @@ function DashboardPage() {
       const { data: u } = await supabase.auth.getUser();
       setUserId(u.user?.id ?? null);
       const meta = u.user?.user_metadata as { full_name?: string; name?: string } | undefined;
-      setName(meta?.full_name?.split(" ")[0] ?? meta?.name?.split(" ")[0] ?? t("dashboard.traveler"));
+      // Fallback al prefijo del email antes que al genérico "viajero": un saludo
+      // con nombre real se siente personal aunque el usuario no rellenara perfil.
+      const emailPrefix = u.user?.email?.split("@")[0]?.replace(/[._-]+/g, " ").split(" ")[0];
+      const prettyPrefix = emailPrefix
+        ? emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
+        : undefined;
+      setName(
+        meta?.full_name?.split(" ")[0] ??
+          meta?.name?.split(" ")[0] ??
+          prettyPrefix ??
+          t("dashboard.traveler"),
+      );
 
       if (!u.user) {
         setTrips([]);
@@ -500,7 +511,7 @@ function DashboardPage() {
                           type="button"
                           onClick={() => removeSaved(s.id)}
                           aria-label={t("dashboard.savedRemove")}
-                          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -705,7 +716,7 @@ function TripCard({
               {isFree ? (
                 <Link
                   to="/pricing"
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100"
                   aria-label={t("sidebar.assistantLocked")}
                 >
                   <Lock className="h-3.5 w-3.5" />
@@ -713,7 +724,7 @@ function TripCard({
               ) : (
                 <Link
                   to="/assistant"
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
                   aria-label={t("dashboard.editAi")}
                 >
                   <Wand2 className="h-3.5 w-3.5" />
@@ -722,7 +733,7 @@ function TripCard({
               <button
                 type="button"
                 onClick={onShare}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
                 aria-label={t("dashboard.share")}
               >
                 <Share2 className="h-3.5 w-3.5" />
@@ -730,7 +741,7 @@ function TripCard({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-300 transition hover:bg-red-50 hover:text-red-500"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-300 transition hover:bg-red-50 hover:text-red-500"
                 aria-label={t("dashboard.deleteTrip")}
               >
                 <Trash2 className="h-3.5 w-3.5" />

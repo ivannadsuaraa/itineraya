@@ -21,6 +21,7 @@ import {
   PlusCircle,
   Star,
   ArrowUpDown,
+  Eye,
 } from "lucide-react";
 import { listPublicTrips, rateTrip, type PublicFeedItem } from "@/lib/explore.functions";
 import { Navbar } from "@/components/landing/Navbar";
@@ -192,8 +193,8 @@ function ExplorePage() {
                 <button
                   type="button"
                   onClick={() => setDestination("")}
-                  className="h-5 w-5 shrink-0 rounded-full bg-slate-200 text-slate-500 text-xs font-bold leading-5 transition hover:bg-slate-300"
-                  aria-label="Clear"
+                  className="h-6 w-6 shrink-0 rounded-full bg-slate-200 text-slate-500 text-xs font-bold leading-6 transition hover:bg-slate-300"
+                  aria-label={t("explore.clear")}
                 >
                   ×
                 </button>
@@ -262,7 +263,7 @@ function ExplorePage() {
                 }`}
               >
                 {sortBy === "best" ? <Star className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3" />}
-                {sortBy === "best" ? "Mejor valorados" : "Más recientes"}
+                {sortBy === "best" ? t("explore.sortBest") : t("explore.sortNewest")}
               </button>
             </div>
           </div>
@@ -274,7 +275,7 @@ function ExplorePage() {
             <div className="mb-4 flex items-center gap-2">
               <span className="text-lg">🔥</span>
               <h2 className="font-display text-base font-bold text-slate-900">
-                {t("explore.trending", { defaultValue: "Destinos trending esta semana" })}
+                {t("explore.trending")}
               </h2>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -398,10 +399,11 @@ function initials(destination: string): string {
 }
 
 function StarRating({ avg, count, onRate }: { avg: number | null; count: number; onRate?: (r: number) => void }) {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState<number | null>(null);
   const display = hovered ?? Math.round(avg ?? 0);
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((s) => (
         <button
           key={s}
@@ -410,8 +412,8 @@ function StarRating({ avg, count, onRate }: { avg: number | null; count: number;
           onClick={() => onRate?.(s)}
           onMouseEnter={() => onRate && setHovered(s)}
           onMouseLeave={() => setHovered(null)}
-          className={`transition-transform ${onRate ? "cursor-pointer hover:scale-110" : "cursor-default"}`}
-          aria-label={`${s} stars`}
+          className={`p-1 transition-transform ${onRate ? "cursor-pointer hover:scale-110" : "cursor-default"}`}
+          aria-label={t("explore.rateAria", { count: s })}
         >
           <Star
             className={`h-3.5 w-3.5 ${
@@ -497,8 +499,14 @@ function FeedCard({ item, onRemix, onRate }: { item: PublicFeedItem; onRemix: ()
             {item.summary}
           </p>
         )}
-        <div className="mb-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
           <StarRating avg={item.rating_avg} count={item.rating_count} onRate={onRate} />
+          {item.view_count > 0 && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400">
+              <Eye className="h-3 w-3" />
+              {t("explore.views", { count: item.view_count })}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button

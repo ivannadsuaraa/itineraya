@@ -212,7 +212,37 @@
     "perYear": "/year",
     "trust1": "No commitment",
     "trust2": "Cancel anytime",
-    "trust3": "Secure payment with Stripe"
+    "trust3": "Secure payment with Stripe",
+    "guaranteeTitle": "30-day guarantee",
+    "guaranteeBody": "If you're not happy with Itineraya, we'll refund you — no questions asked — within the first 30 days. No fine print.",
+    "faqTitle": "Pricing FAQ",
+    "cmp": {
+      "title": "What does each plan include?",
+      "feature": "Feature",
+      "ai": "AI-generated itineraries",
+      "images": "Destination photos",
+      "map": "Interactive map",
+      "share": "Share itinerary",
+      "trips": "Number of trips",
+      "unlimited": "Unlimited",
+      "assistant": "AI editing assistant",
+      "tripmates": "Tripmates",
+      "postcards": "Download itinerary postcards",
+      "copilot": "Real-time copilot",
+      "copilotFree": "10 msg/day",
+      "pdf": "Export to PDF",
+      "support": "Priority support"
+    },
+    "faq": {
+      "q1": "Can I cancel my subscription anytime?",
+      "a1": "Yes. You can cancel from your profile at any time. You'll keep access until the end of the billed period. No penalties.",
+      "q2": "What if I'm not satisfied?",
+      "a2": "We offer a 30-day no-questions-asked refund. If it doesn't win you over for any reason, we refund 100% of what you paid.",
+      "q3": "Does the free plan expire?",
+      "a3": "No. The free plan is permanent. New users also get 7 free days of the Viajero plan to try everything with no commitment.",
+      "q4": "Can I change plans later?",
+      "a4": "Of course. Upgrade or downgrade whenever you want from your profile. The change applies on the next billing cycle."
+    }
   },
   "welcome": {
     "step": "Step {{n}} of 2",
@@ -473,7 +503,9 @@
     "mapReady": "{{count}} places on the map",
     "mapFallbackNotice": "Using alternative map (OpenStreetMap) — Google Maps is unavailable right now.",
     "nights_one": "{{count}} night",
-    "nights_other": "{{count}} nights"
+    "nights_other": "{{count}} nights",
+    "readyShare": "Your itinerary is ready! Share it with your travel buddies ✈️",
+    "loadingHint": "Usually takes under a minute"
   },
   "tripmates": {
     "tag": "Tripmates",
@@ -508,7 +540,8 @@
     "error": "Couldn't create the link",
     "text": "Check out my trip to {{destination}} on Itineraya",
     "publicHint": "Only the itinerary is shared. Your account stays private.",
-    "instagramHint": "Link copied — paste it into your Instagram story or bio"
+    "instagramHint": "Link copied — paste it into your Instagram story or bio",
+    "copyStories": "Copy for Stories"
   },
   "publicTrip": {
     "eyebrow": "Public itinerary",
@@ -526,7 +559,10 @@
     "savedLabel": "Saved",
     "saved": "Added to your saved ✨",
     "saveError": "Could not save",
-    "saveLoginPrompt": "Sign in to save inspirations"
+    "saveLoginPrompt": "Sign in to save inspirations",
+    "goneTitle": "This itinerary is no longer available",
+    "goneBody": "The author may have unpublished it or the link expired. But you can create yours in seconds!",
+    "goneCta": "Create my free itinerary"
   },
   "paywall": {
     "title": "Sign up free to see the full itinerary",
@@ -564,7 +600,11 @@
     "panelUpdated": "Itinerary updated ✨",
     "panelClose": "Close",
     "panelOops": "Oops, {{msg}}",
-    "panelSomethingWrong": "Something went wrong"
+    "panelSomethingWrong": "Something went wrong",
+    "sugg1": "What do you recommend for the first night?",
+    "sugg2": "Make day 2 cheaper",
+    "sugg3": "Where can I eat well near my route?",
+    "sugg4": "What should I pack for this trip?"
   },
   "newTrip": {
     "back": "Back",
@@ -692,7 +732,14 @@
     "emptyAction": "Create my trip",
     "viralCta": "Build yours in 10 seconds",
     "heroEyebrow": "Itinerary shared by the community",
-    "trending": "Trending destinations this week"
+    "trending": "Trending destinations this week",
+    "sortBest": "Top rated",
+    "sortNewest": "Newest",
+    "clear": "Clear search",
+    "rateAria_one": "Rate {{count}} star",
+    "rateAria_other": "Rate {{count}} stars",
+    "views_one": "{{count}} view",
+    "views_other": "{{count}} views"
   },
   "publish": {
     "title": "Publish as inspiration",
@@ -701,5 +748,13 @@
     "disabled": "Trip unpublished",
     "error": "Could not update visibility",
     "viewPublic": "Open public page"
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page you're looking for doesn't exist or has moved. Shall we get back to planning adventures?",
+    "backHome": "Back to home",
+    "errorTitle": "This page didn't load",
+    "errorBody": "Something went wrong on our end. Try refreshing or head back home.",
+    "retry": "Try again"
   }
 }

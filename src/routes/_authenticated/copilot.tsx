@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 
 export const Route = createFileRoute("/_authenticated/copilot")({
-  head: () => ({ meta: [{ title: "Travel copilot – Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Copiloto de viaje – Itineraya" }] }),
   component: CopilotPage,
 });
 

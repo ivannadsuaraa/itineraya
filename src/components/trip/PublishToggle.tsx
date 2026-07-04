@@ -53,7 +53,9 @@ export function PublishToggle({ tripId }: Props) {
 
   const origin =
     typeof window !== "undefined" ? window.location.origin : "https://itineraya.com";
-  const url = slug ? `${origin}/explore/${slug}` : "";
+  // URL canónica única de compartir (/trip/…): antes ShareDialog y este toggle
+  // repartían el tráfico entre /trip y /explore y dividían métricas y SEO.
+  const url = slug ? `${origin}/trip/${slug}` : "";
 
   const copy = async () => {
     if (!url) return;
@@ -137,10 +139,10 @@ export function PublishToggle({ tripId }: Props) {
             </button>
           </div>
           <Link
-            to="/explore/$slug"
+            to="/trip/$slug"
             params={{ slug: slug ?? "" }}
             target="_blank"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
+            className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
           >
             <ExternalLink className="h-3 w-3" />
             {t("publish.viewPublic")}

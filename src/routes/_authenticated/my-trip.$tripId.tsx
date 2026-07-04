@@ -48,7 +48,7 @@ const TripMap = lazy(() =>
 
 export const Route = createFileRoute("/_authenticated/my-trip/$tripId")({
   component: ItineraryPage,
-  head: () => ({ meta: [{ title: "Your itinerary – Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Tu itinerario – Itineraya" }] }),
 });
 
 type ActivityCategory =
@@ -116,22 +116,32 @@ type BookingInfo = {
   url: string;
 };
 
+// Etiqueta el enlace por su dominio real — nunca "Booking" para un enlace que
+// en realidad es Google Maps. Los enlaces del modelo solo se aceptan en https.
+function brandFromUrl(url: string): { brand: string; kind: "book" | "view" } | null {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    if (host.includes("booking.com")) return { brand: "Booking", kind: "book" };
+    if (host.includes("thefork")) return { brand: "TheFork", kind: "book" };
+    if (host.includes("getyourguide")) return { brand: "GetYourGuide", kind: "book" };
+    if (host.includes("tripadvisor")) return { brand: "TripAdvisor", kind: "view" };
+    if (host.includes("google.")) return null; // ya hay chip de Maps: no duplicar
+    return { brand: host.split(".")[0], kind: "view" };
+  } catch {
+    return null;
+  }
+}
+
 function bookingForCategory(
   category: ActivityCategory | undefined,
   placeOrTitle: string,
   destination: string,
   aiUrl?: string,
 ): BookingInfo | null {
-  if (aiUrl) {
-    const brand =
-      category === "hotel"
-        ? "Booking"
-        : category === "restaurant"
-          ? "TheFork"
-          : category === "nightlife"
-            ? "TripAdvisor"
-            : "GetYourGuide";
-    return { kind: "book", brand, url: aiUrl };
+  if (aiUrl && aiUrl.startsWith("https://")) {
+    const fromUrl = brandFromUrl(aiUrl);
+    if (fromUrl) return { kind: fromUrl.kind, brand: fromUrl.brand, url: aiUrl };
+    // Enlace de Maps u opaco → seguimos con el deep-link por categoría.
   }
   const q = `${placeOrTitle} ${destination}`.trim();
 
@@ -273,6 +283,12 @@ function ItineraryPage() {
           itinerary: result.itinerary as unknown as Itinerary,
           status: "ready",
         });
+        // Momento de máxima motivación: el itinerario acaba de aparecer.
+        // Proponer compartirlo aquí multiplica el alcance del enlace público.
+        toast.success(t("trip.readyShare"), { duration: 5000 });
+        setTimeout(() => {
+          if (!cancelled) setShareOpen(true);
+        }, 1600);
       } catch (err) {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : t("trip.somethingWrong"));
@@ -326,7 +342,7 @@ function ItineraryPage() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-5">
           <Link
             to="/dashboard"
-            className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             aria-label={t("trip.backDashboard")}
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -343,7 +359,7 @@ function ItineraryPage() {
                   <button
                     key={v}
                     onClick={() => setView(v)}
-                    className={`flex h-7 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
+                    className={`flex h-9 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
                       view === v
                         ? "bg-sky-900 text-white shadow-sm"
                         : "text-slate-600 hover:text-slate-900"
@@ -359,7 +375,7 @@ function ItineraryPage() {
             {/* Fullscreen map */}
             <button
               onClick={() => setMapModalOpen(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <MapIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.viewMap")}</span>
@@ -368,14 +384,14 @@ function ItineraryPage() {
             {/* Action buttons */}
             <button
               onClick={() => setTripmatesOpen(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
             >
               <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.invite")}</span>
             </button>
             <button
               onClick={() => setShareOpen(true)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <Share2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.share")}</span>
@@ -383,7 +399,7 @@ function ItineraryPage() {
             {plan && plan !== "free" ? (
               <button
                 onClick={() => setAssistantOpen(true)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800"
               >
                 <Wand2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t("trip.editAssistant")}</span>
@@ -391,7 +407,7 @@ function ItineraryPage() {
             ) : plan === "free" ? (
               <Link
                 to="/pricing"
-                className="inline-flex h-8 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200"
                 title={t("trip.editAssistantLocked")}
               >
                 <Wand2 className="h-3.5 w-3.5" />
@@ -572,7 +588,7 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
   dayIdx: number;
   onActivityUpdate: (dayIdx: number, actIdx: number, updates: Partial<Activity>) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [busy, setBusy] = useState<null | "download" | "share">(null);
 
   const buildPostcard = async (): Promise<string> => {
@@ -582,6 +598,7 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
       dayTitle: day.title,
       subtitle: day.subtitle,
       imageUrl: day.image_url ?? null,
+      locale: i18n.language,
       activities: day.activities.map((a) => ({
         time: a.time,
         emoji: a.emoji,
@@ -859,23 +876,20 @@ function ActivityRow({
 }
 
 function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
+  const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
 
+  // Progreso asintótico hacia 97: nunca se congela (el anterior moría en 91 %
+  // y a los 20 s parecía colgado) + contador real de segundos para honestidad.
   useEffect(() => {
-    const steps = [
-      { target: 15, delay: 500 },
-      { target: 35, delay: 2000 },
-      { target: 55, delay: 3500 },
-      { target: 72, delay: 6000 },
-      { target: 85, delay: 10000 },
-      { target: 91, delay: 16000 },
-    ];
-
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    for (const { target, delay } of steps) {
-      timers.push(setTimeout(() => setProgress(target), delay));
-    }
-    return () => timers.forEach(clearTimeout);
+    const started = Date.now();
+    const tick = setInterval(() => {
+      const s = (Date.now() - started) / 1000;
+      setElapsed(Math.floor(s));
+      setProgress(Math.min(97, Math.round(97 * (1 - Math.exp(-s / 18)))));
+    }, 500);
+    return () => clearInterval(tick);
   }, []);
 
   return (
@@ -911,7 +925,10 @@ function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="mt-2 text-xs tabular-nums text-sky-500">{progress}%</p>
+        <p className="mt-2 text-xs tabular-nums text-sky-500">
+          {progress}% · {elapsed}s
+        </p>
+        <p className="mt-1 text-[11px] text-sky-500/80">{t("trip.loadingHint")}</p>
 
         <div className="mt-5 flex items-center gap-2">
           <Loader2 className="h-4 w-4 animate-spin text-sky-400" />

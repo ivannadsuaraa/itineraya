@@ -44,8 +44,17 @@ export function getSeasonalInspirations(date = new Date()): Inspiration[] {
   return AUTUMN;
 }
 
-// Open-Meteo weather (no API key, CORS-enabled)
+// Open-Meteo weather (no API key, CORS-enabled).
+// Cacheado en sessionStorage por destino+hora: el hero del dashboard disparaba
+// dos fetch en cascada en cada visita para un dato que cambia poco.
 export async function fetchWeather(destination: string): Promise<{ tempC: number; code: number } | null> {
+  const cacheKey = `itineraya:weather:${destination.toLowerCase().trim()}:${new Date().toISOString().slice(0, 13)}`;
+  try {
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) return JSON.parse(cached) as { tempC: number; code: number };
+  } catch {
+    /* sessionStorage no disponible — seguimos sin caché */
+  }
   try {
     const geo = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(destination)}&count=1&language=en&format=json`,
@@ -57,7 +66,13 @@ export async function fetchWeather(destination: string): Promise<{ tempC: number
     ).then((r) => r.json());
     const c = w?.current;
     if (!c) return null;
-    return { tempC: Math.round(c.temperature_2m), code: c.weather_code };
+    const result = { tempC: Math.round(c.temperature_2m), code: c.weather_code };
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify(result));
+    } catch {
+      /* ignore */
+    }
+    return result;
   } catch {
     return null;
   }

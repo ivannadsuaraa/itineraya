@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
-  head: () => ({ meta: [{ title: "AI travel assistant – Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Asistente de viaje – Itineraya" }] }),
   component: AssistantPage,
 });
 
@@ -133,6 +133,50 @@ function ChatSurface({
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Esquema compacto del itinerario del viaje activo: sin él, el asistente
+  // respondía a ciegas sobre un plan que el usuario tiene delante.
+  const [itineraryOutline, setItineraryOutline] = useState<string | null>(null);
+  useEffect(() => {
+    if (!tripId) {
+      setItineraryOutline(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("trips")
+        .select("itinerary")
+        .eq("id", tripId)
+        .maybeSingle();
+      if (cancelled) return;
+      const itin = data?.itinerary as {
+        days?: Array<{
+          day: number;
+          title: string;
+          activities?: Array<{ time: string; title: string; place?: string }>;
+        }>;
+      } | null;
+      if (!itin?.days?.length) {
+        setItineraryOutline(null);
+        return;
+      }
+      const outline = itin.days
+        .map((d) => {
+          const stops = (d.activities ?? [])
+            .slice(0, 6)
+            .map((a) => `${a.time} ${a.place || a.title}`)
+            .join(" · ");
+          return `Día ${d.day} — ${d.title}: ${stops}`;
+        })
+        .join("\n")
+        .slice(0, 3500);
+      setItineraryOutline(outline);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tripId]);
+
   const tripContext = useMemo(
     () =>
       activeTrip
@@ -143,9 +187,10 @@ function ChatSurface({
             budget: activeTrip.budget,
             companion: activeTrip.companion,
             tripStyle: activeTrip.trip_style,
+            itineraryOutline,
           }
         : null,
-    [activeTrip],
+    [activeTrip, itineraryOutline],
   );
 
   const greeting: UIMessage = useMemo(
@@ -232,7 +277,8 @@ function ChatSurface({
             <select
               value={tripId ?? ""}
               onChange={(e) => setTripId(e.target.value || null)}
-              className="max-w-[120px] shrink-0 truncate rounded-full border border-sky-200 bg-white/80 px-2.5 py-1.5 text-[11px] font-semibold text-sky-800 outline-none focus:border-[#1E6B9A] sm:max-w-[180px] sm:px-3 sm:text-xs"
+              title={activeTrip?.destination}
+              className="max-w-[160px] shrink-0 truncate rounded-full border border-sky-200 bg-white/80 px-2.5 py-1.5 text-[11px] font-semibold text-sky-800 outline-none focus:border-[#1E6B9A] sm:max-w-[240px] sm:px-3 sm:text-xs"
             >
               {trips.map((tr) => (
                 <option key={tr.id} value={tr.id}>
@@ -249,6 +295,26 @@ function ChatSurface({
           {messages.map((m) => (
             <MessageBubble key={m.id} message={m} />
           ))}
+          {/* Chips de arranque: el lienzo en blanco es el mayor freno del chat */}
+          {messages.length <= 1 && !isLoading && (
+            <div className="mt-1 flex flex-wrap gap-2 pl-10">
+              {(["sugg1", "sugg2", "sugg3", "sugg4"] as const).map((k) => {
+                const text = t(`assistant.${k}`, {
+                  destination: activeTrip?.destination ?? t("assistant.noTripSelected"),
+                });
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => sendMessage({ text })}
+                    className="rounded-full bg-white/85 px-3.5 py-2 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 transition hover:bg-white hover:ring-sky-300 active:scale-95"
+                  >
+                    {text}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {isLoading && (
             <div className="flex items-center gap-2 text-sm text-sky-600">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white">

@@ -66,6 +66,9 @@ export const enableTripShare = createServerFn({ method: "POST" })
         .eq("id", tripRow.id)
         .eq("user_id", userId);
       if (!upErr) return { slug: candidate };
+      // Solo la colisión de unique (23505) justifica otro intento; cualquier
+      // otro error (permisos, red) se propaga en vez de reintentarse a ciegas.
+      if (upErr.code !== "23505") throw new Error(upErr.message);
     }
     throw new Error("Could not generate share slug");
   });

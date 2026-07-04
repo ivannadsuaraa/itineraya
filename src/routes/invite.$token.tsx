@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/invite/$token")({
   component: InvitePage,
-  head: () => ({ meta: [{ title: "Trip invitation – Itineraya" }] }),
+  head: () => ({ meta: [{ title: "Invitación de viaje – Itineraya" }] }),
 });
 
 function InvitePage() {

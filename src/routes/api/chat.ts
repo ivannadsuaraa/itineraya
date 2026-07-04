@@ -14,6 +14,8 @@ type ChatRequestBody = {
     budget?: string | null;
     companion?: string | null;
     tripStyle?: string | null;
+    /** Esquema compacto día-a-día del itinerario del viaje seleccionado. */
+    itineraryOutline?: string | null;
   } | null;
 };
 
@@ -91,12 +93,19 @@ export const Route = createFileRoute("/api/chat")({
         if (!key) return new Response("Missing ANTHROPIC_API_KEY", { status: 500 });
 
         const ctx = tripContext ?? {};
+        const outline =
+          typeof ctx.itineraryOutline === "string" && ctx.itineraryOutline.trim()
+            ? ctx.itineraryOutline.slice(0, 4000)
+            : null;
         const contextLines = [
           ctx.destination ? `Destino: ${ctx.destination}` : null,
           ctx.startDate && ctx.endDate ? `Fechas: del ${ctx.startDate} al ${ctx.endDate}` : null,
           ctx.budget ? `Presupuesto: ${ctx.budget}` : null,
           ctx.companion ? `Compañía: ${ctx.companion}` : null,
           ctx.tripStyle ? `Estilo de viaje: ${ctx.tripStyle}` : null,
+          outline
+            ? `Itinerario actual del usuario (referénciate a él al responder — días, horas y sitios reales):\n${outline}`
+            : null,
         ].filter(Boolean).join("\n");
 
         const nowIso = clientNow || new Date().toISOString();

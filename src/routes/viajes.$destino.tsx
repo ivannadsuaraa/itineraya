@@ -31,6 +31,15 @@ export const Route = createFileRoute("/viajes/$destino")({
         acceptedAnswer: { "@type": "Answer", text: f.a },
       })),
     };
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Itineraya", item: "https://itineraya.com/" },
+        { "@type": "ListItem", position: 2, name: "Viajes", item: "https://itineraya.com/viajes" },
+        { "@type": "ListItem", position: 3, name: d.name, item: url },
+      ],
+    };
     const tripSchema = {
       "@context": "https://schema.org",
       "@type": "TouristTrip",
@@ -62,6 +71,7 @@ export const Route = createFileRoute("/viajes/$destino")({
       scripts: [
         { type: "application/ld+json", children: JSON.stringify(faqSchema) },
         { type: "application/ld+json", children: JSON.stringify(tripSchema) },
+        { type: "application/ld+json", children: JSON.stringify(breadcrumbSchema) },
       ],
     };
   },

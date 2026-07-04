@@ -212,7 +212,37 @@
     "perYear": "/año",
     "trust1": "Sin permanencia",
     "trust2": "Cancela cuando quieras",
-    "trust3": "Pago seguro con Stripe"
+    "trust3": "Pago seguro con Stripe",
+    "guaranteeTitle": "Garantía de 30 días",
+    "guaranteeBody": "Si no estás satisfecho con Itineraya, te devolvemos el dinero sin preguntas en los primeros 30 días. Sin letra pequeña.",
+    "faqTitle": "Preguntas frecuentes sobre precios",
+    "cmp": {
+      "title": "¿Qué incluye cada plan?",
+      "feature": "Función",
+      "ai": "Itinerarios generados con IA",
+      "images": "Imágenes del destino",
+      "map": "Mapa interactivo",
+      "share": "Compartir itinerario",
+      "trips": "Número de viajes",
+      "unlimited": "Ilimitados",
+      "assistant": "Asistente IA para editar",
+      "tripmates": "Compañeros de viaje (tripmates)",
+      "postcards": "Descargar postales del itinerario",
+      "copilot": "Copiloto en tiempo real",
+      "copilotFree": "10 msg/día",
+      "pdf": "Exportar a PDF",
+      "support": "Soporte prioritario"
+    },
+    "faq": {
+      "q1": "¿Puedo cancelar mi suscripción en cualquier momento?",
+      "a1": "Sí. Puedes cancelar desde tu perfil en cualquier momento. Seguirás teniendo acceso hasta el final del período facturado. Sin penalizaciones.",
+      "q2": "¿Qué pasa si no estoy satisfecho?",
+      "a2": "Ofrecemos 30 días de devolución sin preguntas. Si por cualquier motivo no te convence, te reembolsamos el 100% del importe pagado.",
+      "q3": "¿El plan gratuito tiene límite de tiempo?",
+      "a3": "No. El plan gratuito es permanente. Además, los nuevos usuarios disfrutan de 7 días del plan Viajero gratis para probarlo sin compromiso.",
+      "q4": "¿Puedo cambiar de plan más adelante?",
+      "a4": "Por supuesto. Puedes subir o bajar de plan cuando quieras desde tu perfil. El cambio se aplica en el siguiente ciclo de facturación."
+    }
   },
   "welcome": {
     "step": "Paso {{n}} de 2",
@@ -473,7 +503,9 @@
     "mapReady": "{{count}} lugares en el mapa",
     "mapFallbackNotice": "Usando mapa alternativo (OpenStreetMap) — Google Maps no está disponible ahora mismo.",
     "nights_one": "{{count}} noche",
-    "nights_other": "{{count}} noches"
+    "nights_other": "{{count}} noches",
+    "readyShare": "¡Tu itinerario está listo! Compártelo con tus compañeros de viaje ✈️",
+    "loadingHint": "Suele tardar menos de un minuto"
   },
   "tripmates": {
     "tag": "Compañeros de viaje",
@@ -508,7 +540,8 @@
     "error": "No se pudo crear el enlace",
     "text": "Mira mi viaje a {{destination}} en Itineraya",
     "publicHint": "Solo se comparte el itinerario. Tu cuenta sigue siendo privada.",
-    "instagramHint": "Enlace copiado — pégalo en tu historia o bio de Instagram"
+    "instagramHint": "Enlace copiado — pégalo en tu historia o bio de Instagram",
+    "copyStories": "Copiar para Stories"
   },
   "publicTrip": {
     "eyebrow": "Itinerario público",
@@ -526,7 +559,10 @@
     "savedLabel": "Guardado",
     "saved": "Añadido a tus guardados ✨",
     "saveError": "No se pudo guardar",
-    "saveLoginPrompt": "Inicia sesión para guardar inspiraciones"
+    "saveLoginPrompt": "Inicia sesión para guardar inspiraciones",
+    "goneTitle": "Este itinerario ya no está disponible",
+    "goneBody": "Quizá el autor lo despublicó o el enlace caducó. ¡Pero puedes crear el tuyo en segundos!",
+    "goneCta": "Crear mi itinerario gratis"
   },
   "paywall": {
     "title": "Regístrate gratis para ver el itinerario completo",
@@ -564,7 +600,11 @@
     "panelUpdated": "Itinerario actualizado ✨",
     "panelClose": "Cerrar",
     "panelOops": "Ups, {{msg}}",
-    "panelSomethingWrong": "Algo salió mal"
+    "panelSomethingWrong": "Algo salió mal",
+    "sugg1": "¿Qué me recomiendas para la primera noche?",
+    "sugg2": "Hazme el día 2 más barato",
+    "sugg3": "¿Dónde como bien cerca de mi ruta?",
+    "sugg4": "¿Qué meto en la maleta para este viaje?"
   },
   "newTrip": {
     "back": "Atrás",
@@ -692,7 +732,14 @@
     "emptyAction": "Crear mi viaje",
     "viralCta": "Crea el tuyo en 10 segundos",
     "heroEyebrow": "Itinerario publicado por la comunidad",
-    "trending": "Destinos trending esta semana"
+    "trending": "Destinos trending esta semana",
+    "sortBest": "Mejor valorados",
+    "sortNewest": "Más recientes",
+    "clear": "Borrar búsqueda",
+    "rateAria_one": "Valorar con {{count}} estrella",
+    "rateAria_other": "Valorar con {{count}} estrellas",
+    "views_one": "{{count}} vista",
+    "views_other": "{{count}} vistas"
   },
   "publish": {
     "title": "Publicar como inspiración",
@@ -701,5 +748,13 @@
     "disabled": "Viaje despublicado",
     "error": "No se pudo actualizar la visibilidad",
     "viewPublic": "Ver página pública"
+  },
+  "errors": {
+    "notFoundTitle": "Página no encontrada",
+    "notFoundBody": "La página que buscas no existe o ha sido movida. ¿Volvemos a planificar aventuras?",
+    "backHome": "Volver al inicio",
+    "errorTitle": "Esta página no ha cargado",
+    "errorBody": "Algo ha fallado por nuestra parte. Prueba a recargar o vuelve al inicio.",
+    "retry": "Reintentar"
   }
 }
