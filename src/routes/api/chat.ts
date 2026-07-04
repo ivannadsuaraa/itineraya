@@ -42,6 +42,16 @@ export const Route = createFileRoute("/api/chat")({
         }
         const userId = claimsData.claims.sub as string;
 
+        // Parse and validate the body BEFORE consuming quota, so malformed
+        // requests don't burn a free-plan message.
+        const { messages, tripContext, mode, clientNow } = (await request.json()) as ChatRequestBody;
+        if (!Array.isArray(messages)) {
+          return new Response("Messages are required", { status: 400 });
+        }
+        if (messages.length > 60) {
+          return new Response("Conversation too long", { status: 400 });
+        }
+
         // Enforce per-day message limit for the free plan.
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: profileRow } = await supabaseAdmin
@@ -75,11 +85,6 @@ export const Route = createFileRoute("/api/chat")({
               { user_id: userId, usage_date: today, message_count: used + 1 },
               { onConflict: "user_id,usage_date" },
             );
-        }
-
-        const { messages, tripContext, mode, clientNow } = (await request.json()) as ChatRequestBody;
-        if (!Array.isArray(messages)) {
-          return new Response("Messages are required", { status: 400 });
         }
 
         const key = process.env.ANTHROPIC_API_KEY;

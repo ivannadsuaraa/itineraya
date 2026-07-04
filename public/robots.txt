@@ -9,7 +9,9 @@ Disallow: /copilot
 Disallow: /inspire
 Disallow: /profile
 Disallow: /invite/
-Disallow: /checkout-return
+Disallow: /checkout/return
+Disallow: /saved
+Disallow: /my-trip/
 Disallow: /reset-password
 Disallow: /email-confirmed
 

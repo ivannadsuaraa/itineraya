@@ -21,6 +21,7 @@ function WelcomePage() {
   const [age, setAge] = useState(28);
   const [language, setLanguage] = useState<string>("es");
   const [saving, setSaving] = useState(false);
+  const [hadTrial, setHadTrial] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -28,7 +29,7 @@ function WelcomePage() {
       if (!u.user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("welcome_completed, age, language")
+        .select("welcome_completed, age, language, trial_ends_at")
         .eq("id", u.user.id)
         .maybeSingle();
       if (data?.welcome_completed) {
@@ -36,19 +37,26 @@ function WelcomePage() {
       } else {
         if (data?.age) setAge(data.age);
         if (data?.language) setLanguage(data.language);
+        setHadTrial(Boolean(data?.trial_ends_at));
       }
     })();
   }, [navigate]);
+
+  // El trial ahora arranca al crear la cuenta (default en BD); solo lo fijamos
+  // aquí como fallback para perfiles anteriores a esa migración.
+  const trialPatch = () =>
+    hadTrial
+      ? {}
+      : { trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() };
 
   const finish = async () => {
     setSaving(true);
     try {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("No user");
-      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase
         .from("profiles")
-        .update({ age, language, welcome_completed: true, trial_ends_at: trialEndsAt } as never)
+        .update({ age, language, welcome_completed: true, ...trialPatch() } as never)
         .eq("id", u.user.id);
       if (error) throw error;
       document.documentElement.lang = language;
@@ -59,6 +67,26 @@ function WelcomePage() {
       }
       await i18n.changeLanguage(language);
       toast.success(t("welcome.saved"));
+      navigate({ to: "/dashboard", replace: true });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("welcome.saveFail"));
+      setSaving(false);
+    }
+  };
+
+  // Sacar el welcome del camino crítico: el usuario puede saltárselo y llegar
+  // al dashboard; edad/idioma se pueden completar después en el perfil.
+  const skip = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("No user");
+      const { error } = await supabase
+        .from("profiles")
+        .update({ welcome_completed: true, ...trialPatch() } as never)
+        .eq("id", u.user.id);
+      if (error) throw error;
       navigate({ to: "/dashboard", replace: true });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("welcome.saveFail"));
@@ -96,6 +124,15 @@ function WelcomePage() {
             />
           ))}
         </div>
+
+        <button
+          type="button"
+          onClick={skip}
+          disabled={saving}
+          className="absolute right-5 top-5 rounded-full px-3 py-1.5 text-sm font-semibold text-sky-600 transition hover:bg-white/70 hover:text-sky-900 disabled:opacity-50"
+        >
+          {t("welcome.skip")}
+        </button>
 
         <div className="w-full overflow-hidden rounded-3xl bg-white/85 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60">
           <AnimatePresence mode="wait" initial={false}>

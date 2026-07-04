@@ -172,20 +172,22 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const plan = (planProfile?.plan ?? "free") as "free" | "viajero" | "explorador";
-    const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 10 : 1;
+    // Must match the client gate (new-trip.tsx) and the pricing page: 2 / 15 / ∞.
+    const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 15 : 2;
 
     if (planLimit !== null) {
-      // Count ALL existing trips (any status) except the one being generated.
+      // Count generated trips (same criterion as the client gate in new-trip.tsx).
       const { count } = await supabase
         .from("trips")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
+        .eq("status", "ready")
         .neq("id", data.tripId);
 
       if ((count ?? 0) >= planLimit) {
         const msg =
           plan === "free"
-            ? "LIMIT_REACHED: Has alcanzado el límite de 1 itinerario en el plan gratuito. Actualiza al plan Viajero para crear más."
+            ? `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios en el plan gratuito. Actualiza al plan Viajero para crear más.`
             : `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios del plan Viajero. Actualiza a Explorador para itinerarios ilimitados.`;
         throw new Error(msg);
       }
@@ -205,15 +207,15 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .eq("id", userId)
       .maybeSingle();
     // Prefer language passed from the client (current UI language) over stored profile.
+    type ItinLang = "es" | "en" | "fr" | "pt";
+    const SUPPORTED_ITIN_LANGS: readonly ItinLang[] = ["es", "en", "fr", "pt"];
     const clientLang = (data.language ?? "").toLowerCase().slice(0, 2);
     const profileLang = (profile?.language ?? "").toLowerCase().slice(0, 2);
-    const lang: "es" | "en" =
-      clientLang === "en" || clientLang === "es"
-        ? (clientLang as "es" | "en")
-        : profileLang === "en"
-          ? "en"
-          : "es";
-    const langName = lang === "en" ? "English" : "Spanish";
+    const lang: ItinLang = (SUPPORTED_ITIN_LANGS as readonly string[]).includes(clientLang)
+      ? (clientLang as ItinLang)
+      : (SUPPORTED_ITIN_LANGS as readonly string[]).includes(profileLang)
+        ? (profileLang as ItinLang)
+        : "es";
 
     // Trip history for personalization (last 5 ready trips, excluding current)
     const { data: history } = await supabase
@@ -406,15 +408,21 @@ export const generateItinerary = createServerFn({ method: "POST" })
       ? `${trip.destination} is an inland city — beach, sea or coastal activities (beach time, snorkeling, sea kayaking, swimming in the sea) are strictly forbidden.`
       : `Only include beach or sea activities if ${trip.destination} genuinely has a coastline or nearby beach AND the season allows it. A beach is never the only activity of a day; combine it with nearby stops and avoid peak-heat hours (12:00–16:00) in summer.`;
 
-    const languageBlock =
-      lang === "es"
-        ? `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Spanish from Spain (peninsular). Meal naming: "Desayuno", "Comida" (the main midday meal — never "almuerzo" or "lunch") and "Cena". Meal activity titles must start with the meal word ("Comida en …", "Cena en …").`
-        : `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in English. Meal naming: Breakfast, Lunch, Dinner, Snack. Meal activity titles must start with the meal word ("Lunch at …", "Dinner at …").`;
+    const languageBlocks: Record<ItinLang, string> = {
+      es: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Spanish from Spain (peninsular). Meal naming: "Desayuno", "Comida" (the main midday meal — never "almuerzo" or "lunch") and "Cena". Meal activity titles must start with the meal word ("Comida en …", "Cena en …").`,
+      en: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in English. Meal naming: Breakfast, Lunch, Dinner, Snack. Meal activity titles must start with the meal word ("Lunch at …", "Dinner at …").`,
+      fr: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in French. Meal naming: "Petit-déjeuner", "Déjeuner", "Dîner". Meal activity titles must start with the meal word ("Déjeuner à …", "Dîner à …").`,
+      pt: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Portuguese. Meal naming: "Café da manhã", "Almoço", "Jantar". Meal activity titles must start with the meal word ("Almoço em …", "Jantar em …").`,
+    };
+    const languageBlock = languageBlocks[lang];
 
-    const transportExamples =
-      lang === "es"
-        ? `"🚶 8 min a pie" | "🚇 Metro L4 dirección X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Tren, 18 min" | "⛴️ Ferry, 20 min"`
-        : `"🚶 8 min walk" | "🚇 Metro Line 4 towards X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Train, 18 min" | "⛴️ Ferry, 20 min"`;
+    const transportExampleMap: Record<ItinLang, string> = {
+      es: `"🚶 8 min a pie" | "🚇 Metro L4 dirección X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Tren, 18 min" | "⛴️ Ferry, 20 min"`,
+      en: `"🚶 8 min walk" | "🚇 Metro Line 4 towards X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Train, 18 min" | "⛴️ Ferry, 20 min"`,
+      fr: `"🚶 8 min à pied" | "🚇 Métro L4 direction X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Train, 18 min" | "⛴️ Ferry, 20 min"`,
+      pt: `"🚶 8 min a pé" | "🚇 Metrô L4 sentido X, 12 min" | "🚌 Ônibus 24, 15 min" | "🚕 Táxi ~10 min" | "🚆 Trem, 18 min" | "⛴️ Balsa, 20 min"`,
+    };
+    const transportExamples = transportExampleMap[lang];
 
     const tripData = [
       `- Destination: ${trip.destination}`,
@@ -424,6 +432,9 @@ export const generateItinerary = createServerFn({ method: "POST" })
       `- ${departureLine}`,
       accommodationBlock,
       budgetBlock,
+      (trip as { avoid?: string | null }).avoid?.trim()
+        ? `- The traveler explicitly wants to AVOID: ${(trip as { avoid?: string | null }).avoid!.trim().slice(0, 500)}. Never schedule anything matching this.`
+        : "",
       `- Previous trips by this user (personalization context only): ${historyLine}`,
     ]
       .filter(Boolean)

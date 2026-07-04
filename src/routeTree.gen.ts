@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -19,7 +20,9 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ViajesIndexRouteImport } from './routes/viajes.index'
 import { Route as ExploreIndexRouteImport } from './routes/explore.index'
+import { Route as ViajesDestinoRouteImport } from './routes/viajes.$destino'
 import { Route as TripSlugRouteImport } from './routes/trip.$slug'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
@@ -36,6 +39,7 @@ import { Route as AuthenticatedCopilotRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
 import { Route as AuthenticatedMyTripTripIdRouteImport } from './routes/_authenticated/my-trip.$tripId'
 import { Route as EmailEmailQueueProcessRouteImport } from './routes/email/email/queue/process'
+import { Route as EmailEmailLifecycleRunRouteImport } from './routes/email/email/lifecycle/run'
 import { Route as EmailEmailAuthWebhookRouteImport } from './routes/email/email/auth/webhook'
 import { Route as EmailEmailAuthPreviewRouteImport } from './routes/email/email/auth/preview'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -43,6 +47,11 @@ import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/publi
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -89,9 +98,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ViajesIndexRoute = ViajesIndexRouteImport.update({
+  id: '/viajes/',
+  path: '/viajes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreIndexRoute = ExploreIndexRouteImport.update({
   id: '/explore/',
   path: '/explore/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ViajesDestinoRoute = ViajesDestinoRouteImport.update({
+  id: '/viajes/$destino',
+  path: '/viajes/$destino',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TripSlugRoute = TripSlugRouteImport.update({
@@ -175,6 +194,11 @@ const EmailEmailQueueProcessRoute = EmailEmailQueueProcessRouteImport.update({
   path: '/email/email/queue/process',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmailEmailLifecycleRunRoute = EmailEmailLifecycleRunRouteImport.update({
+  id: '/email/email/lifecycle/run',
+  path: '/email/email/lifecycle/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EmailEmailAuthWebhookRoute = EmailEmailAuthWebhookRouteImport.update({
   id: '/email/email/auth/webhook',
   path: '/email/email/auth/webhook',
@@ -201,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/copilot': typeof AuthenticatedCopilotRoute
@@ -216,11 +241,14 @@ export interface FileRoutesByFullPath {
   '/explore/$slug': typeof ExploreSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/viajes/$destino': typeof ViajesDestinoRoute
   '/explore/': typeof ExploreIndexRoute
+  '/viajes/': typeof ViajesIndexRoute
   '/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
+  '/email/email/lifecycle/run': typeof EmailEmailLifecycleRunRoute
   '/email/email/queue/process': typeof EmailEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -232,6 +260,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/assistant': typeof AuthenticatedAssistantRoute
   '/copilot': typeof AuthenticatedCopilotRoute
@@ -247,11 +276,14 @@ export interface FileRoutesByTo {
   '/explore/$slug': typeof ExploreSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/viajes/$destino': typeof ViajesDestinoRoute
   '/explore': typeof ExploreIndexRoute
+  '/viajes': typeof ViajesIndexRoute
   '/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
+  '/email/email/lifecycle/run': typeof EmailEmailLifecycleRunRoute
   '/email/email/queue/process': typeof EmailEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -265,6 +297,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/terms': typeof TermsRoute
   '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
   '/_authenticated/copilot': typeof AuthenticatedCopilotRoute
@@ -280,11 +313,14 @@ export interface FileRoutesById {
   '/explore/$slug': typeof ExploreSlugRoute
   '/invite/$token': typeof InviteTokenRoute
   '/trip/$slug': typeof TripSlugRoute
+  '/viajes/$destino': typeof ViajesDestinoRoute
   '/explore/': typeof ExploreIndexRoute
+  '/viajes/': typeof ViajesIndexRoute
   '/_authenticated/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
+  '/email/email/lifecycle/run': typeof EmailEmailLifecycleRunRoute
   '/email/email/queue/process': typeof EmailEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -298,6 +334,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/terms'
     | '/assistant'
     | '/copilot'
@@ -313,11 +350,14 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/invite/$token'
     | '/trip/$slug'
+    | '/viajes/$destino'
     | '/explore/'
+    | '/viajes/'
     | '/my-trip/$tripId'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
+    | '/email/email/lifecycle/run'
     | '/email/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -329,6 +369,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/terms'
     | '/assistant'
     | '/copilot'
@@ -344,11 +385,14 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/invite/$token'
     | '/trip/$slug'
+    | '/viajes/$destino'
     | '/explore'
+    | '/viajes'
     | '/my-trip/$tripId'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
+    | '/email/email/lifecycle/run'
     | '/email/email/queue/process'
   id:
     | '__root__'
@@ -361,6 +405,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/reset-password'
+    | '/sitemap.xml'
     | '/terms'
     | '/_authenticated/assistant'
     | '/_authenticated/copilot'
@@ -376,11 +421,14 @@ export interface FileRouteTypes {
     | '/explore/$slug'
     | '/invite/$token'
     | '/trip/$slug'
+    | '/viajes/$destino'
     | '/explore/'
+    | '/viajes/'
     | '/_authenticated/my-trip/$tripId'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
+    | '/email/email/lifecycle/run'
     | '/email/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -394,16 +442,20 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   ExploreSlugRoute: typeof ExploreSlugRoute
   InviteTokenRoute: typeof InviteTokenRoute
   TripSlugRoute: typeof TripSlugRoute
+  ViajesDestinoRoute: typeof ViajesDestinoRoute
   ExploreIndexRoute: typeof ExploreIndexRoute
+  ViajesIndexRoute: typeof ViajesIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   EmailEmailAuthPreviewRoute: typeof EmailEmailAuthPreviewRoute
   EmailEmailAuthWebhookRoute: typeof EmailEmailAuthWebhookRoute
+  EmailEmailLifecycleRunRoute: typeof EmailEmailLifecycleRunRoute
   EmailEmailQueueProcessRoute: typeof EmailEmailQueueProcessRoute
 }
 
@@ -414,6 +466,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -479,11 +538,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/viajes/': {
+      id: '/viajes/'
+      path: '/viajes'
+      fullPath: '/viajes/'
+      preLoaderRoute: typeof ViajesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore/': {
       id: '/explore/'
       path: '/explore'
       fullPath: '/explore/'
       preLoaderRoute: typeof ExploreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/viajes/$destino': {
+      id: '/viajes/$destino'
+      path: '/viajes/$destino'
+      fullPath: '/viajes/$destino'
+      preLoaderRoute: typeof ViajesDestinoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trip/$slug': {
@@ -598,6 +671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/email/email/lifecycle/run': {
+      id: '/email/email/lifecycle/run'
+      path: '/email/email/lifecycle/run'
+      fullPath: '/email/email/lifecycle/run'
+      preLoaderRoute: typeof EmailEmailLifecycleRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/email/email/auth/webhook': {
       id: '/email/email/auth/webhook'
       path: '/email/email/auth/webhook'
@@ -661,16 +741,20 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   ExploreSlugRoute: ExploreSlugRoute,
   InviteTokenRoute: InviteTokenRoute,
   TripSlugRoute: TripSlugRoute,
+  ViajesDestinoRoute: ViajesDestinoRoute,
   ExploreIndexRoute: ExploreIndexRoute,
+  ViajesIndexRoute: ViajesIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   EmailEmailAuthPreviewRoute: EmailEmailAuthPreviewRoute,
   EmailEmailAuthWebhookRoute: EmailEmailAuthWebhookRoute,
+  EmailEmailLifecycleRunRoute: EmailEmailLifecycleRunRoute,
   EmailEmailQueueProcessRoute: EmailEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport

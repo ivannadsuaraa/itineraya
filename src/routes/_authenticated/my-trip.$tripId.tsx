@@ -206,7 +206,15 @@ function ItineraryPage() {
         };
       });
       const newItinerary = { ...prev.itinerary, days: newDays };
-      void supabase.from("trips").update({ itinerary: newItinerary } as never).eq("id", prev.id);
+      void supabase
+        .from("trips")
+        .update({ itinerary: newItinerary } as never)
+        .eq("id", prev.id)
+        .then(({ error }) => {
+          // RLS silently rejects updates from non-owners (invited tripmates);
+          // surface it instead of pretending the change was saved.
+          if (error) toast.error(t("trip.somethingWrong"));
+        });
       return { ...prev, itinerary: newItinerary };
     });
   };
@@ -363,7 +371,7 @@ function ItineraryPage() {
               className="inline-flex h-8 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
             >
               <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Invite</span>
+              <span className="hidden sm:inline">{t("trip.invite")}</span>
             </button>
             <button
               onClick={() => setShareOpen(true)}
@@ -421,7 +429,7 @@ function ItineraryPage() {
             <div className="mt-3 flex items-center gap-3 text-xs text-white/70">
               <span className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
-                {itin.days.length} {itin.days.length === 1 ? "día" : "días"}
+                {t("trip.daysCount", { count: itin.days.length })}
               </span>
             </div>
           </div>
@@ -776,7 +784,7 @@ function ActivityRow({
             type="button"
             onClick={toggleCompleted}
             className="shrink-0 text-slate-300 transition hover:text-emerald-500"
-            title={activity.completed ? "Marcar como pendiente" : "Marcar como completada"}
+            title={activity.completed ? t("trip.markPending") : t("trip.markDone")}
           >
             {activity.completed ? (
               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -804,7 +812,7 @@ function ActivityRow({
             <textarea
               className="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
               rows={2}
-              placeholder="Añade una nota personal…"
+              placeholder={t("trip.notePh")}
               value={noteDraft}
               onChange={(e) => setNoteDraft(e.target.value)}
               onBlur={saveNote}
@@ -842,7 +850,7 @@ function ActivityRow({
             className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50"
           >
             <StickyNote className="h-3 w-3" />
-            {showNotes ? "Ocultar" : activity.notes ? "Ver nota" : "Añadir nota"}
+            {showNotes ? t("trip.noteHide") : activity.notes ? t("trip.noteView") : t("trip.noteAdd")}
           </button>
         </div>
       </div>

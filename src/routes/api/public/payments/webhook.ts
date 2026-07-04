@@ -11,6 +11,17 @@ function safeString(v: unknown): string | null {
   return typeof v === "string" && v.length ? v : null;
 }
 
+// Maps Stripe price ids (see pricing.tsx) to app plans so the webhook can
+// keep profiles.plan in sync — every server-side gate reads profiles.plan.
+const PLAN_BY_PRICE_ID: Record<string, "viajero" | "explorador"> = {
+  price_1Ton51ClvzRH6emiNWNG9HXZ: "viajero",
+  price_1Ton6DClvzRH6emiDhKYKjeb: "viajero",
+  price_1Ton8WClvzRH6emiPx5gxrYj: "explorador",
+  price_1Ton9LClvzRH6emisN4JF1b9: "explorador",
+};
+
+const ACTIVE_STATUSES = new Set(["active", "trialing", "past_due"]);
+
 // Event types we actually act on; everything else is acknowledged and ignored.
 const HANDLED_EVENT_TYPES = new Set([
   "customer.subscription.created",
@@ -93,6 +104,29 @@ async function upsertSubscriptionRow(env: StripeEnv, subscription: Stripe.Subscr
     await supabaseAdmin.from("subscriptions").update(row).eq("id", existing.id);
   } else {
     await supabaseAdmin.from("subscriptions").insert(row);
+  }
+
+  // Sync profiles.plan — the source of truth for every server-side gate
+  // (itinerary limits, chat limits, assistant access).
+  const rawPriceId =
+    price?.id ?? safeString((subscription.metadata as Record<string, string> | undefined)?.priceId);
+  const mappedPlan = rawPriceId ? (PLAN_BY_PRICE_ID[rawPriceId] ?? null) : null;
+  const stillActive =
+    ACTIVE_STATUSES.has(subscription.status) ||
+    (subscription.status === "canceled" &&
+      firstItem?.current_period_end != null &&
+      firstItem.current_period_end * 1000 > Date.now());
+  const newPlan = stillActive && mappedPlan ? mappedPlan : "free";
+  const { error: planErr } = await supabaseAdmin
+    .from("profiles")
+    .update({ plan: newPlan })
+    .eq("id", userId);
+  if (planErr) {
+    console.error("[payments/webhook] failed to sync profiles.plan", {
+      userId,
+      newPlan,
+      error: planErr.message,
+    });
   }
 }
 

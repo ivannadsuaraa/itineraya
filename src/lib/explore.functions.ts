@@ -116,7 +116,7 @@ export const listPublicTrips = createServerFn({ method: "GET" })
     let query = client
       .from("trips")
       .select(
-        "share_slug, destination, hero_image_url, itinerary, start_date, end_date, trip_style, trip_types, budget, published_at, is_public",
+        "share_slug, destination, hero_image_url, itinerary, start_date, end_date, trip_style, trip_types, budget, published_at, is_public, rating_sum, rating_count",
       )
       .eq("is_public" as never, true)
       .not("share_slug", "is", null)

@@ -119,6 +119,27 @@ export type Database = {
         }
         Relationships: []
       }
+      lifecycle_email_log: {
+        Row: {
+          created_at: string
+          email_key: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_key: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_key?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null
@@ -132,6 +153,7 @@ export type Database = {
           preferred_destinations: string[] | null
           travel_style: string | null
           traveler_type: string | null
+          trial_ends_at: string | null
           updated_at: string
           welcome_completed: boolean
         }
@@ -147,6 +169,7 @@ export type Database = {
           preferred_destinations?: string[] | null
           travel_style?: string | null
           traveler_type?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           welcome_completed?: boolean
         }
@@ -162,6 +185,7 @@ export type Database = {
           preferred_destinations?: string[] | null
           travel_style?: string | null
           traveler_type?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           welcome_completed?: boolean
         }
@@ -364,6 +388,8 @@ export type Database = {
           departure_time: string | null
           destination: string
           end_date: string | null
+          geo_lat: number | null
+          geo_lng: number | null
           has_accommodation: boolean
           hero_image_url: string | null
           hotel_address: string | null
@@ -374,6 +400,8 @@ export type Database = {
           is_public: boolean
           itinerary: Json | null
           published_at: string | null
+          rating_count: number
+          rating_sum: number
           share_slug: string | null
           start_date: string | null
           status: string
@@ -382,6 +410,7 @@ export type Database = {
           trip_types: string[]
           updated_at: string
           user_id: string
+          view_count: number
         }
         Insert: {
           arrival_time?: string | null
@@ -392,6 +421,8 @@ export type Database = {
           departure_time?: string | null
           destination: string
           end_date?: string | null
+          geo_lat?: number | null
+          geo_lng?: number | null
           has_accommodation?: boolean
           hero_image_url?: string | null
           hotel_address?: string | null
@@ -402,6 +433,8 @@ export type Database = {
           is_public?: boolean
           itinerary?: Json | null
           published_at?: string | null
+          rating_count?: number
+          rating_sum?: number
           share_slug?: string | null
           start_date?: string | null
           status?: string
@@ -410,6 +443,7 @@ export type Database = {
           trip_types?: string[]
           updated_at?: string
           user_id: string
+          view_count?: number
         }
         Update: {
           arrival_time?: string | null
@@ -420,6 +454,8 @@ export type Database = {
           departure_time?: string | null
           destination?: string
           end_date?: string | null
+          geo_lat?: number | null
+          geo_lng?: number | null
           has_accommodation?: boolean
           hero_image_url?: string | null
           hotel_address?: string | null
@@ -430,6 +466,8 @@ export type Database = {
           is_public?: boolean
           itinerary?: Json | null
           published_at?: string | null
+          rating_count?: number
+          rating_sum?: number
           share_slug?: string | null
           start_date?: string | null
           status?: string
@@ -438,6 +476,7 @@ export type Database = {
           trip_types?: string[]
           updated_at?: string
           user_id?: string
+          view_count?: number
         }
         Relationships: []
       }

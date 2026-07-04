@@ -51,6 +51,22 @@ export const Route = createFileRoute('/email/email/auth/webhook')({
           return Response.json({ error: 'Server configuration error' }, { status: 500 })
         }
 
+        // Without verification this endpoint is an open phishing relay: anyone
+        // could make Itineraya send an official-looking email with an
+        // attacker-controlled URL to any address. Supabase's auth hook must be
+        // configured to send this same secret as a Bearer token.
+        const hookSecret = process.env.SEND_EMAIL_HOOK_SECRET
+        if (hookSecret) {
+          const auth = request.headers.get('authorization') ?? ''
+          if (auth !== `Bearer ${hookSecret}`) {
+            return Response.json({ error: 'Unauthorized' }, { status: 401 })
+          }
+        } else {
+          console.warn(
+            '[auth-email-webhook] SEND_EMAIL_HOOK_SECRET is not set — endpoint accepts unauthenticated requests. Set it in Vercel and in the Supabase auth hook config.'
+          )
+        }
+
         let payload: any
         try {
           payload = JSON.parse(await request.text())

@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import { ArrowLeft, X, Loader2, Check, Minus, Star, Shield } from "lucide-react";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -19,7 +19,17 @@ const PricingGlass = lazy(() =>
   import("@/components/ui/pricing-glass").then((m) => ({ default: m.PricingGlass })),
 );
 
+// Precios mensuales por plan — usados por las tarjetas y por la reanudación
+// del checkout tras un registro iniciado desde esta página (?plan=…).
+const PRICE_ID_MONTHLY: Record<"viajero" | "explorador", string> = {
+  viajero: "price_1Ton51ClvzRH6emiNWNG9HXZ",
+  explorador: "price_1Ton8WClvzRH6emiPx5gxrYj",
+};
+
 export const Route = createFileRoute("/pricing")({
+  validateSearch: (search: Record<string, unknown>): { plan?: "viajero" | "explorador" } => ({
+    plan: search.plan === "viajero" || search.plan === "explorador" ? search.plan : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Planes y precios – Itineraya" },
@@ -61,6 +71,27 @@ function PricingPage() {
         setUserPlan((data as { plan?: string } | null)?.plan ?? "free");
       });
   }, [authedUserId]);
+
+  // Reanuda el checkout cuando el usuario vuelve autenticado con ?plan=…
+  // (returnTo tras el signup iniciado desde esta misma página). Antes el
+  // parámetro se guardaba pero nadie lo leía y la compra se perdía.
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const resumedRef = useRef(false);
+  useEffect(() => {
+    if (!search.plan || !authedUserId || resumedRef.current) return;
+    if (!isPaymentsConfigured()) return;
+    resumedRef.current = true;
+    const planId = search.plan;
+    // Limpia el parámetro para que un refresh no reabra el checkout.
+    navigate({ to: "/pricing", search: {}, replace: true });
+    setStarting(planId);
+    try {
+      openCheckout({ priceId: PRICE_ID_MONTHLY[planId] });
+    } finally {
+      setStarting(null);
+    }
+  }, [search.plan, authedUserId, navigate, openCheckout]);
 
   const handleSelect = (planId: "free" | "viajero" | "explorador", priceId?: string) => {
     if (!priceId) {
@@ -113,7 +144,7 @@ function PricingPage() {
         t("pricing.viajero.f5"),
         t("pricing.viajero.f6"),
       ],
-      priceIdMonthly: "price_1Ton51ClvzRH6emiNWNG9HXZ",
+      priceIdMonthly: PRICE_ID_MONTHLY.viajero,
       priceIdAnnual: "price_1Ton6DClvzRH6emiDhKYKjeb",
       ctaLabel: loading || starting === "viajero" ? "..." : t("pricing.choose"),
       onSelect: (priceId?: string) => handleSelect("viajero", priceId),
@@ -130,7 +161,7 @@ function PricingPage() {
         t("pricing.explorador.f3"),
         t("pricing.explorador.f4"),
       ],
-      priceIdMonthly: "price_1Ton8WClvzRH6emiPx5gxrYj",
+      priceIdMonthly: PRICE_ID_MONTHLY.explorador,
       priceIdAnnual: "price_1Ton9LClvzRH6emisN4JF1b9",
       ctaLabel: loading || starting === "explorador" ? "..." : t("pricing.choose"),
       onSelect: (priceId?: string) => handleSelect("explorador", priceId),

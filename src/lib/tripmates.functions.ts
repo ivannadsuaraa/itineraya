@@ -93,13 +93,20 @@ export const acceptInvite = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: invite, error } = await supabaseAdmin
       .from("trip_invites")
-      .select("id,trip_id,email,status")
+      .select("id,trip_id,email,status,accepted_user_id")
       .eq("token", data.token)
       .maybeSingle();
     if (error || !invite) throw new Error("Invitation not found");
-    if (invite.status === "accepted") {
-      // already accepted — still ensure membership exists
-    } else if (email && invite.email.toLowerCase() !== email) {
+    // A token is single-use: once accepted it only remains valid for the same
+    // account (idempotent re-accept), never for a different one.
+    if (
+      invite.status === "accepted" &&
+      invite.accepted_user_id &&
+      invite.accepted_user_id !== userId
+    ) {
+      throw new Error("This invitation has already been used");
+    }
+    if (email && invite.email.toLowerCase() !== email) {
       // Allow accepting from any signed-in account but keep email record
     }
     await supabaseAdmin.from("trip_members").upsert(

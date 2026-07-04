@@ -21,7 +21,9 @@ export const Route = createFileRoute("/_authenticated")({
     if (error || !data.user) {
       throw redirect({
         to: "/",
-        search: { authModal: "login", return_to: location.pathname } as never,
+        // href (path + query) y no pathname: conserva p. ej. ?prefill=… cuando
+        // un visitante llega al onboarding desde una landing de destino.
+        search: { authModal: "login", return_to: location.href } as never,
       });
     }
     return { user: data.user };

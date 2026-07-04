@@ -237,7 +237,7 @@ function PublicTripPage() {
         
           <img
             key={trip.hero_image_url || "default-hero"}
-            src={trip.hero_image_url || "/placeholder-hero.jpg"} // Use a placeholder if no image
+            src={trip.hero_image_url || "/images/hero-bg.jpg"}
             alt={trip.destination}
             
             
@@ -300,7 +300,7 @@ function PublicTripPage() {
       {/* Summary */}
       <div className="mx-auto max-w-4xl px-4 py-8 md:py-10">
         {/* Remix actions */}
-        <div className="mb-8 grid gap-3 sm:grid-grid-cols-3">
+        <div className="mb-8 grid gap-3 sm:grid-cols-3">
           <button
             type="button"
             onClick={handleRemix}

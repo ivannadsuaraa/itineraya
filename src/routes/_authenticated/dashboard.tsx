@@ -336,18 +336,18 @@ function DashboardPage() {
               <Zap className="h-4 w-4 shrink-0 text-amber-500" />
               <span className="font-semibold text-amber-800">
                 {trialDaysLeft === 1
-                  ? "Tu prueba gratuita acaba mañana"
-                  : `Te quedan ${trialDaysLeft} días de prueba gratuita`}
+                  ? t("dashboard.trialLastDay")
+                  : t("dashboard.trialDaysLeft", { count: trialDaysLeft })}
               </span>
               <span className="hidden text-amber-600 sm:inline">
-                — Disfruta del asistente IA y todas las funciones premium.
+                {t("dashboard.trialPerk")}
               </span>
             </div>
             <Link
               to="/pricing"
               className="shrink-0 rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95"
             >
-              Mantener acceso
+              {t("dashboard.trialKeep")}
             </Link>
           </div>
         </div>
@@ -360,7 +360,7 @@ function DashboardPage() {
         <div className="mt-6 flex items-center gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-100 w-fit">
           {(["viajes", "calendario"] as const).map((tab) => {
             const Icon = tab === "viajes" ? MapPin : CalendarDays;
-            const label = tab === "viajes" ? t("dashboard.savedTrips") : "Calendario";
+            const label = tab === "viajes" ? t("dashboard.savedTrips") : t("dashboard.calendarTab");
             return (
               <button
                 key={tab}
@@ -481,7 +481,7 @@ function DashboardPage() {
                             {s.n_days && (
                               <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
                                 <Calendar className="h-2.5 w-2.5" />
-                                {s.n_days} días
+                                {t("dashboard.nDays", { count: s.n_days })}
                               </div>
                             )}
                           </div>

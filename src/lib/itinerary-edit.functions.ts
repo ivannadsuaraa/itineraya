@@ -164,7 +164,12 @@ REQUISITOS:
       throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
     }
 
-    const aiJson = (await aiRes.json()) as { content?: Array<{ text?: string }> };
+    const aiJson = (await aiRes.json()) as {
+      content?: Array<{ text?: string }>;
+      stop_reason?: string;
+    };
+    if (aiJson.stop_reason === "max_tokens")
+      throw new Error("La respuesta del modelo se truncó. Vuelve a intentarlo.");
     const content = aiJson.content?.[0]?.text;
     if (!content) throw new Error("Respuesta vacía del modelo");
 
@@ -175,6 +180,8 @@ REQUISITOS:
       const cleaned = content.replace(/```json\n?/gi, "").replace(/```/g, "").trim();
       parsed = JSON.parse(cleaned);
     }
+    if (!Array.isArray(parsed.days) || parsed.days.length === 0)
+      throw new Error("El modelo no devolvió un itinerario válido. Vuelve a intentarlo.");
 
     const { change_summary, ...itineraryOnly } = parsed;
 
