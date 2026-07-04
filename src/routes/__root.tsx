@@ -18,6 +18,7 @@ import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 import { AuthModalRouteSync } from "@/components/auth/AuthModalRouteSync";
 import { Toaster } from "@/components/ui/sonner";
 import i18n from "@/i18n";
+import { captureReferralFromLocation } from "@/lib/referral";
 
 // i18n.t directo (no useTranslation): estas pantallas pueden renderizarse
 // fuera de los providers cuando el árbol entero falla.
@@ -143,6 +144,12 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Runs once per fresh page load — shared links are always opened as a new
+  // navigation from outside the app, so this is the right place to catch them.
+  useEffect(() => {
+    captureReferralFromLocation();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

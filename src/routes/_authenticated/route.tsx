@@ -10,9 +10,12 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 import { consumePendingAuthToast } from "@/lib/post-auth-toast";
+import { getPendingReferral, clearPendingReferral } from "@/lib/referral";
+import { attributeAcquisition } from "@/lib/referral.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -41,6 +44,7 @@ function AuthenticatedLayout() {
   const { t } = useTranslation();
   const { user } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const attributeAcquisitionFn = useServerFn(attributeAcquisition);
 
   const hideChrome = HIDE_CHROME_PREFIXES.some((p) => pathname.startsWith(p));
   const hideBack = hideChrome || HIDE_BACK_PATHS.has(pathname);
@@ -60,6 +64,18 @@ function AuthenticatedLayout() {
     toast.success(
       resolved === "accountCreated" ? t("auth.accountReadyToast") : t("auth.loggedInToast"),
     );
+    // Only ever fires for a genuinely new account — covers email/password
+    // and Google OAuth alike, since both land here via this same toast flow.
+    if (resolved === "accountCreated") {
+      const pending = getPendingReferral();
+      if (pending?.ref || pending?.utmSource) {
+        attributeAcquisitionFn({
+          data: { referredBy: pending.ref ?? null, utmSource: pending.utmSource ?? null },
+        })
+          .then(() => clearPendingReferral())
+          .catch(() => {}); // best-effort — a lost attribution shouldn't block the dashboard
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
