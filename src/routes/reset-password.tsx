@@ -58,7 +58,7 @@ function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sky-50 to-sky-100 px-4">
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-sky-50 to-sky-100 px-4">
       <div className="w-full max-w-md rounded-3xl bg-white/90 p-8 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
         {done ? (
           <div className="text-center py-4">

@@ -205,7 +205,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           placeholder="Buscar hotel o dirección…"
-          className="w-full rounded-2xl border border-sky-200 bg-white/90 py-3 pl-11 pr-10 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10"
+          className="w-full rounded-2xl border border-sky-200 bg-white/90 py-3 pl-11 pr-10 text-base text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10 sm:text-sm"
         />
         {searchInput && (
           <button
@@ -215,7 +215,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
               setSuggestions([]);
               onChange(null);
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-sky-500 hover:bg-sky-100"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-sky-500 hover:bg-sky-100 before:absolute before:-inset-2.5 before:content-['']"
             aria-label="Limpiar"
           >
             <X className="h-3.5 w-3.5" />

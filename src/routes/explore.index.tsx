@@ -187,13 +187,13 @@ function ExplorePage() {
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 placeholder={t("explore.searchPlaceholder")}
-                className="w-full bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-400 sm:text-sm"
               />
               {destination && (
                 <button
                   type="button"
                   onClick={() => setDestination("")}
-                  className="h-6 w-6 shrink-0 rounded-full bg-slate-200 text-slate-500 text-xs font-bold leading-6 transition hover:bg-slate-300"
+                  className="relative h-6 w-6 shrink-0 rounded-full bg-slate-200 text-slate-500 text-xs font-bold leading-6 transition hover:bg-slate-300 before:absolute before:-inset-2.5 before:content-['']"
                   aria-label={t("explore.clear")}
                 >
                   ×
@@ -216,7 +216,7 @@ function ExplorePage() {
                     key={s}
                     type="button"
                     onClick={() => setStyle(s)}
-                    className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                    className={`inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-all ${
                       active
                         ? "bg-sky-900 text-white shadow-md"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -238,7 +238,7 @@ function ExplorePage() {
                     key={d}
                     type="button"
                     onClick={() => setDurationBucket(active ? "all" : d)}
-                    className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                    className={`inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-all ${
                       active
                         ? "bg-[#1E6B9A] text-white shadow-md"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -256,7 +256,7 @@ function ExplorePage() {
               <button
                 type="button"
                 onClick={() => setSortBy((s) => (s === "newest" ? "best" : "newest"))}
-                className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                className={`inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-all ${
                   sortBy === "best"
                     ? "bg-amber-500 text-white shadow-md"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -412,7 +412,7 @@ function StarRating({ avg, count, onRate }: { avg: number | null; count: number;
           onClick={() => onRate?.(s)}
           onMouseEnter={() => onRate && setHovered(s)}
           onMouseLeave={() => setHovered(null)}
-          className={`p-1 transition-transform ${onRate ? "cursor-pointer hover:scale-110" : "cursor-default"}`}
+          className={`p-2.5 -m-1 transition-transform ${onRate ? "cursor-pointer hover:scale-110" : "cursor-default"}`}
           aria-label={t("explore.rateAria", { count: s })}
         >
           <Star
@@ -512,7 +512,7 @@ function FeedCard({ item, onRemix, onRate }: { item: PublicFeedItem; onRemix: ()
           <button
             type="button"
             onClick={onRemix}
-            className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-sky-900 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
+            className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-full bg-sky-900 px-3 text-[11px] font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
           >
             <Sparkles className="h-3 w-3" />
             {t("explore.remix")}
@@ -520,7 +520,7 @@ function FeedCard({ item, onRemix, onRate }: { item: PublicFeedItem; onRemix: ()
           <Link
             to="/explore/$slug"
             params={{ slug: item.slug }}
-            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
+            className="inline-flex h-9 items-center gap-1 rounded-full bg-slate-100 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
           >
             {t("explore.view")}
             <ArrowRight className="h-3 w-3" />

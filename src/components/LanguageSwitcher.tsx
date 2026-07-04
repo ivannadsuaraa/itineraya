@@ -40,7 +40,7 @@ export function LanguageSwitcher({ variant = "light", compact = false }: Props) 
       <button
         type="button"
         onClick={() => setOpen((s) => !s)}
-        className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold backdrop-blur-md transition ${triggerClass}`}
+        className={`inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold backdrop-blur-md transition ${triggerClass}`}
         aria-label="Language"
       >
         <span className="text-base leading-none">{currentOpt.flag}</span>

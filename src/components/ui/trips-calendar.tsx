@@ -112,7 +112,7 @@ function TripDetailPanel({ trip, color, onClose }: { trip: CalendarTrip; color: 
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
+            className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
             aria-label="Cerrar"
           >
             <X className="h-4 w-4" />
@@ -300,7 +300,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
           <button
             type="button"
             onClick={viewMode === "month" ? prevMonth : prevWeek}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
@@ -342,7 +342,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
           <button
             type="button"
             onClick={viewMode === "month" ? nextMonth : nextWeek}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white"
           >
             <ChevronRight className="h-5 w-5" />
           </button>
@@ -375,7 +375,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
             <button
               type="button"
               onClick={() => setViewMode("month")}
-              className={`flex h-7 w-7 items-center justify-center rounded-full transition ${viewMode === "month" ? "bg-white text-sky-900 shadow" : "text-white/60 hover:text-white"}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition ${viewMode === "month" ? "bg-white text-sky-900 shadow" : "text-white/60 hover:text-white"}`}
               title="Vista mensual"
             >
               <LayoutGrid className="h-3.5 w-3.5" />
@@ -383,7 +383,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
             <button
               type="button"
               onClick={() => setViewMode("week")}
-              className={`flex h-7 w-7 items-center justify-center rounded-full transition ${viewMode === "week" ? "bg-white text-sky-900 shadow" : "text-white/60 hover:text-white"}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-full transition ${viewMode === "week" ? "bg-white text-sky-900 shadow" : "text-white/60 hover:text-white"}`}
               title="Vista semanal"
             >
               <CalendarDays className="h-3.5 w-3.5" />

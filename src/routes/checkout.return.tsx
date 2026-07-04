@@ -14,8 +14,8 @@ export const Route = createFileRoute("/checkout/return")({
 function CheckoutReturn() {
   const { t } = useTranslation();
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      <div className="relative mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-12">
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      <div className="relative mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 py-12">
         <BrandLogo size="md" />
         <div className="mt-10 w-full rounded-3xl bg-white/85 p-10 text-center shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">

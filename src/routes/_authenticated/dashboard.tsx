@@ -356,7 +356,7 @@ function DashboardPage() {
             </div>
             <Link
               to="/pricing"
-              className="shrink-0 rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95"
+              className="flex h-9 shrink-0 items-center rounded-full bg-amber-500 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95"
             >
               {t("dashboard.trialKeep")}
             </Link>
@@ -502,7 +502,7 @@ function DashboardPage() {
                         <button
                           type="button"
                           onClick={() => remixSaved(s)}
-                          className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
+                          className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
                         >
                           <Wand2 className="h-3 w-3" />
                           {t("dashboard.savedRemix")}
@@ -511,7 +511,7 @@ function DashboardPage() {
                           type="button"
                           onClick={() => removeSaved(s.id)}
                           aria-label={t("dashboard.savedRemove")}
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -556,7 +556,7 @@ function DashboardPage() {
                       <button
                         type="button"
                         onClick={() => planInspiration(insp)}
-                        className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-sky-800 active:scale-95"
+                        className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-bold text-white transition hover:bg-sky-800 active:scale-95"
                       >
                         <Sparkles className="h-3 w-3" />
                         {t("dashboard.plan")}
@@ -687,7 +687,7 @@ function TripCard({
         <Link
           to="/my-trip/$tripId"
           params={{ tripId: trip.id }}
-          className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
+          className="inline-flex h-9 items-center gap-1 rounded-full bg-slate-100 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
         >
           <Eye className="h-3 w-3" />
           {t("dashboard.view")}
@@ -699,14 +699,14 @@ function TripCard({
               <button
                 type="button"
                 onClick={() => { setConfirmDelete(false); onDelete(); }}
-                className="text-[11px] font-bold text-red-600 hover:text-red-700"
+                className="flex h-9 items-center px-1 text-[11px] font-bold text-red-600 hover:text-red-700"
               >
                 {t("dashboard.deleteTripYes")}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="text-[11px] font-semibold text-slate-400 hover:text-slate-600"
+                className="flex h-9 items-center px-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600"
               >
                 ✕
               </button>
@@ -716,7 +716,7 @@ function TripCard({
               {isFree ? (
                 <Link
                   to="/pricing"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100"
                   aria-label={t("sidebar.assistantLocked")}
                 >
                   <Lock className="h-3.5 w-3.5" />
@@ -724,7 +724,7 @@ function TripCard({
               ) : (
                 <Link
                   to="/assistant"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
                   aria-label={t("dashboard.editAi")}
                 >
                   <Wand2 className="h-3.5 w-3.5" />
@@ -733,7 +733,7 @@ function TripCard({
               <button
                 type="button"
                 onClick={onShare}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-sky-700"
                 aria-label={t("dashboard.share")}
               >
                 <Share2 className="h-3.5 w-3.5" />
@@ -741,7 +741,7 @@ function TripCard({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-slate-300 transition hover:bg-red-50 hover:text-red-500"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-slate-300 transition hover:bg-red-50 hover:text-red-500"
                 aria-label={t("dashboard.deleteTrip")}
               >
                 <Trash2 className="h-3.5 w-3.5" />

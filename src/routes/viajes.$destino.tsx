@@ -81,7 +81,7 @@ export const Route = createFileRoute("/viajes/$destino")({
 
 function DestinationNotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
       <h1 className="font-display text-2xl font-bold text-white">Destino no encontrado</h1>
       <p className="mt-2 max-w-sm text-sky-300">
         Todavía no tenemos guía para este destino, pero puedes generar tu itinerario con IA en un
@@ -123,7 +123,7 @@ function DestinationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
 
       {/* Hero */}

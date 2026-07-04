@@ -65,7 +65,7 @@ export const Route = createFileRoute("/trip/$slug")({
 function PublicTripUnavailable() {
   const { t } = useTranslation();
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
       <div className="max-w-md rounded-3xl bg-white/85 p-8 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-3xl">
           ✈️
@@ -194,7 +194,7 @@ function PublicTripPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="min-h-dvh bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       {/* Top bar */}
       <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
@@ -204,7 +204,7 @@ function PublicTripPage() {
           <button
             type="button"
             onClick={() => openAuthModal({ mode: "login" })}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-[#1E6B9A] px-4 py-2 text-xs font-semibold text-white shadow hover:bg-[#15577E] sm:text-sm"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-[#1E6B9A] px-4 py-2 text-xs font-semibold text-white shadow hover:bg-[#15577E] sm:text-sm"
           >
             {t("publicTrip.ctaShort")}
             <ArrowRight className="h-3.5 w-3.5" />

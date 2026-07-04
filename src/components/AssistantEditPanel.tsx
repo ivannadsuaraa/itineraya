@@ -82,7 +82,7 @@ export function AssistantEditPanel({
         onClick={onClose}
         className="fixed inset-0 z-40 bg-sky-950/40 backdrop-blur-sm"
       />
-      <aside className="fixed right-0 top-0 z-50 flex h-screen w-full max-w-md flex-col bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] shadow-2xl">
+      <aside className="fixed right-0 top-0 z-50 flex h-dvh w-full max-w-md flex-col bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] shadow-2xl">
             <header className="flex items-center justify-between border-b border-white/40 bg-white/60 px-5 py-3 backdrop-blur-xl">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] shadow-md shadow-[#1E6B9A]/30">
@@ -97,7 +97,7 @@ export function AssistantEditPanel({
               </div>
               <button
                 onClick={onClose}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
                 aria-label={t("assistant.panelClose")}
               >
                 <X className="h-4 w-4" />
@@ -140,7 +140,7 @@ export function AssistantEditPanel({
                   rows={1}
                   placeholder={t("assistant.panelPh")}
                   disabled={busy}
-                  className="flex-1 resize-none rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10 disabled:opacity-60"
+                  className="flex-1 resize-none rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 text-base text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10 disabled:opacity-60 sm:text-sm"
                 />
                 <button
                   type="submit"

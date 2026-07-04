@@ -97,7 +97,7 @@ function WelcomePage() {
   const ageLabel = age >= 99 ? "99+" : String(age);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
@@ -109,7 +109,7 @@ function WelcomePage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 py-12">
+      <div className="relative mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 py-12">
         <Link to="/dashboard" className="mb-8 inline-flex">
           <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-14 w-auto select-none" draggable={false} />
         </Link>
@@ -129,7 +129,7 @@ function WelcomePage() {
           type="button"
           onClick={skip}
           disabled={saving}
-          className="absolute right-5 top-5 rounded-full px-3 py-1.5 text-sm font-semibold text-sky-600 transition hover:bg-white/70 hover:text-sky-900 disabled:opacity-50"
+          className="absolute right-4 top-4 flex h-11 items-center rounded-full px-4 text-sm font-semibold text-sky-600 transition hover:bg-white/70 hover:text-sky-900 disabled:opacity-50"
         >
           {t("welcome.skip")}
         </button>
@@ -174,6 +174,7 @@ function WelcomePage() {
                     max={99}
                     value={age}
                     onChange={(e) => setAge(Number(e.target.value))}
+                    onPointerDownCapture={(e) => e.stopPropagation()}
                     className="age-slider w-full"
                     aria-label={t("welcome.ageAria")}
                   />

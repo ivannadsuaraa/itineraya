@@ -62,7 +62,7 @@ function LandingPage() {
     return () => subscription.unsubscribe();
   }, []);
   return (
-    <div className={`min-h-screen bg-white ${isLoggedIn ? "pb-16 md:pb-0" : ""}`}>
+    <div className={`min-h-dvh bg-white ${isLoggedIn ? "pb-16 md:pb-0" : ""}`}>
       {mounted && isLoggedIn ? <DesktopTopNav /> : <Navbar />}
       <HeroSection />
 

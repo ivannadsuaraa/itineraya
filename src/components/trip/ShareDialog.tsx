@@ -98,11 +98,11 @@ export function ShareDialog({ open, onClose, tripId, destination }: Props) {
                     readOnly
                     value={displayUrl}
                     onFocus={(e) => e.currentTarget.select()}
-                    className="flex-1 bg-transparent px-2 text-sm text-sky-900 outline-none"
+                    className="flex-1 bg-transparent px-2 text-base text-sky-900 outline-none sm:text-sm"
                   />
                   <button
                     onClick={() => copy("link")}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-xl bg-[#1E6B9A] px-3 py-2 text-xs font-semibold text-white hover:bg-[#15577E]"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[#1E6B9A] px-3 py-2 text-xs font-semibold text-white hover:bg-[#15577E]"
                   >
                     {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                     {copied ? t("share.copied") : t("share.copy")}

@@ -189,7 +189,7 @@ function ProfilePage() {
                 <select
                   value={travelStyle}
                   onChange={(e) => setTravelStyle(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-900 outline-none focus:border-sky-400 sm:text-sm"
                 >
                   <option value="">{t("profilePrefs.select")}</option>
                   {TRAVEL_STYLES.map((s) => (
@@ -207,7 +207,7 @@ function ProfilePage() {
                 <select
                   value={budgetRange}
                   onChange={(e) => setBudgetRange(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-900 outline-none focus:border-sky-400 sm:text-sm"
                 >
                   <option value="">{t("profilePrefs.select")}</option>
                   <option value="low">{t("profilePrefs.budgetLow")}</option>
@@ -224,7 +224,7 @@ function ProfilePage() {
                 <select
                   value={travelerType}
                   onChange={(e) => setTravelerType(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-900 outline-none focus:border-sky-400 sm:text-sm"
                 >
                   <option value="">{t("profilePrefs.select")}</option>
                   <option value="solo">{t("profilePrefs.travelerSolo")}</option>
@@ -243,7 +243,7 @@ function ProfilePage() {
                   value={preferredDestinations}
                   onChange={(e) => setPreferredDestinations(e.target.value)}
                   placeholder={t("profilePrefs.destinationsPh")}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-400"
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-900 outline-none focus:border-sky-400 sm:text-sm"
                 />
                 <p className="mt-1 text-[11px] text-slate-500">
                   {t("profilePrefs.destinationsHint")}

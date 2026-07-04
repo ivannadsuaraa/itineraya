@@ -27,7 +27,7 @@ function TermsPage() {
   const { i18n } = useTranslation();
   const isEs = i18n.language?.startsWith("es");
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
+    <div className="min-h-dvh bg-gradient-to-b from-sky-50 to-white">
       <header className="border-b border-sky-100 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2">

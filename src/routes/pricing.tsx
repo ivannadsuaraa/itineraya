@@ -243,7 +243,7 @@ function PricingPage() {
             <button
               type="button"
               onClick={closeCheckout}
-              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-sky-700 shadow-md ring-1 ring-sky-100 hover:bg-sky-50"
+              className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-sky-700 shadow-md ring-1 ring-sky-100 hover:bg-sky-50"
               aria-label={t("pricing.close")}
             >
               <X className="h-4 w-4" />
@@ -295,28 +295,30 @@ function ComparisonTable() {
       <h2 className="mb-8 text-center font-display text-2xl font-bold text-white">
         {t("pricing.cmp.title")}
       </h2>
-      <div className="overflow-hidden rounded-2xl ring-1 ring-white/10">
-        {/* Header */}
-        <div className="grid grid-cols-4 bg-white/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white/40">
-          <div>{t("pricing.cmp.feature")}</div>
-          <div className="text-center">{t("pricing.free.name")}</div>
-          <div className="text-center text-sky-300">{t("pricing.viajero.name")}</div>
-          <div className="text-center text-purple-300">{t("pricing.explorador.name")}</div>
-        </div>
-        {/* Rows */}
-        {FEATURES.map((f, i) => (
-          <div
-            key={i}
-            className={`grid grid-cols-4 items-center px-4 py-3 text-sm ${
-              i % 2 === 0 ? "bg-white/3" : "bg-transparent"
-            }`}
-          >
-            <div className="text-white/70">{t(f.labelKey)}</div>
-            <div className="text-center"><FeatureCell val={f.free} /></div>
-            <div className="text-center"><FeatureCell val={f.viajero} /></div>
-            <div className="text-center"><FeatureCell val={f.explorador} /></div>
+      <div className="overflow-x-auto rounded-2xl ring-1 ring-white/10">
+        <div className="min-w-[560px]">
+          {/* Header */}
+          <div className="grid grid-cols-4 bg-white/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white/40">
+            <div>{t("pricing.cmp.feature")}</div>
+            <div className="text-center">{t("pricing.free.name")}</div>
+            <div className="text-center text-sky-300">{t("pricing.viajero.name")}</div>
+            <div className="text-center text-purple-300">{t("pricing.explorador.name")}</div>
           </div>
-        ))}
+          {/* Rows */}
+          {FEATURES.map((f, i) => (
+            <div
+              key={i}
+              className={`grid grid-cols-4 items-center px-4 py-3 text-sm ${
+                i % 2 === 0 ? "bg-white/3" : "bg-transparent"
+              }`}
+            >
+              <div className="text-white/70">{t(f.labelKey)}</div>
+              <div className="text-center"><FeatureCell val={f.free} /></div>
+              <div className="text-center"><FeatureCell val={f.viajero} /></div>
+              <div className="text-center"><FeatureCell val={f.explorador} /></div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -268,7 +268,7 @@ export function GlobePolaroids({
               <Link
                 to="/my-trip/$tripId"
                 params={{ tripId: popup.marker.id }}
-                className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#1E6B9A] transition hover:underline"
+                className="-ml-1 mt-1 inline-flex items-center gap-1 px-1 py-2 text-[11px] font-semibold text-[#1E6B9A] transition hover:underline"
               >
                 Ver itinerario
                 <ArrowRight className="h-3 w-3" />
@@ -277,9 +277,12 @@ export function GlobePolaroids({
             <button
               type="button"
               onClick={() => setPopup(null)}
-              className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition hover:bg-black/40"
+              aria-label="Cerrar"
+              className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center"
             >
-              <X className="h-3 w-3" />
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition hover:bg-black/40">
+                <X className="h-3 w-3" />
+              </span>
             </button>
           </div>
         </div>

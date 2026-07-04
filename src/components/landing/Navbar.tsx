@@ -42,7 +42,7 @@ export function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8" suppressHydrationWarning>
         <nav className="mt-4 flex items-center justify-between rounded-full bg-white/80 px-6 py-3 shadow-[0_4px_24px_rgba(46,107,138,0.08)] backdrop-blur-md" suppressHydrationWarning>
-          <Link to={mounted && isLoggedIn ? "/dashboard" : "/"} className="inline-flex items-center">
+          <Link to={mounted && isLoggedIn ? "/dashboard" : "/"} className="inline-flex h-11 items-center py-1.5 -my-1.5">
             <img src="/itineraya-logo.png" alt="Itineraya" className="hidden h-8 w-auto select-none sm:block" draggable={false} />
             <img src="/itineraya-mark.png" alt="Itineraya" className="h-8 w-auto select-none sm:hidden" draggable={false} />
           </Link>
@@ -93,7 +93,7 @@ export function Navbar() {
             <LanguageSwitcher compact />
             <button
               onClick={() => setOpen(!open)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-sky-800"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-sky-800"
               aria-label={t("nav.toggleMenu")}
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

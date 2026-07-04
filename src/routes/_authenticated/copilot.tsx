@@ -21,14 +21,14 @@ function CopilotPage() {
 
   if (!started) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
         <div className="pointer-events-none absolute inset-0">
           <div
             className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
             style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
           />
         </div>
-        <div className="relative mx-auto flex min-h-screen max-w-xl flex-col px-4 py-6 sm:px-6 sm:py-10">
+        <div className="relative mx-auto flex min-h-dvh max-w-xl flex-col px-4 py-6 sm:px-6 sm:py-10">
           <div className="mb-4 self-start">
             <Link
               to="/new-trip"
@@ -135,12 +135,12 @@ function CopilotChat({ destination }: { destination: string }) {
   };
 
   return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <header className="relative z-10 border-b border-white/40 bg-white/60 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-3 py-2 sm:px-5 sm:py-3">
           <Link
             to="/new-trip"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/80 text-sky-800 hover:bg-white"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -204,7 +204,7 @@ function CopilotChat({ destination }: { destination: string }) {
             }}
             placeholder={t("copilot.inputPh")}
             rows={1}
-            className="flex-1 resize-none rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 text-sm text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10"
+            className="flex-1 resize-none rounded-2xl border border-sky-200 bg-white/90 px-4 py-3 text-base text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10 sm:text-sm"
           />
           <button
             type="submit"

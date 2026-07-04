@@ -78,7 +78,7 @@ export const Route = createFileRoute("/explore/$slug")({
 
 function FallbackPage({ title, message }: { title: string; message: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
       <div>
         <h1 className="font-display text-2xl font-bold text-sky-900">{title}</h1>
         <p className="mt-2 text-sky-700">{message}</p>
@@ -105,7 +105,7 @@ function DiscoverableTripPage() {
 
   if (!trip) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
+      <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
         <div className="max-w-md rounded-3xl bg-white/85 p-8 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-3xl">✈️</div>
           <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">Este itinerario ya no está disponible</h1>
@@ -230,7 +230,7 @@ function DiscoverableTripPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => requireAuth(e)}
-                className="mt-2 inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 hover:bg-sky-50"
+                className="mt-2 inline-flex h-9 items-center gap-1 rounded-full bg-white px-3 text-xs font-semibold text-sky-800 ring-1 ring-sky-200 hover:bg-sky-50"
               >
                 <MapPin className="h-3 w-3" />
                 {t("trip.maps")}
@@ -244,7 +244,7 @@ function DiscoverableTripPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="min-h-dvh bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/explore" className="flex items-center gap-2">

@@ -342,7 +342,7 @@ function ItineraryPage() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-5">
           <Link
             to="/dashboard"
-            className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             aria-label={t("trip.backDashboard")}
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -359,7 +359,7 @@ function ItineraryPage() {
                   <button
                     key={v}
                     onClick={() => setView(v)}
-                    className={`flex h-9 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
+                    className={`flex h-11 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
                       view === v
                         ? "bg-sky-900 text-white shadow-sm"
                         : "text-slate-600 hover:text-slate-900"
@@ -375,7 +375,7 @@ function ItineraryPage() {
             {/* Fullscreen map */}
             <button
               onClick={() => setMapModalOpen(true)}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <MapIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.viewMap")}</span>
@@ -384,14 +384,14 @@ function ItineraryPage() {
             {/* Action buttons */}
             <button
               onClick={() => setTripmatesOpen(true)}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
             >
               <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.invite")}</span>
             </button>
             <button
               onClick={() => setShareOpen(true)}
-              className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <Share2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.share")}</span>
@@ -399,7 +399,7 @@ function ItineraryPage() {
             {plan && plan !== "free" ? (
               <button
                 onClick={() => setAssistantOpen(true)}
-                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800"
+                className="inline-flex h-11 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800"
               >
                 <Wand2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t("trip.editAssistant")}</span>
@@ -407,7 +407,7 @@ function ItineraryPage() {
             ) : plan === "free" ? (
               <Link
                 to="/pricing"
-                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200"
+                className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200"
                 title={t("trip.editAssistantLocked")}
               >
                 <Wand2 className="h-3.5 w-3.5" />
@@ -538,7 +538,7 @@ function ItineraryPage() {
               type="button"
               onClick={() => setMapModalOpen(false)}
               aria-label={t("layout.back")}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
             >
               <X className="h-5 w-5" />
             </button>
@@ -704,7 +704,7 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
         <button
           onClick={download}
           disabled={busy !== null}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-60 sm:text-sm"
+          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-60 sm:text-sm"
         >
           {busy === "download" ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -716,7 +716,7 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
         <button
           onClick={share}
           disabled={busy !== null}
-          className="flex flex-1 items-center justify-center gap-2 rounded-full bg-sky-900 px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800 disabled:opacity-60 sm:text-sm"
+          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-sky-900 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800 disabled:opacity-60 sm:text-sm"
         >
           {busy === "share" ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -800,7 +800,7 @@ function ActivityRow({
           <button
             type="button"
             onClick={toggleCompleted}
-            className="shrink-0 text-slate-300 transition hover:text-emerald-500"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-slate-300 transition hover:text-emerald-500"
             title={activity.completed ? t("trip.markPending") : t("trip.markDone")}
           >
             {activity.completed ? (
@@ -827,7 +827,7 @@ function ActivityRow({
         {showNotes && (
           <div className="mt-2">
             <textarea
-              className="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400"
+              className="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-base text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400 sm:text-sm"
               rows={2}
               placeholder={t("trip.notePh")}
               value={noteDraft}
@@ -845,7 +845,7 @@ function ActivityRow({
             href={googleMapsUrl(placeQuery)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+            className="inline-flex h-9 items-center gap-1 rounded-full bg-white px-2.5 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
           >
             <MapPin className="h-3 w-3 text-slate-500" />
             {t("trip.maps")}
@@ -855,7 +855,7 @@ function ActivityRow({
               href={booking.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 rounded-full bg-sky-900 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-sky-800"
+              className="inline-flex h-9 items-center gap-1 rounded-full bg-sky-900 px-2.5 text-[11px] font-semibold text-white transition hover:bg-sky-800"
             >
               <Sparkles className="h-3 w-3" />
               {bookingLabel} · {booking.brand}
@@ -864,7 +864,7 @@ function ActivityRow({
           <button
             type="button"
             onClick={() => setShowNotes((s) => !s)}
-            className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50"
+            className="inline-flex h-9 items-center gap-1 rounded-full bg-white px-2.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50"
           >
             <StickyNote className="h-3 w-3" />
             {showNotes ? t("trip.noteHide") : activity.notes ? t("trip.noteView") : t("trip.noteAdd")}

@@ -63,7 +63,7 @@ export function TripmatesModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto bg-black/50 p-4 py-10 backdrop-blur-sm sm:items-center"
       onClick={onClose}
     >
       <div
@@ -74,7 +74,7 @@ export function TripmatesModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
+                className="absolute right-2 top-2 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white hover:bg-white/25"
                 aria-label="Close"
               >
                 <X className="h-4 w-4" />
@@ -111,7 +111,7 @@ export function TripmatesModal({
                     placeholder={t("tripmates.emailPh", { defaultValue: "friend@email.com" })}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-full border border-sky-200 bg-white py-3 pl-10 pr-3 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                    className="w-full rounded-full border border-sky-200 bg-white py-3 pl-10 pr-3 text-base outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
                   />
                 </div>
                 <button

@@ -29,7 +29,7 @@ export const Route = createFileRoute("/viajes/")({
 
 function DestinationsIndexPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white">
       <Navbar />
       <header className="bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-14 pt-32 text-center sm:pt-36">
         <h1 className="mx-auto max-w-2xl font-display text-3xl font-bold text-white md:text-5xl">

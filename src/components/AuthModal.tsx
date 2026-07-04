@@ -199,17 +199,17 @@ export function AuthModal({ open, onClose, title, description, initialMode, retu
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/50 p-4 py-10 backdrop-blur-sm sm:items-center"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white shadow-2xl"
+        className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl"
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow hover:bg-white"
+          className="absolute right-2 top-2 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow hover:bg-white"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
@@ -360,12 +360,12 @@ export function AuthModal({ open, onClose, title, description, initialMode, retu
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t("authModal.password", { defaultValue: "Password" })}
-                    className="w-full rounded-2xl border border-sky-200 bg-white py-3 pl-10 pr-9 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                    className="w-full rounded-2xl border border-sky-200 bg-white py-3 pl-10 pr-11 text-sm outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((s) => !s)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center text-slate-400 hover:text-slate-600"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

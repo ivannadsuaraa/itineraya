@@ -251,7 +251,7 @@ function OnboardingPage() {
   const locale = i18n.language.startsWith("en") ? enUS : esLocale;
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
@@ -263,7 +263,7 @@ function OnboardingPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+      <div className="relative mx-auto flex min-h-dvh max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <Link
           to="/new-trip"
           className="mb-6 inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
@@ -392,7 +392,7 @@ function OnboardingPage() {
                           }))
                         }
                         className={cn(
-                          "rounded-2xl border px-4 py-2.5 text-left text-sm font-semibold transition active:scale-[0.97]",
+                          "rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.97]",
                           selected
                             ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
                             : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
@@ -415,7 +415,7 @@ function OnboardingPage() {
                     }
                   }}
                   placeholder={t("onboarding.stylePh")}
-                  className="mt-3 min-h-20 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-sm text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                  className="mt-3 min-h-20 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
                 />
               </div>
             </StepShell>
@@ -468,7 +468,7 @@ function OnboardingPage() {
                     }
                   }}
                   placeholder={t("onboarding.avoidPh")}
-                  className="min-h-24 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-sm text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100"
+                  className="min-h-24 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
                 />
               </div>
             </StepShell>
@@ -551,7 +551,7 @@ function TimeInput({
         type="time"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 w-full bg-transparent text-sm font-semibold text-sky-900 outline-none"
+        className="mt-1 w-full bg-transparent text-base font-semibold text-sky-900 outline-none sm:text-sm"
       />
     </label>
   );

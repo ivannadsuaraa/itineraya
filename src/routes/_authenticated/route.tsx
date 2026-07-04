@@ -69,21 +69,21 @@ function AuthenticatedLayout() {
       {!hideChrome && (
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-white/85 px-3 py-2 backdrop-blur-xl">
           {hideBack ? (
-            <span className="h-9 w-9" aria-hidden />
+            <span className="h-11 w-11" aria-hidden />
           ) : (
             <button
               onClick={() => router.history.back()}
               aria-label={t("layout.back")}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-sky-900"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-sky-900"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <Link to="/" className="flex items-center gap-1.5" aria-label={t("layout.homeAria")}>
+          <Link to="/" className="flex items-center gap-1.5 py-2" aria-label={t("layout.homeAria")}>
             <img src="/itineraya-mark.png" alt="" className="h-7 w-7" draggable={false} />
             <span className="font-display text-base font-bold text-sky-900">Itineraya</span>
           </Link>
-          <span className="h-9 w-9" aria-hidden />
+          <span className="h-11 w-11" aria-hidden />
         </header>
       )}
       <div className={hideChrome ? "" : "pb-16 md:pb-0 md:pt-14"}>

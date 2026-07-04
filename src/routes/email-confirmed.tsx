@@ -37,7 +37,7 @@ function EmailConfirmedPage() {
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
@@ -49,7 +49,7 @@ function EmailConfirmedPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="relative mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 py-12 text-center">
         <Link to="/" className="mb-8 inline-flex">
           <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
         </Link>

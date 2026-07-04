@@ -23,7 +23,7 @@ import i18n from "@/i18n";
 // fuera de los providers cuando el árbol entero falla.
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
       <img src="/itineraya-mark.png" alt="Itineraya" className="mb-6 h-12 w-auto opacity-80" />
       <div className="text-8xl font-bold text-sky-700">404</div>
       <h1 className="mt-4 font-display text-2xl font-bold text-white">
@@ -48,7 +48,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
       <img src="/itineraya-mark.png" alt="Itineraya" className="mb-6 h-12 w-auto opacity-80" />
       <h1 className="font-display text-2xl font-bold text-white">
         {i18n.t("errors.errorTitle")}

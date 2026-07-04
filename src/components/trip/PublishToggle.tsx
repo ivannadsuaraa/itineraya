@@ -106,7 +106,7 @@ export function PublishToggle({ tripId }: Props) {
           aria-checked={isPublic}
           disabled={loading}
           onClick={() => onToggle(!isPublic)}
-          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition ${
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition before:absolute before:-inset-3 before:content-[''] ${
             isPublic ? "bg-[#1E6B9A]" : "bg-sky-200"
           } disabled:opacity-60`}
         >
@@ -128,11 +128,11 @@ export function PublishToggle({ tripId }: Props) {
               readOnly
               value={url}
               onFocus={(e) => e.currentTarget.select()}
-              className="flex-1 bg-transparent px-2 text-xs text-emerald-900 outline-none"
+              className="flex-1 bg-transparent px-2 text-base text-emerald-900 outline-none sm:text-xs"
             />
             <button
               onClick={copy}
-              className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.97]"
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 active:scale-[0.97]"
             >
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               {copied ? t("share.copied") : t("share.copy")}
@@ -142,7 +142,7 @@ export function PublishToggle({ tripId }: Props) {
             to="/trip/$slug"
             params={{ slug: slug ?? "" }}
             target="_blank"
-            className="inline-flex min-h-9 items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
+            className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-[#1E6B9A] hover:underline"
           >
             <ExternalLink className="h-3 w-3" />
             {t("publish.viewPublic")}

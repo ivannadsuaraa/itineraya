@@ -46,7 +46,7 @@ function InvitePage() {
   }, [authed]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] flex items-center justify-center p-6">
+    <div className="min-h-dvh bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] flex items-center justify-center p-6">
       <div className="max-w-md rounded-3xl bg-white/85 p-8 text-center shadow-xl backdrop-blur-xl ring-1 ring-white/60">
         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white shadow-lg">
           <Users className="h-6 w-6" />
