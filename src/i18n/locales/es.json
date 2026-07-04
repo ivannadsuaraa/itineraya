@@ -380,6 +380,7 @@
     "arrivalTime": "Hora de llegada",
     "departureTime": "Hora de vuelta",
     "timeHint": "Opcional · ayuda a ajustar el primer y último día",
+    "maxDaysWarning": "El máximo es de 20 días para asegurar la mejor experiencia",
     "compTitle": "¿Con quién vas?",
     "compSubtitle": "Adaptaremos el plan al grupo.",
     "compSolo": "Solo",

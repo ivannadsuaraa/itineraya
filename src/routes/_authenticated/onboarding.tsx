@@ -1,8 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { differenceInCalendarDays } from "date-fns";
 import { es as esLocale, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
@@ -178,6 +179,13 @@ function OnboardingPage() {
     hotel: null,
   }));
 
+  const MAX_TRIP_DAYS = 20;
+  const tripDayCount =
+    data.dateRange?.from && data.dateRange?.to
+      ? differenceInCalendarDays(data.dateRange.to, data.dateRange.from) + 1
+      : 0;
+  const exceedsMaxDays = tripDayCount > MAX_TRIP_DAYS;
+
   // 4 pasos (antes 7): destino → fechas → perfil de viaje → opcionales.
   // Los pasos 3-4 tienen defaults razonables; llegar al valor cuesta menos clics.
   const totalSteps = 4;
@@ -185,7 +193,7 @@ function OnboardingPage() {
     step === 0
       ? data.destination.trim().length > 1
       : step === 1
-        ? Boolean(data.dateRange?.from && data.dateRange?.to)
+        ? Boolean(data.dateRange?.from && data.dateRange?.to) && !exceedsMaxDays
         : true;
 
   const next = () => {
@@ -328,6 +336,12 @@ function OnboardingPage() {
                 placeholder={t("onboarding.datePick")}
                 nightsLabel={(count) => t("trip.nights", { count })}
               />
+              {exceedsMaxDays && (
+                <div className="flex items-center gap-2.5 rounded-2xl border border-[#1E6B9A]/20 bg-[#1E6B9A]/8 px-4 py-3 text-sm font-medium text-[#1E6B9A]">
+                  <Info className="h-4 w-4 shrink-0" />
+                  {t("onboarding.maxDaysWarning")}
+                </div>
+              )}
               <div className="grid gap-3 sm:grid-cols-2">
                 <TimeInput
                   label={t("onboarding.arrivalTime")}
