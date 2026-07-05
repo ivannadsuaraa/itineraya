@@ -186,9 +186,10 @@ function OnboardingPage() {
       : 0;
   const exceedsMaxDays = tripDayCount > MAX_TRIP_DAYS;
 
-  // 4 pasos (antes 7): destino → fechas → perfil de viaje → opcionales.
-  // Los pasos 3-4 tienen defaults razonables; llegar al valor cuesta menos clics.
-  const totalSteps = 4;
+  // 7 pasos: destino → fechas → compañía → presupuesto → gustos → alojamiento
+  // → restricciones. Un concepto por pantalla. Solo destino y fechas son
+  // obligatorios; el resto ya trae valores por defecto razonables.
+  const totalSteps = 7;
   const canContinue =
     step === 0
       ? data.destination.trim().length > 1
@@ -361,36 +362,39 @@ function OnboardingPage() {
           )}
 
           {step === 2 && (
+            <StepShell title={t("onboarding.compTitle")} subtitle={t("onboarding.compSubtitle")}>
+              <OptionGrid
+                value={data.companion}
+                onChange={(companion) => setData((prevData) => ({ ...prevData, companion }))}
+                options={[
+                  ["solo", t("onboarding.compSolo"), "🧭"],
+                  ["pareja", t("onboarding.compPair"), "💙"],
+                  ["amigos", t("onboarding.compFriends"), "🎒"],
+                  ["familia", t("onboarding.compFamily"), "🏡"],
+                ]}
+              />
+            </StepShell>
+          )}
+
+          {step === 3 && (
             <StepShell
-              title={t("onboarding.profileTitle")}
-              subtitle={t("onboarding.profileSubtitle")}
+              title={t("onboarding.budgetTitle")}
+              subtitle={t("onboarding.budgetSubtitle")}
             >
-              <div>
-                <SectionLabel>{t("onboarding.compTitle")}</SectionLabel>
-                <OptionGrid
-                  compact
-                  value={data.companion}
-                  onChange={(companion) => setData((prevData) => ({ ...prevData, companion }))}
-                  options={[
-                    ["solo", t("onboarding.compSolo"), "🧭"],
-                    ["pareja", t("onboarding.compPair"), "💙"],
-                    ["amigos", t("onboarding.compFriends"), "🎒"],
-                    ["familia", t("onboarding.compFamily"), "🏡"],
-                  ]}
-                />
-              </div>
+              <BudgetRangeSlider
+                value={data.budgetRange}
+                onChange={(budgetRange) => setData((prevData) => ({ ...prevData, budgetRange }))}
+              />
+            </StepShell>
+          )}
 
+          {step === 4 && (
+            <StepShell title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleSubtitle")}>
               <div>
-                <SectionLabel>{t("onboarding.budgetTitle")}</SectionLabel>
-                <BudgetRangeSlider
-                  value={data.budgetRange}
-                  onChange={(budgetRange) => setData((prevData) => ({ ...prevData, budgetRange }))}
-                />
-              </div>
-
-              <div>
-                <SectionLabel>{t("onboarding.styleTitle")}</SectionLabel>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <p className="mb-3 text-xs font-semibold text-sky-600">
+                  {t("onboarding.styleMultiSubtitle")}
+                </p>
+                <div className="grid gap-2.5 sm:grid-cols-2">
                   {getTripTypesForDestination(data.destination).map((id) => {
                     const selected = data.tripTypes.includes(id);
                     return (
@@ -406,7 +410,7 @@ function OnboardingPage() {
                           }))
                         }
                         className={cn(
-                          "rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition active:scale-[0.97]",
+                          "rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition active:scale-[0.97]",
                           selected
                             ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
                             : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
@@ -429,62 +433,57 @@ function OnboardingPage() {
                     }
                   }}
                   placeholder={t("onboarding.stylePh")}
-                  className="mt-3 min-h-20 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
+                  className="mt-4 min-h-24 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
                 />
               </div>
             </StepShell>
           )}
 
-          {step === 3 && (
-            <StepShell
-              title={t("onboarding.optionalTitle")}
-              subtitle={t("onboarding.optionalSubtitle")}
-            >
-              <div>
-                <SectionLabel>{t("onboarding.accomTitle")}</SectionLabel>
-                <OptionGrid
-                  compact
-                  value={data.hasAccommodation ? "yes" : "no"}
-                  onChange={(value) =>
-                    setData((prevData) => ({
-                      ...prevData,
-                      hasAccommodation: value === "yes",
-                      hotel: value === "yes" ? prevData.hotel : null,
-                    }))
-                  }
-                  options={[
-                    ["no", t("onboarding.accomNo"), "✨"],
-                    ["yes", t("onboarding.accomYes"), "🏨"],
-                  ]}
-                />
-                {data.hasAccommodation && (
-                  <div className="mt-3">
-                    <HotelMapPicker
-                      destination={data.destination}
-                      value={data.hotel}
-                      onChange={(hotel) => setData((prevData) => ({ ...prevData, hotel }))}
-                    />
-                  </div>
-                )}
-              </div>
+          {step === 5 && (
+            <StepShell title={t("onboarding.accomTitle")} subtitle={t("onboarding.accomSubtitle")}>
+              <OptionGrid
+                value={data.hasAccommodation ? "yes" : "no"}
+                onChange={(value) =>
+                  setData((prevData) => ({
+                    ...prevData,
+                    hasAccommodation: value === "yes",
+                    hotel: value === "yes" ? prevData.hotel : null,
+                  }))
+                }
+                options={[
+                  ["no", t("onboarding.accomNo"), "✨"],
+                  ["yes", t("onboarding.accomYes"), "🏨"],
+                ]}
+              />
+              {data.hasAccommodation && (
+                <div className="mt-4">
+                  <HotelMapPicker
+                    destination={data.destination}
+                    value={data.hotel}
+                    onChange={(hotel) => setData((prevData) => ({ ...prevData, hotel }))}
+                  />
+                </div>
+              )}
+            </StepShell>
+          )}
 
-              <div>
-                <SectionLabel>{t("onboarding.avoidTitle")}</SectionLabel>
-                <textarea
-                  value={data.avoid}
-                  onChange={(event) =>
-                    setData((prevData) => ({ ...prevData, avoid: event.target.value }))
+          {step === 6 && (
+            <StepShell title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>
+              <textarea
+                value={data.avoid}
+                onChange={(event) =>
+                  setData((prevData) => ({ ...prevData, avoid: event.target.value }))
+                }
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void finish();
                   }
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault();
-                      void finish();
-                    }
-                  }}
-                  placeholder={t("onboarding.avoidPh")}
-                  className="min-h-24 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
-                />
-              </div>
+                }}
+                placeholder={t("onboarding.avoidPh")}
+                className="min-h-32 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
+                autoFocus
+              />
             </StepShell>
           )}
         </div>
@@ -538,12 +537,6 @@ function StepShell({
       </div>
       {children}
     </div>
-  );
-}
-
-function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="mb-2.5 text-[13px] font-bold uppercase tracking-wide text-sky-700">{children}</p>
   );
 }
 
