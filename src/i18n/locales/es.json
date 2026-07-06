@@ -325,7 +325,9 @@
     "trialDaysLeft": "Te quedan {{count}} días de prueba gratuita",
     "trialPerk": "— Disfruta del asistente IA y todas las funciones premium.",
     "trialKeep": "Mantener acceso",
-    "nDays": "{{count}} días"
+    "nDays": "{{count}} días",
+    "globeViewItinerary": "Ver itinerario",
+    "globeClose": "Cerrar"
   },
   "saved": {
     "metaTitle": "Guardados – Itineraya",
@@ -551,7 +553,17 @@
     "nights_one": "{{count}} noche",
     "nights_other": "{{count}} noches",
     "readyShare": "¡Tu itinerario está listo! Compártelo con tus compañeros de viaje ✈️",
-    "loadingHint": "Suele tardar menos de un minuto"
+    "loadingHint": "Suele tardar menos de un minuto",
+    "visualMapCta": "Ver mapa del viaje",
+    "visualMapTitle": "Tu viaje, ilustrado",
+    "visualMapEyebrow": "Mapa del viaje",
+    "visualMapDays": "Días",
+    "visualMapActivities": "Actividades",
+    "visualMapExperiences": "Experiencias",
+    "visualMapDownload": "Descargar",
+    "visualMapDownloaded": "Mapa del viaje descargado ✨",
+    "visualMapFooter": "Creado con Itineraya  ·  itineraya.com",
+    "visualMapAria": "Mapa ilustrado del viaje a {{destination}}"
   },
   "tripmates": {
     "tag": "Compañeros de viaje",

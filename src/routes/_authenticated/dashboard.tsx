@@ -32,6 +32,8 @@ import {
   type Inspiration,
 } from "@/lib/dashboard-helpers";
 import { lazy, Suspense } from "react";
+import { geocodeAndPersistTrip, primeGeocodeCache } from "@/lib/geocode";
+import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import type { PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
 
 const GlobePolaroids = lazy(() =>
@@ -80,38 +82,22 @@ const UNSPLASH_FALLBACK = [
   "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=400&fit=crop&auto=format&q=75",
 ];
 
-// Session-level cache — avoids duplicate Nominatim calls within the same page session
-const geocodeCache = new Map<string, [number, number] | null>();
-
-// Geocode via Nominatim (no API key required). Saves result to Supabase so future
-// loads skip the network call entirely.
-async function geocodeAndSave(
-  tripId: string,
-  destination: string,
-): Promise<[number, number] | null> {
-  const key = destination.toLowerCase().trim();
-  if (geocodeCache.has(key)) return geocodeCache.get(key)!;
-  try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`,
-      { headers: { "Accept-Language": "en" } },
-    );
-    const results = (await res.json()) as Array<{ lat: string; lon: string }>;
-    if (results[0]) {
-      const coords: [number, number] = [parseFloat(results[0].lat), parseFloat(results[0].lon)];
-      geocodeCache.set(key, coords);
-      // Persist so next load uses stored values (suppress TS error for new columns)
-      void supabase
-        .from("trips")
-        .update({ geo_lat: coords[0], geo_lng: coords[1] } as never)
-        .eq("id", tripId);
-      return coords;
-    }
-  } catch {
-    // network failure or parse error — fall through to null
-  }
-  geocodeCache.set(key, null);
-  return null;
+// Carga de viajes tolerante a migraciones: si las columnas geo_lat/geo_lng
+// aún no existen en prod, la query con ellas falla entera y el dashboard se
+// quedaba vacío. Reintenta sin las columnas geo antes de rendirse.
+async function fetchTrips(userId: string) {
+  const base = "id,destination,start_date,end_date,hero_image_url,status,created_at";
+  const withGeo = await supabase
+    .from("trips")
+    .select(`${base},geo_lat,geo_lng`)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (!withGeo.error) return withGeo;
+  return supabase
+    .from("trips")
+    .select(base)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 }
 
 function DashboardPage() {
@@ -133,7 +119,10 @@ function DashboardPage() {
       const meta = u.user?.user_metadata as { full_name?: string; name?: string } | undefined;
       // Fallback al prefijo del email antes que al genérico "viajero": un saludo
       // con nombre real se siente personal aunque el usuario no rellenara perfil.
-      const emailPrefix = u.user?.email?.split("@")[0]?.replace(/[._-]+/g, " ").split(" ")[0];
+      const emailPrefix = u.user?.email
+        ?.split("@")[0]
+        ?.replace(/[._-]+/g, " ")
+        .split(" ")[0];
       const prettyPrefix = emailPrefix
         ? emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
         : undefined;
@@ -155,7 +144,11 @@ function DashboardPage() {
         .select("welcome_completed, plan, trial_ends_at")
         .eq("id", u.user.id)
         .maybeSingle();
-      const prof = profRaw as unknown as { welcome_completed?: boolean; plan?: string; trial_ends_at?: string | null } | null;
+      const prof = profRaw as unknown as {
+        welcome_completed?: boolean;
+        plan?: string;
+        trial_ends_at?: string | null;
+      } | null;
       const userPlan = prof?.plan ?? "free";
       const trialEndsAt = prof?.trial_ends_at ?? null;
       setIsFree(userPlan === "free");
@@ -170,11 +163,7 @@ function DashboardPage() {
       }
 
       const [{ data, error }, { data: savedData }] = await Promise.all([
-        supabase
-          .from("trips")
-          .select("id,destination,start_date,end_date,hero_image_url,status,created_at,geo_lat,geo_lng")
-          .eq("user_id", u.user.id)
-          .order("created_at", { ascending: false }),
+        fetchTrips(u.user.id),
         supabase
           .from("saved_inspirations")
           .select("id,slug,destination,hero_image_url,summary,n_days")
@@ -226,7 +215,9 @@ function DashboardPage() {
   const upcoming = useMemo(
     () =>
       (trips ?? [])
-        .filter((tr) => tr.start_date && new Date(tr.start_date) >= new Date(new Date().toDateString()))
+        .filter(
+          (tr) => tr.start_date && new Date(tr.start_date) >= new Date(new Date().toDateString()),
+        )
         .sort((a, b) => (a.start_date! < b.start_date! ? -1 : 1))[0],
     [trips],
   );
@@ -242,37 +233,60 @@ function DashboardPage() {
   const [globeMarkers, setGlobeMarkers] = useState<PolaroidMarker[] | undefined>(undefined);
   const geocodeAbortRef = useRef(false);
 
+  // Cada viaje del usuario se convierte en un punto del globo en su posición
+  // real. Las coordenadas ya guardadas pintan al instante; las que faltan se
+  // geocodifican en segundo plano (cola secuencial de Nominatim) y el globo
+  // se va completando marcador a marcador.
   useEffect(() => {
-    if (!trips || trips.length === 0) { setGlobeMarkers(undefined); return; }
+    if (!trips || trips.length === 0) {
+      setGlobeMarkers(undefined);
+      return;
+    }
     geocodeAbortRef.current = false;
     const rotations = [-5, 4, -3, 6, -4, 3, -2, 5];
-    Promise.all(
-      trips.map(async (trip, i): Promise<PolaroidMarker | null> => {
-        // Use stored coordinates if available, otherwise geocode via Nominatim
-        const row = trip as unknown as { geo_lat?: number | null; geo_lng?: number | null };
-        let coords: [number, number] | null = null;
-        if (row.geo_lat != null && row.geo_lng != null) {
-          coords = [row.geo_lat, row.geo_lng];
-          // Prime the in-memory cache so sibling trips reuse it
-          geocodeCache.set(trip.destination.toLowerCase().trim(), coords);
-        } else {
-          coords = await geocodeAndSave(trip.id, trip.destination);
-        }
-        if (!coords) return null;
-        return {
-          id: trip.id,
-          location: coords,
-          image: trip.hero_image_url ?? UNSPLASH_FALLBACK[i % UNSPLASH_FALLBACK.length],
-          caption: trip.destination.split(",")[0],
-          rotate: rotations[i % rotations.length],
-        };
-      }),
-    ).then((results) => {
-      if (geocodeAbortRef.current) return;
-      const valid = results.filter((m): m is PolaroidMarker => m !== null);
-      setGlobeMarkers(valid.length > 0 ? valid : undefined);
+
+    const toMarker = (trip: Trip, i: number, coords: [number, number]): PolaroidMarker => ({
+      id: trip.id,
+      location: coords,
+      image: trip.hero_image_url ?? UNSPLASH_FALLBACK[i % UNSPLASH_FALLBACK.length],
+      caption: trip.destination.split(",")[0],
+      rotate: rotations[i % rotations.length],
     });
-    return () => { geocodeAbortRef.current = true; };
+
+    const resolved = new Map<string, PolaroidMarker>();
+    const publish = () => {
+      if (geocodeAbortRef.current) return;
+      // Mantiene el orden de la lista de viajes, no el orden de resolución
+      const ordered = trips
+        .map((tr) => resolved.get(tr.id))
+        .filter((m): m is PolaroidMarker => m !== undefined);
+      setGlobeMarkers(ordered.length > 0 ? ordered : undefined);
+    };
+
+    const pending: Trip[] = [];
+    trips.forEach((trip, i) => {
+      if (trip.geo_lat != null && trip.geo_lng != null) {
+        const coords: [number, number] = [trip.geo_lat, trip.geo_lng];
+        primeGeocodeCache(trip.destination, coords);
+        resolved.set(trip.id, toMarker(trip, i, coords));
+      } else {
+        pending.push(trip);
+      }
+    });
+    publish();
+
+    pending.forEach((trip) => {
+      const i = trips.indexOf(trip);
+      void geocodeAndPersistTrip(trip.id, trip.destination).then((coords) => {
+        if (!coords || geocodeAbortRef.current) return;
+        resolved.set(trip.id, toMarker(trip, i, coords));
+        publish();
+      });
+    });
+
+    return () => {
+      geocodeAbortRef.current = true;
+    };
   }, [trips]);
 
   const calendarTrips = useMemo(
@@ -291,7 +305,6 @@ function DashboardPage() {
 
   return (
     <PageTransition className="min-h-dvh bg-slate-50">
-
       {/* ── Dark header with globe ── */}
       <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10 lg:px-8">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -304,7 +317,9 @@ function DashboardPage() {
             <div>
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-sky-300">{t("dashboard.hello", { name })}</p>
+                  <p className="text-sm font-semibold text-sky-300">
+                    {t("dashboard.hello", { name })}
+                  </p>
                   <h1 className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">
                     {t("dashboard.where")}
                   </h1>
@@ -327,12 +342,14 @@ function DashboardPage() {
 
             {/* Right: Globe */}
             <div className="mx-auto w-full max-w-[300px] lg:max-w-none">
-              <Suspense fallback={<div className="aspect-square w-full rounded-full bg-sky-100/50 animate-pulse" />}>
-                <GlobePolaroids
-                  markers={globeMarkers}
-                  className="w-full"
-                  speed={0.003}
-                />
+              <Suspense
+                fallback={
+                  <div className="aspect-square w-full rounded-full bg-sky-100/50 animate-pulse" />
+                }
+              >
+                {/* Solo los destinos reales del usuario: nunca los marcadores
+                    de muestra del componente (eso es cosa de la landing). */}
+                <GlobePolaroids markers={globeMarkers ?? []} className="w-full" speed={0.003} />
               </Suspense>
             </div>
           </div>
@@ -350,9 +367,7 @@ function DashboardPage() {
                   ? t("dashboard.trialLastDay")
                   : t("dashboard.trialDaysLeft", { count: trialDaysLeft })}
               </span>
-              <span className="hidden text-amber-600 sm:inline">
-                {t("dashboard.trialPerk")}
-              </span>
+              <span className="hidden text-amber-600 sm:inline">{t("dashboard.trialPerk")}</span>
             </div>
             <Link
               to="/pricing"
@@ -366,7 +381,6 @@ function DashboardPage() {
 
       {/* ── Content ── */}
       <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 md:pb-12 lg:px-8">
-
         {/* Tab bar */}
         <div className="mt-6 flex items-center gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-100 w-fit">
           {(["viajes", "calendario"] as const).map((tab) => {
@@ -412,7 +426,10 @@ function DashboardPage() {
               {trips === null && (
                 <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                    <div
+                      key={i}
+                      className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100"
+                    >
                       <div className="aspect-[4/3] animate-pulse bg-slate-200" />
                       <div className="space-y-2 p-4">
                         <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
@@ -444,9 +461,13 @@ function DashboardPage() {
                   {otherTrips.map((trip, i) => (
                     <motion.div
                       key={trip.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.4, delay: i * 0.04 }}
+                      initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{
+                        duration: 0.45,
+                        ease: [0.23, 1, 0.32, 1],
+                        delay: Math.min(i * 0.055, 0.5),
+                      }}
                     >
                       <TripCard
                         trip={trip}
@@ -476,19 +497,18 @@ function DashboardPage() {
                     >
                       <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
                         <div className="relative aspect-[4/3] overflow-hidden">
-                          {s.hero_image_url ? (
-                            <img
-                              src={s.hero_image_url}
-                              alt={s.destination}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                            />
-                          ) : (
-                            <div className="h-full w-full bg-gradient-to-br from-sky-300 to-sky-600" />
-                          )}
+                          <SmartImage
+                            src={s.hero_image_url}
+                            fallbackSrc={destinationFallback(s.destination)}
+                            gradientClassName="bg-gradient-to-br from-sky-300 to-sky-600"
+                            alt={s.destination}
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                          />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
                           <div className="absolute bottom-3 left-4 right-4 text-white">
-                            <div className="font-display text-base font-bold drop-shadow">{s.destination}</div>
+                            <div className="font-display text-base font-bold drop-shadow">
+                              {s.destination}
+                            </div>
                             {s.n_days && (
                               <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
                                 <Calendar className="h-2.5 w-2.5" />
@@ -548,7 +568,9 @@ function DashboardPage() {
                         {insp.tag}
                       </span>
                       <div className="absolute bottom-3 left-4 right-4 text-white">
-                        <div className="font-display text-sm font-bold drop-shadow">{insp.destination}</div>
+                        <div className="font-display text-sm font-bold drop-shadow">
+                          {insp.destination}
+                        </div>
                         <div className="text-[11px] opacity-80">{insp.country}</div>
                       </div>
                     </div>
@@ -573,7 +595,9 @@ function DashboardPage() {
         {activeTab === "calendario" && (
           <section className="mt-6">
             <div className="mb-5">
-              <h2 className="font-display text-lg font-bold text-slate-900">{t("dashboard.calendarTitle")}</h2>
+              <h2 className="font-display text-lg font-bold text-slate-900">
+                {t("dashboard.calendarTitle")}
+              </h2>
               <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.calendarSub")}</p>
             </div>
             <div className="max-w-lg">
@@ -627,8 +651,11 @@ function TripCard({
 }) {
   const { t } = useTranslation();
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const isPast = trip.end_date ? new Date(trip.end_date) < new Date(new Date().toDateString()) : false;
-  const isUpcoming = trip.start_date && new Date(trip.start_date) >= new Date(new Date().toDateString());
+  const isPast = trip.end_date
+    ? new Date(trip.end_date) < new Date(new Date().toDateString())
+    : false;
+  const isUpcoming =
+    trip.start_date && new Date(trip.start_date) >= new Date(new Date().toDateString());
   const days =
     trip.start_date && trip.end_date
       ? differenceInCalendarDays(parseISO(trip.end_date), parseISO(trip.start_date)) + 1
@@ -638,16 +665,12 @@ function TripCard({
     <article className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-lg">
       <Link to="/my-trip/$tripId" params={{ tripId: trip.id }} className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
-          {trip.hero_image_url ? (
-            <img
-              src={trip.hero_image_url}
-              alt={trip.destination}
-              loading="lazy"
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="h-full w-full bg-gradient-to-br from-sky-400 to-sky-700" />
-          )}
+          <SmartImage
+            src={trip.hero_image_url}
+            fallbackSrc={destinationFallback(trip.destination)}
+            alt={trip.destination}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
 
           <div className="absolute right-3 top-3">
@@ -669,7 +692,9 @@ function TripCard({
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
-            <h3 className="font-display text-base font-bold leading-tight drop-shadow">{trip.destination}</h3>
+            <h3 className="font-display text-base font-bold leading-tight drop-shadow">
+              {trip.destination}
+            </h3>
             <div className="mt-1 flex items-center gap-1.5 text-[11px] text-white/80">
               <Calendar className="h-2.5 w-2.5" />
               <span>
@@ -698,7 +723,10 @@ function TripCard({
               <span className="text-[11px] text-red-600">{t("dashboard.deleteTripConfirm")}</span>
               <button
                 type="button"
-                onClick={() => { setConfirmDelete(false); onDelete(); }}
+                onClick={() => {
+                  setConfirmDelete(false);
+                  onDelete();
+                }}
                 className="flex h-9 items-center px-1 text-[11px] font-bold text-red-600 hover:text-red-700"
               >
                 {t("dashboard.deleteTripYes")}
@@ -762,7 +790,9 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
     Math.max(0, differenceInCalendarDays(parseISO(trip.start_date!), new Date())),
   );
   const [displayed, setDisplayed] = useState(0);
-  const [weather, setWeather] = useState<{ tempC: number; code: number } | null | undefined>(undefined);
+  const [weather, setWeather] = useState<{ tempC: number; code: number } | null | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     setDays(Math.max(0, differenceInCalendarDays(parseISO(trip.start_date!), new Date())));
@@ -788,7 +818,9 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
     fetchWeather(trip.destination).then((w) => {
       if (!cancelled) setWeather(w);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [trip.destination]);
 
   const isEs = locale === es;
@@ -799,15 +831,14 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
       <div className="group overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15">
         <div className="grid md:grid-cols-[1.4fr_1fr]">
           <div className="relative h-44 overflow-hidden md:h-56 md:rounded-l-2xl">
-            {trip.hero_image_url ? (
-              <img
-                src={trip.hero_image_url}
-                alt={trip.destination}
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <div className="h-full w-full bg-gradient-to-br from-sky-600 to-sky-800" />
-            )}
+            <SmartImage
+              src={trip.hero_image_url}
+              fallbackSrc={destinationFallback(trip.destination, 1200, 700)}
+              gradientClassName="bg-gradient-to-br from-sky-600 to-sky-800"
+              alt={trip.destination}
+              loading="eager"
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent md:bg-gradient-to-r" />
             <div className="absolute bottom-4 left-5 right-5 text-white">
               <p className="text-[10px] font-semibold uppercase tracking-widest text-white/70">

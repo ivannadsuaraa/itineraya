@@ -78,7 +78,7 @@ export function DesktopTopNav() {
                     : "text-slate-500 hover:bg-slate-50 hover:text-sky-900"
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className={`h-4 w-4 ${active ? "nav-icon-active" : ""}`} />
                 {t(item.labelKey)}
                 {active && (
                   <span className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[#1E6B9A]" />
@@ -149,7 +149,7 @@ export function MobileBottomBar() {
                   <span className="absolute top-0 left-1/2 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[#1E6B9A]" />
                 )}
                 <Icon
-                  className={`h-5 w-5 transition-transform duration-150 ${active ? "scale-110" : ""}`}
+                  className={`h-5 w-5 transition-transform duration-150 ${active ? "nav-icon-active" : ""}`}
                 />
                 {t(item.labelKey)}
               </Link>

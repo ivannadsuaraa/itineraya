@@ -17,6 +17,7 @@ import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 import { AuthModalRouteSync } from "@/components/auth/AuthModalRouteSync";
 import { Toaster } from "@/components/ui/sonner";
+import { RouteTransition } from "@/components/ui/RouteTransition";
 import i18n from "@/i18n";
 import { captureReferralFromLocation } from "@/lib/referral";
 
@@ -51,9 +52,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
       <img src="/itineraya-mark.png" alt="Itineraya" className="mb-6 h-12 w-auto opacity-80" />
-      <h1 className="font-display text-2xl font-bold text-white">
-        {i18n.t("errors.errorTitle")}
-      </h1>
+      <h1 className="font-display text-2xl font-bold text-white">{i18n.t("errors.errorTitle")}</h1>
       <p className="mt-2 max-w-sm text-sky-400">{i18n.t("errors.errorBody")}</p>
       <div className="mt-8 flex flex-wrap justify-center gap-2">
         <button
@@ -105,7 +104,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image", content: "https://itineraya.com/og-image.jpg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
-      { property: "og:image:alt", content: "Itineraya — Tu itinerario de viaje personalizado con IA" },
+      {
+        property: "og:image:alt",
+        content: "Itineraya — Tu itinerario de viaje personalizado con IA",
+      },
       { property: "og:locale", content: "es_ES" },
     ],
     links: [
@@ -157,7 +159,9 @@ function RootComponent() {
         <LanguageProvider>
           <AuthModalProvider>
             {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
+            <RouteTransition>
+              <Outlet />
+            </RouteTransition>
             <AuthModalRouteSync />
             <CookieBanner />
             <Toaster position="top-center" richColors />

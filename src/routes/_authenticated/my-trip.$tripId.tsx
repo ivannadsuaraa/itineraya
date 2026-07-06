@@ -1,6 +1,9 @@
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { EASE_OUT } from "@/lib/motion";
 
 import {
   ArrowLeft,
@@ -14,6 +17,7 @@ import {
   Calendar as CalendarIcon,
   Wand2,
   Map as MapIcon,
+  Route as RouteIcon,
   Users,
   Clock,
   X,
@@ -38,6 +42,8 @@ import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { ShareDialog } from "@/components/trip/ShareDialog";
 import { PublishToggle } from "@/components/trip/PublishToggle";
 import { TripmatesModal } from "@/components/trip/TripmatesModal";
+import { TripVisualMap } from "@/components/trip/TripVisualMap";
+import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/ui/PageTransition";
@@ -69,27 +75,43 @@ type Activity = {
 
 function getCategoryIcon(category: ActivityCategory | undefined) {
   switch (category) {
-    case "hotel": return Building2;
-    case "restaurant": return UtensilsCrossed;
-    case "activity": return Zap;
-    case "transport": return Train;
-    case "sight": return Landmark;
-    case "nightlife": return Music;
-    case "shopping": return ShoppingBag;
-    default: return MapPin;
+    case "hotel":
+      return Building2;
+    case "restaurant":
+      return UtensilsCrossed;
+    case "activity":
+      return Zap;
+    case "transport":
+      return Train;
+    case "sight":
+      return Landmark;
+    case "nightlife":
+      return Music;
+    case "shopping":
+      return ShoppingBag;
+    default:
+      return MapPin;
   }
 }
 
 function getCategoryColor(category: ActivityCategory | undefined): string {
   switch (category) {
-    case "hotel": return "bg-purple-100 text-purple-700";
-    case "restaurant": return "bg-orange-100 text-orange-700";
-    case "activity": return "bg-emerald-100 text-emerald-700";
-    case "transport": return "bg-blue-100 text-blue-700";
-    case "sight": return "bg-amber-100 text-amber-700";
-    case "nightlife": return "bg-pink-100 text-pink-700";
-    case "shopping": return "bg-rose-100 text-rose-700";
-    default: return "bg-slate-100 text-slate-600";
+    case "hotel":
+      return "bg-purple-100 text-purple-700";
+    case "restaurant":
+      return "bg-orange-100 text-orange-700";
+    case "activity":
+      return "bg-emerald-100 text-emerald-700";
+    case "transport":
+      return "bg-blue-100 text-blue-700";
+    case "sight":
+      return "bg-amber-100 text-amber-700";
+    case "nightlife":
+      return "bg-pink-100 text-pink-700";
+    case "shopping":
+      return "bg-rose-100 text-rose-700";
+    default:
+      return "bg-slate-100 text-slate-600";
   }
 }
 
@@ -220,6 +242,7 @@ function ItineraryPage() {
   } | null>(null);
   const [view, setView] = useState<"cards" | "text" | "timeline">("cards");
   const [mapModalOpen, setMapModalOpen] = useState(false);
+  const [visualMapOpen, setVisualMapOpen] = useState(false);
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -331,7 +354,10 @@ function ItineraryPage() {
           <p className="mt-2 text-sm text-slate-500">{error}</p>
           <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
             <button
-              onClick={() => { setError(null); setRetryKey((k) => k + 1); }}
+              onClick={() => {
+                setError(null);
+                setRetryKey((k) => k + 1);
+              }}
               className="rounded-full bg-sky-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-800"
             >
               {t("trip.errorRetry")}
@@ -352,7 +378,7 @@ function ItineraryPage() {
   const itin = trip.itinerary;
 
   return (
-    <PageTransition className="min-h-dvh bg-slate-50">
+    <PageTransition className="min-h-dvh bg-slate-50" personality="focus">
       {/* ── Sticky toolbar ── */}
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-5">
@@ -369,8 +395,14 @@ function ItineraryPage() {
             {/* View toggle */}
             <div className="flex rounded-full bg-slate-100 p-0.5">
               {(["cards", "text", "timeline"] as const).map((v) => {
-                const Icon = v === "cards" ? LayoutGrid : v === "text" ? FileText : GanttChartSquare;
-                const label = v === "cards" ? t("trip.viewCards") : v === "text" ? t("trip.viewText") : t("trip.viewTimeline");
+                const Icon =
+                  v === "cards" ? LayoutGrid : v === "text" ? FileText : GanttChartSquare;
+                const label =
+                  v === "cards"
+                    ? t("trip.viewCards")
+                    : v === "text"
+                      ? t("trip.viewText")
+                      : t("trip.viewTimeline");
                 return (
                   <button
                     key={v}
@@ -395,6 +427,15 @@ function ItineraryPage() {
             >
               <MapIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.viewMap")}</span>
+            </button>
+
+            {/* Mapa ilustrado del viaje (póster descargable) */}
+            <button
+              onClick={() => setVisualMapOpen(true)}
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            >
+              <RouteIcon className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("trip.visualMapCta")}</span>
             </button>
 
             {/* Action buttons */}
@@ -436,15 +477,15 @@ function ItineraryPage() {
 
       {/* ── Hero image ── */}
       <div className="relative h-72 w-full overflow-hidden md:h-96">
-        {trip.hero_image_url ? (
-          <img
-            src={trip.hero_image_url}
-            alt={trip.destination}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-sky-950 to-sky-800" />
-        )}
+        <SmartImage
+          src={trip.hero_image_url}
+          fallbackSrc={destinationFallback(trip.destination, 1600, 900)}
+          gradientClassName="bg-gradient-to-br from-sky-950 to-sky-800"
+          alt={trip.destination}
+          loading="eager"
+          fetchPriority="high"
+          className="h-full w-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
           <div className="mx-auto max-w-5xl">
@@ -484,9 +525,26 @@ function ItineraryPage() {
           className="relative mb-5 block w-full overflow-hidden rounded-2xl text-left shadow-sm ring-1 ring-slate-200 transition hover:shadow-md lg:hidden"
         >
           <div className="relative h-28 bg-[#EAF4FB]">
-            <svg viewBox="0 0 400 112" className="absolute inset-0 h-full w-full" aria-hidden="true" preserveAspectRatio="none">
-              <path d="M0 30 H400 M0 66 H400 M0 96 H400 M80 0 V112 M190 0 V112 M300 0 V112" stroke="#C9E4F5" strokeWidth="2" fill="none" />
-              <path d="M30 88 Q 110 62 160 50 T 280 62 T 375 22" stroke="#1E6B9A" strokeWidth="3" strokeDasharray="7 5" fill="none" strokeLinecap="round" />
+            <svg
+              viewBox="0 0 400 112"
+              className="absolute inset-0 h-full w-full"
+              aria-hidden="true"
+              preserveAspectRatio="none"
+            >
+              <path
+                d="M0 30 H400 M0 66 H400 M0 96 H400 M80 0 V112 M190 0 V112 M300 0 V112"
+                stroke="#C9E4F5"
+                strokeWidth="2"
+                fill="none"
+              />
+              <path
+                d="M30 88 Q 110 62 160 50 T 280 62 T 375 22"
+                stroke="#1E6B9A"
+                strokeWidth="3"
+                strokeDasharray="7 5"
+                fill="none"
+                strokeLinecap="round"
+              />
             </svg>
             {[
               { x: "6%", y: "72%", n: 1 },
@@ -526,8 +584,18 @@ function ItineraryPage() {
           <div>
             {view === "cards" && (
               <div className="space-y-5">
+                {/* El itinerario se revela día a día: los primeros en cascada
+                    al aparecer la página, el resto según entran en pantalla,
+                    con un desenfoque que "enfoca" cada día como algo especial. */}
                 {itin.days.map((day, dayIdx) => (
-                  <DayCard key={day.day} day={day} destination={trip.destination} dayIdx={dayIdx} onActivityUpdate={updateActivity} />
+                  <DayReveal key={day.day} index={dayIdx}>
+                    <DayCard
+                      day={day}
+                      destination={trip.destination}
+                      dayIdx={dayIdx}
+                      onActivityUpdate={updateActivity}
+                    />
+                  </DayReveal>
                 ))}
               </div>
             )}
@@ -563,7 +631,14 @@ function ItineraryPage() {
                         <p className="text-sm text-slate-500 italic">{day.subtitle}</p>
                       )}
                       {day.activities.map((a, actIdx) => (
-                        <ActivityRow key={actIdx} activity={a} destination={trip.destination} dayIdx={dayIdx} actIdx={actIdx} onUpdate={updateActivity} />
+                        <ActivityRow
+                          key={actIdx}
+                          activity={a}
+                          destination={trip.destination}
+                          dayIdx={dayIdx}
+                          actIdx={actIdx}
+                          onUpdate={updateActivity}
+                        />
                       ))}
                     </div>
                   ),
@@ -620,6 +695,15 @@ function ItineraryPage() {
         </div>
       )}
 
+      <TripVisualMap
+        open={visualMapOpen}
+        onClose={() => setVisualMapOpen(false)}
+        destination={trip.destination}
+        days={itin.days}
+        startDate={trip.start_date}
+        endDate={trip.end_date}
+      />
+
       <AssistantEditPanel
         open={assistantOpen}
         onClose={() => setAssistantOpen(false)}
@@ -645,7 +729,34 @@ function ItineraryPage() {
   );
 }
 
-function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
+// Envoltorio de revelado por día. Los tres primeros días entran en cascada
+// (stagger); los demás se animan cuando el usuario los alcanza al hacer scroll.
+function DayReveal({ index, children }: { index: number; children: React.ReactNode }) {
+  const reduce = useReducedMotion();
+  const isMobile = useIsMobile();
+  if (reduce) return <>{children}</>;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30, scale: 0.985, filter: "blur(6px)" }}
+      whileInView={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{
+        duration: isMobile ? 0.4 : 0.55,
+        ease: EASE_OUT,
+        delay: index < 3 ? index * (isMobile ? 0.1 : 0.14) : 0,
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function DayCard({
+  day,
+  destination,
+  dayIdx,
+  onActivityUpdate,
+}: {
   day: Day;
   destination: string;
   dayIdx: number;
@@ -653,6 +764,15 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
 }) {
   const { t, i18n } = useTranslation();
   const [busy, setBusy] = useState<null | "download" | "share">(null);
+
+  // Parallax sutil de la foto del día: la imagen (escalada un 12 %) se
+  // desplaza con el scroll. Desactivado en móvil y con reduced-motion.
+  const imageRef = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const isMobile = useIsMobile();
+  const parallaxOn = !reduce && !isMobile;
+  const { scrollYProgress } = useScroll({ target: imageRef, offset: ["start end", "end start"] });
+  const parallaxY = useTransform(scrollYProgress, [0, 1], ["-6%", "6%"]);
 
   const buildPostcard = async (): Promise<string> => {
     return generatePostcardDataUrl({
@@ -722,13 +842,20 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:shadow-md">
       {/* Day image */}
       {day.image_url ? (
-        <div className="relative aspect-[16/7] w-full overflow-hidden">
-          <img
-            src={day.image_url}
-            alt={day.title}
-            className="h-full w-full object-cover"
-            crossOrigin="anonymous"
-          />
+        <div ref={imageRef} className="relative aspect-[16/7] w-full overflow-hidden">
+          <motion.div
+            style={parallaxOn ? { y: parallaxY, scale: 1.12 } : undefined}
+            className="h-full w-full will-change-transform"
+          >
+            <SmartImage
+              src={day.image_url}
+              fallbackSrc={destinationFallback(`${day.title} ${destination}`, 1400, 620)}
+              gradientClassName="bg-gradient-to-br from-sky-700 to-sky-900"
+              alt={day.title}
+              className="h-full w-full object-cover"
+              crossOrigin="anonymous"
+            />
+          </motion.div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
             <span
@@ -762,7 +889,14 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
       {/* Activities */}
       <div className="space-y-2.5 p-4 sm:p-5">
         {day.activities.map((a, i) => (
-          <ActivityRow key={i} activity={a} destination={destination} dayIdx={dayIdx} actIdx={i} onUpdate={onActivityUpdate} />
+          <ActivityRow
+            key={i}
+            activity={a}
+            destination={destination}
+            dayIdx={dayIdx}
+            actIdx={i}
+            onUpdate={onActivityUpdate}
+          />
         ))}
       </div>
 
@@ -944,7 +1078,11 @@ function ActivityRow({
             className="inline-flex h-9 items-center gap-1 rounded-full bg-white px-2.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50"
           >
             <StickyNote className="h-3 w-3" />
-            {showNotes ? t("trip.noteHide") : activity.notes ? t("trip.noteView") : t("trip.noteAdd")}
+            {showNotes
+              ? t("trip.noteHide")
+              : activity.notes
+                ? t("trip.noteView")
+                : t("trip.noteAdd")}
           </button>
         </div>
       </div>
@@ -1007,6 +1145,30 @@ function LoadingScreen({ destination }: { destination: string | null }) {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-700/25 blur-3xl" />
         <div className="absolute -bottom-16 left-0 h-48 w-72 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
+        {/* Campo de estrellas: partículas que titilan y ascienden despacio
+            mientras la IA trabaja. Posiciones deterministas, GPU-only. */}
+        {Array.from({ length: 26 }).map((_, i) => {
+          const left = (i * 37 + 13) % 100;
+          const top = (i * 53 + 29) % 100;
+          const size = 1.5 + ((i * 7) % 3);
+          const dur = 3.5 + ((i * 11) % 5);
+          const delay = (i * 0.47) % 4;
+          return (
+            <span
+              key={i}
+              className="absolute rounded-full bg-sky-200"
+              style={{
+                left: `${left}%`,
+                top: `${top}%`,
+                width: size,
+                height: size,
+                opacity: 0,
+                animation: `loading-star ${dur}s ease-in-out ${delay}s infinite`,
+                willChange: "transform, opacity",
+              }}
+            />
+          );
+        })}
       </div>
 
       <div className="relative flex w-full max-w-md flex-col items-center text-center">
@@ -1069,6 +1231,13 @@ function LoadingScreen({ destination }: { destination: string | null }) {
         @keyframes loading-kenburns {
           from { transform: scale(1.05) translateY(0); }
           to { transform: scale(1.12) translateY(-1.5%); }
+        }
+        @keyframes loading-star {
+          0%, 100% { opacity: 0; transform: translateY(0) scale(0.8); }
+          20% { opacity: 0.9; }
+          60% { opacity: 0.45; }
+          80% { opacity: 0.1; }
+          99% { transform: translateY(-26px) scale(1.05); }
         }
       `}</style>
     </div>

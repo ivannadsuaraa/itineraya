@@ -112,7 +112,7 @@ function hexToRgba(hex: string, a: number): string {
 // older itineraries without a category still get a sensible icon.
 // ---------------------------------------------------------------------------
 
-type IconId =
+export type IconId =
   | "museum"
   | "beach"
   | "mountain"
@@ -124,7 +124,7 @@ type IconId =
   | "walk"
   | "pin";
 
-const ICON_PATHS: Record<IconId, string> = {
+export const ICON_PATHS: Record<IconId, string> = {
   // Museum / monument: columns + pediment
   museum: '<path d="M3 21h18M4 21V10M20 21V10M2 10l10-6 10 6M6 10v7M10 10v7M14 10v7M18 10v7"/>',
   // Beach: palm + waves
@@ -173,7 +173,7 @@ const KEYWORD_ICON: Array<[RegExp, IconId]> = [
   [/paseo|barrio|calle|walk|stroll|neighbo/i, "walk"],
 ];
 
-function matchIcon(activity: PostcardActivity): IconId {
+export function matchIcon(activity: PostcardActivity): IconId {
   const text = `${activity.title} ${activity.description ?? ""}`;
   for (const [re, icon] of KEYWORD_ICON) {
     if (re.test(text)) return icon;

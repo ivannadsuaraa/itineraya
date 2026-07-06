@@ -13,7 +13,15 @@ function fallbackImage(query: string): string {
   return `https://loremflickr.com/1200/800/${q}?lock=${lock}`;
 }
 
-async function unsplashImage(query: string): Promise<string | null> {
+// Dimensiona la imagen en el CDN de Unsplash: fit=crop respeta el encuadre,
+// auto=format sirve WebP/AVIF cuando el navegador lo soporta y q=80 equilibra
+// peso y calidad. Partimos de urls.raw (sin parámetros de tamaño previos).
+function sizeUnsplashUrl(rawUrl: string, w: number, h: number): string {
+  const sep = rawUrl.includes("?") ? "&" : "?";
+  return `${rawUrl}${sep}w=${w}&h=${h}&fit=crop&auto=format&q=80`;
+}
+
+async function unsplashImage(query: string, w = 1600, h = 900): Promise<string | null> {
   const key = process.env.UNSPLASH_KEY;
   if (!key) return fallbackImage(query);
   try {
@@ -21,9 +29,18 @@ async function unsplashImage(query: string): Promise<string | null> {
       `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
       { headers: { Authorization: `Client-ID ${key}` } },
     );
-    if (!res.ok) return fallbackImage(query);
-    const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };
-    return data.results?.[0]?.urls?.regular ?? fallbackImage(query);
+    if (!res.ok) {
+      // 403 = cuota agotada (key demo: 50 req/hora). Queda registrado para
+      // que el problema sea visible en los logs de Vercel, no silencioso.
+      console.warn(`[unsplash] ${res.status} for "${query}" — falling back to loremflickr`);
+      return fallbackImage(query);
+    }
+    const data = (await res.json()) as {
+      results?: Array<{ urls?: { raw?: string; regular?: string } }>;
+    };
+    const first = data.results?.[0]?.urls;
+    if (first?.raw) return sizeUnsplashUrl(first.raw, w, h);
+    return first?.regular ?? fallbackImage(query);
   } catch {
     return fallbackImage(query);
   }
@@ -619,11 +636,12 @@ FIELD GUIDE
     if (parsed.days.length !== dayCount)
       console.warn(`[itinerary] expected ${dayCount} days, model returned ${parsed.days.length}`);
 
-    // Hero + all day images in parallel
+    // Hero + all day images in parallel. El hero llena un ancho completo
+    // (h-96 desktop); las imágenes de día usan tarjetas 16:7.
     const [hero, ...dayImages] = await Promise.all([
-      unsplashImage(`${trip.destination} travel landscape`),
+      unsplashImage(`${trip.destination} travel landscape`, 2000, 1000),
       ...parsed.days.map((d) =>
-        unsplashImage(`${d.image_query || trip.destination} ${trip.destination}`),
+        unsplashImage(`${d.image_query || trip.destination} ${trip.destination}`, 1400, 620),
       ),
     ]);
     parsed.days = parsed.days.map((d, i) => ({ ...d, image_url: dayImages[i] }));

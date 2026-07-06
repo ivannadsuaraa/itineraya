@@ -320,7 +320,7 @@ function DiscoverableTripPage() {
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : saved ? (
-              <BookmarkCheck className="h-4 w-4" />
+              <BookmarkCheck className="bookmark-filled h-4 w-4 fill-[#1E6B9A]/20 text-[#1E6B9A]" />
             ) : (
               <Bookmark className="h-4 w-4" />
             )}

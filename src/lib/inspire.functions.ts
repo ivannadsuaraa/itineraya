@@ -25,7 +25,14 @@ function fallbackImage(query: string): string {
   return `https://loremflickr.com/800/600/${q}?lock=${lock}`;
 }
 
-async function unsplashImage(query: string): Promise<string> {
+// fit=crop encuadra al tamaño pedido, auto=format sirve WebP/AVIF y q=80
+// equilibra peso y calidad. Se parte de urls.raw (sin tamaños previos).
+function sizeUnsplashUrl(rawUrl: string, w: number, h: number): string {
+  const sep = rawUrl.includes("?") ? "&" : "?";
+  return `${rawUrl}${sep}w=${w}&h=${h}&fit=crop&auto=format&q=80`;
+}
+
+async function unsplashImage(query: string, w = 1200, h = 800): Promise<string> {
   const key = process.env.UNSPLASH_KEY;
   if (!key) return fallbackImage(query);
   try {
@@ -33,9 +40,16 @@ async function unsplashImage(query: string): Promise<string> {
       `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
       { headers: { Authorization: `Client-ID ${key}` } },
     );
-    if (!res.ok) return fallbackImage(query);
-    const data = (await res.json()) as { results?: Array<{ urls?: { regular?: string } }> };
-    return data.results?.[0]?.urls?.regular ?? fallbackImage(query);
+    if (!res.ok) {
+      console.warn(`[unsplash] ${res.status} for "${query}" — falling back to loremflickr`);
+      return fallbackImage(query);
+    }
+    const data = (await res.json()) as {
+      results?: Array<{ urls?: { raw?: string; regular?: string } }>;
+    };
+    const first = data.results?.[0]?.urls;
+    if (first?.raw) return sizeUnsplashUrl(first.raw, w, h);
+    return first?.regular ?? fallbackImage(query);
   } catch {
     return fallbackImage(query);
   }

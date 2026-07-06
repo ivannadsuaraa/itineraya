@@ -1,5 +1,8 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { motion, useReducedMotion } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { EASE_OUT } from "@/lib/motion";
 
 import { ArrowLeft, ArrowRight, Loader2, Sparkles, Info, MapPin, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -11,6 +14,7 @@ import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker
 import { DestinationAutocomplete } from "@/components/DestinationAutocomplete";
 import { BudgetRangeSlider } from "@/components/BudgetRangeSlider";
 import { supabase } from "@/integrations/supabase/client";
+import { geocodeDestination, geocodeAndPersistTrip } from "@/lib/geocode";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -187,6 +191,15 @@ function OnboardingPage() {
     hotel: null,
   }));
 
+  // Pre-calienta la geocodificación en cuanto el usuario pasa del paso de
+  // destino: cuando llegue a "Generar", las coordenadas ya estarán en caché
+  // y el globo del dashboard mostrará el viaje sin esperar a Nominatim.
+  useEffect(() => {
+    if (step > 0 && data.destination.trim().length > 1) {
+      void geocodeDestination(data.destination.trim());
+    }
+  }, [step, data.destination]);
+
   const MAX_TRIP_DAYS = 20;
   const tripDayCount =
     data.dateRange?.from && data.dateRange?.to
@@ -223,6 +236,14 @@ function OnboardingPage() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) throw new Error(t("onboarding.notAuth"));
 
+      // Coordenadas del destino: normalmente instantáneo (pre-calentado al
+      // avanzar de paso). El race evita bloquear la creación si Nominatim
+      // va lento; en ese caso se persisten después, sin retrasar al usuario.
+      const coords = await Promise.race([
+        geocodeDestination(data.destination.trim()),
+        new Promise<null>((r) => setTimeout(() => r(null), 1800)),
+      ]);
+
       const basePayload = {
         user_id: auth.user.id,
         destination: data.destination.trim(),
@@ -247,18 +268,22 @@ function OnboardingPage() {
         first_visit: data.firstVisit,
         dietary: data.dietary.length > 0 ? data.dietary.join(",") : null,
       };
+      const geo = coords ? { geo_lat: coords[0], geo_lng: coords[1] } : {};
 
       let { data: trip, error } = await supabase
         .from("trips")
-        .insert({ ...basePayload, ...personalization })
+        .insert({ ...basePayload, ...personalization, ...geo })
         .select("id")
         .single();
 
-      // Fallback: si la migración de personalización aún no está aplicada en
-      // prod (columnas pace/first_visit/dietary inexistentes), reintenta sin
-      // ellas para no bloquear la creación del viaje.
-      if (error && /column|pace|first_visit|dietary|PGRST204/i.test(error.message ?? "")) {
-        console.warn("[onboarding] personalization columns missing, retrying without them", error);
+      // Fallback: si alguna migración aún no está aplicada en prod (columnas
+      // pace/first_visit/dietary o geo_lat/geo_lng inexistentes), reintenta
+      // solo con el payload base para no bloquear la creación del viaje.
+      if (
+        error &&
+        /column|pace|first_visit|dietary|geo_lat|geo_lng|PGRST204/i.test(error.message ?? "")
+      ) {
+        console.warn("[onboarding] optional columns missing, retrying without them", error);
         ({ data: trip, error } = await supabase
           .from("trips")
           .insert(basePayload)
@@ -276,6 +301,9 @@ function OnboardingPage() {
         return;
       }
       if (!trip) throw new Error(t("onboarding.saveFail"));
+      // Si Nominatim no llegó a tiempo, geocodifica y persiste en segundo
+      // plano — la navegación es SPA, así que la petición sigue viva.
+      if (!coords) void geocodeAndPersistTrip(trip.id, data.destination.trim());
       navigate({ to: "/my-trip/$tripId", params: { tripId: trip.id } });
     } catch (error) {
       console.error("[onboarding] unexpected error", error);
@@ -285,6 +313,8 @@ function OnboardingPage() {
   };
 
   const locale = i18n.language.startsWith("en") ? enUS : esLocale;
+  const reduceMotion = useReducedMotion();
+  const isMobile = useIsMobile();
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
@@ -355,7 +385,9 @@ function OnboardingPage() {
                 {step > 2 && (
                   <span className="flex items-center gap-1">
                     <MapPin className="h-3 w-3" />
-                    {t(`onboarding.comp${data.companion === "solo" ? "Solo" : data.companion === "pareja" ? "Pair" : data.companion === "amigos" ? "Friends" : "Family"}`)}
+                    {t(
+                      `onboarding.comp${data.companion === "solo" ? "Solo" : data.companion === "pareja" ? "Pair" : data.companion === "amigos" ? "Friends" : "Family"}`,
+                    )}
                   </span>
                 )}
               </div>
@@ -366,8 +398,20 @@ function OnboardingPage() {
           </div>
         )}
 
-        <div
+        <motion.div
           key={step}
+          initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction * 44 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: isMobile ? 0.2 : 0.3, ease: EASE_OUT }}
+          // Swipe en móvil: arrastrar la tarjeta avanza/retrocede el paso,
+          // con el propio arrastre como feedback visual (elástico).
+          drag={isMobile && !reduceMotion ? "x" : false}
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.16}
+          onDragEnd={(_, info) => {
+            if (info.offset.x < -80 && canContinue && step < totalSteps - 1) next();
+            else if (info.offset.x > 80 && step > 0) prev();
+          }}
           onKeyDown={(e) => {
             if (e.key !== "Enter" || e.shiftKey) return;
             const tag = (e.target as HTMLElement).tagName;
@@ -509,7 +553,7 @@ function OnboardingPage() {
                         className={cn(
                           "rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition active:scale-[0.97]",
                           selected
-                            ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
+                            ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
                             : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
                         )}
                       >
@@ -588,7 +632,7 @@ function OnboardingPage() {
                         className={cn(
                           "rounded-full border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.97]",
                           selected
-                            ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
+                            ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
                             : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white",
                         )}
                       >
@@ -615,7 +659,7 @@ function OnboardingPage() {
               />
             </StepShell>
           )}
-        </div>
+        </motion.div>
 
         <div className="mt-6 flex items-center justify-between gap-3">
           <button
@@ -715,7 +759,7 @@ function OptionGrid({
             "rounded-2xl border text-left transition active:scale-[0.97]",
             compact ? "flex items-center gap-2.5 px-4 py-3" : "p-5",
             value === id
-              ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
+              ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
               : "border-sky-200 bg-white/70 text-sky-900 hover:border-sky-300 hover:bg-white hover:shadow-sm",
           )}
         >

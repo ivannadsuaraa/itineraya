@@ -325,7 +325,9 @@
     "trialDaysLeft": "You have {{count}} days left in your free trial",
     "trialPerk": "— Enjoy the AI assistant and all premium features.",
     "trialKeep": "Keep access",
-    "nDays": "{{count}} days"
+    "nDays": "{{count}} days",
+    "globeViewItinerary": "View itinerary",
+    "globeClose": "Close"
   },
   "saved": {
     "metaTitle": "Saved – Itineraya",
@@ -551,7 +553,17 @@
     "nights_one": "{{count}} night",
     "nights_other": "{{count}} nights",
     "readyShare": "Your itinerary is ready! Share it with your travel buddies ✈️",
-    "loadingHint": "Usually takes under a minute"
+    "loadingHint": "Usually takes under a minute",
+    "visualMapCta": "View trip map",
+    "visualMapTitle": "Your trip, illustrated",
+    "visualMapEyebrow": "Trip map",
+    "visualMapDays": "Days",
+    "visualMapActivities": "Activities",
+    "visualMapExperiences": "Experiences",
+    "visualMapDownload": "Download",
+    "visualMapDownloaded": "Trip map downloaded ✨",
+    "visualMapFooter": "Created with Itineraya  ·  itineraya.com",
+    "visualMapAria": "Illustrated map of the trip to {{destination}}"
   },
   "tripmates": {
     "tag": "Tripmates",
