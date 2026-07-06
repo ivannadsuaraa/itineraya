@@ -200,6 +200,12 @@ function ExplorePage() {
                 </button>
               )}
             </div>
+
+            {/* Qué es el Remix: cada viaje del feed es una plantilla */}
+            <p className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-1.5 text-xs text-sky-300/90">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" />
+              {t("explore.remixExplainer")}
+            </p>
           </div>
         </section>
 
@@ -512,15 +518,16 @@ function FeedCard({ item, onRemix, onRate }: { item: PublicFeedItem; onRemix: ()
           <button
             type="button"
             onClick={onRemix}
-            className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-full bg-sky-900 px-3 text-[11px] font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
+            title={t("explore.remixTooltip")}
+            className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-sky-900 to-[#1E6B9A] px-4 text-xs font-bold text-white shadow-sm transition hover:shadow-md active:scale-95"
           >
-            <Sparkles className="h-3 w-3" />
+            <Sparkles className="h-3.5 w-3.5" />
             {t("explore.remix")}
           </button>
           <Link
             to="/explore/$slug"
             params={{ slug: item.slug }}
-            className="inline-flex h-9 items-center gap-1 rounded-full bg-slate-100 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
+            className="inline-flex h-10 items-center gap-1 rounded-full bg-slate-100 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
           >
             {t("explore.view")}
             <ArrowRight className="h-3 w-3" />

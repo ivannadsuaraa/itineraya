@@ -1,9 +1,9 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, Info, MapPin, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, format } from "date-fns";
 import { es as esLocale, enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import { DateRangeField, type DateRange } from "@/components/DateRangeField";
@@ -308,7 +308,7 @@ function OnboardingPage() {
           {t("onboarding.back")}
         </Link>
 
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="mb-3 flex items-center justify-between text-xs font-semibold text-sky-700">
             <span>{t("onboarding.stepIndicator", { n: step + 1, total: totalSteps })}</span>
             <span>{Math.round(((step + 1) / totalSteps) * 100)}%</span>
@@ -325,6 +325,46 @@ function OnboardingPage() {
             ))}
           </div>
         </div>
+
+        {/* "Tarjeta de embarque": el viaje va tomando forma según respondes.
+            Aparece en cuanto hay destino y acumula fechas y compañía. */}
+        {step > 0 && data.destination.trim().length > 1 && (
+          <div className="mb-6 flex items-center gap-3 overflow-hidden rounded-2xl bg-white/85 p-2.5 pr-4 shadow-lg ring-1 ring-white/60 backdrop-blur-xl">
+            <img
+              src={`https://loremflickr.com/240/240/${encodeURIComponent(data.destination.split(",")[0].trim() + ",travel")}`}
+              alt=""
+              aria-hidden
+              className="h-14 w-14 shrink-0 rounded-xl object-cover"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-sky-500">
+                {t("onboarding.tripStripLabel")}
+              </p>
+              <p className="truncate font-display text-base font-bold text-sky-900">
+                {data.destination}
+              </p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] font-medium text-sky-600">
+                {data.dateRange?.from && data.dateRange?.to && (
+                  <span className="flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />
+                    {format(data.dateRange.from, "d MMM", { locale })} –{" "}
+                    {format(data.dateRange.to, "d MMM", { locale })}
+                    {tripDayCount > 0 && ` · ${t("trip.daysCount", { count: tripDayCount })}`}
+                  </span>
+                )}
+                {step > 2 && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {t(`onboarding.comp${data.companion === "solo" ? "Solo" : data.companion === "pareja" ? "Pair" : data.companion === "amigos" ? "Friends" : "Family"}`)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <span className="hidden text-2xl sm:block" aria-hidden>
+              ✈️
+            </span>
+          </div>
+        )}
 
         <div
           key={step}

@@ -3,7 +3,7 @@ import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { PopularDestinationsSection } from "@/components/landing/PopularDestinationsSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
-import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { ProductShowcaseSection } from "@/components/landing/ProductShowcaseSection";
 import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { FAQSection } from "@/components/landing/FAQSection";
@@ -19,24 +19,24 @@ import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Itineraya – Viajes personalizados con IA" },
+      { title: "Itineraya – Planificador de viajes: itinerario día a día con mapa y horarios" },
       {
         name: "description",
         content:
-          "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos.",
+          "Planifica tu viaje día a día: mapa del recorrido, horarios reales, restaurantes que existen y postales para compartir. Tu guía de viaje personalizada en segundos.",
       },
-      { property: "og:title", content: "Itineraya – Viajes personalizados con IA" },
+      { property: "og:title", content: "Itineraya – Planificador de viajes: itinerario día a día con mapa y horarios" },
       {
         property: "og:description",
         content:
-          "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos.",
+          "Planifica tu viaje día a día: mapa del recorrido, horarios reales, restaurantes que existen y postales para compartir.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Itineraya – Viajes personalizados con IA" },
+      { name: "twitter:title", content: "Itineraya – Planificador de viajes: itinerario día a día con mapa y horarios" },
       {
         name: "twitter:description",
-        content: "Itineraya genera itinerarios de viaje personalizados con inteligencia artificial. Planifica tu próxima aventura en segundos.",
+        content: "Planifica tu viaje día a día: mapa del recorrido, horarios reales, restaurantes que existen y postales para compartir.",
       },
       { name: "twitter:image", content: "https://itineraya.com/og-image.jpg" },
     ],
@@ -66,9 +66,9 @@ function LandingPage() {
       {mounted && isLoggedIn ? <DesktopTopNav /> : <Navbar />}
       <HeroSection />
 
+      <ProductShowcaseSection />
       <PopularDestinationsSection />
       <HowItWorksSection />
-      <FeaturesSection />
       <TestimonialsSection />
 
       {/* Final CTA */}

@@ -476,6 +476,47 @@ function ItineraryPage() {
 
       {/* ── Content ── */}
       <div className="mx-auto max-w-5xl px-4 py-6 md:px-6 md:py-8">
+        {/* Mapa prominente en móvil: en desktop vive fijo a la derecha, pero en
+            móvil quedaba escondido tras un botón del toolbar. */}
+        <button
+          type="button"
+          onClick={() => setMapModalOpen(true)}
+          className="relative mb-5 block w-full overflow-hidden rounded-2xl text-left shadow-sm ring-1 ring-slate-200 transition hover:shadow-md lg:hidden"
+        >
+          <div className="relative h-28 bg-[#EAF4FB]">
+            <svg viewBox="0 0 400 112" className="absolute inset-0 h-full w-full" aria-hidden="true" preserveAspectRatio="none">
+              <path d="M0 30 H400 M0 66 H400 M0 96 H400 M80 0 V112 M190 0 V112 M300 0 V112" stroke="#C9E4F5" strokeWidth="2" fill="none" />
+              <path d="M30 88 Q 110 62 160 50 T 280 62 T 375 22" stroke="#1E6B9A" strokeWidth="3" strokeDasharray="7 5" fill="none" strokeLinecap="round" />
+            </svg>
+            {[
+              { x: "6%", y: "72%", n: 1 },
+              { x: "39%", y: "38%", n: 2 },
+              { x: "69%", y: "50%", n: 3 },
+              { x: "92%", y: "14%", n: 4 },
+            ].map((p) => (
+              <span
+                key={p.n}
+                className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-sky-900 text-[10px] font-bold text-white ring-2 ring-white shadow"
+                style={{ left: p.x, top: p.y }}
+              >
+                {p.n}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center justify-between gap-2 bg-white px-4 py-3">
+            <div>
+              <p className="text-sm font-bold text-slate-900">{t("trip.mapPreviewTitle")}</p>
+              <p className="text-xs text-slate-500">
+                {t("trip.mapPreviewSubtitle", { count: itin.days.length })}
+              </p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-900 px-3.5 py-2 text-xs font-bold text-white">
+              <MapIcon className="h-3.5 w-3.5" />
+              {t("trip.mapPreviewCta")}
+            </span>
+          </div>
+        </button>
+
         <div className="mb-5">
           <PublishToggle tripId={trip.id} />
         </div>

@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowRight, Sparkles, MapPin, Sun, Utensils, Camera, LayoutDashboard } from "lucide-react";
+import {
+  ArrowRight,
+  MapPin,
+  Sun,
+  Utensils,
+  Camera,
+  LayoutDashboard,
+  Map as MapIcon,
+  Clock,
+  Download,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,11 +30,13 @@ export function HeroSection() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Contenido del mockup: nombres propios reales de Bali (no se traducen) y
+  // líneas de transporte solo con emoji + minutos para ser neutrales al idioma.
   const itineraryDays = [
-    { icon: MapPin, label: "Templo Uluwatu", time: "09:00" },
-    { icon: Sun, label: "Playa Nusa Dua", time: "12:00" },
-    { icon: Utensils, label: "Cena en Jimbaran", time: "19:00" },
-    { icon: Camera, label: "Arrozales Jatiluwih", time: "10:00" },
+    { icon: MapPin, label: "Templo Uluwatu", time: "09:00", transport: null },
+    { icon: Sun, label: "Playa Nusa Dua", time: "12:00", transport: "🚕 25 min" },
+    { icon: Utensils, label: "Warung Jimbaran", time: "19:00", transport: "🚶 12 min" },
+    { icon: Camera, label: "Arrozales Jatiluwih", time: "10:00", transport: "🚗 40 min" },
   ];
 
   return (
@@ -42,7 +54,7 @@ export function HeroSection() {
           {/* ── Text side ── */}
           <div className="max-w-xl">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-sky-200 ring-1 ring-white/20 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" />
+              <MapIcon className="h-3.5 w-3.5" />
               {t("hero.badge")}
             </span>
 
@@ -99,85 +111,127 @@ export function HeroSection() {
               </a>
             </div>
 
-            {/* Social proof micro-strip */}
-            <div className="mt-8 flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {["sky", "emerald", "violet", "amber"].map((c, i) => (
-                  <div
-                    key={i}
-                    className={`grid h-8 w-8 place-items-center rounded-full bg-${c}-500/30 text-xs font-bold text-${c}-200 ring-2 ring-sky-900`}
-                  >
-                    {["A", "M", "J", "L"][i]}
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-sky-300/80">{t("hero.socialProof")}</p>
+            {/* Diferenciadores en una línea: lo que un chat nunca da */}
+            <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-sky-300/90">
+              <span className="flex items-center gap-1.5">
+                <MapIcon className="h-3.5 w-3.5" />
+                {t("hero.proofMap")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                {t("hero.proofSchedule")}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Download className="h-3.5 w-3.5" />
+                {t("hero.proofPostcards")}
+              </span>
             </div>
           </div>
 
-          {/* ── Card side ── */}
-          <div className="relative hidden lg:block">
-            <div className="relative mx-auto w-full max-w-sm">
-              {/* Decorative rings */}
-              <div className="absolute inset-0 -m-6 rounded-[2rem] border border-white/10" />
-              <div className="absolute inset-0 -m-12 rounded-[2.5rem] border border-white/5" />
+          {/* ── Product mockup side (visible también en móvil) ── */}
+          <div className="relative mx-auto w-full max-w-sm lg:max-w-md">
+            {/* Decorative rings */}
+            <div className="absolute inset-0 -m-6 hidden rounded-[2rem] border border-white/10 lg:block" />
+            <div className="absolute inset-0 -m-12 hidden rounded-[2.5rem] border border-white/5 lg:block" />
 
-              {/* Main card */}
-              <div className="relative overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/30">
-                {/* Header image */}
-                <div className="relative h-44 overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80"
-                    alt="Bali"
-                    className="h-full w-full object-cover"
-                    width={800}
-                    height={300}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <div className="absolute bottom-3 left-4">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-white/70">{t("hero.cardLabel")}</p>
-                    <p className="text-lg font-bold text-white">Bali, Indonesia</p>
-                  </div>
-                  <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-bold text-sky-800">
-                    {t("hero.cardDays", { count: 7 })}
-                  </div>
+            {/* Main card: un día real del itinerario */}
+            <div className="relative overflow-hidden rounded-2xl bg-white shadow-2xl shadow-black/30">
+              {/* Header image */}
+              <div className="relative h-44 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=800&q=80"
+                  alt="Bali"
+                  className="h-full w-full object-cover"
+                  width={800}
+                  height={300}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-3 left-4">
+                  <span className="inline-flex items-center rounded-full bg-gradient-to-r from-sky-700 to-cyan-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm">
+                    {t("hero.cardDayLabel")}
+                  </span>
+                  <p className="mt-1 text-lg font-bold text-white">Bali, Indonesia</p>
                 </div>
+                <div className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-bold text-sky-800">
+                  {t("hero.cardDays", { count: 7 })}
+                </div>
+              </div>
 
-                {/* Body */}
-                <div className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-slate-500">{t("hero.cardBudget")}</p>
-                      <p className="text-base font-bold text-slate-900">$1,200 USD</p>
-                    </div>
-                    <div className="flex -space-x-1.5">
-                      {["🏖️", "🌿", "🍜"].map((e, i) => (
-                        <div key={i} className="grid h-7 w-7 place-items-center rounded-full bg-slate-100 text-xs ring-2 ring-white">
-                          {e}
+              {/* Body: agenda con horarios y transporte */}
+              <div className="p-4">
+                <div className="space-y-2">
+                  {itineraryDays.map((day, i) => (
+                    <div key={i} className="rounded-xl bg-slate-50 px-3 py-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-sky-900 text-white">
+                          <span className="text-[10px] font-bold leading-none">{day.time}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 space-y-2">
-                    {itineraryDays.map((day, i) => (
-                      <div key={i} className="flex items-center gap-2.5 rounded-xl bg-slate-50 px-3 py-2">
                         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-600">
                           <day.icon className="h-3.5 w-3.5" />
                         </div>
-                        <p className="flex-1 truncate text-xs font-medium text-slate-800">{day.label}</p>
-                        <span className="text-[10px] font-medium text-slate-400">{day.time}</span>
+                        <p className="flex-1 truncate text-xs font-semibold text-slate-800">{day.label}</p>
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2">
-                    <Sparkles className="h-3.5 w-3.5 text-sky-500" />
-                    <p className="text-xs text-sky-600">
-                      {t("hero.cardAI")} <span className="font-bold text-sky-700">{t("hero.cardAISeconds")}</span>
-                    </p>
-                  </div>
+                      {day.transport && (
+                        <p className="mt-1 pl-[54px] text-[10px] text-slate-400">{day.transport}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
+
+                <div className="mt-4 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2">
+                  <MapIcon className="h-3.5 w-3.5 shrink-0 text-sky-500" />
+                  <p className="text-xs text-sky-600">
+                    {t("hero.cardFooter")}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating mini-map: el recorrido del día */}
+            <div className="absolute -right-4 -top-6 w-36 rotate-2 overflow-hidden rounded-xl bg-white shadow-xl ring-1 ring-slate-200 sm:-right-8 sm:w-40">
+              <div className="relative h-24 bg-sky-50">
+                {/* Ruta estilizada */}
+                <svg viewBox="0 0 160 96" className="absolute inset-0 h-full w-full" aria-hidden="true">
+                  <path d="M8 80 Q 50 60 70 44 T 148 14" stroke="#1E6B9A" strokeWidth="2.5" strokeDasharray="5 4" fill="none" strokeLinecap="round" />
+                  {/* Calles de fondo */}
+                  <path d="M0 30 H160 M0 62 H160 M40 0 V96 M104 0 V96" stroke="#BAE0F2" strokeWidth="1" fill="none" />
+                </svg>
+                {[
+                  { x: "3%", y: "72%", n: 1 },
+                  { x: "40%", y: "38%", n: 2 },
+                  { x: "84%", y: "6%", n: 3 },
+                ].map((p) => (
+                  <span
+                    key={p.n}
+                    className="absolute grid h-5 w-5 place-items-center rounded-full bg-sky-900 text-[9px] font-bold text-white ring-2 ring-white shadow"
+                    style={{ left: p.x, top: p.y }}
+                  >
+                    {p.n}
+                  </span>
+                ))}
+              </div>
+              <p className="flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-semibold text-slate-700">
+                <MapIcon className="h-3 w-3 text-[#1E6B9A]" />
+                {t("hero.mapChip")}
+              </p>
+            </div>
+
+            {/* Floating postcard chip */}
+            <div className="absolute -bottom-5 -left-3 flex -rotate-2 items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-xl ring-1 ring-slate-200 sm:-left-6">
+              <img
+                src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=120&q=60"
+                alt=""
+                aria-hidden
+                className="h-9 w-9 rounded-lg object-cover"
+                width={120}
+                height={120}
+              />
+              <div>
+                <p className="text-[10px] font-bold text-slate-800">{t("hero.postcardChip")}</p>
+                <p className="flex items-center gap-1 text-[9px] text-slate-400">
+                  <Download className="h-2.5 w-2.5" />
+                  PNG
+                </p>
               </div>
             </div>
           </div>
