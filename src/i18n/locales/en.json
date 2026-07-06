@@ -24,7 +24,7 @@
     "title1": "Your perfect trip,",
     "title2": "day by day",
     "subtitle": "Tell us your destination, dates and budget. Get a complete travel guide: route map, real opening hours, restaurants that actually exist and postcards to share. Not a wall of text — a plan.",
-    "ctaStart": "Start free",
+    "ctaStart": "Check-in",
     "ctaMyTrips": "Go to my trips",
     "ctaHow": "How it works",
     "cardDayLabel": "Day 3 · Uluwatu",
@@ -34,7 +34,8 @@
     "postcardChip": "Day 3 postcard",
     "proofMap": "Interactive map",
     "proofSchedule": "Real schedules",
-    "proofPostcards": "Downloadable postcards"
+    "proofPostcards": "Downloadable postcards",
+    "tickerLabel": "Departures"
   },
   "showcase": {
     "kicker": "The product, not promises",
@@ -54,15 +55,15 @@
     "feedCta": "Explore trips"
   },
   "how": {
-    "kicker": "How it works 🗺️",
+    "kicker": "How it works",
     "title": "From idea to trip in 3 steps",
     "subtitle": "No spreadsheets, no late-night research. Plan your adventure in minutes.",
-    "step1Title": "Pick your destination",
-    "step1Desc": "Tell us where you want to go. A city, a country, or just 'beach in summer'.",
-    "step2Title": "Customize the details",
-    "step2Desc": "Adjust dates, budget, travel style and preferences. Packed schedule or total relaxation.",
-    "step3Title": "Get your itinerary",
-    "step3Desc": "AI builds a day-by-day plan with maps, schedules, bookings and local tips."
+    "step1Title": "Check-in",
+    "step1Desc": "Fill in your preferences: destination, dates, budget and travel style. Two minutes, like skipping the queue.",
+    "step2Title": "Gate",
+    "step2Desc": "The AI prepares your trip: routes by area, real schedules, restaurants that exist and bookings ready.",
+    "step3Title": "Boarding",
+    "step3Desc": "Your itinerary is ready to board: route map, day-by-day schedule and postcards to share."
   },
   "features": {
     "kicker": "Features ✨",
@@ -397,8 +398,8 @@
     "destPh": "e.g. Japan, Lisbon, Patagonia…",
     "datesTitle": "When are you travelling?",
     "datesSubtitle": "Pick a start and an end date.",
-    "dateStart": "Start",
-    "dateEnd": "End",
+    "dateStart": "DEPARTURE",
+    "dateEnd": "RETURN",
     "datePick": "Pick a date",
     "arrivalTime": "Arrival time",
     "departureTime": "Departure time",
@@ -563,7 +564,14 @@
     "visualMapDownload": "Download",
     "visualMapDownloaded": "Trip map downloaded ✨",
     "visualMapFooter": "Created with Itineraya  ·  itineraya.com",
-    "visualMapAria": "Illustrated map of the trip to {{destination}}"
+    "visualMapAria": "Illustrated map of the trip to {{destination}}",
+    "brochureCta": "Brochure",
+    "brochureTitle": "Trip brochure",
+    "brochureEyebrow": "Travel brochure",
+    "brochureRoute": "Trip route",
+    "brochureDownloaded": "Trip brochure downloaded ✨",
+    "brochureAria": "Brochure for the trip to {{destination}}",
+    "dayNavAria": "Day navigation"
   },
   "tripmates": {
     "tag": "Tripmates",
@@ -769,14 +777,14 @@
     "subtitle": "Real itineraries from the community. Get inspired and build yours in seconds.",
     "searchPlaceholder": "Search destination (Bali, Tokyo, Paris…)",
     "style": {
-      "all": "All styles",
-      "adventure": "Adventure",
-      "relax": "Relax",
-      "cultural": "Cultural",
-      "romantic": "Romantic",
-      "family": "Family",
-      "party": "Party",
-      "nature": "Nature"
+      "all": "All gates",
+      "adventure": "Adventure Terminal",
+      "relax": "Relax Lounge",
+      "cultural": "Culture Lounge",
+      "romantic": "Sunset Gate",
+      "family": "Family Boarding",
+      "party": "Night Flight",
+      "nature": "Nature Terminal"
     },
     "duration": {
       "all": "Any duration",
@@ -802,8 +810,8 @@
     "clear": "Clear search",
     "rateAria_one": "Rate {{count}} star",
     "rateAria_other": "Rate {{count}} stars",
-    "views_one": "{{count}} view",
-    "views_other": "{{count}} views"
+    "views_one": "{{count}} passenger has flown to this destination",
+    "views_other": "{{count}} passengers have flown to this destination"
   },
   "publish": {
     "title": "Publish as inspiration",
@@ -820,5 +828,54 @@
     "errorTitle": "This page didn't load",
     "errorBody": "Something went wrong on our end. Try refreshing or head back home.",
     "retry": "Try again"
+  },
+  "stats": {
+    "itineraries": "Itineraries created",
+    "destinations": "Destinations planned",
+    "rating": "Average rating"
+  },
+  "common": {
+    "backToTop": "Back to top"
+  },
+  "airport": {
+    "boardingPass": "Boarding pass",
+    "from": "From",
+    "to": "To",
+    "yourCity": "YOUR CITY",
+    "flight": "Flight",
+    "gate": "Gate",
+    "date": "Date",
+    "duration": "Duration",
+    "passengers": "Passengers",
+    "seat": "Seat",
+    "passenger": "Passenger",
+    "downloadPass": "Download boarding pass",
+    "passDownloaded": "Boarding pass downloaded ✈️",
+    "takeoff": "Taking off",
+    "takeoffSub": "Runway 27 · En route to your itinerary",
+    "board": {
+      "departures": "Departures",
+      "flightCol": "Flight",
+      "destinationCol": "Destination",
+      "dateCol": "Date",
+      "statusCol": "Status",
+      "upcoming": "UPCOMING",
+      "ongoing": "EN ROUTE",
+      "done": "LANDED",
+      "planning": "PLANNING",
+      "viewBoard": "Board",
+      "viewCards": "Cards"
+    },
+    "stats": {
+      "destinations": "Destinations visited",
+      "miles": "Miles flown",
+      "milesHint": "estimated",
+      "class": "Traveler class"
+    },
+    "passport": {
+      "title": "Digital passport",
+      "eyebrow": "Stamps",
+      "empty": "Your stamps will appear here with every trip you plan."
+    }
   }
 }

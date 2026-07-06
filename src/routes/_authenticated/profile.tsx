@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -15,6 +15,9 @@ import {
   Loader2,
   Check,
 } from "lucide-react";
+import { PassportStamps, type StampTrip } from "@/components/airport/PassportStamps";
+import { CountUp } from "@/components/ui/CountUp";
+import { haversineKm, homeCoordsForLanguage, kmToMiles, travelClassForPlan } from "@/lib/flight";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   component: ProfilePage,
@@ -24,8 +27,28 @@ const TRAVEL_STYLES = ["adventure", "relax", "cultural", "romantic", "family", "
 const BUDGET_RANGES = ["low", "medium", "high", "luxury"];
 const TRAVELER_TYPES = ["solo", "couple", "family", "friends", "business"];
 
+type ProfileTrip = StampTrip & { geo_lat?: number | null; geo_lng?: number | null };
+
+// Carga tolerante a migraciones: si geo_lat/geo_lng no existen en prod, la
+// query entera falla — reintenta sin ellas (mismas reglas que el dashboard).
+async function fetchProfileTrips(userId: string): Promise<ProfileTrip[]> {
+  const base = "id,destination,start_date,end_date";
+  const withGeo = await supabase
+    .from("trips")
+    .select(`${base},geo_lat,geo_lng`)
+    .eq("user_id", userId)
+    .order("start_date", { ascending: true });
+  if (!withGeo.error) return (withGeo.data ?? []) as unknown as ProfileTrip[];
+  const plain = await supabase
+    .from("trips")
+    .select(base)
+    .eq("user_id", userId)
+    .order("start_date", { ascending: true });
+  return (plain.data ?? []) as unknown as ProfileTrip[];
+}
+
 function ProfilePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { isActive } = useSubscription();
   const [email, setEmail] = useState<string>("");
@@ -41,6 +64,7 @@ function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [trips, setTrips] = useState<ProfileTrip[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -67,8 +91,27 @@ function ProfilePage() {
           : "",
       );
       setTravelerType(((p as { traveler_type?: string } | null)?.traveler_type as string) ?? "");
+      setTrips(await fetchProfileTrips(user.id));
     })();
   }, []);
+
+  // Estadísticas de viajero: destinos únicos, millas estimadas (ida y vuelta
+  // desde una ciudad base plausible por idioma) y clase según plan.
+  const travelerStats = useMemo(() => {
+    const uniqueDestinations = new Set(
+      trips.map((tr) => tr.destination.split(",")[0].trim().toLowerCase()),
+    );
+    const home = homeCoordsForLanguage(i18n.language);
+    let km = 0;
+    for (const tr of trips) {
+      if (tr.geo_lat != null && tr.geo_lng != null) {
+        km += haversineKm(home, [tr.geo_lat, tr.geo_lng]) * 2;
+      }
+    }
+    return { destinations: uniqueDestinations.size, miles: Math.round(kmToMiles(km)) };
+  }, [trips, i18n.language]);
+
+  const travelClass = travelClassForPlan(plan);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -142,7 +185,45 @@ function ProfilePage() {
 
       <div>
         <main className="mx-auto max-w-2xl px-5 py-6 md:px-10 md:py-8">
-          <section className="mt-2 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          {/* Estadísticas de viajero, estilo panel de vuelo */}
+          <section className="mt-2 overflow-hidden rounded-2xl bg-[#050b16] p-5 shadow-sm ring-1 ring-sky-900/50">
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="font-flight text-[9px] font-semibold uppercase tracking-[0.2em] text-sky-300/60">
+                  {t("airport.stats.destinations")}
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">
+                  <CountUp to={travelerStats.destinations} duration={1.2} locale={i18n.language} />
+                </p>
+              </div>
+              <div>
+                <p className="font-flight text-[9px] font-semibold uppercase tracking-[0.2em] text-sky-300/60">
+                  {t("airport.stats.miles")}
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">
+                  <CountUp to={travelerStats.miles} duration={1.6} locale={i18n.language} />
+                </p>
+                <p className="font-flight text-[9px] uppercase tracking-wider text-sky-300/50">
+                  {t("airport.stats.milesHint")}
+                </p>
+              </div>
+              <div>
+                <p className="font-flight text-[9px] font-semibold uppercase tracking-[0.2em] text-sky-300/60">
+                  {t("airport.stats.class")}
+                </p>
+                <p className="mt-1 font-flight text-lg font-bold uppercase tracking-wide text-amber-300 sm:text-xl">
+                  {travelClass.label}
+                </p>
+              </div>
+            </div>
+            {/* Línea de pista decorativa */}
+            <div
+              aria-hidden
+              className="mt-4 h-px bg-[repeating-linear-gradient(90deg,rgba(56,189,248,0.4)_0_10px,transparent_10px_20px)]"
+            />
+          </section>
+
+          <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -267,6 +348,9 @@ function ProfilePage() {
               </Button>
             </div>
           </section>
+
+          {/* Pasaporte digital con sellos de cada destino */}
+          <PassportStamps trips={trips} />
 
           <section className="mt-4 grid gap-2">
             <Link

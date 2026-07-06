@@ -50,6 +50,7 @@
 
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-flight: var(--font-flight);
 }
 
 :root {
@@ -57,6 +58,10 @@
 
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  /* Pantallas de aeropuerto: códigos de vuelo, gates, horas. Stack de sistema
+     para no cargar una fuente extra. */
+  --font-flight:
+    ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
 
   /* Itineraya pastel palette */
   --background: oklch(1 0 0);
@@ -242,4 +247,24 @@
 }
 .nav-icon-active {
   animation: nav-icon-pop 340ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+/* Tipografía de panel de aeropuerto (códigos de vuelo, gates, horas). */
+.font-flight {
+  font-family: var(--font-flight);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Scroll snapping suave entre secciones de la landing ──────────────────
+   Solo desktop y solo sin reduced-motion. `proximity` (no `mandatory`) para
+   que el snap sugiera, nunca secuestre el scroll. La clase se añade a <html>
+   mientras la landing está montada. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  html.landing-snap {
+    scroll-snap-type: y proximity;
+  }
+  html.landing-snap section {
+    scroll-snap-align: start;
+    scroll-margin-top: 72px;
+  }
 }

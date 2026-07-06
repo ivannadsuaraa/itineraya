@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { BackToTop } from "@/components/ui/BackToTop";
+import { EASE_OUT } from "@/lib/motion";
 import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import {
@@ -85,6 +88,8 @@ function ExplorePage() {
   const list = useServerFn(listPublicTrips);
   const rate = useServerFn(rateTrip);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const reduceMotion = useReducedMotion();
 
   const [destination, setDestination] = useState("");
   const [style, setStyle] = useState<(typeof STYLES)[number]>("all");
@@ -231,15 +236,18 @@ function ExplorePage() {
           {/* ── Filters ── */}
           <div className="sticky top-14 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              {/* Style chips */}
+              {/* Style chips — se revelan con slide desde la izquierda */}
               <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
-                {STYLES.map((s) => {
+                {STYLES.map((s, chipIdx) => {
                   const Icon = STYLE_ICONS[s];
                   const active = style === s;
                   return (
-                    <button
+                    <motion.button
                       key={s}
                       type="button"
+                      initial={reduceMotion ? false : { opacity: 0, x: -26 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, ease: EASE_OUT, delay: chipIdx * 0.045 }}
                       onClick={() => setStyle(s)}
                       className={`inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-all ${
                         active
@@ -249,19 +257,26 @@ function ExplorePage() {
                     >
                       <Icon className="h-3 w-3" />
                       {t(`explore.style.${s}`)}
-                    </button>
+                    </motion.button>
                   );
                 })}
 
                 <div className="mx-2 h-5 w-px shrink-0 bg-slate-200" />
 
-                {/* Duration chips */}
-                {DURATIONS.filter((d) => d !== "all").map((d) => {
+                {/* Duration chips — continúan la cascada de la izquierda */}
+                {DURATIONS.filter((d) => d !== "all").map((d, dIdx) => {
                   const active = durationBucket === d;
                   return (
-                    <button
+                    <motion.button
                       key={d}
                       type="button"
+                      initial={reduceMotion ? false : { opacity: 0, x: -26 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{
+                        duration: 0.4,
+                        ease: EASE_OUT,
+                        delay: (STYLES.length + dIdx) * 0.045,
+                      }}
                       onClick={() => setDurationBucket(active ? "all" : d)}
                       className={`inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-all ${
                         active
@@ -271,7 +286,7 @@ function ExplorePage() {
                     >
                       <Clock className="h-3 w-3" />
                       {t(`explore.duration.${d}`)}
-                    </button>
+                    </motion.button>
                   );
                 })}
 
@@ -354,13 +369,20 @@ function ExplorePage() {
               <EmptyState />
             ) : (
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {/* Stagger distinto por dispositivo: en desktop la cascada
+                    sigue las 3 columnas (90 ms); en móvil, 1 columna, basta
+                    un desfase corto (40 ms) para no hacer esperar. */}
                 {sortedItems.map((item, i) => (
                   <motion.div
                     key={item.slug}
-                    initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                    initial={reduceMotion ? false : { opacity: 0, y: 20, scale: 0.98 }}
                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
                     viewport={{ once: true, amount: 0.1 }}
-                    transition={{ duration: 0.45, ease: [0.23, 1, 0.32, 1], delay: (i % 3) * 0.06 }}
+                    transition={{
+                      duration: isMobile ? 0.38 : 0.5,
+                      ease: EASE_OUT,
+                      delay: isMobile ? (i % 2) * 0.04 : (i % 3) * 0.09,
+                    }}
                   >
                     <FeedCard
                       item={item}
@@ -374,6 +396,9 @@ function ExplorePage() {
           </section>
         </PageTransition>
       </main>
+
+      {/* Botón flotante para volver arriba tras hacer scroll */}
+      <BackToTop />
 
       {!isAuthenticated && <FooterSection />}
       {isAuthenticated && <MobileBottomBar />}
@@ -501,6 +526,7 @@ function FeedCard({
   onRate?: (rating: number) => void;
 }) {
   const { t } = useTranslation();
+  const reduceMotion = useReducedMotion();
   const fallback = useMemo(
     () =>
       `https://loremflickr.com/800/600/${encodeURIComponent(
@@ -519,13 +545,24 @@ function FeedCard({
         {/* Image */}
         <Link to="/explore/$slug" params={{ slug: item.slug }} className="block">
           <div className="relative aspect-[4/3] overflow-hidden">
-            <img
-              src={img}
-              alt={item.destination}
-              loading="lazy"
-              onError={() => setImg(fallback)}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
+            {/* La foto entra con zoom sutil y pasa de oscura a iluminada al
+                entrar en viewport. El zoom de hover vive en el <img> interior
+                para no pelear con el transform de framer. */}
+            <motion.div
+              initial={reduceMotion ? false : { scale: 1.12, filter: "brightness(0.55)" }}
+              whileInView={{ scale: 1, filter: "brightness(1)" }}
+              viewport={{ once: true, amount: 0.35 }}
+              transition={{ duration: 0.9, ease: EASE_OUT }}
+              className="h-full w-full"
+            >
+              <img
+                src={img}
+                alt={item.destination}
+                loading="lazy"
+                onError={() => setImg(fallback)}
+                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+              />
+            </motion.div>
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
 

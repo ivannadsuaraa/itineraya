@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useMotionValue,
+  useScroll,
   useSpring,
   useTransform,
   useReducedMotion,
   type Variants,
 } from "framer-motion";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { DestinationTicker } from "@/components/airport/DestinationTicker";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -45,6 +48,19 @@ export function HeroSection() {
   // Profundidad por capas: el mockup y sus elementos flotantes siguen al
   // ratón a velocidades distintas (parallax), con muelles para que respire.
   const sectionRef = useRef<HTMLElement>(null);
+  const isMobile = useIsMobile();
+
+  // Parallax de scroll del fondo del hero: las capas decorativas y el mockup
+  // se desplazan a velocidades distintas al hacer scroll. Solo desktop.
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const scrollParallaxOn = !reduceMotion && !isMobile;
+  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "26%"]);
+  const mockupY = useTransform(scrollYProgress, [0, 1], ["0%", "14%"]);
+  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "7%"]);
+
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const sx = useSpring(mx, { stiffness: 60, damping: 18 });
@@ -84,18 +100,22 @@ export function HeroSection() {
       }}
       className="relative overflow-hidden bg-gradient-to-b from-sky-950 via-sky-900 to-sky-800 pt-28 pb-24 sm:pt-36 sm:pb-32"
     >
-      {/* Decorative blobs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Decorative blobs — capa de fondo con parallax de scroll */}
+      <motion.div
+        style={scrollParallaxOn ? { y: bgY } : undefined}
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+      >
         <div className="absolute -top-24 -right-24 h-[480px] w-[480px] rounded-full bg-sky-700/25 blur-3xl" />
         <div className="absolute top-1/2 -left-32 h-[360px] w-[360px] rounded-full bg-[#1E6B9A]/30 blur-3xl" />
         <div className="absolute bottom-0 right-1/3 h-[280px] w-[280px] rounded-full bg-sky-600/20 blur-3xl" />
-      </div>
+      </motion.div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* ── Text side ── */}
           <motion.div
             className="max-w-xl"
+            style={scrollParallaxOn ? { y: textY } : undefined}
             initial={reduceMotion ? false : "hidden"}
             animate="visible"
           >
@@ -197,6 +217,7 @@ export function HeroSection() {
           {/* ── Product mockup side (visible también en móvil) ── */}
           <motion.div
             className="relative mx-auto w-full max-w-sm lg:max-w-md"
+            style={scrollParallaxOn ? { y: mockupY } : undefined}
             initial={reduceMotion ? false : { opacity: 0, y: 36, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.9, ease: [0.23, 1, 0.32, 1], delay: 0.35 }}
@@ -343,16 +364,9 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Wave transition to next section */}
+      {/* Ticker de salidas estilo panel de aeropuerto — borde inferior del hero */}
       <div className="absolute bottom-0 left-0 right-0">
-        <svg
-          viewBox="0 0 1440 60"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full"
-        >
-          <path d="M0 30C360 60 720 0 1080 30C1260 45 1380 30 1440 30V60H0V30Z" fill="white" />
-        </svg>
+        <DestinationTicker label={t("hero.tickerLabel")} />
       </div>
     </section>
   );

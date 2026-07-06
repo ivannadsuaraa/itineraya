@@ -1,4 +1,3 @@
-
 import { Sparkles, Map, Sun, Wallet, Globe, Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -21,13 +20,7 @@ export function FeaturesSection() {
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div
-          
-          
-          
-          
-          className="mx-auto max-w-2xl text-center"
-        >
+        <div className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
             {t("features.kicker")}
           </span>
@@ -37,17 +30,11 @@ export function FeaturesSection() {
           <p className="mt-4 text-lg text-sky-600">{t("features.subtitle")}</p>
         </div>
 
-        <div
-          
-          
-          
-          
-          className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <div
               key={feature.title}
-              
+
               className="rounded-2xl border border-sky-100 bg-white/70 p-6 backdrop-blur-sm transition-all hover:border-sky-200 hover:bg-white hover:shadow-lg hover:shadow-sky-900/5 sm:p-8"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">
@@ -56,9 +43,7 @@ export function FeaturesSection() {
               <h3 className="mt-5 font-display text-lg font-semibold text-sky-900">
                 {feature.title}
               </h3>
-              <p className="mt-2 text-sky-600 leading-relaxed">
-                {feature.description}
-              </p>
+              <p className="mt-2 text-sky-600 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>

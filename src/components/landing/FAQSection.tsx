@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 const FAQ_ES = [
   {
@@ -99,17 +100,19 @@ export function FAQSection() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        <div className="mb-12 text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-[#1E6B9A]">FAQ</p>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            {isEn ? "Frequently Asked Questions" : "Preguntas frecuentes"}
-          </h2>
-          <p className="mt-3 text-sky-600">
-            {isEn
-              ? "Everything you need to know about Itineraya."
-              : "Todo lo que necesitas saber sobre Itineraya."}
-          </p>
-        </div>
+        <ScrollReveal direction="blur" amount={0.3}>
+          <div className="mb-12 text-center">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#1E6B9A]">FAQ</p>
+            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
+              {isEn ? "Frequently Asked Questions" : "Preguntas frecuentes"}
+            </h2>
+            <p className="mt-3 text-sky-600">
+              {isEn
+                ? "Everything you need to know about Itineraya."
+                : "Todo lo que necesitas saber sobre Itineraya."}
+            </p>
+          </div>
+        </ScrollReveal>
 
         <div className="divide-y divide-sky-100 rounded-2xl border border-sky-100 bg-white shadow-sm">
           {faqs.map((faq, i) => (

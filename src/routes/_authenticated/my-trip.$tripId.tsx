@@ -43,10 +43,14 @@ import { ShareDialog } from "@/components/trip/ShareDialog";
 import { PublishToggle } from "@/components/trip/PublishToggle";
 import { TripmatesModal } from "@/components/trip/TripmatesModal";
 import { TripVisualMap } from "@/components/trip/TripVisualMap";
+import { TripBrochure } from "@/components/trip/TripBrochure";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/ui/PageTransition";
+import { ReadingProgress } from "@/components/ui/ReadingProgress";
+import { BoardingPass } from "@/components/airport/BoardingPass";
+import { RevealGroup, RevealItem } from "@/components/ui/ScrollReveal";
 
 const TripMap = lazy(() =>
   import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })),
@@ -226,6 +230,7 @@ function ItineraryPage() {
   const { tripId } = Route.useParams();
   const navigate = useNavigate();
   const generate = useServerFn(generateItinerary);
+  const reduceMotion = useReducedMotion();
 
   const [loading, setLoading] = useState(true);
   const [loadingDestination, setLoadingDestination] = useState<string | null>(null);
@@ -239,10 +244,13 @@ function ItineraryPage() {
     status: string;
     start_date: string | null;
     end_date: string | null;
+    companion?: string | null;
   } | null>(null);
   const [view, setView] = useState<"cards" | "text" | "timeline">("cards");
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [visualMapOpen, setVisualMapOpen] = useState(false);
+  const [brochureOpen, setBrochureOpen] = useState(false);
+  const [activeDay, setActiveDay] = useState(0);
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -296,7 +304,7 @@ function ItineraryPage() {
       try {
         const { data, error: e1 } = await supabase
           .from("trips")
-          .select("id,destination,hero_image_url,itinerary,status,start_date,end_date")
+          .select("id,destination,hero_image_url,itinerary,status,start_date,end_date,companion")
           .eq("id", tripId)
           .maybeSingle();
         if (e1) throw e1;
@@ -322,6 +330,7 @@ function ItineraryPage() {
           status: "ready",
           start_date: data.start_date ?? null,
           end_date: data.end_date ?? null,
+          companion: (data as { companion?: string | null }).companion ?? null,
         });
         // Momento de máxima motivación: el itinerario acaba de aparecer.
         // Proponer compartirlo aquí multiplica el alcance del enlace público.
@@ -379,6 +388,8 @@ function ItineraryPage() {
 
   return (
     <PageTransition className="min-h-dvh bg-slate-50" personality="focus">
+      {/* Progress bar de lectura del itinerario */}
+      <ReadingProgress />
       {/* ── Sticky toolbar ── */}
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-5">
@@ -436,6 +447,15 @@ function ItineraryPage() {
             >
               <RouteIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.visualMapCta")}</span>
+            </button>
+
+            {/* Folleto A4 del viaje completo (descargable) */}
+            <button
+              onClick={() => setBrochureOpen(true)}
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("trip.brochureCta")}</span>
             </button>
 
             {/* Action buttons */}
@@ -517,11 +537,29 @@ function ItineraryPage() {
 
       {/* ── Content ── */}
       <div className="mx-auto max-w-5xl px-4 py-6 md:px-6 md:py-8">
+        {/* Boarding pass del viaje: el itinerario empieza como empieza un
+            vuelo. Descargable como imagen. */}
+        <div className="mb-6">
+          <BoardingPass
+            tripId={trip.id}
+            destination={trip.destination}
+            startDate={trip.start_date}
+            daysCount={itin.days.length}
+            companion={trip.companion}
+            plan={plan}
+          />
+        </div>
+
         {/* Mapa prominente en móvil: en desktop vive fijo a la derecha, pero en
-            móvil quedaba escondido tras un botón del toolbar. */}
-        <button
+            móvil quedaba escondido tras un botón del toolbar. El panel se
+            "despliega" (clip-path) al entrar en pantalla. */}
+        <motion.button
           type="button"
           onClick={() => setMapModalOpen(true)}
+          initial={reduceMotion ? undefined : { clipPath: "inset(0 0 100% 0 round 16px)" }}
+          whileInView={{ clipPath: "inset(0 0 0% 0 round 16px)" }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.7, ease: EASE_OUT }}
           className="relative mb-5 block w-full overflow-hidden rounded-2xl text-left shadow-sm ring-1 ring-slate-200 transition hover:shadow-md lg:hidden"
         >
           <div className="relative h-28 bg-[#EAF4FB]">
@@ -573,11 +611,17 @@ function ItineraryPage() {
               {t("trip.mapPreviewCta")}
             </span>
           </div>
-        </button>
+        </motion.button>
 
         <div className="mb-5">
           <PublishToggle tripId={trip.id} />
         </div>
+
+        {/* Navegación de días: sticky bajo el toolbar, el indicador sigue el
+            scroll con animación suave (layoutId). Solo en vista de tarjetas. */}
+        {view === "cards" && itin.days.length > 1 && (
+          <DayScrollNav count={itin.days.length} active={activeDay} onActiveChange={setActiveDay} />
+        )}
 
         <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
           {/* Cards / Text / Timeline panel */}
@@ -588,14 +632,16 @@ function ItineraryPage() {
                     al aparecer la página, el resto según entran en pantalla,
                     con un desenfoque que "enfoca" cada día como algo especial. */}
                 {itin.days.map((day, dayIdx) => (
-                  <DayReveal key={day.day} index={dayIdx}>
-                    <DayCard
-                      day={day}
-                      destination={trip.destination}
-                      dayIdx={dayIdx}
-                      onActivityUpdate={updateActivity}
-                    />
-                  </DayReveal>
+                  <div key={day.day} id={`day-section-${dayIdx}`} data-day-anchor={dayIdx}>
+                    <DayReveal index={dayIdx}>
+                      <DayCard
+                        day={day}
+                        destination={trip.destination}
+                        dayIdx={dayIdx}
+                        onActivityUpdate={updateActivity}
+                      />
+                    </DayReveal>
+                  </div>
                 ))}
               </div>
             )}
@@ -647,9 +693,19 @@ function ItineraryPage() {
             )}
           </div>
 
-          {/* Map panel (persistent preview on desktop) */}
+          {/* Map panel (persistent preview on desktop) — se despliega de
+              arriba abajo (clip-path) la primera vez que entra en pantalla */}
           <div className="hidden lg:block">
-            <div className="lg:sticky lg:top-[60px]">
+            <motion.div
+              initial={
+                reduceMotion
+                  ? undefined
+                  : { clipPath: "inset(0 0 100% 0 round 16px)", opacity: 0.5 }
+              }
+              animate={{ clipPath: "inset(0 0 0% 0 round 16px)", opacity: 1 }}
+              transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.25 }}
+              className="lg:sticky lg:top-[60px]"
+            >
               <Suspense
                 fallback={
                   <div className="flex h-[60vh] items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
@@ -659,7 +715,7 @@ function ItineraryPage() {
               >
                 <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
               </Suspense>
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -704,6 +760,15 @@ function ItineraryPage() {
         endDate={trip.end_date}
       />
 
+      <TripBrochure
+        open={brochureOpen}
+        onClose={() => setBrochureOpen(false)}
+        destination={trip.destination}
+        days={itin.days}
+        startDate={trip.start_date}
+        endDate={trip.end_date}
+      />
+
       <AssistantEditPanel
         open={assistantOpen}
         onClose={() => setAssistantOpen(false)}
@@ -726,6 +791,80 @@ function ItineraryPage() {
         destination={trip.destination}
       />
     </PageTransition>
+  );
+}
+
+// Navegación de días pegajosa: chips "Día N" cuyo estado activo sigue el
+// scroll (IntersectionObserver sobre las secciones de día) y cuyo indicador
+// se desliza con animación de layout compartido.
+function DayScrollNav({
+  count,
+  active,
+  onActiveChange,
+}: {
+  count: number;
+  active: number;
+  onActiveChange: (idx: number) => void;
+}) {
+  const { t } = useTranslation();
+  const reduce = useReducedMotion();
+
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-day-anchor]"));
+    if (sections.length === 0) return;
+    // La franja central del viewport decide qué día está "activo".
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = Number((entry.target as HTMLElement).dataset.dayAnchor);
+            if (!Number.isNaN(idx)) onActiveChange(idx);
+          }
+        }
+      },
+      { rootMargin: "-35% 0px -55% 0px", threshold: 0 },
+    );
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [count, onActiveChange]);
+
+  const jumpTo = (idx: number) => {
+    onActiveChange(idx);
+    document
+      .getElementById(`day-section-${idx}`)
+      ?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  };
+
+  return (
+    <nav
+      aria-label={t("trip.dayNavAria")}
+      className="sticky top-[56px] z-10 -mx-4 mb-5 overflow-x-auto bg-slate-50/95 px-4 py-2 backdrop-blur-sm scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] md:-mx-6 md:px-6"
+    >
+      <div className="flex w-max gap-1.5 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-100">
+        {Array.from({ length: count }).map((_, idx) => (
+          <button
+            key={idx}
+            type="button"
+            onClick={() => jumpTo(idx)}
+            className={`relative flex h-9 items-center rounded-full px-3.5 text-xs font-semibold transition-colors ${
+              active === idx ? "text-white" : "text-slate-500 hover:text-slate-800"
+            }`}
+            aria-current={active === idx ? "true" : undefined}
+          >
+            {active === idx && (
+              <motion.span
+                layoutId="day-nav-pill"
+                transition={
+                  reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }
+                }
+                className="absolute inset-0 rounded-full bg-sky-900 shadow-sm"
+              />
+            )}
+            <span className="relative">{t("trip.dayLabel", { n: idx + 1 })}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -886,19 +1025,20 @@ function DayCard({
         </div>
       )}
 
-      {/* Activities */}
-      <div className="space-y-2.5 p-4 sm:p-5">
+      {/* Activities — cascada con stagger de 40 ms al entrar en pantalla */}
+      <RevealGroup stagger={0.04} amount={0.08} className="space-y-2.5 p-4 sm:p-5">
         {day.activities.map((a, i) => (
-          <ActivityRow
-            key={i}
-            activity={a}
-            destination={destination}
-            dayIdx={dayIdx}
-            actIdx={i}
-            onUpdate={onActivityUpdate}
-          />
+          <RevealItem key={i}>
+            <ActivityRow
+              activity={a}
+              destination={destination}
+              dayIdx={dayIdx}
+              actIdx={i}
+              onUpdate={onActivityUpdate}
+            />
+          </RevealItem>
         ))}
-      </div>
+      </RevealGroup>
 
       {/* Footer actions */}
       <div className="flex gap-2 border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">

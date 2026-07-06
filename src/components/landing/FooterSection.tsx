@@ -8,7 +8,12 @@ export function FooterSection() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center gap-8">
           {/* Logo */}
-          <img src="/itineraya-wordmark.png" alt="Itineraya" className="h-8 w-auto select-none opacity-80" draggable={false} />
+          <img
+            src="/itineraya-wordmark.png"
+            alt="Itineraya"
+            className="h-8 w-auto select-none opacity-80"
+            draggable={false}
+          />
 
           {/* Social links */}
           <div className="flex items-center gap-5">
@@ -45,16 +50,28 @@ export function FooterSection() {
               &copy; {new Date().getFullYear()} Itineraya. {t("footer.rights")}
             </p>
             <div className="flex flex-wrap justify-center gap-x-2 gap-y-1">
-              <a href="https://itineraya.com/privacy" className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900">
+              <a
+                href="https://itineraya.com/privacy"
+                className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900"
+              >
                 {t("footer.privacy")}
               </a>
-              <a href="https://itineraya.com/terms" className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900">
+              <a
+                href="https://itineraya.com/terms"
+                className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900"
+              >
                 {t("footer.terms")}
               </a>
-              <Link to="/cookies" className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900">
+              <Link
+                to="/cookies"
+                className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900"
+              >
                 Cookies
               </Link>
-              <Link to="/contact" className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900">
+              <Link
+                to="/contact"
+                className="flex items-center px-2 py-3 text-sm text-sky-600 transition-colors hover:text-sky-900"
+              >
                 {t("footer.contact")}
               </Link>
             </div>

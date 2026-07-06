@@ -10,6 +10,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 // Sustituye al grid genérico de iconos (FeaturesSection): en vez de contar lo
 // que hace la app, la enseña. Cuatro mockups construidos en CSS de lo que un
@@ -21,21 +22,32 @@ export function ProductShowcaseSection() {
   return (
     <section id="product" className="relative overflow-hidden bg-white py-20 sm:py-28">
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
-            {t("showcase.kicker")}
-          </span>
-          <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
-            {t("showcase.title")}
-          </h2>
-          <p className="mt-4 text-lg text-sky-600">{t("showcase.subtitle")}</p>
-        </div>
+        <ScrollReveal direction="up" amount={0.5}>
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
+              {t("showcase.kicker")}
+            </span>
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
+              {t("showcase.title")}
+            </h2>
+            <p className="mt-4 text-lg text-sky-600">{t("showcase.subtitle")}</p>
+          </div>
+        </ScrollReveal>
 
+        {/* Cada bloque entra desde su lado del grid: izquierda/derecha alternos */}
         <div className="mt-16 grid gap-6 lg:grid-cols-2">
-          <MapBlock />
-          <ScheduleBlock />
-          <PostcardBlock />
-          <FeedBlock />
+          <ScrollReveal direction="left" amount={0.25}>
+            <MapBlock />
+          </ScrollReveal>
+          <ScrollReveal direction="right" amount={0.25} delay={0.08}>
+            <ScheduleBlock />
+          </ScrollReveal>
+          <ScrollReveal direction="left" amount={0.25}>
+            <PostcardBlock />
+          </ScrollReveal>
+          <ScrollReveal direction="right" amount={0.25} delay={0.08}>
+            <FeedBlock />
+          </ScrollReveal>
         </div>
       </div>
     </section>
@@ -86,9 +98,24 @@ function MapBlock() {
     >
       <div className="relative h-56 overflow-hidden rounded-t-2xl bg-[#EAF4FB] ring-1 ring-sky-100 sm:h-64">
         {/* Calles */}
-        <svg viewBox="0 0 400 240" className="absolute inset-0 h-full w-full" aria-hidden="true" preserveAspectRatio="none">
-          <path d="M0 60 H400 M0 130 H400 M0 200 H400 M70 0 V240 M170 0 V240 M290 0 V240" stroke="#C9E4F5" strokeWidth="2" fill="none" />
-          <path d="M0 95 H400 M230 0 V240 M350 0 V240" stroke="#D9EDF9" strokeWidth="1.5" fill="none" />
+        <svg
+          viewBox="0 0 400 240"
+          className="absolute inset-0 h-full w-full"
+          aria-hidden="true"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0 60 H400 M0 130 H400 M0 200 H400 M70 0 V240 M170 0 V240 M290 0 V240"
+            stroke="#C9E4F5"
+            strokeWidth="2"
+            fill="none"
+          />
+          <path
+            d="M0 95 H400 M230 0 V240 M350 0 V240"
+            stroke="#D9EDF9"
+            strokeWidth="1.5"
+            fill="none"
+          />
           {/* Ruta del día */}
           <path
             d="M40 168 Q 100 130 136 100 T 232 140 T 328 58"
@@ -178,7 +205,9 @@ function PostcardBlock() {
             className="h-28 w-full rounded-lg object-cover sm:h-32"
             loading="lazy"
           />
-          <p className="px-1 pt-2 text-[10px] font-bold text-slate-800">París · {t("showcase.postcardDay", { n: 2 })}</p>
+          <p className="px-1 pt-2 text-[10px] font-bold text-slate-800">
+            París · {t("showcase.postcardDay", { n: 2 })}
+          </p>
           <p className="px-1 pb-1 text-[9px] text-slate-400">Montmartre & Sacré-Cœur</p>
         </div>
         {/* Postal delantera */}
@@ -192,7 +221,9 @@ function PostcardBlock() {
           />
           <div className="flex items-center justify-between px-1 pt-2 pb-1">
             <div>
-              <p className="text-[10px] font-bold text-slate-800">Venezia · {t("showcase.postcardDay", { n: 4 })}</p>
+              <p className="text-[10px] font-bold text-slate-800">
+                Venezia · {t("showcase.postcardDay", { n: 4 })}
+              </p>
               <p className="text-[9px] text-slate-400">Canal Grande</p>
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-sky-900 px-2 py-1 text-[9px] font-bold text-white">
@@ -234,9 +265,17 @@ function FeedBlock() {
           {cards.map((c, i) => (
             <div key={i} className="overflow-hidden rounded-xl ring-1 ring-slate-100">
               <div className="relative h-20 sm:h-24">
-                <img src={c.img} alt="" aria-hidden className="h-full w-full object-cover" loading="lazy" />
+                <img
+                  src={c.img}
+                  alt=""
+                  aria-hidden
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-                <p className="absolute bottom-1.5 left-2 text-[10px] font-bold text-white drop-shadow">{c.title}</p>
+                <p className="absolute bottom-1.5 left-2 text-[10px] font-bold text-white drop-shadow">
+                  {c.title}
+                </p>
               </div>
               <div className="flex items-center justify-between px-2 py-1.5">
                 <span className="flex items-center gap-0.5">
@@ -272,4 +311,3 @@ function FeedBlock() {
     </BlockShell>
   );
 }
-

@@ -24,7 +24,7 @@
     "title1": "Sua viagem perfeita,",
     "title2": "dia a dia",
     "subtitle": "Conte-nos destino, datas e orçamento. Receba um guia de viagem completo: mapa do percurso, horários reais, restaurantes que existem de verdade e cartões postais para compartilhar. Não um texto — um plano.",
-    "ctaStart": "Começar grátis",
+    "ctaStart": "Embarcar",
     "ctaMyTrips": "Ver minhas viagens",
     "ctaHow": "Como funciona",
     "cardDayLabel": "Dia 3 · Uluwatu",
@@ -34,7 +34,8 @@
     "postcardChip": "Postal do dia 3",
     "proofMap": "Mapa interativo",
     "proofSchedule": "Horários reais",
-    "proofPostcards": "Postais para baixar"
+    "proofPostcards": "Postais para baixar",
+    "tickerLabel": "Partidas · Departures"
   },
   "showcase": {
     "kicker": "O produto, não promessas",
@@ -54,15 +55,15 @@
     "feedCta": "Explorar viagens"
   },
   "how": {
-    "kicker": "Como funciona 🗺️",
+    "kicker": "Como funciona",
     "title": "Da ideia à viagem em 3 etapas",
     "subtitle": "Sem planilhas nem noites de pesquisa. Planeje sua aventura em minutos.",
-    "step1Title": "Escolha seu destino",
-    "step1Desc": "Diga-nos para onde você quer ir. Uma cidade, um país ou simplesmente 'praia no verão'.",
-    "step2Title": "Personalize os detalhes",
-    "step2Desc": "Ajuste as datas, o orçamento, o estilo de viagem e suas preferências. Programação cheia ou relaxamento total.",
-    "step3Title": "Receba seu roteiro",
-    "step3Desc": "A IA gera um plano dia a dia com mapas, horários, reservas e recomendações locais."
+    "step1Title": "Check-in",
+    "step1Desc": "Preencha suas preferências: destino, datas, orçamento e estilo de viagem. Dois minutos, sem fila.",
+    "step2Title": "Gate",
+    "step2Desc": "A IA prepara sua viagem: rotas por região, horários reais, restaurantes que existem e reservas prontas.",
+    "step3Title": "Boarding",
+    "step3Desc": "Seu roteiro está pronto para embarcar: mapa do percurso, agenda dia a dia e postais para compartilhar."
   },
   "features": {
     "kicker": "Funcionalidades ✨",
@@ -395,8 +396,8 @@
     "destPh": "Ex. Japão, Lisboa, Patagônia…",
     "datesTitle": "Quando você vai viajar?",
     "datesSubtitle": "Escolha as datas de início e fim.",
-    "dateStart": "Início",
-    "dateEnd": "Fim",
+    "dateStart": "DEPARTURE",
+    "dateEnd": "RETURN",
     "datePick": "Escolher data",
     "arrivalTime": "Horário de chegada",
     "departureTime": "Horário de retorno",
@@ -551,7 +552,14 @@
     "nights_one": "{{count}} noite",
     "nights_other": "{{count}} noites",
     "readyShare": "Seu roteiro está pronto! Compartilhe com seus companheiros de viagem ✈️",
-    "loadingHint": "Costuma levar menos de um minuto"
+    "loadingHint": "Costuma levar menos de um minuto",
+    "brochureCta": "Folheto",
+    "brochureTitle": "Folheto da viagem",
+    "brochureEyebrow": "Folheto de viagem",
+    "brochureRoute": "Rota da viagem",
+    "brochureDownloaded": "Folheto da viagem baixado ✨",
+    "brochureAria": "Folheto da viagem a {{destination}}",
+    "dayNavAria": "Navegação por dias"
   },
   "tripmates": {
     "tag": "Companheiros de viagem",
@@ -759,14 +767,14 @@
     "subtitle": "Roteiros reais criados pela comunidade. Inspire-se e crie o seu em segundos.",
     "searchPlaceholder": "Buscar um destino (Bali, Tóquio, Paris…)",
     "style": {
-      "all": "Todos os estilos",
-      "adventure": "Aventura",
-      "relax": "Relaxamento",
-      "cultural": "Cultural",
-      "romantic": "Romântico",
-      "family": "Família",
-      "party": "Balada",
-      "nature": "Natureza"
+      "all": "Todos os portões",
+      "adventure": "Adventure Terminal",
+      "relax": "Relax Lounge",
+      "cultural": "Culture Lounge",
+      "romantic": "Sunset Gate",
+      "family": "Family Boarding",
+      "party": "Night Flight",
+      "nature": "Nature Terminal"
     },
     "duration": {
       "all": "Qualquer duração",
@@ -792,8 +800,8 @@
     "clear": "Limpar busca",
     "rateAria_one": "Avaliar com {{count}} estrela",
     "rateAria_other": "Avaliar com {{count}} estrelas",
-    "views_one": "{{count}} visualização",
-    "views_other": "{{count}} visualizações"
+    "views_one": "{{count}} passageiro já voou para este destino",
+    "views_other": "{{count}} passageiros já voaram para este destino"
   },
   "publish": {
     "title": "Publicar como inspiração",
@@ -810,5 +818,54 @@
     "errorTitle": "Esta página não carregou",
     "errorBody": "Algo falhou do nosso lado. Tente recarregar ou volte ao início.",
     "retry": "Tentar de novo"
+  },
+  "stats": {
+    "itineraries": "Roteiros criados",
+    "destinations": "Destinos planejados",
+    "rating": "Avaliação média"
+  },
+  "common": {
+    "backToTop": "Voltar ao topo"
+  },
+  "airport": {
+    "boardingPass": "Cartão de embarque",
+    "from": "Origem",
+    "to": "Destino",
+    "yourCity": "SUA CIDADE",
+    "flight": "Voo",
+    "gate": "Portão",
+    "date": "Data",
+    "duration": "Duração",
+    "passengers": "Passageiros",
+    "seat": "Assento",
+    "passenger": "Passageiro",
+    "downloadPass": "Baixar cartão de embarque",
+    "passDownloaded": "Cartão de embarque baixado ✈️",
+    "takeoff": "Decolando",
+    "takeoffSub": "Pista 27 · Rumo ao seu roteiro",
+    "board": {
+      "departures": "Partidas",
+      "flightCol": "Voo",
+      "destinationCol": "Destino",
+      "dateCol": "Data",
+      "statusCol": "Status",
+      "upcoming": "PRÓXIMO",
+      "ongoing": "EM CURSO",
+      "done": "CONCLUÍDO",
+      "planning": "PLANEJANDO",
+      "viewBoard": "Painel",
+      "viewCards": "Cartões"
+    },
+    "stats": {
+      "destinations": "Destinos visitados",
+      "miles": "Milhas voadas",
+      "milesHint": "estimadas",
+      "class": "Classe de viajante"
+    },
+    "passport": {
+      "title": "Passaporte digital",
+      "eyebrow": "Carimbos",
+      "empty": "Seus carimbos aparecerão aqui a cada viagem planejada."
+    }
   }
 }

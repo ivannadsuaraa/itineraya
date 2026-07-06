@@ -24,7 +24,7 @@
     "title1": "Votre voyage parfait,",
     "title2": "jour par jour",
     "subtitle": "Dites-nous votre destination, vos dates et votre budget. Recevez un guide de voyage complet : carte du parcours, horaires réels, restaurants qui existent vraiment et cartes postales à partager. Pas un texte — un plan.",
-    "ctaStart": "Commencer gratuitement",
+    "ctaStart": "Embarquer",
     "ctaMyTrips": "Aller à mes voyages",
     "ctaHow": "Comment ça marche",
     "cardDayLabel": "Jour 3 · Uluwatu",
@@ -34,7 +34,8 @@
     "postcardChip": "Carte postale du jour 3",
     "proofMap": "Carte interactive",
     "proofSchedule": "Horaires réels",
-    "proofPostcards": "Cartes postales téléchargeables"
+    "proofPostcards": "Cartes postales téléchargeables",
+    "tickerLabel": "Départs · Departures"
   },
   "showcase": {
     "kicker": "Le produit, pas des promesses",
@@ -54,15 +55,15 @@
     "feedCta": "Explorer les voyages"
   },
   "how": {
-    "kicker": "Comment ça marche 🗺️",
+    "kicker": "Comment ça marche",
     "title": "De l'idée au voyage en 3 étapes",
     "subtitle": "Sans tableurs ni nuits de recherche. Planifiez votre aventure en quelques minutes.",
-    "step1Title": "Choisissez votre destination",
-    "step1Desc": "Dites-nous où vous voulez aller. Une ville, un pays ou simplement 'plage en été'.",
-    "step2Title": "Personnalisez les détails",
-    "step2Desc": "Ajustez les dates, le budget, le style de voyage et vos préférences. Programme chargé ou détente totale.",
-    "step3Title": "Recevez votre itinéraire",
-    "step3Desc": "L'IA génère un plan jour par jour avec cartes, horaires, réservations et recommandations locales."
+    "step1Title": "Check-in",
+    "step1Desc": "Renseigne tes préférences : destination, dates, budget et style de voyage. Deux minutes, sans file d'attente.",
+    "step2Title": "Gate",
+    "step2Desc": "L'IA prépare ton voyage : itinéraires par quartier, horaires réels, restaurants qui existent et réservations prêtes.",
+    "step3Title": "Boarding",
+    "step3Desc": "Ton itinéraire est prêt à embarquer : carte du parcours, agenda jour par jour et cartes postales à partager."
   },
   "features": {
     "kicker": "Fonctionnalités ✨",
@@ -395,8 +396,8 @@
     "destPh": "Ex. Japon, Lisbonne, Patagonie…",
     "datesTitle": "Quand voyagez-vous ?",
     "datesSubtitle": "Choisissez les dates de début et de fin.",
-    "dateStart": "Début",
-    "dateEnd": "Fin",
+    "dateStart": "DEPARTURE",
+    "dateEnd": "RETURN",
     "datePick": "Choisir une date",
     "arrivalTime": "Heure d'arrivée",
     "departureTime": "Heure de retour",
@@ -551,7 +552,14 @@
     "nights_one": "{{count}} nuit",
     "nights_other": "{{count}} nuits",
     "readyShare": "Votre itinéraire est prêt ! Partagez-le avec vos compagnons de voyage ✈️",
-    "loadingHint": "Cela prend généralement moins d'une minute"
+    "loadingHint": "Cela prend généralement moins d'une minute",
+    "brochureCta": "Brochure",
+    "brochureTitle": "Brochure du voyage",
+    "brochureEyebrow": "Brochure de voyage",
+    "brochureRoute": "Itinéraire du voyage",
+    "brochureDownloaded": "Brochure du voyage téléchargée ✨",
+    "brochureAria": "Brochure du voyage à {{destination}}",
+    "dayNavAria": "Navigation par jours"
   },
   "tripmates": {
     "tag": "Compagnons de voyage",
@@ -759,14 +767,14 @@
     "subtitle": "Itinéraires réels créés par la communauté. Inspirez-vous et créez le vôtre en quelques secondes.",
     "searchPlaceholder": "Chercher une destination (Bali, Tokyo, Paris…)",
     "style": {
-      "all": "Tous les styles",
-      "adventure": "Aventure",
-      "relax": "Détente",
-      "cultural": "Culturel",
-      "romantic": "Romantique",
-      "family": "Famille",
-      "party": "Fête",
-      "nature": "Nature"
+      "all": "Toutes les portes",
+      "adventure": "Adventure Terminal",
+      "relax": "Relax Lounge",
+      "cultural": "Culture Lounge",
+      "romantic": "Sunset Gate",
+      "family": "Family Boarding",
+      "party": "Night Flight",
+      "nature": "Nature Terminal"
     },
     "duration": {
       "all": "Toute durée",
@@ -792,8 +800,8 @@
     "clear": "Effacer la recherche",
     "rateAria_one": "Noter {{count}} étoile",
     "rateAria_other": "Noter {{count}} étoiles",
-    "views_one": "{{count}} vue",
-    "views_other": "{{count}} vues"
+    "views_one": "{{count}} passager a embarqué pour cette destination",
+    "views_other": "{{count}} passagers ont embarqué pour cette destination"
   },
   "publish": {
     "title": "Publier comme inspiration",
@@ -810,5 +818,54 @@
     "errorTitle": "Cette page n'a pas chargé",
     "errorBody": "Quelque chose a échoué de notre côté. Essayez de recharger ou revenez à l'accueil.",
     "retry": "Réessayer"
+  },
+  "stats": {
+    "itineraries": "Itinéraires créés",
+    "destinations": "Destinations planifiées",
+    "rating": "Note moyenne"
+  },
+  "common": {
+    "backToTop": "Revenir en haut"
+  },
+  "airport": {
+    "boardingPass": "Carte d'embarquement",
+    "from": "Origine",
+    "to": "Destination",
+    "yourCity": "TA VILLE",
+    "flight": "Vol",
+    "gate": "Porte",
+    "date": "Date",
+    "duration": "Durée",
+    "passengers": "Passagers",
+    "seat": "Siège",
+    "passenger": "Passager",
+    "downloadPass": "Télécharger la carte d'embarquement",
+    "passDownloaded": "Carte d'embarquement téléchargée ✈️",
+    "takeoff": "Décollage",
+    "takeoffSub": "Piste 27 · Cap sur ton itinéraire",
+    "board": {
+      "departures": "Départs",
+      "flightCol": "Vol",
+      "destinationCol": "Destination",
+      "dateCol": "Date",
+      "statusCol": "Statut",
+      "upcoming": "À VENIR",
+      "ongoing": "EN COURS",
+      "done": "TERMINÉ",
+      "planning": "EN PRÉPARATION",
+      "viewBoard": "Tableau",
+      "viewCards": "Cartes"
+    },
+    "stats": {
+      "destinations": "Destinations visitées",
+      "miles": "Miles parcourus",
+      "milesHint": "estimés",
+      "class": "Classe voyageur"
+    },
+    "passport": {
+      "title": "Passeport numérique",
+      "eyebrow": "Tampons",
+      "empty": "Tes tampons apparaîtront ici à chaque voyage planifié."
+    }
   }
 }

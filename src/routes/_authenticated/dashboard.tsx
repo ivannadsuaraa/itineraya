@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+  useVelocity,
+  type MotionValue,
+} from "framer-motion";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import {
@@ -18,7 +26,11 @@ import {
   Trash2,
   Clock,
   Zap,
+  LayoutGrid,
+  Plane,
 } from "lucide-react";
+import { DepartureBoard } from "@/components/airport/DepartureBoard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
@@ -111,6 +123,18 @@ function DashboardPage() {
   const [isFree, setIsFree] = useState(true);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"viajes" | "calendario">("viajes");
+  const [tripsView, setTripsView] = useState<"board" | "cards">("board");
+  const reduceMotion = useReducedMotion();
+  const isMobile = useIsMobile();
+
+  // Inclinación sutil de las cards según la dirección del scroll: la
+  // velocidad de scroll (suavizada con muelle) se mapea a unos grados de
+  // rotateX. Al parar, vuelve a 0. Solo desktop y sin reduced-motion.
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, { stiffness: 160, damping: 34, mass: 0.6 });
+  const cardTilt = useTransform(smoothVelocity, [-1400, 0, 1400], [3, 0, -3]);
+  const tiltOn = !reduceMotion && !isMobile;
 
   useEffect(() => {
     (async () => {
@@ -412,15 +436,43 @@ function DashboardPage() {
                 <h2 className="font-display text-lg font-bold text-slate-900">
                   {t("dashboard.savedTrips")}
                 </h2>
-                {trips && trips.length > 0 && (
-                  <Link
-                    to="/new-trip"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    {t("dashboard.newTrip")}
-                  </Link>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Toggle panel de salidas / tarjetas */}
+                  {trips && trips.length > 0 && (
+                    <div className="flex rounded-full bg-white p-0.5 shadow-sm ring-1 ring-slate-100">
+                      {(["board", "cards"] as const).map((v) => {
+                        const Icon = v === "board" ? Plane : LayoutGrid;
+                        return (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() => setTripsView(v)}
+                            aria-pressed={tripsView === v}
+                            className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition ${
+                              tripsView === v
+                                ? "bg-sky-900 text-white shadow-sm"
+                                : "text-slate-500 hover:text-slate-800"
+                            }`}
+                          >
+                            <Icon className={`h-3 w-3 ${v === "board" ? "-rotate-45" : ""}`} />
+                            {v === "board"
+                              ? t("airport.board.viewBoard")
+                              : t("airport.board.viewCards")}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {trips && trips.length > 0 && (
+                    <Link
+                      to="/new-trip"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      {t("dashboard.newTrip")}
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {trips === null && (
@@ -456,12 +508,29 @@ function DashboardPage() {
                 </div>
               )}
 
-              {otherTrips.length > 0 && (
-                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Panel de salidas estilo aeropuerto: todos los viajes como
+                  filas de un tablón con letras que giran al cargar. */}
+              {tripsView === "board" && trips && trips.length > 0 && (
+                <motion.div
+                  initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+                  className="mt-5"
+                >
+                  <DepartureBoard trips={trips} />
+                </motion.div>
+              )}
+
+              {tripsView === "cards" && otherTrips.length > 0 && (
+                <div
+                  className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                  style={{ perspective: 1100 }}
+                >
                   {otherTrips.map((trip, i) => (
                     <motion.div
                       key={trip.id}
-                      initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                      style={tiltOn ? { rotateX: cardTilt as MotionValue<number> } : undefined}
+                      initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.98 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{
                         duration: 0.45,

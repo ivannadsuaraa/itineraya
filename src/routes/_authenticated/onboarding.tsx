@@ -4,7 +4,17 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EASE_OUT } from "@/lib/motion";
 
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, Info, MapPin, CalendarDays } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Loader2,
+  Sparkles,
+  Info,
+  MapPin,
+  CalendarDays,
+  Plane,
+} from "lucide-react";
+import { TakeoffOverlay } from "@/components/airport/TakeoffOverlay";
 import { useTranslation } from "react-i18next";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es as esLocale, enUS } from "date-fns/locale";
@@ -172,6 +182,8 @@ function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
+  // Al terminar el wizard: animación de despegue antes de la pantalla de carga.
+  const [takeoffTripId, setTakeoffTripId] = useState<string | null>(null);
   const [data, setData] = useState<FormData>(() => ({
     destination: prefill?.destination ?? "",
     dateRange: undefined,
@@ -304,7 +316,10 @@ function OnboardingPage() {
       // Si Nominatim no llegó a tiempo, geocodifica y persiste en segundo
       // plano — la navegación es SPA, así que la petición sigue viva.
       if (!coords) void geocodeAndPersistTrip(trip.id, data.destination.trim());
-      navigate({ to: "/my-trip/$tripId", params: { tripId: trip.id } });
+      // Despegue: la pantalla simula la aceleración del avión antes de la
+      // pantalla de carga (TakeoffOverlay navega en onDone). Con
+      // reduced-motion el overlay llama a onDone inmediatamente.
+      setTakeoffTripId(trip.id);
     } catch (error) {
       console.error("[onboarding] unexpected error", error);
       toast.error(error instanceof Error ? error.message : t("onboarding.saveFail"));
@@ -318,6 +333,11 @@ function OnboardingPage() {
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      {takeoffTripId && (
+        <TakeoffOverlay
+          onDone={() => navigate({ to: "/my-trip/$tripId", params: { tripId: takeoffTripId } })}
+        />
+      )}
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
@@ -426,14 +446,28 @@ function OnboardingPage() {
         >
           {step === 0 && (
             <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
-              <DestinationAutocomplete
-                value={data.destination}
-                onChange={(destination) => setData((prevData) => ({ ...prevData, destination }))}
-                onEnter={() => {
-                  if (canContinue) next();
-                }}
-                placeholder={t("onboarding.destPh")}
-              />
+              {/* Mostrador de check-in: marco punteado tipo tarjeta de
+                  embarque alrededor del buscador de destino. */}
+              <div className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <span className="flex items-center gap-2 font-flight text-[10px] font-bold uppercase tracking-[0.28em] text-[#1E6B9A]">
+                    <Plane className="h-3.5 w-3.5 -rotate-45" />
+                    CHECK-IN
+                  </span>
+                  <span
+                    aria-hidden
+                    className="h-px w-24 bg-[repeating-linear-gradient(90deg,rgba(30,107,154,0.4)_0_8px,transparent_8px_16px)]"
+                  />
+                </div>
+                <DestinationAutocomplete
+                  value={data.destination}
+                  onChange={(destination) => setData((prevData) => ({ ...prevData, destination }))}
+                  onEnter={() => {
+                    if (canContinue) next();
+                  }}
+                  placeholder={t("onboarding.destPh")}
+                />
+              </div>
             </StepShell>
           )}
 
@@ -474,14 +508,15 @@ function OnboardingPage() {
 
           {step === 2 && (
             <StepShell title={t("onboarding.compTitle")} subtitle={t("onboarding.compSubtitle")}>
+              {/* Códigos PAX estilo tarjeta de embarque en cada opción */}
               <OptionGrid
                 value={data.companion}
                 onChange={(companion) => setData((prevData) => ({ ...prevData, companion }))}
                 options={[
-                  ["solo", t("onboarding.compSolo"), "🧭"],
-                  ["pareja", t("onboarding.compPair"), "💙"],
-                  ["amigos", t("onboarding.compFriends"), "🎒"],
-                  ["familia", t("onboarding.compFamily"), "🏡"],
+                  ["solo", t("onboarding.compSolo"), "🧭", "1 PAX"],
+                  ["pareja", t("onboarding.compPair"), "💙", "2 PAX"],
+                  ["amigos", t("onboarding.compFriends"), "🎒", "3+ PAX"],
+                  ["familia", t("onboarding.compFamily"), "🏡", "FAMILY"],
                 ]}
               />
             </StepShell>
@@ -750,19 +785,29 @@ function OptionGrid({
 }) {
   return (
     <div className={cn("grid gap-3", compact ? "grid-cols-2" : "sm:grid-cols-2")}>
-      {options.map(([id, label, icon]) => (
+      {options.map(([id, label, icon, code]) => (
         <button
           key={id}
           type="button"
           onClick={() => onChange(id)}
           className={cn(
-            "rounded-2xl border text-left transition active:scale-[0.97]",
+            "relative rounded-2xl border text-left transition active:scale-[0.97]",
             compact ? "flex items-center gap-2.5 px-4 py-3" : "p-5",
             value === id
               ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
               : "border-sky-200 bg-white/70 text-sky-900 hover:border-sky-300 hover:bg-white hover:shadow-sm",
           )}
         >
+          {code && (
+            <span
+              className={cn(
+                "absolute right-3 top-3 rounded-md px-1.5 py-0.5 font-flight text-[9px] font-bold uppercase tracking-[0.18em]",
+                value === id ? "bg-white/20 text-white" : "bg-sky-100 text-sky-700",
+              )}
+            >
+              {code}
+            </span>
+          )}
           <span className={compact ? "text-xl" : "text-2xl"}>{icon}</span>
           <span className={cn("block text-sm font-bold", !compact && "mt-2.5")}>{label}</span>
         </button>
