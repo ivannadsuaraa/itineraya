@@ -177,23 +177,34 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const plan = (planProfile?.plan ?? "free") as "free" | "viajero" | "explorador";
-    // Must match the client gate (new-trip.tsx) and the pricing page: 2 / 15 / ∞.
-    const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 15 : 2;
+    // Must match the client gate (new-trip.tsx) and the pricing page:
+    // free = 2 lifetime, viajero = 5 per calendar month (resets on the 1st), explorador = unlimited.
+    const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 5 : 2;
 
     if (planLimit !== null) {
       // Count generated trips (same criterion as the client gate in new-trip.tsx).
-      const { count } = await supabase
+      // Free: lifetime count, never resets. Viajero: only trips created in the
+      // current calendar month, since its quota resets on the 1st.
+      let countQuery = supabase
         .from("trips")
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
         .eq("status", "ready")
         .neq("id", data.tripId);
 
+      if (plan === "viajero") {
+        const now = new Date();
+        const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+        countQuery = countQuery.gte("created_at", startOfMonth);
+      }
+
+      const { count } = await countQuery;
+
       if ((count ?? 0) >= planLimit) {
         const msg =
           plan === "free"
             ? `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios en el plan gratuito. Actualiza al plan Viajero para crear más.`
-            : `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios del plan Viajero. Actualiza a Explorador para itinerarios ilimitados.`;
+            : `LIMIT_REACHED: Has alcanzado tu límite de ${planLimit} itinerarios este mes en el plan Viajero. Se renueva el día 1 de cada mes. Actualiza a Explorador para itinerarios ilimitados.`;
         throw new Error(msg);
       }
     }

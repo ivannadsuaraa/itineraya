@@ -271,7 +271,7 @@ const FEATURES: Array<{
   { labelKey: "pricing.cmp.images",     free: true,  viajero: true,  explorador: true },
   { labelKey: "pricing.cmp.map",        free: true,  viajero: true,  explorador: true },
   { labelKey: "pricing.cmp.share",      free: true,  viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.trips",      free: "2",   viajero: "15",  explorador: "pricing.cmp.unlimited" },
+  { labelKey: "pricing.cmp.trips",      free: "pricing.cmp.freeTrips", viajero: "pricing.cmp.viajeroTrips", explorador: "pricing.cmp.unlimited" },
   { labelKey: "pricing.cmp.assistant",  free: false, viajero: true,  explorador: true },
   { labelKey: "pricing.cmp.tripmates",  free: false, viajero: true,  explorador: true },
   { labelKey: "pricing.cmp.postcards",  free: false, viajero: true,  explorador: true },

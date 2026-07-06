@@ -26,18 +26,33 @@ function NewTripPage() {
       const { data: u } = await supabase.auth.getUser();
       const uid = u.user?.id ?? null;
       if (cancelled || !uid) return;
-      const [{ data: profile }, { count }] = await Promise.all([
-        supabase.from("profiles").select("plan").eq("id", uid).maybeSingle(),
-        supabase.from("trips").select("id", { count: "exact", head: true }).eq("user_id", uid).eq("status", "ready"),
-      ]);
+      const { data: profile } = await supabase.from("profiles").select("plan").eq("id", uid).maybeSingle();
       if (cancelled) return;
-      setPlan((profile?.plan as Plan | undefined) ?? "free");
+      const resolvedPlan = (profile?.plan as Plan | undefined) ?? "free";
+      setPlan(resolvedPlan);
+
+      // Free: lifetime count, never resets. Viajero: only trips created in the
+      // current calendar month, since its quota resets on the 1st.
+      let countQuery = supabase
+        .from("trips")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", uid)
+        .eq("status", "ready");
+      if (resolvedPlan === "viajero") {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        countQuery = countQuery.gte("created_at", startOfMonth);
+      }
+      const { count } = await countQuery;
+      if (cancelled) return;
       setTripCount(count ?? 0);
     })();
     return () => { cancelled = true; };
   }, []);
 
-  const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 15 : 2;
+  // Must match the server gate (itinerary.functions.ts) and the pricing page:
+  // free = 2 lifetime, viajero = 5 per calendar month (resets on the 1st), explorador = unlimited.
+  const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 5 : 2;
   const loaded = plan !== null && tripCount !== null;
   const overLimit = loaded && planLimit !== null && (tripCount ?? 0) >= planLimit;
 
@@ -90,11 +105,14 @@ function NewTripPage() {
               <AlertCircle className="h-4 w-4 shrink-0 text-sky-400" />
             )}
             <span>
-              {t("newTrip.limitBanner", { count: tripCount ?? 0, limit: planLimit })}
+              {t(plan === "viajero" ? "newTrip.limitBannerViajero" : "newTrip.limitBannerFree", {
+                count: tripCount ?? 0,
+                limit: planLimit,
+              })}
             </span>
             {overLimit && (
               <Link to="/pricing" className="ml-auto shrink-0 text-xs font-bold text-amber-700 hover:underline">
-                {t("newTrip.limitUpgrade")} →
+                {t(plan === "viajero" ? "newTrip.limitUpgradeExplorador" : "newTrip.limitUpgrade")} →
               </Link>
             )}
           </div>
@@ -126,10 +144,12 @@ function NewTripPage() {
               <Lock className="h-5 w-5" />
             </div>
             <DialogTitle className="text-center font-display text-xl text-sky-900">
-              {t("newTrip.limitTitle")}
+              {t(plan === "viajero" ? "newTrip.limitTitleViajero" : "newTrip.limitTitle", {
+                limit: planLimit,
+              })}
             </DialogTitle>
             <DialogDescription className="text-center text-sky-700">
-              {t("newTrip.limitDesc")}
+              {t(plan === "viajero" ? "newTrip.limitDescViajero" : "newTrip.limitDesc")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col gap-2 sm:flex-col">
@@ -139,7 +159,7 @@ function NewTripPage() {
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl"
             >
               <Sparkles className="h-4 w-4" />
-              {t("newTrip.limitUpgrade")}
+              {t(plan === "viajero" ? "newTrip.limitUpgradeExplorador" : "newTrip.limitUpgrade")}
               <ArrowRight className="h-4 w-4" />
             </button>
             <button
