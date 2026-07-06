@@ -74,6 +74,11 @@ const itinerarySchema = {
                   ],
                 },
                 url: { type: "string" },
+                tip: {
+                  type: "string",
+                  description:
+                    "optional insider tip: best time to go, what to order, how to skip the line",
+                },
               },
             },
           },
@@ -404,6 +409,53 @@ export const generateItinerary = createServerFn({ method: "POST" })
 
     const companion = (trip as { companion?: string | null }).companion ?? null;
 
+    // ── Personalización profunda (columnas opcionales; null si la migración
+    // trip_personalization aún no está aplicada) ──
+    const pace = (trip as { pace?: string | null }).pace ?? "balanced";
+    const firstVisit = (trip as { first_visit?: boolean | null }).first_visit;
+    const dietaryRaw = (trip as { dietary?: string | null }).dietary ?? null;
+
+    const paceMap: Record<string, string> = {
+      relaxed:
+        "RELAXED pace: 4-5 activities/day, first activity never before 10:00, long unhurried meals, at least one café/terrace break per day, evenings end early or with a calm plan.",
+      balanced:
+        "BALANCED pace: 5-6 activities/day, days start around 09:00-09:30, a good mix of sights and downtime.",
+      intense:
+        "INTENSE pace: 6-7 activities/day, early starts (08:30-09:00), full days — this traveler wants to squeeze every hour; still keep transitions realistic.",
+    };
+    const paceLine = paceMap[pace] ?? paceMap.balanced;
+
+    const firstVisitLine =
+      firstVisit === false
+        ? "The traveler has BEEN HERE BEFORE: skip the obvious top-3 tourist clichés (or give them a fresh twist), and lean into neighborhoods, local life and lesser-known spots."
+        : "FIRST TIME in this destination: the iconic must-sees belong in the plan, ordered sensibly — but balance them with authentic local moments.";
+
+    const dietaryDescMap: Record<string, string> = {
+      vegetarian: "vegetarian",
+      vegan: "vegan",
+      glutenFree: "gluten-free (celiac)",
+      halal: "halal",
+      allergies: "food allergies (details in the AVOID notes)",
+    };
+    const dietaryLine = dietaryRaw
+      ? dietaryRaw
+          .split(",")
+          .map((d) => dietaryDescMap[d.trim()] ?? d.trim())
+          .join(", ")
+      : null;
+
+    const age = (profile as { age?: number | null } | null)?.age ?? null;
+    const travelerType =
+      (profile as { traveler_type?: string | null } | null)?.traveler_type ?? null;
+
+    const travelerProfileLine = [
+      age ? `${age} years old` : null,
+      travelerType ? `self-described as "${travelerType}"` : null,
+      companion ? `traveling ${companion}` : "solo traveler",
+    ]
+      .filter(Boolean)
+      .join(", ");
+
     const beachRule = isKnownInland
       ? `${trip.destination} is an inland city — beach, sea or coastal activities (beach time, snorkeling, sea kayaking, swimming in the sea) are strictly forbidden.`
       : `Only include beach or sea activities if ${trip.destination} genuinely has a coastline or nearby beach AND the season allows it. A beach is never the only activity of a day; combine it with nearby stops and avoid peak-heat hours (12:00–16:00) in summer.`;
@@ -424,47 +476,69 @@ export const generateItinerary = createServerFn({ method: "POST" })
     };
     const transportExamples = transportExampleMap[lang];
 
-    const tripData = [
-      `- Destination: ${trip.destination}`,
-      `- Dates: ${datesLine} — ${dayCount} days, month: ${monthName}`,
-      `- Travelers: ${companion ?? "not specified"} | Trip style/interests: ${tripTypesLine}`,
-      `- ${arrivalLine}`,
-      `- ${departureLine}`,
-      accommodationBlock,
-      budgetBlock,
-      (trip as { avoid?: string | null }).avoid?.trim()
-        ? `- The traveler explicitly wants to AVOID: ${(trip as { avoid?: string | null }).avoid!.trim().slice(0, 500)}. Never schedule anything matching this.`
+    const avoidText = (trip as { avoid?: string | null }).avoid?.trim() ?? "";
+    const styleText = (trip.trip_style ?? "").trim();
+
+    const travelerBlock = [
+      `- Profile: ${travelerProfileLine}.`,
+      `- ${firstVisitLine}`,
+      `- ${paceLine}`,
+      `- Interests: ${tripTypesLine}.${styleText ? ` In their own words: "${styleText.slice(0, 400)}".` : ""}`,
+      dietaryLine
+        ? `- Dietary requirements: ${dietaryLine}. EVERY restaurant and food stop must genuinely work for this — if unsure a venue fits, choose one that clearly does.`
         : "",
-      `- Previous trips by this user (personalization context only): ${historyLine}`,
+      avoidText
+        ? `- The traveler explicitly wants to AVOID: ${avoidText.slice(0, 500)}. Never schedule anything matching this.`
+        : "",
+      `- Previous trips (calibrate their travel experience; never repeat these destinations' style blindly): ${historyLine}.`,
     ]
       .filter(Boolean)
       .join("\n");
 
-    const prompt = `Create a personalized ${dayCount}-day travel itinerary that is geographically coherent and realistic in its timing.
+    const logisticsBlock = [
+      `- Destination: ${trip.destination}`,
+      `- Dates: ${datesLine} — ${dayCount} days, month: ${monthName}`,
+      `- ${arrivalLine}`,
+      `- ${departureLine}`,
+      accommodationBlock,
+      budgetBlock,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-TRIP DATA
-${tripData}
+    const prompt = `You are planning a ${dayCount}-day trip to ${trip.destination} for one specific traveler. The goal: an itinerary so well-fitted, geographically coherent and locally informed that it reads like a knowledgeable friend who lives there planned it personally.
+
+THE TRAVELER
+${travelerBlock}
+
+TRIP LOGISTICS
+${logisticsBlock}
 
 OUTPUT LANGUAGE
 ${languageBlock}
 Exception: "place" must always hold the venue's real name in its native language, and real proper nouns (streets, monuments, venues) keep their original names inside the text.
 
+VOICE & TONE
+Write for THIS traveler. A young group of friends gets an energetic, casual voice that knows where the night goes; a family with kids gets practical reassurance (short walking legs, early dinners, plan-B for meltdowns); a couple gets atmosphere, views and unhurried evenings; an experienced solo traveler gets confident, no-fluff local detail. Descriptions must be concrete and specific ("order the lampredotto", "come at sunset when the facade lights up") — never generic filler like "enjoy the atmosphere" or "soak in the culture".
+
 RULES
-1. GEOGRAPHY — Each day focuses on ONE neighborhood/zone (or two adjacent ones). Order the stops as a logical walking line or loop: consecutive stops ≤1.2 km apart or directly connected by transit, and the whole day within ~3 km unless the metro connects points in under 15 min. Never cross to the other side of the city and come back the same day. Meals stay inside the day's zone.
+1. GEOGRAPHY — Each day focuses on ONE neighborhood/zone (or two adjacent ones). Order the stops as a logical walking line or loop: consecutive stops ≤1.2 km apart or directly connected by transit, and the whole day within ~3 km unless the metro connects points in under 15 min. Never cross to the other side of the city and come back the same day. Meals stay inside the day's zone. Give each day a distinct zone so the trip progressively covers the destination without backtracking.
 2. BEACH — ${beachRule}
-3. SCHEDULE — Activities in chronological order with realistic durations: museum 1.5–2h, meal 1–1.5h, monument 45–60 min, café 20–30 min; leave 15–30 min of slack between stops. Respect opening hours AND weekly closing days: work out the weekday of every itinerary day from the dates above and never schedule a venue on a day it is typically closed (e.g. many museums close on Mondays). Meal times follow the local dining customs of ${trip.destination}, not those of the traveler's home country.
-4. WEATHER — Adapt to typical ${monthName} weather in ${trip.destination}: cold or rain → prioritize indoor options; summer heat → outdoor in the morning/evening, indoor at midday.
+3. SCHEDULE — Activities in chronological order with realistic durations: museum 1.5–2h, meal 1–1.5h, monument 45–60 min, café 20–30 min; leave 15–30 min of slack between stops. Respect opening hours AND weekly closing days: work out the weekday of every itinerary day from the dates above and never schedule a venue on a day it is typically closed (e.g. many museums close on Mondays). Meal times follow the local dining customs of ${trip.destination}, not those of the traveler's home country. The day's density and start time follow the traveler's pace above.
+4. SEASON — It is ${monthName} in ${trip.destination}: plan around the real season. Typical weather (cold/rain → indoor priority; summer heat → outdoor mornings and evenings, indoor at midday), daylight hours (sunset time changes what an "evening walk" means), high/low season (book-ahead warnings in tips during peak months), and seasonal closures or seasonal specialties (dishes, markets, blooms) that only exist in this month.
 5. TRANSPORT — Every activity except the first of each day must start its "description" with a transport line (mode + route + minutes from the previous stop): ${transportExamples}. Distances under 1.2 km are always on foot — never taxi.
-6. REAL PLACES — Only real, well-established venues you are confident exist. If you are not sure a specific restaurant exists, name the dining area or venue type instead (e.g. "Trattoria in Trastevere") — never fabricate a venue name.
-7. LINKS — For the "url" field build a Google Maps link: https://www.google.com/maps/search/?api=1&query=VENUE+NAME+CITY (replace spaces with +). Use an official website instead only when you are completely certain of the exact URL. Never invent URLs; omit "url" when unsure.
-8. EVENTS — Include a local festival, fair or public holiday only if it is a well-known recurring event you are confident takes place in ${trip.destination} within the trip dates. Never invent events or their URLs.
-9. VOLUME — Exactly ${dayCount} days with 5–7 activities per day (fewer on days constrained by arrival or departure).${hasAccommodation ? ' Never use the "hotel" category.' : ""}
+6. REAL PLACES — Only real, well-established venues you are confident exist, and every restaurant must match BOTH the budget tier and the dietary requirements above. If you are not sure a specific restaurant exists, name the dining area or venue type instead (e.g. "Trattoria in Trastevere") — never fabricate a venue name.
+7. HIDDEN GEMS — Include at least 2–3 genuine non-obvious experiences across the trip: places locals love and most tourists miss (a viewpoint without crowds, a market bar, a workshop, a lesser-known museum wing). They must be real and fit the traveler's interests — surprise them, don't pad the plan.
+8. TIPS — Use the optional "tip" field on 1–2 activities per day for a specific, actionable insider tip: the best hour to avoid queues, what exactly to order, which entrance to use, where the best photo is. Never generic advice ("wear comfortable shoes").
+9. LINKS — For the "url" field build a Google Maps link: https://www.google.com/maps/search/?api=1&query=VENUE+NAME+CITY (replace spaces with +). Use an official website instead only when you are completely certain of the exact URL. Never invent URLs; omit "url" when unsure.
+10. EVENTS — Include a local festival, fair or public holiday only if it is a well-known recurring event you are confident takes place in ${trip.destination} within the trip dates. Never invent events or their URLs.
+11. VOLUME — Exactly ${dayCount} days. Activities per day follow the traveler's pace (see THE TRAVELER); always fewer on days constrained by arrival or departure.${hasAccommodation ? ' Never use the "hotel" category.' : ""}
 
 FIELD GUIDE
-- summary: 1–2 inspiring sentences.
-- title (day): short, the day's zone or theme. subtitle: a one-sentence recap of the day.
+- summary: 2 sentences, second person, evocative and specific to THIS trip (destination + season + their interests) — it is the first thing they read when the itinerary appears.
+- title (day): short and evocative — the day's zone or theme, not "Day 3". subtitle: a one-sentence recap of the day's arc.
 - image_query: 2–3 English words for a photo of the day's area (e.g. "montmartre paris street").
-- time: "HH:MM" 24h. emoji: exactly one emoji. title (activity): 3–6 words. description: 1–2 lines.`;
+- time: "HH:MM" 24h. emoji: exactly one emoji. title (activity): 3–6 words. description: 1–2 lines. tip: only when you have a genuinely useful insider tip.`;
 
     let aiRes: Response | null = null;
     for (let attempt = 1; attempt <= 3; attempt++) {

@@ -402,6 +402,14 @@ function PublicDayCard({ day, date }: { day: PublicTripDay; date: string | null 
                 </div>
               </div>
               <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{a.description}</p>
+              {a.tip && (
+                <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2">
+                  <span className="text-sm leading-tight">💎</span>
+                  <p className="text-xs leading-relaxed text-amber-800">
+                    <span className="font-semibold">{t("trip.tipLabel")}</span> {a.tip}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         ))}

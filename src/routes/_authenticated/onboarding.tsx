@@ -27,13 +27,18 @@ type FormData = {
   arrivalTime: string;
   departureTime: string;
   companion: string;
+  pace: string;
+  firstVisit: boolean;
   budgetRange: [number, number];
   tripStyle: string;
   avoid: string;
+  dietary: string[];
   tripTypes: string[];
   hasAccommodation: boolean;
   hotel: HotelSelection | null;
 };
+
+const dietaryIds = ["vegetarian", "vegan", "glutenFree", "halal", "allergies"];
 
 type PrefillData = Partial<{
   destination: string;
@@ -169,9 +174,12 @@ function OnboardingPage() {
     arrivalTime: "",
     departureTime: "",
     companion: "solo",
+    pace: "balanced",
+    firstVisit: true,
     budgetRange: [800, 2000],
     tripStyle: prefill?.tripType ?? "",
     avoid: "",
+    dietary: [],
     tripTypes: Array.isArray(prefill?.tripTypes)
       ? prefill.tripTypes.filter((id) => tripTypeIds.includes(id))
       : [],
@@ -186,10 +194,10 @@ function OnboardingPage() {
       : 0;
   const exceedsMaxDays = tripDayCount > MAX_TRIP_DAYS;
 
-  // 7 pasos: destino → fechas → compañía → presupuesto → gustos → alojamiento
-  // → restricciones. Un concepto por pantalla. Solo destino y fechas son
-  // obligatorios; el resto ya trae valores por defecto razonables.
-  const totalSteps = 7;
+  // 8 pasos: destino → fechas → compañía → ritmo → presupuesto → gustos
+  // → alojamiento → restricciones. Un concepto por pantalla. Solo destino y
+  // fechas son obligatorios; el resto ya trae valores por defecto razonables.
+  const totalSteps = 8;
   const canContinue =
     step === 0
       ? data.destination.trim().length > 1
@@ -215,29 +223,48 @@ function OnboardingPage() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) throw new Error(t("onboarding.notAuth"));
 
-      const { data: trip, error } = await supabase
+      const basePayload = {
+        user_id: auth.user.id,
+        destination: data.destination.trim(),
+        start_date: toDateInputValue(data.dateRange?.from),
+        end_date: toDateInputValue(data.dateRange?.to),
+        arrival_time: data.arrivalTime || null,
+        departure_time: data.departureTime || null,
+        companion: data.companion,
+        budget: `${data.budgetRange[0]}-${data.budgetRange[1]}`,
+        trip_style: data.tripStyle || null,
+        avoid: data.avoid || null,
+        trip_types: data.tripTypes,
+        has_accommodation: data.hasAccommodation,
+        hotel_name: data.hotel?.name ?? null,
+        hotel_address: data.hotel?.address ?? null,
+        hotel_lat: data.hotel?.lat ?? null,
+        hotel_lng: data.hotel?.lng ?? null,
+        status: "pending",
+      };
+      const personalization = {
+        pace: data.pace,
+        first_visit: data.firstVisit,
+        dietary: data.dietary.length > 0 ? data.dietary.join(",") : null,
+      };
+
+      let { data: trip, error } = await supabase
         .from("trips")
-        .insert({
-          user_id: auth.user.id,
-          destination: data.destination.trim(),
-          start_date: toDateInputValue(data.dateRange?.from),
-          end_date: toDateInputValue(data.dateRange?.to),
-          arrival_time: data.arrivalTime || null,
-          departure_time: data.departureTime || null,
-          companion: data.companion,
-          budget: `${data.budgetRange[0]}-${data.budgetRange[1]}`,
-          trip_style: data.tripStyle || null,
-          avoid: data.avoid || null,
-          trip_types: data.tripTypes,
-          has_accommodation: data.hasAccommodation,
-          hotel_name: data.hotel?.name ?? null,
-          hotel_address: data.hotel?.address ?? null,
-          hotel_lat: data.hotel?.lat ?? null,
-          hotel_lng: data.hotel?.lng ?? null,
-          status: "pending",
-        })
+        .insert({ ...basePayload, ...personalization })
         .select("id")
         .single();
+
+      // Fallback: si la migración de personalización aún no está aplicada en
+      // prod (columnas pace/first_visit/dietary inexistentes), reintenta sin
+      // ellas para no bloquear la creación del viaje.
+      if (error && /column|pace|first_visit|dietary|PGRST204/i.test(error.message ?? "")) {
+        console.warn("[onboarding] personalization columns missing, retrying without them", error);
+        ({ data: trip, error } = await supabase
+          .from("trips")
+          .insert(basePayload)
+          .select("id")
+          .single());
+      }
 
       if (error) {
         // PostgrestError is not an Error instance — log the full object so the
@@ -377,6 +404,36 @@ function OnboardingPage() {
           )}
 
           {step === 3 && (
+            <StepShell title={t("onboarding.paceTitle")} subtitle={t("onboarding.paceSubtitle")}>
+              <OptionGrid
+                value={data.pace}
+                onChange={(pace) => setData((prevData) => ({ ...prevData, pace }))}
+                options={[
+                  ["relaxed", t("onboarding.paceRelaxed"), "🌿"],
+                  ["balanced", t("onboarding.paceBalanced"), "⚖️"],
+                  ["intense", t("onboarding.paceIntense"), "⚡"],
+                ]}
+              />
+              <div>
+                <p className="mb-3 text-sm font-semibold text-sky-800">
+                  {t("onboarding.firstVisitTitle", { destination: data.destination })}
+                </p>
+                <OptionGrid
+                  compact
+                  value={data.firstVisit ? "yes" : "no"}
+                  onChange={(value) =>
+                    setData((prevData) => ({ ...prevData, firstVisit: value === "yes" }))
+                  }
+                  options={[
+                    ["yes", t("onboarding.firstVisitYes"), "🆕"],
+                    ["no", t("onboarding.firstVisitNo"), "🔁"],
+                  ]}
+                />
+              </div>
+            </StepShell>
+          )}
+
+          {step === 4 && (
             <StepShell
               title={t("onboarding.budgetTitle")}
               subtitle={t("onboarding.budgetSubtitle")}
@@ -388,7 +445,7 @@ function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <StepShell title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleSubtitle")}>
               <div>
                 <p className="mb-3 text-xs font-semibold text-sky-600">
@@ -439,7 +496,7 @@ function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <StepShell title={t("onboarding.accomTitle")} subtitle={t("onboarding.accomSubtitle")}>
               <OptionGrid
                 value={data.hasAccommodation ? "yes" : "no"}
@@ -467,8 +524,40 @@ function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <StepShell title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>
+              <div>
+                <p className="mb-3 text-xs font-semibold text-sky-600">
+                  {t("onboarding.dietaryTitle")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {dietaryIds.map((id) => {
+                    const selected = data.dietary.includes(id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() =>
+                          setData((prevData) => ({
+                            ...prevData,
+                            dietary: selected
+                              ? prevData.dietary.filter((item) => item !== id)
+                              : [...prevData.dietary, id],
+                          }))
+                        }
+                        className={cn(
+                          "rounded-full border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.97]",
+                          selected
+                            ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
+                            : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white",
+                        )}
+                      >
+                        {t(`onboarding.dietary.${id}`)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
               <textarea
                 value={data.avoid}
                 onChange={(event) =>

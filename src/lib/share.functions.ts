@@ -80,6 +80,7 @@ export type PublicTripActivity = {
   place?: string;
   description: string;
   category?: string;
+  tip?: string;
 };
 export type PublicTripDay = {
   day: number;

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, lazy, Suspense } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -62,6 +62,7 @@ type Activity = {
   description: string;
   category?: ActivityCategory;
   url?: string;
+  tip?: string;
   completed?: boolean;
   notes?: string;
 };
@@ -105,6 +106,28 @@ type Itinerary = {
   summary?: string;
   days: Day[];
 };
+
+function formatDateRange(start: string, end: string, lang: string): string {
+  const fmt: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" };
+  const locale = lang.startsWith("en") ? "en-US" : lang;
+  const a = new Date(`${start}T00:00:00`).toLocaleDateString(locale, fmt);
+  const b = new Date(`${end}T00:00:00`).toLocaleDateString(locale, fmt);
+  return `${a} – ${b}`;
+}
+
+// Acento visual rotatorio: cada día del itinerario tiene su propio color en
+// los chips de número y hora, para que los días se distingan de un vistazo.
+const DAY_ACCENTS = [
+  "from-sky-700 to-cyan-600",
+  "from-violet-700 to-purple-500",
+  "from-amber-500 to-orange-500",
+  "from-emerald-700 to-teal-500",
+  "from-rose-600 to-pink-500",
+] as const;
+
+function dayAccent(dayIdx: number): string {
+  return DAY_ACCENTS[dayIdx % DAY_ACCENTS.length];
+}
 
 function googleMapsUrl(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
@@ -182,12 +205,8 @@ function ItineraryPage() {
   const navigate = useNavigate();
   const generate = useServerFn(generateItinerary);
 
-  const LOADING_MESSAGES = useMemo(
-    () => [t("trip.loading1"), t("trip.loading2"), t("trip.loading3"), t("trip.loading4")],
-    [t],
-  );
-
   const [loading, setLoading] = useState(true);
+  const [loadingDestination, setLoadingDestination] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [trip, setTrip] = useState<{
@@ -196,10 +215,11 @@ function ItineraryPage() {
     hero_image_url: string | null;
     itinerary: Itinerary | null;
     status: string;
+    start_date: string | null;
+    end_date: string | null;
   } | null>(null);
   const [view, setView] = useState<"cards" | "text" | "timeline">("cards");
   const [mapModalOpen, setMapModalOpen] = useState(false);
-  const [msgIdx, setMsgIdx] = useState(0);
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -246,12 +266,6 @@ function ItineraryPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading) return;
-    const tm = setInterval(() => setMsgIdx((i) => (i + 1) % LOADING_MESSAGES.length), 1800);
-    return () => clearInterval(tm);
-  }, [loading, LOADING_MESSAGES.length]);
-
-  useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -259,11 +273,12 @@ function ItineraryPage() {
       try {
         const { data, error: e1 } = await supabase
           .from("trips")
-          .select("id,destination,hero_image_url,itinerary,status")
+          .select("id,destination,hero_image_url,itinerary,status,start_date,end_date")
           .eq("id", tripId)
           .maybeSingle();
         if (e1) throw e1;
         if (!data) throw new Error(t("trip.notFound"));
+        if (!cancelled) setLoadingDestination(data.destination);
 
         if (data.status === "ready" && data.itinerary) {
           if (!cancelled) {
@@ -282,6 +297,8 @@ function ItineraryPage() {
           hero_image_url: result.hero_image_url ?? null,
           itinerary: result.itinerary as unknown as Itinerary,
           status: "ready",
+          start_date: data.start_date ?? null,
+          end_date: data.end_date ?? null,
         });
         // Momento de máxima motivación: el itinerario acaba de aparecer.
         // Proponer compartirlo aquí multiplica el alcance del enlace público.
@@ -301,8 +318,7 @@ function ItineraryPage() {
     };
   }, [tripId, generate, t, i18n.language, retryKey]);
 
-  if (loading)
-    return <LoadingScreen msg={LOADING_MESSAGES[msgIdx]} subtitle={t("trip.loadingSubtitle")} />;
+  if (loading) return <LoadingScreen destination={loadingDestination} />;
 
   if (error) {
     return (
@@ -442,11 +458,17 @@ function ItineraryPage() {
             {itin.summary && (
               <p className="mt-2 max-w-2xl text-sm text-white/80 md:text-base">{itin.summary}</p>
             )}
-            <div className="mt-3 flex items-center gap-3 text-xs text-white/70">
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-white/70">
               <span className="flex items-center gap-1">
                 <Clock className="h-3.5 w-3.5" />
                 {t("trip.daysCount", { count: itin.days.length })}
               </span>
+              {trip.start_date && trip.end_date && (
+                <span className="flex items-center gap-1">
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  {formatDateRange(trip.start_date, trip.end_date, i18n.language)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -668,7 +690,9 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-            <span className="inline-flex items-center rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur-sm">
+            <span
+              className={`inline-flex items-center rounded-full bg-gradient-to-r px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm ${dayAccent(dayIdx)}`}
+            >
               {t("trip.dayLabel", { n: day.day })}
             </span>
             <h3 className="mt-1.5 font-display text-xl font-bold text-white drop-shadow sm:text-2xl">
@@ -679,7 +703,9 @@ function DayCard({ day, destination, dayIdx, onActivityUpdate }: {
         </div>
       ) : (
         <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-sky-50 to-slate-50 px-5 py-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-900 text-white">
+          <div
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ${dayAccent(dayIdx)}`}
+          >
             <span className="text-sm font-bold">{day.day}</span>
           </div>
           <div>
@@ -823,6 +849,16 @@ function ActivityRow({
 
         <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{activity.description}</p>
 
+        {/* Insider tip */}
+        {activity.tip && (
+          <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2">
+            <span className="text-sm leading-tight">💎</span>
+            <p className="text-xs leading-relaxed text-amber-800">
+              <span className="font-semibold">{t("trip.tipLabel")}</span> {activity.tip}
+            </p>
+          </div>
+        )}
+
         {/* Inline notes */}
         {showNotes && (
           <div className="mt-2">
@@ -875,66 +911,125 @@ function ActivityRow({
   );
 }
 
-function LoadingScreen({ msg, subtitle }: { msg: string; subtitle: string }) {
+// Umbrales de progreso en los que arranca cada etapa del "backstage" de la
+// generación. Las etapas cuentan lo que hace la IA de verdad (zonas → sitios
+// → rutas → joyas → retoques) para que la espera se sienta como creación.
+const LOADING_STAGES = [
+  { key: "loadingStage1", at: 0 },
+  { key: "loadingStage2", at: 18 },
+  { key: "loadingStage3", at: 40 },
+  { key: "loadingStage4", at: 64 },
+  { key: "loadingStage5", at: 85 },
+] as const;
+
+function LoadingScreen({ destination }: { destination: string | null }) {
   const { t } = useTranslation();
   const [progress, setProgress] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+  const [bgLoaded, setBgLoaded] = useState(false);
 
-  // Progreso asintótico hacia 97: nunca se congela (el anterior moría en 91 %
-  // y a los 20 s parecía colgado) + contador real de segundos para honestidad.
+  // Asintótico hacia 97 con τ=9 s: ~87 % a los 20 s (duración típica de la
+  // generación) y nunca se congela; el contador real de segundos da honestidad.
   useEffect(() => {
     const started = Date.now();
     const tick = setInterval(() => {
       const s = (Date.now() - started) / 1000;
       setElapsed(Math.floor(s));
-      setProgress(Math.min(97, Math.round(97 * (1 - Math.exp(-s / 18)))));
-    }, 500);
+      setProgress(Math.min(97, Math.round(97 * (1 - Math.exp(-s / 9)))));
+    }, 400);
     return () => clearInterval(tick);
   }, []);
 
+  const destLabel = destination ?? t("trip.loadingDestFallback");
+  const stageIdx = LOADING_STAGES.reduce((acc, s, i) => (progress >= s.at ? i : acc), 0);
+  // Misma fuente de imágenes sin clave que el fallback del servidor.
+  const bgUrl = destination
+    ? `https://loremflickr.com/1600/900/${encodeURIComponent(destination.split(",")[0].trim() + ",travel")}`
+    : null;
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 p-6">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-hidden bg-sky-950 p-6">
+      {/* Foto del destino a pantalla completa con overlay oscuro */}
+      {bgUrl && (
+        <img
+          src={bgUrl}
+          alt=""
+          aria-hidden
+          onLoad={() => setBgLoaded(true)}
+          className={`absolute inset-0 h-full w-full scale-105 object-cover transition-opacity duration-1000 ${
+            bgLoaded ? "opacity-60" : "opacity-0"
+          }`}
+          style={{ animation: bgLoaded ? "loading-kenburns 24s ease-out forwards" : undefined }}
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-b from-sky-950/80 via-sky-950/60 to-sky-950/90" />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-700/25 blur-3xl" />
         <div className="absolute -bottom-16 left-0 h-48 w-72 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-800/10 blur-3xl" />
       </div>
 
-      <div className="relative flex w-full max-w-sm flex-col items-center text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-md">
-          <MapIcon className="h-7 w-7 text-white" />
-        </div>
+      <div className="relative flex w-full max-w-md flex-col items-center text-center">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-widest text-sky-100 ring-1 ring-white/20 backdrop-blur-md">
+          <Sparkles className="h-3 w-3" />
+          {t("trip.loadingTag")}
+        </span>
 
-        <div className="mt-8">
+        <h1 className="mt-4 font-display text-4xl font-bold text-white drop-shadow-lg md:text-5xl">
+          {destLabel}
+        </h1>
+
+        <div className="mt-6 min-h-8">
           <TextShimmerWave
-            className="font-display text-xl font-bold md:text-2xl"
+            key={stageIdx}
+            className="font-display text-lg font-bold md:text-xl"
             duration={1.4}
             spread={1.1}
             zDistance={14}
           >
-            {msg}
+            {t(`trip.${LOADING_STAGES[stageIdx].key}`, { destination: destLabel })}
           </TextShimmerWave>
         </div>
 
-        <p className="mt-4 max-w-xs text-sm text-sky-400/80">{subtitle}</p>
+        {/* Checklist de etapas: lo ya hecho queda marcado, lo pendiente en espera */}
+        <ul className="mt-6 w-full max-w-xs space-y-2 text-left">
+          {LOADING_STAGES.map((s, i) => (
+            <li
+              key={s.key}
+              className={`flex items-center gap-2.5 text-sm transition-colors duration-500 ${
+                i < stageIdx ? "text-sky-200" : i === stageIdx ? "text-white" : "text-sky-200/40"
+              }`}
+            >
+              {i < stageIdx ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+              ) : i === stageIdx ? (
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-sky-300" />
+              ) : (
+                <Circle className="h-4 w-4 shrink-0" />
+              )}
+              <span className="truncate">{t(`trip.${s.key}`, { destination: destLabel })}</span>
+            </li>
+          ))}
+        </ul>
 
         {/* Progress bar */}
-        <div className="mt-8 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="mt-7 w-full max-w-xs overflow-hidden rounded-full bg-white/15">
           <div
-            className="h-1.5 rounded-full bg-gradient-to-r from-sky-400 to-sky-300 transition-all duration-700 ease-out"
+            className="h-1.5 rounded-full bg-gradient-to-r from-sky-400 to-sky-200 transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="mt-2 text-xs tabular-nums text-sky-500">
+        <p className="mt-2 text-xs tabular-nums text-sky-200/80">
           {progress}% · {elapsed}s
         </p>
-        <p className="mt-1 text-[11px] text-sky-500/80">{t("trip.loadingHint")}</p>
-
-        <div className="mt-5 flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin text-sky-400" />
-          <Sparkles className="h-4 w-4 animate-pulse text-sky-300" />
-        </div>
+        <p className="mt-1 text-[11px] text-sky-200/60">{t("trip.loadingHint")}</p>
       </div>
+
+      <style>{`
+        @keyframes loading-kenburns {
+          from { transform: scale(1.05) translateY(0); }
+          to { transform: scale(1.12) translateY(-1.5%); }
+        }
+      `}</style>
     </div>
   );
 }

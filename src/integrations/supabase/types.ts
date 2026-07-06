@@ -387,7 +387,9 @@ export type Database = {
           created_at: string
           departure_time: string | null
           destination: string
+          dietary: string | null
           end_date: string | null
+          first_visit: boolean | null
           geo_lat: number | null
           geo_lng: number | null
           has_accommodation: boolean
@@ -399,6 +401,7 @@ export type Database = {
           id: string
           is_public: boolean
           itinerary: Json | null
+          pace: string | null
           published_at: string | null
           rating_count: number
           rating_sum: number
@@ -420,7 +423,9 @@ export type Database = {
           created_at?: string
           departure_time?: string | null
           destination: string
+          dietary?: string | null
           end_date?: string | null
+          first_visit?: boolean | null
           geo_lat?: number | null
           geo_lng?: number | null
           has_accommodation?: boolean
@@ -432,6 +437,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           itinerary?: Json | null
+          pace?: string | null
           published_at?: string | null
           rating_count?: number
           rating_sum?: number
@@ -453,7 +459,9 @@ export type Database = {
           created_at?: string
           departure_time?: string | null
           destination?: string
+          dietary?: string | null
           end_date?: string | null
+          first_visit?: boolean | null
           geo_lat?: number | null
           geo_lng?: number | null
           has_accommodation?: boolean
@@ -465,6 +473,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           itinerary?: Json | null
+          pace?: string | null
           published_at?: string | null
           rating_count?: number
           rating_sum?: number

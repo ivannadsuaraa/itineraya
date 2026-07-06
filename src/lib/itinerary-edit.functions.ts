@@ -14,6 +14,7 @@ type Activity = {
   place?: string;
   description: string;
   category?: "hotel" | "restaurant" | "activity" | "transport" | "sight" | "nightlife" | "shopping" | "other";
+  tip?: string;
 };
 type Day = {
   day: number;
@@ -109,6 +110,8 @@ REGLAS OBLIGATORIAS:
 
 7. MANTÉN image_url e image_query existentes para días no modificados.
 
+8. MANTÉN el campo "tip" de las actividades que no cambies. Puedes añadir "tip" (consejo local concreto y accionable) a actividades nuevas si conoces uno real.
+
 Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura:
 {
   "summary": "string",
@@ -127,7 +130,8 @@ Devuelve SOLO JSON válido sin markdown, con EXACTAMENTE esta estructura:
           "place": "Nombre REAL del establecimiento",
           "description": "1-2 líneas. Si no es primera actividad, EMPIEZA con transporte.",
           "category": "hotel|restaurant|activity|transport|sight|nightlife|shopping|other",
-          "url": "https://enlace-directo-al-establecimiento (opcional)"
+          "url": "https://enlace-directo-al-establecimiento (opcional)",
+          "tip": "consejo local específico y accionable (opcional)"
         }
       ]
     }
