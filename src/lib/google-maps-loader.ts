@@ -17,6 +17,14 @@ const ENV = (import.meta as { env: Record<string, string | undefined> }).env;
 // is kept as a fallback for environments that haven't migrated the env var yet.
 const GOOGLE_KEY = ENV.VITE_GOOGLE_MAPS_KEY || ENV.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
 
+// Log key presence immediately on module load
+if (typeof window !== "undefined") {
+  console.log(
+    "[GoogleMaps] 🔑 API key configured:",
+    GOOGLE_KEY ? `${GOOGLE_KEY.substring(0, 20)}...${GOOGLE_KEY.substring(GOOGLE_KEY.length - 4)}` : "❌ NO KEY FOUND"
+  );
+}
+
 // Google's loader does not reject the script promise on bad-key/expired-key/referrer
 // restrictions — it silently renders a broken grey map and calls this global callback
 // instead (InvalidKeyMapError, MissingKeyMapError, RefererNotAllowedMapError,
@@ -77,33 +85,43 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
       markAuthFailed();
       return reject(new Error("Missing Google Maps key"));
     }
+    const url = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=${libraries}&loading=async&v=weekly`;
     console.info(
-      `[GoogleMaps] Loading with key …${GOOGLE_KEY.slice(-6)} | libraries: ${libraries}`,
+      `[GoogleMaps] 📡 Loading | key: …${GOOGLE_KEY.slice(-6)} | libraries: ${libraries}`,
     );
+    console.info(`[GoogleMaps] 🔗 URL: ${url.substring(0, 80)}...`);
 
     const existing = document.querySelector<HTMLScriptElement>('script[data-itineraya="gmaps"]');
     if (existing) {
+      console.warn("[GoogleMaps] ⚠️ Script tag already exists, attaching listeners to existing tag");
       existing.addEventListener("load", () => {
-        console.info("[GoogleMaps] Script loaded from existing tag ✓");
+        console.info("[GoogleMaps] ✓ Script loaded from existing tag");
         resolve();
       });
-      existing.addEventListener("error", () => reject(new Error("Failed to load Google Maps")));
+      existing.addEventListener("error", () => {
+        console.error("[GoogleMaps] ❌ Existing script tag error event fired");
+        reject(new Error("Failed to load Google Maps"));
+      });
       return;
     }
     const s = document.createElement("script");
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=${libraries}&loading=async&v=weekly`;
+    s.src = url;
     s.async = true;
     s.defer = true;
     s.dataset.itineraya = "gmaps";
     s.onload = () => {
-      console.info("[GoogleMaps] Script loaded ✓ — if the map still looks broken, check gm_authFailure below.");
+      console.info("[GoogleMaps] ✅ Script loaded successfully | window.google?.maps:", !!window.google?.maps);
+      if (!window.google?.maps) {
+        console.warn("[GoogleMaps] ⚠️ Script loaded but window.google.maps is undefined — check for auth failures");
+      }
       resolve();
     };
     s.onerror = () => {
-      console.error("[GoogleMaps] ❌ Script failed to load (network error or invalid key).");
+      console.error("[GoogleMaps] ❌ Script load failed (network error or invalid key) | src:", s.src);
       markAuthFailed();
       reject(new Error("Failed to load Google Maps"));
     };
+    console.info("[GoogleMaps] 📝 Appending script tag to document.head...");
     document.head.appendChild(s);
   });
   return window.__itineraya_gmap_loaded__;

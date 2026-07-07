@@ -92,7 +92,11 @@ export function DestinationAutocomplete({
   const requestIdRef = useRef(0);
 
   useEffect(() => {
-    loadGoogleMaps().catch(() => setUsingFallback(true));
+    console.info("[DestinationAutocomplete] Mounting: attempting to load Google Maps...");
+    loadGoogleMaps().catch((err) => {
+      console.warn("[DestinationAutocomplete] Google Maps load failed, falling back to Nominatim:", err.message);
+      setUsingFallback(true);
+    });
   }, []);
 
   useEffect(() => {
