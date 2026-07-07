@@ -4,7 +4,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouterState } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EASE_OUT, baseDuration } from "@/lib/motion";
 
@@ -12,12 +12,19 @@ export function RouteTransition({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const reduce = useReducedMotion();
   const isMobile = useIsMobile();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const dur = baseDuration(isMobile);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={pathname}
+        suppressHydrationWarning
         initial={reduce ? { opacity: 0 } : { opacity: 0, x: 24 }}
         animate={{
           opacity: 1,
