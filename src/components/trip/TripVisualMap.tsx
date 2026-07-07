@@ -406,6 +406,28 @@ export function TripVisualMap({ open, onClose, destination, days, startDate, end
                   strokeLinecap="round"
                 />
 
+                {/* Flechas de dirección: un chevron en el punto medio de cada
+                    tramo, orientado hacia el siguiente día. El suavizado de la
+                    ruta pasa exactamente por esos puntos medios. */}
+                {route.slice(0, -1).map((p, i) => {
+                  const q = route[i + 1];
+                  const mx = (p.x + q.x) / 2;
+                  const my = (p.y + q.y) / 2;
+                  const angle = (Math.atan2(q.y - p.y, q.x - p.x) * 180) / Math.PI;
+                  return (
+                    <g key={`arrow-${i}`} transform={`translate(${mx}, ${my}) rotate(${angle})`}>
+                      <path
+                        d="M -5 -7 L 7 0 L -5 7"
+                        fill="none"
+                        stroke={SKY_SOFT}
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </g>
+                  );
+                })}
+
                 {route.map((p, i) => {
                   const iconRight = p.x < 450;
                   const badgeX = Math.max(56, Math.min(800, iconRight ? p.x + 34 : p.x - 34 - 44));

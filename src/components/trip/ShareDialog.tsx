@@ -1,26 +1,49 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Check, Loader2, Share2, Camera } from "lucide-react";
+import { Copy, Check, Loader2, Share2, Camera, Map as MapIcon } from "lucide-react";
 import { Drawer } from "vaul";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { enableTripShare } from "@/lib/share.functions";
 import { supabase } from "@/integrations/supabase/client";
 
+// Lazy: el póster arrastra html-to-image y las siluetas de países; solo se
+// carga si el usuario lo abre.
+const TripVisualMap = lazy(() =>
+  import("./TripVisualMap").then((m) => ({ default: m.TripVisualMap })),
+);
+
+type PosterDay = {
+  day: number;
+  title: string;
+  activities: Array<{
+    time: string;
+    title: string;
+    place?: string;
+    description: string;
+    category?: string;
+  }>;
+};
+
 interface Props {
   open: boolean;
   onClose: () => void;
   tripId: string;
   destination: string;
+  // Opcionales: si hay días, el diálogo ofrece el póster SVG del viaje.
+  days?: PosterDay[];
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
-export function ShareDialog({ open, onClose, tripId, destination }: Props) {
+export function ShareDialog({ open, onClose, tripId, destination, days, startDate, endDate }: Props) {
   const { t } = useTranslation();
   const enable = useServerFn(enableTripShare);
   const [loading, setLoading] = useState(false);
   const [slug, setSlug] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [refId, setRefId] = useState<string | null>(null);
+  const [posterOpen, setPosterOpen] = useState(false);
 
   useEffect(() => {
     if (!open || slug || loading) return;
@@ -109,6 +132,23 @@ export function ShareDialog({ open, onClose, tripId, destination }: Props) {
                   </button>
                 </div>
 
+                {/* Póster del viaje: la pieza pensada para Instagram — mapa
+                    ilustrado del país con la ruta día a día, descargable. */}
+                {days && days.length > 0 && (
+                  <button
+                    onClick={() => setPosterOpen(true)}
+                    className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-gradient-to-r from-sky-950 to-sky-800 p-4 text-left text-white shadow-lg transition hover:shadow-xl active:scale-[0.99]"
+                  >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                      <MapIcon className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-bold">{t("share.posterTitle")}</span>
+                      <span className="block text-xs text-sky-200">{t("share.posterDesc")}</span>
+                    </span>
+                  </button>
+                )}
+
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl("whatsapp"))}`}
@@ -144,6 +184,18 @@ export function ShareDialog({ open, onClose, tripId, destination }: Props) {
           </div>
         </Drawer.Content>
       </Drawer.Portal>
+      {days && days.length > 0 && posterOpen && (
+        <Suspense fallback={null}>
+          <TripVisualMap
+            open={posterOpen}
+            onClose={() => setPosterOpen(false)}
+            destination={destination}
+            days={days}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        </Suspense>
+      )}
     </Drawer.Root>
   );
 }

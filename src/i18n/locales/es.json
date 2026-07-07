@@ -45,7 +45,8 @@
     "proofMap": "Mapa interactivo",
     "proofSchedule": "Horarios reales",
     "proofPostcards": "Postales descargables",
-    "tickerLabel": "Salidas · Departures"
+    "tickerLabel": "Salidas · Departures",
+    "ctaDemo": "Pruébalo gratis — sin registro"
   },
   "showcase": {
     "kicker": "El producto, no promesas",
@@ -654,7 +655,9 @@
     "text": "Mira mi viaje a {{destination}} en Itineraya",
     "publicHint": "Solo se comparte el itinerario. Tu cuenta sigue siendo privada.",
     "instagramHint": "Enlace copiado — pégalo en tu historia o bio de Instagram",
-    "copyStories": "Copiar para Stories"
+    "copyStories": "Copiar para Stories",
+    "posterTitle": "Póster del viaje",
+    "posterDesc": "Mapa ilustrado con tu ruta día a día, listo para Instagram"
   },
   "publicTrip": {
     "eyebrow": "Itinerario público",
@@ -979,5 +982,22 @@
     "noTripsThisMonth": "Sin viajes este mes",
     "adventuresAppearHere": "Tus aventuras aparecerán aquí",
     "moreCount": "+{{count}} más"
+  },
+  "demo": {
+    "badge": "Demo gratuita",
+    "title": "Tu itinerario en 30 segundos",
+    "subtitle": "Sin cuenta y sin tarjeta. Dinos destino y estilo, y mira cómo trabaja Itineraya.",
+    "daysTitle": "¿Cuántos días?",
+    "daysSubtitle": "La demo genera hasta 4 días. La versión completa llega a 14.",
+    "daysUnit": "días",
+    "disclaimer": "Demo con destino, días y estilo. La versión completa añade fechas reales, presupuesto, ritmo, dieta, mapa interactivo y edición con IA — gratis al registrarte.",
+    "resultBadge": "Demo",
+    "saveCta": "Guardar viaje",
+    "saveCtaLong": "Crear cuenta gratis y guardarlo",
+    "saveBar": "¿Te gusta tu viaje a {{destination}}? Guárdalo gratis y desbloquea todos los días.",
+    "lockedCta": "Desbloquear este día gratis",
+    "signupTitle": "Guarda tu viaje a {{destination}}",
+    "signupDesc": "Crea tu cuenta gratis: tu itinerario se guarda automáticamente y desbloqueas todos los días, el mapa interactivo y las postales.",
+    "claimedToast": "Tu viaje a {{destination}} se ha guardado en tu cuenta ✈️"
   }
 }

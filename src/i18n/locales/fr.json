@@ -45,7 +45,8 @@
     "proofMap": "Carte interactive",
     "proofSchedule": "Horaires réels",
     "proofPostcards": "Cartes postales téléchargeables",
-    "tickerLabel": "Départs · Departures"
+    "tickerLabel": "Départs · Departures",
+    "ctaDemo": "Essayez gratuitement — sans inscription"
   },
   "showcase": {
     "kicker": "Le produit, pas des promesses",
@@ -606,7 +607,17 @@
     "brochureRoute": "Itinéraire du voyage",
     "brochureDownloaded": "Brochure du voyage téléchargée ✨",
     "brochureAria": "Brochure du voyage à {{destination}}",
-    "dayNavAria": "Navigation par jours"
+    "dayNavAria": "Navigation par jours",
+    "visualMapCta": "Voir la carte du voyage",
+    "visualMapTitle": "Votre voyage, illustré",
+    "visualMapEyebrow": "Carte du voyage",
+    "visualMapDays": "Jours",
+    "visualMapActivities": "Activités",
+    "visualMapExperiences": "Expériences",
+    "visualMapDownload": "Télécharger",
+    "visualMapDownloaded": "Carte du voyage téléchargée ✨",
+    "visualMapFooter": "Créé avec Itineraya  ·  itineraya.com",
+    "visualMapAria": "Carte illustrée du voyage à {{destination}}"
   },
   "tripmates": {
     "tag": "Compagnons de voyage",
@@ -642,7 +653,9 @@
     "text": "Regardez mon voyage à {{destination}} sur Itineraya",
     "publicHint": "Seul l'itinéraire est partagé. Votre compte reste privé.",
     "instagramHint": "Lien copié — collez-le dans votre story ou bio Instagram",
-    "copyStories": "Copier pour Stories"
+    "copyStories": "Copier pour Stories",
+    "posterTitle": "Affiche du voyage",
+    "posterDesc": "Carte illustrée avec votre itinéraire jour par jour, prête pour Instagram"
   },
   "publicTrip": {
     "eyebrow": "Itinéraire public",
@@ -969,5 +982,22 @@
     "noTripsThisMonth": "Aucun voyage ce mois-ci",
     "adventuresAppearHere": "Vos aventures apparaîtront ici",
     "moreCount": "+{{count}} de plus"
+  },
+  "demo": {
+    "badge": "Démo gratuite",
+    "title": "Votre itinéraire en 30 secondes",
+    "subtitle": "Sans compte ni carte. Indiquez destination et style, et regardez Itineraya travailler.",
+    "daysTitle": "Combien de jours ?",
+    "daysSubtitle": "La démo génère jusqu'à 4 jours. La version complète va jusqu'à 14.",
+    "daysUnit": "jours",
+    "disclaimer": "Démo avec destination, jours et style. La version complète ajoute dates réelles, budget, rythme, régime, carte interactive et édition IA — gratuit à l'inscription.",
+    "resultBadge": "Démo",
+    "saveCta": "Enregistrer",
+    "saveCtaLong": "Créer un compte gratuit et l'enregistrer",
+    "saveBar": "Vous aimez votre voyage à {{destination}} ? Enregistrez-le gratuitement et débloquez tous les jours.",
+    "lockedCta": "Débloquer ce jour gratuitement",
+    "signupTitle": "Enregistrez votre voyage à {{destination}}",
+    "signupDesc": "Créez votre compte gratuit : votre itinéraire est enregistré automatiquement et vous débloquez tous les jours, la carte interactive et les cartes postales.",
+    "claimedToast": "Votre voyage à {{destination}} a été enregistré dans votre compte ✈️"
   }
 }

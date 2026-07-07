@@ -45,7 +45,8 @@
     "proofMap": "Mapa interativo",
     "proofSchedule": "Horários reais",
     "proofPostcards": "Postais para baixar",
-    "tickerLabel": "Partidas · Departures"
+    "tickerLabel": "Partidas · Departures",
+    "ctaDemo": "Experimente grátis — sem cadastro"
   },
   "showcase": {
     "kicker": "O produto, não promessas",
@@ -606,7 +607,17 @@
     "brochureRoute": "Rota da viagem",
     "brochureDownloaded": "Folheto da viagem baixado ✨",
     "brochureAria": "Folheto da viagem a {{destination}}",
-    "dayNavAria": "Navegação por dias"
+    "dayNavAria": "Navegação por dias",
+    "visualMapCta": "Ver mapa da viagem",
+    "visualMapTitle": "Sua viagem, ilustrada",
+    "visualMapEyebrow": "Mapa da viagem",
+    "visualMapDays": "Dias",
+    "visualMapActivities": "Atividades",
+    "visualMapExperiences": "Experiências",
+    "visualMapDownload": "Baixar",
+    "visualMapDownloaded": "Mapa da viagem baixado ✨",
+    "visualMapFooter": "Criado com Itineraya  ·  itineraya.com",
+    "visualMapAria": "Mapa ilustrado da viagem a {{destination}}"
   },
   "tripmates": {
     "tag": "Companheiros de viagem",
@@ -642,7 +653,9 @@
     "text": "Veja minha viagem a {{destination}} no Itineraya",
     "publicHint": "Só o roteiro é compartilhado. Sua conta fica privada.",
     "instagramHint": "Link copiado — cole no seu story ou bio do Instagram",
-    "copyStories": "Copiar para Stories"
+    "copyStories": "Copiar para Stories",
+    "posterTitle": "Pôster da viagem",
+    "posterDesc": "Mapa ilustrado com sua rota dia a dia, pronto para o Instagram"
   },
   "publicTrip": {
     "eyebrow": "Roteiro público",
@@ -969,5 +982,22 @@
     "noTripsThisMonth": "Nenhuma viagem este mês",
     "adventuresAppearHere": "Suas aventuras aparecerão aqui",
     "moreCount": "+{{count}} mais"
+  },
+  "demo": {
+    "badge": "Demo grátis",
+    "title": "Seu roteiro em 30 segundos",
+    "subtitle": "Sem conta e sem cartão. Diga destino e estilo, e veja a Itineraya trabalhar.",
+    "daysTitle": "Quantos dias?",
+    "daysSubtitle": "A demo gera até 4 dias. A versão completa chega a 14.",
+    "daysUnit": "dias",
+    "disclaimer": "Demo com destino, dias e estilo. A versão completa adiciona datas reais, orçamento, ritmo, dieta, mapa interativo e edição com IA — grátis ao se cadastrar.",
+    "resultBadge": "Demo",
+    "saveCta": "Salvar viagem",
+    "saveCtaLong": "Criar conta grátis e salvar",
+    "saveBar": "Gostou da sua viagem a {{destination}}? Salve grátis e desbloqueie todos os dias.",
+    "lockedCta": "Desbloquear este dia grátis",
+    "signupTitle": "Salve sua viagem a {{destination}}",
+    "signupDesc": "Crie sua conta grátis: seu roteiro é salvo automaticamente e você desbloqueia todos os dias, o mapa interativo e os cartões-postais.",
+    "claimedToast": "Sua viagem a {{destination}} foi salva na sua conta ✈️"
   }
 }

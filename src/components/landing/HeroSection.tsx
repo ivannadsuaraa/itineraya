@@ -23,7 +23,6 @@ import {
   Download,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 // Entrada cinematográfica: cada elemento del hero llega en su momento,
@@ -40,7 +39,6 @@ const heroItem: Variants = {
 
 export function HeroSection() {
   const { t } = useTranslation();
-  const { openAuthModal } = useAuthModal();
   const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -176,14 +174,13 @@ export function HeroSection() {
                   {t("hero.ctaMyTrips")}
                 </Link>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => openAuthModal({ mode: "signup" })}
+                <Link
+                  to="/demo"
                   className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-sky-900 shadow-lg transition hover:bg-sky-50 hover:shadow-xl active:scale-[0.97]"
                 >
-                  {t("hero.ctaStart")}
+                  {t("hero.ctaDemo")}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </button>
+                </Link>
               )}
               <a
                 href="#how-it-works"

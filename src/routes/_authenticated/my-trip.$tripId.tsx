@@ -689,6 +689,9 @@ function ItineraryPage() {
         onClose={() => setShareOpen(false)}
         tripId={trip.id}
         destination={trip.destination}
+        days={itin.days}
+        startDate={trip.start_date}
+        endDate={trip.end_date}
       />
     </PageTransition>
   );

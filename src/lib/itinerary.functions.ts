@@ -1,178 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { unsplashImage, itinerarySchema, extractJson } from "@/lib/itinerary-shared";
 
 const Input = z.object({
   tripId: z.string().uuid(),
   language: z.string().optional(),
 });
-
-function fallbackImage(query: string): string {
-  const q = encodeURIComponent(query.split(",")[0].trim() + ",travel");
-  const lock = Math.abs([...query].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0)) % 1000;
-  return `https://loremflickr.com/1200/800/${q}?lock=${lock}`;
-}
-
-// Dimensiona la imagen en el CDN de Unsplash: fit=crop respeta el encuadre,
-// auto=format sirve WebP/AVIF cuando el navegador lo soporta y q=80 equilibra
-// peso y calidad. Partimos de urls.raw (sin parámetros de tamaño previos).
-function sizeUnsplashUrl(rawUrl: string, w: number, h: number): string {
-  const sep = rawUrl.includes("?") ? "&" : "?";
-  return `${rawUrl}${sep}w=${w}&h=${h}&fit=crop&auto=format&q=80`;
-}
-
-async function unsplashImage(query: string, w = 1600, h = 900): Promise<string | null> {
-  const key = process.env.UNSPLASH_KEY;
-  if (!key) return fallbackImage(query);
-  try {
-    const res = await fetch(
-      `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
-      { headers: { Authorization: `Client-ID ${key}` } },
-    );
-    if (!res.ok) {
-      // 403 = cuota agotada (key demo: 50 req/hora). Queda registrado para
-      // que el problema sea visible en los logs de Vercel, no silencioso.
-      console.warn(`[unsplash] ${res.status} for "${query}" — falling back to loremflickr`);
-      return fallbackImage(query);
-    }
-    const data = (await res.json()) as {
-      results?: Array<{ urls?: { raw?: string; regular?: string } }>;
-    };
-    const first = data.results?.[0]?.urls;
-    if (first?.raw) return sizeUnsplashUrl(first.raw, w, h);
-    return first?.regular ?? fallbackImage(query);
-  } catch {
-    return fallbackImage(query);
-  }
-}
-
-// JSON schema enforced server-side via structured outputs (output_config.format).
-// Guarantees valid, schema-conformant JSON — extractJson below remains only as a safety net.
-const itinerarySchema = {
-  type: "object",
-  additionalProperties: false,
-  required: ["summary", "days"],
-  properties: {
-    summary: { type: "string" },
-    days: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        required: ["day", "title", "subtitle", "image_query", "activities"],
-        properties: {
-          day: { type: "integer" },
-          title: { type: "string" },
-          subtitle: { type: "string" },
-          image_query: { type: "string" },
-          activities: {
-            type: "array",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["time", "emoji", "title", "place", "description", "category"],
-              properties: {
-                time: { type: "string", description: "24h HH:MM" },
-                emoji: { type: "string", description: "exactly one emoji" },
-                title: { type: "string" },
-                place: { type: "string" },
-                description: { type: "string" },
-                category: {
-                  type: "string",
-                  enum: [
-                    "hotel",
-                    "restaurant",
-                    "activity",
-                    "transport",
-                    "sight",
-                    "nightlife",
-                    "shopping",
-                    "other",
-                  ],
-                },
-                url: { type: "string" },
-                tip: {
-                  type: "string",
-                  description:
-                    "optional insider tip: best time to go, what to order, how to skip the line",
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-} as const;
-
-function extractJson<T>(raw: string): T {
-  // 1. Strip markdown fences
-  let text = raw
-    .replace(/```json\s*/gi, "")
-    .replace(/```/g, "")
-    .trim();
-
-  // 2. Extract the outermost JSON object (first { … last })
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start !== -1 && end !== -1 && end > start) {
-    text = text.slice(start, end + 1);
-  }
-
-  // 3. Try direct parse
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    /* continue to repair */
-  }
-
-  // 4. Repair common LLM JSON mistakes
-  const repaired = text
-    // trailing commas before ] or }
-    .replace(/,\s*([}\]])/g, "$1")
-    // unescaped newlines inside string values
-    .replace(/("(?:[^"\\]|\\.)*")|(\n)/g, (m, str) => (str ? str : " "))
-    // single-quoted keys/values → double-quoted (careful: only bare single quotes)
-    .replace(/'([^']+)'(\s*:)/g, '"$1"$2')
-    .replace(/:\s*'([^']*)'/g, ': "$1"');
-
-  try {
-    return JSON.parse(repaired) as T;
-  } catch {
-    /* continue to truncation recovery */
-  }
-
-  // 5. Truncation recovery: close any open arrays/objects and retry
-  const stack: string[] = [];
-  let inString = false;
-  let escaped = false;
-  for (const ch of repaired) {
-    if (escaped) {
-      escaped = false;
-      continue;
-    }
-    if (ch === "\\" && inString) {
-      escaped = true;
-      continue;
-    }
-    if (ch === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) continue;
-    if (ch === "{" || ch === "[") stack.push(ch === "{" ? "}" : "]");
-    else if (ch === "}" || ch === "]") stack.pop();
-  }
-  // Drop incomplete last string or value by trimming to last clean comma/brace
-  let truncated = repaired.replace(/,\s*$/, "").replace(/:\s*"[^"]*$/, ': ""');
-  while (stack.length) truncated += stack.pop();
-
-  try {
-    return JSON.parse(truncated) as T;
-  } catch (e) {
-    throw new Error(`No se pudo parsear el JSON del modelo: ${(e as Error).message}`);
-  }
-}
 
 export const generateItinerary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -565,16 +399,17 @@ RULES
 3. SCHEDULE — Activities in chronological order with realistic durations: museum 1.5–2h, meal 1–1.5h, monument 45–60 min, café 20–30 min; leave 15–30 min of slack between stops. Respect opening hours AND weekly closing days: work out the weekday of every itinerary day from the dates above and never schedule a venue on a day it is typically closed (e.g. many museums close on Mondays). Meal times follow the local dining customs of ${trip.destination}, not those of the traveler's home country. The day's density and start time follow the traveler's pace above.
 4. SEASON — It is ${monthName} in ${trip.destination}: plan around the real season. Typical weather (cold/rain → indoor priority; summer heat → outdoor mornings and evenings, indoor at midday), daylight hours (sunset time changes what an "evening walk" means), high/low season (book-ahead warnings in tips during peak months), and seasonal closures or seasonal specialties (dishes, markets, blooms) that only exist in this month.
 5. TRANSPORT — Every activity except the first of each day must start its "description" with a transport line (mode + route + minutes from the previous stop): ${transportExamples}. Distances under 1.2 km are always on foot — never taxi.
-6. REAL PLACES — Only real, well-established venues you are confident exist, and every restaurant must match BOTH the budget tier and the dietary requirements above. If you are not sure a specific restaurant exists, name the dining area or venue type instead (e.g. "Trattoria in Trastevere") — never fabricate a venue name.
+6. REAL PLACES — Only real, well-established venues you are confident exist, and every restaurant must match BOTH the budget tier and the dietary requirements above. If you are not sure a specific restaurant exists, name the dining area or venue type instead (e.g. "Trattoria in Trastevere") — never fabricate a venue name. At every meal, name 1–2 signature dishes worth ordering — the specific thing a local would tell a friend to get, not the cuisine in general.
 7. HIDDEN GEMS — Include at least 2–3 genuine non-obvious experiences across the trip: places locals love and most tourists miss (a viewpoint without crowds, a market bar, a workshop, a lesser-known museum wing). They must be real and fit the traveler's interests — surprise them, don't pad the plan.
 8. TIPS — Use the optional "tip" field on 1–2 activities per day for a specific, actionable insider tip: the best hour to avoid queues, what exactly to order, which entrance to use, where the best photo is. Never generic advice ("wear comfortable shoes").
 9. LINKS — For the "url" field build a Google Maps link: https://www.google.com/maps/search/?api=1&query=VENUE+NAME+CITY (replace spaces with +). Use an official website instead only when you are completely certain of the exact URL. Never invent URLs; omit "url" when unsure.
 10. EVENTS — Include a local festival, fair or public holiday only if it is a well-known recurring event you are confident takes place in ${trip.destination} within the trip dates. Never invent events or their URLs.
 11. VOLUME — Exactly ${dayCount} days. Activities per day follow the traveler's pace (see THE TRAVELER); always fewer on days constrained by arrival or departure.${hasAccommodation ? ' Never use the "hotel" category.' : ""}
+12. TRIP ARC — The trip must have a narrative shape, not ${dayCount} interchangeable days. Day 1 ends with an easy "first wow": a viewpoint, square or waterfront that makes the traveler feel they have truly arrived. Middle days alternate intensity (a packed day is followed by a gentler one). The final evening closes with a farewell moment that echoes the traveler's interests — the place they'll describe when someone asks "what was the best part?".
 
 FIELD GUIDE
 - summary: 2 sentences, second person, evocative and specific to THIS trip (destination + season + their interests) — it is the first thing they read when the itinerary appears.
-- title (day): short and evocative — the day's zone or theme, not "Day 3". subtitle: a one-sentence recap of the day's arc.
+- title (day): short and evocative, anchored on the real name of the day's neighborhood or zone (e.g. "Trastevere al atardecer"), never "Day 3". subtitle: a one-sentence recap of the day's arc.
 - image_query: 2–3 English words for a photo of the day's area (e.g. "montmartre paris street").
 - time: "HH:MM" 24h. emoji: exactly one emoji. title (activity): 3–6 words. description: 1–2 lines. tip: only when you have a genuinely useful insider tip.`;
 

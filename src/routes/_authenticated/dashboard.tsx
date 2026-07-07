@@ -48,6 +48,7 @@ import {
 } from "@/lib/dashboard-helpers";
 import { lazy, Suspense } from "react";
 import { geocodeAndPersistTrip, primeGeocodeCache } from "@/lib/geocode";
+import { readDemoTrip, clearDemoTrip } from "@/lib/demo-trip";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import type { PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
 
@@ -188,8 +189,43 @@ function DashboardPage() {
         const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
         if (daysLeft > 0) setTrialDaysLeft(daysLeft);
       }
+      // Reclamar el viaje demo generado sin cuenta (/demo): se inserta ya
+      // "ready" (el itinerario viene generado) y se lleva al usuario directo
+      // a su viaje — el momento de activación más fuerte posible.
+      const demoTrip = readDemoTrip();
+      let claimedTripId: string | null = null;
+      if (demoTrip) {
+        const { data: claimed, error: claimErr } = await supabase
+          .from("trips")
+          .insert({
+            user_id: u.user.id,
+            destination: demoTrip.destination,
+            companion: demoTrip.companion,
+            trip_types: demoTrip.tripTypes,
+            itinerary: demoTrip.itinerary,
+            hero_image_url: demoTrip.hero_image_url,
+            status: "ready",
+          } as never)
+          .select("id")
+          .single();
+        if (!claimErr && claimed) {
+          clearDemoTrip();
+          claimedTripId = (claimed as { id: string }).id;
+          void geocodeAndPersistTrip(claimedTripId, demoTrip.destination);
+          toast.success(t("demo.claimedToast", { destination: demoTrip.destination }));
+        } else if (claimErr) {
+          // No se borra la demo: se reintentará en la próxima visita.
+          console.error("[dashboard] demo trip claim failed", claimErr);
+        }
+      }
+
       if (prof && !prof.welcome_completed) {
         navigate({ to: "/welcome", replace: true });
+        return;
+      }
+
+      if (claimedTripId) {
+        navigate({ to: "/my-trip/$tripId", params: { tripId: claimedTripId } });
         return;
       }
 

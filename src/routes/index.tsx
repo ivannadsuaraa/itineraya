@@ -16,7 +16,6 @@ import { useEffect, useState } from "react";
 import { StatsSection } from "@/components/landing/StatsSection";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
 
 export const Route = createFileRoute("/")({
@@ -57,7 +56,6 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const { t } = useTranslation();
-  const { openAuthModal } = useAuthModal();
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     if (typeof window === "undefined") return false;
     return Object.keys(localStorage).some((k) => k.startsWith("sb-") && k.endsWith("-auth-token"));
@@ -134,14 +132,13 @@ function LandingPage() {
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
               </Link>
             ) : (
-              <button
-                type="button"
-                onClick={() => openAuthModal({ mode: "signup" })}
+              <Link
+                to="/demo"
                 className="group inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] hover:shadow-xl hover:shadow-[#1E6B9A]/35 hover:scale-[1.02]"
               >
-                {t("hero.ctaStart")}
+                {t("hero.ctaDemo")}
                 <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-              </button>
+              </Link>
             )}
           </motion.div>
         </div>

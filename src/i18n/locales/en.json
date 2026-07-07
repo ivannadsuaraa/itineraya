@@ -45,7 +45,8 @@
     "proofMap": "Interactive map",
     "proofSchedule": "Real schedules",
     "proofPostcards": "Downloadable postcards",
-    "tickerLabel": "Departures"
+    "tickerLabel": "Departures",
+    "ctaDemo": "Try it free — no signup"
   },
   "showcase": {
     "kicker": "The product, not promises",
@@ -654,7 +655,9 @@
     "text": "Check out my trip to {{destination}} on Itineraya",
     "publicHint": "Only the itinerary is shared. Your account stays private.",
     "instagramHint": "Link copied — paste it into your Instagram story or bio",
-    "copyStories": "Copy for Stories"
+    "copyStories": "Copy for Stories",
+    "posterTitle": "Trip poster",
+    "posterDesc": "Illustrated map with your day-by-day route, ready for Instagram"
   },
   "publicTrip": {
     "eyebrow": "Public itinerary",
@@ -979,5 +982,22 @@
     "noTripsThisMonth": "No trips this month",
     "adventuresAppearHere": "Your adventures will appear here",
     "moreCount": "+{{count}} more"
+  },
+  "demo": {
+    "badge": "Free demo",
+    "title": "Your itinerary in 30 seconds",
+    "subtitle": "No account, no card. Tell us destination and style, and watch Itineraya work.",
+    "daysTitle": "How many days?",
+    "daysSubtitle": "The demo generates up to 4 days. The full version goes up to 14.",
+    "daysUnit": "days",
+    "disclaimer": "Demo with destination, days and style. The full version adds real dates, budget, pace, dietary needs, an interactive map and AI editing — free when you sign up.",
+    "resultBadge": "Demo",
+    "saveCta": "Save trip",
+    "saveCtaLong": "Create a free account and save it",
+    "saveBar": "Like your trip to {{destination}}? Save it for free and unlock every day.",
+    "lockedCta": "Unlock this day for free",
+    "signupTitle": "Save your trip to {{destination}}",
+    "signupDesc": "Create your free account: your itinerary is saved automatically and you unlock every day, the interactive map and the postcards.",
+    "claimedToast": "Your trip to {{destination}} has been saved to your account ✈️"
   }
 }
