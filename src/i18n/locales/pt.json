@@ -239,6 +239,15 @@
       "f3": "Exportar roteiro em PDF",
       "f4": "Acesso prioritário a novas funcionalidades"
     },
+    "tripPass": {
+      "eyebrow": "Só precisa de uma viagem?",
+      "name": "Passe de Viagem",
+      "tag": "Sem assinatura",
+      "price": "4,99€",
+      "priceNote": "pagamento único",
+      "description": "Um roteiro completo, sem limite de dias, edição por chat e download em PDF — para sempre, sem assinatura.",
+      "cta": "Comprar Passe de Viagem"
+    },
     "perYear": "/ano",
     "trust1": "Sem compromisso",
     "trust2": "Cancele quando quiser",
@@ -341,7 +350,14 @@
     "trialDaysLeft": "Você tem {{count}} dias restantes de teste gratuito",
     "trialPerk": "— Aproveite o assistente de IA e todos os recursos premium.",
     "trialKeep": "Manter acesso",
-    "nDays": "{{count}} dias"
+    "nDays": "{{count}} dias",
+    "referral": {
+      "title": "Convide 3 amigos e ganhe 1 mês grátis",
+      "subtitle": "Quando 3 pessoas se cadastrarem com seu link, ativamos 1 mês do plano Viajante na sua conta.",
+      "progress": "{{count}} de 3 amigos convidados",
+      "copyLink": "Copiar link de convite",
+      "copied": "Link copiado!"
+    }
   },
   "saved": {
     "metaTitle": "Salvos – Itineraya",
@@ -707,6 +723,7 @@
     "limitDescViajero": "Seu limite é renovado no dia 1 de cada mês. Faça upgrade para Explorador para roteiros ilimitados.",
     "limitUpgrade": "Fazer upgrade para Viajante",
     "limitUpgradeExplorador": "Fazer upgrade para Explorador",
+    "buyPass": "Comprar Passe de Viagem (4,99€)",
     "limitCancel": "Voltar",
     "limitBannerFree": "{{count}} de {{limit}} roteiros usados no total",
     "limitBannerViajero": "{{count}} de {{limit}} roteiros este mês"

@@ -28,6 +28,9 @@ import {
   Zap,
   LayoutGrid,
   Plane,
+  Gift,
+  Copy,
+  Check,
 } from "lucide-react";
 import { DepartureBoard } from "@/components/airport/DepartureBoard";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -122,6 +125,8 @@ function DashboardPage() {
   const [shareTrip, setShareTrip] = useState<Trip | null>(null);
   const [isFree, setIsFree] = useState(true);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
+  const [referralCount, setReferralCount] = useState(0);
+  const [referralCopied, setReferralCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"viajes" | "calendario">("viajes");
   const [tripsView, setTripsView] = useState<"board" | "cards">("board");
   const reduceMotion = useReducedMotion();
@@ -165,17 +170,19 @@ function DashboardPage() {
 
       const { data: profRaw } = await supabase
         .from("profiles")
-        .select("welcome_completed, plan, trial_ends_at")
+        .select("welcome_completed, plan, trial_ends_at, referral_count")
         .eq("id", u.user.id)
         .maybeSingle();
       const prof = profRaw as unknown as {
         welcome_completed?: boolean;
         plan?: string;
         trial_ends_at?: string | null;
+        referral_count?: number;
       } | null;
       const userPlan = prof?.plan ?? "free";
       const trialEndsAt = prof?.trial_ends_at ?? null;
       setIsFree(userPlan === "free");
+      setReferralCount(prof?.referral_count ?? 0);
       if (userPlan === "free" && trialEndsAt) {
         const msLeft = new Date(trialEndsAt).getTime() - Date.now();
         const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
@@ -224,6 +231,15 @@ function DashboardPage() {
       setTrips(prev);
       toast.error(t("dashboard.deleteFail"));
     }
+  };
+
+  const copyReferralLink = async () => {
+    if (!userId) return;
+    const url = `https://itineraya.com?ref=${userId}`;
+    await navigator.clipboard.writeText(url);
+    setReferralCopied(true);
+    toast.success(t("dashboard.referral.copied"));
+    setTimeout(() => setReferralCopied(false), 2000);
   };
 
   const removeSaved = async (id: string) => {
@@ -399,6 +415,44 @@ function DashboardPage() {
             >
               {t("dashboard.trialKeep")}
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ── Referral Banner ── */}
+      {isFree && referralCount < 3 && (
+        <div className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-[#EAF4FA] px-4 py-3.5">
+          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1E6B9A]/10">
+                <Gift className="h-4 w-4 text-[#1E6B9A]" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-sky-900">{t("dashboard.referral.title")}</p>
+                <p className="text-xs text-sky-700">{t("dashboard.referral.subtitle")}</p>
+              </div>
+            </div>
+            <div className="flex w-full items-center gap-3 sm:w-auto">
+              <div className="flex flex-1 items-center gap-2 sm:w-40">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white ring-1 ring-sky-100">
+                  <div
+                    className="h-full rounded-full bg-[#1E6B9A] transition-all"
+                    style={{ width: `${Math.min(100, (referralCount / 3) * 100)}%` }}
+                  />
+                </div>
+                <span className="shrink-0 text-xs font-bold text-sky-800">
+                  {t("dashboard.referral.progress", { count: referralCount })}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={copyReferralLink}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-95"
+              >
+                {referralCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {t("dashboard.referral.copyLink")}
+              </button>
+            </div>
           </div>
         </div>
       )}

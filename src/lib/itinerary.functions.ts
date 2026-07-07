@@ -187,16 +187,26 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error || !trip) throw new Error("Viaje no encontrado");
     // Plan-based itinerary limit
-    const { data: planProfile } = await supabase
+    // select("*") + cast: bonus_trips isn't in the generated Supabase types yet
+    // (see supabase/migrations/20260707130000_trip_pass_and_referral_rewards.sql),
+    // same workaround used for the trip_personalization columns above.
+    const { data: planProfileRaw } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("*")
       .eq("id", userId)
       .maybeSingle();
+    const planProfile = planProfileRaw as unknown as {
+      plan?: "free" | "viajero" | "explorador";
+      bonus_trips?: number;
+    } | null;
 
-    const plan = (planProfile?.plan ?? "free") as "free" | "viajero" | "explorador";
+    const plan = planProfile?.plan ?? "free";
+    const bonusTrips = planProfile?.bonus_trips ?? 0;
     // Must match the client gate (new-trip.tsx) and the pricing page:
     // free = 2 lifetime, viajero = 5 per calendar month (resets on the 1st), explorador = unlimited.
-    const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 5 : 2;
+    // Each Trip Pass purchased (bonus_trips) adds +1 on top of the plan limit.
+    const baseLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 5 : 2;
+    const planLimit: number | null = baseLimit === null ? null : baseLimit + bonusTrips;
 
     if (planLimit !== null) {
       // Count generated trips (same criterion as the client gate in new-trip.tsx).
@@ -220,7 +230,7 @@ export const generateItinerary = createServerFn({ method: "POST" })
       if ((count ?? 0) >= planLimit) {
         const msg =
           plan === "free"
-            ? `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios en el plan gratuito. Actualiza al plan Viajero para crear más.`
+            ? `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios en el plan gratuito. Compra un Pase de Viaje por 4,99€ para desbloquear uno más sin suscripción, o actualiza al plan Viajero para itinerarios ilimitados cada mes.`
             : `LIMIT_REACHED: Has alcanzado tu límite de ${planLimit} itinerarios este mes en el plan Viajero. Se renueva el día 1 de cada mes. Actualiza a Explorador para itinerarios ilimitados.`;
         throw new Error(msg);
       }

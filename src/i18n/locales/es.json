@@ -239,6 +239,15 @@
       "f3": "Exportar itinerario en PDF",
       "f4": "Acceso prioritario a nuevas funciones"
     },
+    "tripPass": {
+      "eyebrow": "¿Solo necesitas un viaje?",
+      "name": "Pase de Viaje",
+      "tag": "Sin suscripción",
+      "price": "4,99€",
+      "priceNote": "pago único",
+      "description": "Un itinerario completo, sin límites de días, edición por chat y descarga en PDF — para siempre, sin suscripción.",
+      "cta": "Comprar Pase de Viaje"
+    },
     "perYear": "/año",
     "trust1": "Sin permanencia",
     "trust2": "Cancela cuando quieras",
@@ -343,7 +352,14 @@
     "trialKeep": "Mantener acceso",
     "nDays": "{{count}} días",
     "globeViewItinerary": "Ver itinerario",
-    "globeClose": "Cerrar"
+    "globeClose": "Cerrar",
+    "referral": {
+      "title": "Invita a 3 amigos y consigue 1 mes gratis",
+      "subtitle": "Cuando 3 personas se registren con tu enlace, activamos 1 mes del plan Viajero en tu cuenta.",
+      "progress": "{{count}} de 3 amigos invitados",
+      "copyLink": "Copiar enlace de invitación",
+      "copied": "¡Enlace copiado!"
+    }
   },
   "saved": {
     "metaTitle": "Guardados – Itineraya",
@@ -719,6 +735,7 @@
     "limitDescViajero": "Tu límite se renueva el día 1 de cada mes. Actualiza a Explorador para itinerarios ilimitados.",
     "limitUpgrade": "Actualizar a plan Viajero",
     "limitUpgradeExplorador": "Actualizar a plan Explorador",
+    "buyPass": "Comprar Pase de Viaje (4,99€)",
     "limitCancel": "Volver",
     "limitBannerFree": "{{count}} de {{limit}} itinerarios usados en total",
     "limitBannerViajero": "{{count}} de {{limit}} itinerarios este mes"

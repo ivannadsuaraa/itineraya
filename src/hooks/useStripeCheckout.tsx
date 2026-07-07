@@ -4,6 +4,7 @@ import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
 interface CheckoutOptions {
   priceId: string;
   returnUrl?: string;
+  mode?: "subscription" | "payment";
 }
 
 export function useStripeCheckout() {

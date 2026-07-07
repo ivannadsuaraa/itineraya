@@ -5,9 +5,10 @@ import { createCheckoutSession } from "@/lib/payments.functions";
 interface Props {
   priceId: string;
   returnUrl?: string;
+  mode?: "subscription" | "payment";
 }
 
-export function StripeEmbeddedCheckout({ priceId, returnUrl }: Props) {
+export function StripeEmbeddedCheckout({ priceId, returnUrl, mode }: Props) {
   const fetchClientSecret = async (): Promise<string> => {
     const result = await createCheckoutSession({
       data: {
@@ -16,6 +17,7 @@ export function StripeEmbeddedCheckout({ priceId, returnUrl }: Props) {
           returnUrl ||
           `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
         environment: getStripeEnvironment(),
+        mode,
       },
     });
     if ("error" in result) throw new Error(result.error);

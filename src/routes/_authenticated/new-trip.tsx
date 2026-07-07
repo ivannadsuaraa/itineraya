@@ -1,10 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, MapPin, Compass, Lock, Sparkles, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Compass, Lock, Sparkles, AlertCircle, Ticket, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { isPaymentsConfigured } from "@/lib/stripe";
+import { TRIP_PASS_PRICE_ID } from "@/lib/trip-pass";
 
 export const Route = createFileRoute("/_authenticated/new-trip")({
   head: () => ({ meta: [{ title: "Crear viaje – Itineraya" }] }),
@@ -17,8 +20,10 @@ function NewTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [bonusTrips, setBonusTrips] = useState(0);
   const [tripCount, setTripCount] = useState<number | null>(null);
   const [showLimit, setShowLimit] = useState(false);
+  const { openCheckout, closeCheckout, checkoutElement, isOpen: checkoutOpen } = useStripeCheckout();
 
   useEffect(() => {
     let cancelled = false;
@@ -26,10 +31,18 @@ function NewTripPage() {
       const { data: u } = await supabase.auth.getUser();
       const uid = u.user?.id ?? null;
       if (cancelled || !uid) return;
-      const { data: profile } = await supabase.from("profiles").select("plan").eq("id", uid).maybeSingle();
+      // select("*") + cast: bonus_trips isn't in the generated Supabase types yet
+      // (see supabase/migrations/20260707130000_trip_pass_and_referral_rewards.sql).
+      const { data: profileRaw } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", uid)
+        .maybeSingle();
       if (cancelled) return;
-      const resolvedPlan = (profile?.plan as Plan | undefined) ?? "free";
+      const profile = profileRaw as unknown as { plan?: Plan; bonus_trips?: number } | null;
+      const resolvedPlan = profile?.plan ?? "free";
       setPlan(resolvedPlan);
+      setBonusTrips(profile?.bonus_trips ?? 0);
 
       // Free: lifetime count, never resets. Viajero: only trips created in the
       // current calendar month, since its quota resets on the 1st.
@@ -52,7 +65,9 @@ function NewTripPage() {
 
   // Must match the server gate (itinerary.functions.ts) and the pricing page:
   // free = 2 lifetime, viajero = 5 per calendar month (resets on the 1st), explorador = unlimited.
-  const planLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 5 : 2;
+  // Each Trip Pass purchased (bonus_trips) adds +1 on top of the plan limit.
+  const baseLimit: number | null = plan === "explorador" ? null : plan === "viajero" ? 5 : 2;
+  const planLimit: number | null = baseLimit === null ? null : baseLimit + bonusTrips;
   const loaded = plan !== null && tripCount !== null;
   const overLimit = loaded && planLimit !== null && (tripCount ?? 0) >= planLimit;
 
@@ -60,6 +75,12 @@ function NewTripPage() {
     if (!loaded) return;
     if (overLimit) { setShowLimit(true); return; }
     navigate({ to });
+  };
+
+  const handleBuyPass = () => {
+    if (!isPaymentsConfigured()) return;
+    setShowLimit(false);
+    openCheckout({ priceId: TRIP_PASS_PRICE_ID, mode: "payment" });
   };
 
   return (
@@ -162,6 +183,16 @@ function NewTripPage() {
               {t(plan === "viajero" ? "newTrip.limitUpgradeExplorador" : "newTrip.limitUpgrade")}
               <ArrowRight className="h-4 w-4" />
             </button>
+            {plan === "free" && isPaymentsConfigured() && (
+              <button
+                type="button"
+                onClick={handleBuyPass}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#1E6B9A] ring-1 ring-sky-200 transition hover:bg-sky-50"
+              >
+                <Ticket className="h-4 w-4" />
+                {t("newTrip.buyPass")}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowLimit(false)}
@@ -172,6 +203,23 @@ function NewTripPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Embedded checkout modal para el Pase de Viaje */}
+      {checkoutOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-sky-950/70 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl rounded-3xl bg-white p-2 shadow-2xl">
+            <button
+              type="button"
+              onClick={closeCheckout}
+              className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-sky-700 shadow-md ring-1 ring-sky-100 hover:bg-sky-50"
+              aria-label={t("pricing.close")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="max-h-[85vh] overflow-y-auto rounded-2xl">{checkoutElement}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type Stripe from "stripe";
 import { createNativeStripeClient, getWebhookSecret, type StripeEnv } from "@/lib/stripe.server";
+import { TRIP_PASS_PRICE_ID } from "@/lib/trip-pass";
 
 function pickEnv(url: URL): StripeEnv {
   const env = url.searchParams.get("env");
@@ -130,6 +131,37 @@ async function upsertSubscriptionRow(env: StripeEnv, subscription: Stripe.Subscr
   }
 }
 
+/**
+ * Grants +1 bonus trip for a one-off Trip Pass purchase. Idempotent: the
+ * unique index on (stripe_checkout_session_id, environment) means a
+ * re-delivered webhook event only inserts once, so a retried delivery never
+ * double-grants the bonus trip.
+ */
+async function grantTripPass(env: StripeEnv, session: Stripe.Checkout.Session, userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // trip_pass_purchases / increment_bonus_trips aren't in the generated Supabase
+  // types yet (see supabase/migrations/20260707130000_trip_pass_and_referral_rewards.sql)
+  // — same `as never` workaround already used for attribute_acquisition.
+  const { error: insertErr } = await supabaseAdmin.from("trip_pass_purchases" as never).insert({
+    user_id: userId,
+    stripe_checkout_session_id: session.id,
+    environment: env,
+  } as never);
+  if (insertErr) {
+    // Unique violation = already processed this session; anything else is logged.
+    if (insertErr.code !== "23505") {
+      console.error("[payments/webhook] trip_pass_purchases insert failed", insertErr);
+    }
+    return;
+  }
+  const { error: incErr } = await supabaseAdmin.rpc("increment_bonus_trips" as never, {
+    p_user_id: userId,
+  } as never);
+  if (incErr) {
+    console.error("[payments/webhook] increment_bonus_trips failed", { userId, error: incErr });
+  }
+}
+
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
     handlers: {
@@ -166,6 +198,20 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
 
           if (event.type === "checkout.session.completed") {
             const session = event.data.object as Stripe.Checkout.Session;
+
+            if (session.mode === "payment") {
+              const priceId = safeString(
+                (session.metadata as Record<string, string> | undefined)?.priceId,
+              );
+              const userId = safeString(
+                (session.metadata as Record<string, string> | undefined)?.userId,
+              );
+              if (priceId === TRIP_PASS_PRICE_ID && userId && session.payment_status === "paid") {
+                await grantTripPass(env, session, userId);
+              }
+              return new Response("ok", { status: 200 });
+            }
+
             const subscriptionId =
               typeof session.subscription === "string"
                 ? session.subscription

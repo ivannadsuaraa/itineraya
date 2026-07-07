@@ -49,10 +49,14 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       priceId: string;
       returnUrl: string;
       environment: StripeEnv;
+      mode?: "subscription" | "payment";
     }) => {
       if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
       if (data.environment !== "sandbox" && data.environment !== "live") {
         throw new Error("Invalid environment");
+      }
+      if (data.mode !== undefined && data.mode !== "subscription" && data.mode !== "payment") {
+        throw new Error("Invalid mode");
       }
       return data;
     },
@@ -62,6 +66,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       const stripe = createNativeStripeClient(data.environment);
       const userId = context.userId;
       const email = (context.claims?.email as string | undefined) ?? undefined;
+      const mode = data.mode ?? "subscription";
 
       const stripePrice = await stripe.prices.retrieve(data.priceId);
 
@@ -69,12 +74,14 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
-        mode: "subscription",
+        mode,
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         customer: customerId,
         metadata: { userId, priceId: data.priceId },
-        subscription_data: { metadata: { userId, priceId: data.priceId } },
+        ...(mode === "subscription"
+          ? { subscription_data: { metadata: { userId, priceId: data.priceId } } }
+          : {}),
         managed_payments: { enabled: true },
       } as Parameters<typeof stripe.checkout.sessions.create>[0]);
 

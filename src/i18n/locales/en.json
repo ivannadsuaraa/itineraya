@@ -239,6 +239,15 @@
       "f3": "Export itinerary as PDF",
       "f4": "Priority access to new features"
     },
+    "tripPass": {
+      "eyebrow": "Only need one trip?",
+      "name": "Trip Pass",
+      "tag": "No subscription",
+      "price": "€4.99",
+      "priceNote": "one-time payment",
+      "description": "One full itinerary, unlimited days, chat editing and PDF download — forever, no subscription.",
+      "cta": "Buy Trip Pass"
+    },
     "perYear": "/year",
     "trust1": "No commitment",
     "trust2": "Cancel anytime",
@@ -343,7 +352,14 @@
     "trialKeep": "Keep access",
     "nDays": "{{count}} days",
     "globeViewItinerary": "View itinerary",
-    "globeClose": "Close"
+    "globeClose": "Close",
+    "referral": {
+      "title": "Invite 3 friends and get 1 free month",
+      "subtitle": "Once 3 people sign up with your link, we activate 1 month of the Viajero plan on your account.",
+      "progress": "{{count}} of 3 friends invited",
+      "copyLink": "Copy invite link",
+      "copied": "Link copied!"
+    }
   },
   "saved": {
     "metaTitle": "Saved – Itineraya",
@@ -719,6 +735,7 @@
     "limitDescViajero": "Your limit renews on the 1st of every month. Upgrade to Explorador for unlimited itineraries.",
     "limitUpgrade": "Upgrade to Viajero",
     "limitUpgradeExplorador": "Upgrade to Explorador",
+    "buyPass": "Buy a Trip Pass (€4.99)",
     "limitCancel": "Go back",
     "limitBannerFree": "{{count}} of {{limit}} itineraries used in total",
     "limitBannerViajero": "{{count}} of {{limit}} itineraries this month"

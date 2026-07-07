@@ -239,6 +239,15 @@
       "f3": "Export de l'itinéraire en PDF",
       "f4": "Accès prioritaire aux nouvelles fonctionnalités"
     },
+    "tripPass": {
+      "eyebrow": "Besoin d'un seul voyage ?",
+      "name": "Pass Voyage",
+      "tag": "Sans abonnement",
+      "price": "4,99 €",
+      "priceNote": "paiement unique",
+      "description": "Un itinéraire complet, sans limite de jours, édition par chat et export PDF — pour toujours, sans abonnement.",
+      "cta": "Acheter le Pass Voyage"
+    },
     "perYear": "/an",
     "trust1": "Sans engagement",
     "trust2": "Annulez quand vous voulez",
@@ -341,7 +350,14 @@
     "trialDaysLeft": "Il te reste {{count}} jours d'essai gratuit",
     "trialPerk": "— Profite de l'assistant IA et de toutes les fonctionnalités premium.",
     "trialKeep": "Garder l'accès",
-    "nDays": "{{count}} jours"
+    "nDays": "{{count}} jours",
+    "referral": {
+      "title": "Invite 3 amis et obtiens 1 mois gratuit",
+      "subtitle": "Dès que 3 personnes s'inscrivent avec ton lien, nous activons 1 mois du plan Voyageur sur ton compte.",
+      "progress": "{{count}} sur 3 amis invités",
+      "copyLink": "Copier le lien d'invitation",
+      "copied": "Lien copié !"
+    }
   },
   "saved": {
     "metaTitle": "Sauvegardés – Itineraya",
@@ -707,6 +723,7 @@
     "limitDescViajero": "Votre limite se renouvelle le 1er de chaque mois. Passez à Explorateur pour des itinéraires illimités.",
     "limitUpgrade": "Passer au plan Voyageur",
     "limitUpgradeExplorador": "Passer au plan Explorateur",
+    "buyPass": "Acheter un Pass Voyage (4,99 €)",
     "limitCancel": "Retour",
     "limitBannerFree": "{{count}} sur {{limit}} itinéraires utilisés au total",
     "limitBannerViajero": "{{count}} sur {{limit}} itinéraires ce mois-ci"

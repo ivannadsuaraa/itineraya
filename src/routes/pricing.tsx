@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { ArrowLeft, X, Loader2, Check, Minus, Shield } from "lucide-react";
+import { ArrowLeft, X, Loader2, Check, Minus, Shield, Ticket } from "lucide-react";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { useSubscription } from "@/hooks/useSubscription";
 import { isPaymentsConfigured } from "@/lib/stripe";
+import { TRIP_PASS_PRICE_ID } from "@/lib/trip-pass";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { toast } from "sonner";
@@ -114,6 +115,18 @@ function PricingPage() {
     }
   };
 
+  const handleBuyTripPass = () => {
+    if (!authedUserId) {
+      openAuthModal({ mode: "signup" });
+      return;
+    }
+    if (!isPaymentsConfigured()) {
+      toast.error(t("pricing.notConfigured"));
+      return;
+    }
+    openCheckout({ priceId: TRIP_PASS_PRICE_ID, mode: "payment" });
+  };
+
   const tiers: TierType[] = [
     {
       name: t("pricing.free.name"),
@@ -204,6 +217,9 @@ function PricingPage() {
           />
         </Suspense>
 
+        {/* ── Pase de Viaje: opción discreta de pago único ── */}
+        <TripPassCard onSelect={handleBuyTripPass} />
+
         {/* Trust signals */}
         <div className="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-center">
           {[
@@ -252,6 +268,39 @@ function PricingPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Trip Pass: discreet one-time-payment option ─── */
+
+function TripPassCard({ onSelect }: { onSelect: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mx-auto mt-8 flex max-w-xl flex-col items-center gap-4 rounded-2xl bg-white/[0.03] px-5 py-4 ring-1 ring-white/8 sm:flex-row sm:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/8 ring-1 ring-white/10">
+          <Ticket className="h-4 w-4 text-sky-300" />
+        </div>
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-white/85">{t("pricing.tripPass.eyebrow")}</p>
+            <span className="rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/50">
+              {t("pricing.tripPass.tag")}
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-white/40">{t("pricing.tripPass.description")}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-xs font-bold text-white ring-1 ring-white/15 transition hover:bg-white/18"
+      >
+        {t("pricing.tripPass.cta")}
+        <span className="text-white/50">·</span>
+        {t("pricing.tripPass.price")}
+      </button>
     </div>
   );
 }
