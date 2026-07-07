@@ -257,6 +257,8 @@ function ItineraryPage() {
     start_date: string | null;
     end_date: string | null;
     companion?: string | null;
+    geo_lat?: number | null;
+    geo_lng?: number | null;
   } | null>(null);
   const [mapModalOpen, setMapModalOpen] = useState(false);
   const [activeDay, setActiveDay] = useState(0);
@@ -312,7 +314,7 @@ function ItineraryPage() {
       try {
         const { data, error: e1 } = await supabase
           .from("trips")
-          .select("id,destination,hero_image_url,itinerary,status,start_date,end_date,companion")
+          .select("id,destination,hero_image_url,itinerary,status,start_date,end_date,companion,geo_lat,geo_lng")
           .eq("id", tripId)
           .maybeSingle();
         if (e1) throw e1;
@@ -324,7 +326,12 @@ function ItineraryPage() {
 
         if (data.status === "ready" && data.itinerary) {
           if (!cancelled) {
-            setTrip({ ...data, itinerary: data.itinerary as unknown as Itinerary });
+            setTrip({
+              ...data,
+              itinerary: data.itinerary as unknown as Itinerary,
+              geo_lat: (data as { geo_lat?: number | null }).geo_lat ?? null,
+              geo_lng: (data as { geo_lng?: number | null }).geo_lng ?? null,
+            });
             setLoading(false);
           }
           return;
@@ -342,6 +349,8 @@ function ItineraryPage() {
           start_date: data.start_date ?? null,
           end_date: data.end_date ?? null,
           companion: (data as { companion?: string | null }).companion ?? null,
+          geo_lat: (data as { geo_lat?: number | null }).geo_lat ?? null,
+          geo_lng: (data as { geo_lng?: number | null }).geo_lng ?? null,
         });
         // Momento de máxima motivación: el itinerario acaba de aparecer.
         // Proponer compartirlo aquí multiplica el alcance del enlace público.
@@ -630,7 +639,13 @@ function ItineraryPage() {
                   </div>
                 }
               >
-                <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
+                <TripMap
+                  destination={trip.destination}
+                  days={itin.days}
+                  tripId={trip.id}
+                  geo_lat={trip.geo_lat}
+                  geo_lng={trip.geo_lng}
+                />
               </Suspense>
             </motion.div>
           </div>
@@ -669,7 +684,13 @@ function ItineraryPage() {
                 </div>
               }
             >
-              <TripMap destination={trip.destination} days={itin.days} tripId={trip.id} />
+              <TripMap
+                destination={trip.destination}
+                days={itin.days}
+                tripId={trip.id}
+                geo_lat={trip.geo_lat}
+                geo_lng={trip.geo_lng}
+              />
             </Suspense>
           </div>
         </div>

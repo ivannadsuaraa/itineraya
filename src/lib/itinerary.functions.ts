@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { unsplashImage, itinerarySchema, extractJson } from "@/lib/itinerary-shared";
+import { geocodeAndPersistTrip } from "@/lib/geocode";
 
 const Input = z.object({
   tripId: z.string().uuid(),
@@ -496,6 +497,9 @@ FIELD GUIDE
       .update({ itinerary: parsed, hero_image_url: hero, status: "ready" })
       .eq("id", data.tripId);
     if (updateErr) throw updateErr;
+
+    // Geocode destination and persist coordinates for map centering
+    void geocodeAndPersistTrip(data.tripId, trip.destination);
 
     return { itinerary: parsed, hero_image_url: hero };
   });

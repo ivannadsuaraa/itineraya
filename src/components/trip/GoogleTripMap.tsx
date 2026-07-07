@@ -24,6 +24,8 @@ interface Props {
   days: Day[];
   tripId: string;
   onError?: () => void;
+  geo_lat?: number | null;
+  geo_lng?: number | null;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -68,7 +70,7 @@ function pinSvg(color: string, label: string): string {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-export function GoogleTripMap({ destination, days, tripId, onError }: Props) {
+export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo_lng }: Props) {
   const { t } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<google.maps.Map | null>(null);
@@ -77,6 +79,7 @@ export function GoogleTripMap({ destination, days, tripId, onError }: Props) {
   const [pins, setPins] = useState<Pin[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const cancelled = useRef(false);
+  const initialCenter = geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : { lat: 40.4168, lng: -3.7038 };
 
   // Google's auth-failure callback fires asynchronously and can't be caught
   // by a try/catch around the loader promise — listen for it explicitly.
@@ -105,7 +108,7 @@ export function GoogleTripMap({ destination, days, tripId, onError }: Props) {
         await loadGoogleMaps();
         if (!mounted || !mapRef.current) return;
         mapInstance.current = new google.maps.Map(mapRef.current, {
-          center: { lat: 40.4168, lng: -3.7038 },
+          center: initialCenter,
           zoom: 12,
           mapTypeControl: false,
           streetViewControl: false,

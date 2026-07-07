@@ -22,6 +22,8 @@ interface Props {
   destination: string;
   days: Day[];
   tripId: string;
+  geo_lat?: number | null;
+  geo_lng?: number | null;
 }
 
 function MapFallback() {
@@ -36,7 +38,7 @@ function MapFallback() {
 // billing disabled) without throwing — it just renders a broken grey tile.
 // This wrapper detects that failure via GoogleTripMap's onError and swaps to
 // the Leaflet/OpenStreetMap implementation so the map always works.
-export function SmartTripMap({ destination, days, tripId }: Props) {
+export function SmartTripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) {
   const { t } = useTranslation();
   const [googleFailed, setGoogleFailed] = useState(false);
   const handleError = useCallback(() => setGoogleFailed(true), []);
@@ -51,7 +53,7 @@ export function SmartTripMap({ destination, days, tripId }: Props) {
           })}
         </div>
         <Suspense fallback={<MapFallback />}>
-          <TripMap destination={destination} days={days} tripId={tripId} />
+          <TripMap destination={destination} days={days} tripId={tripId} geo_lat={geo_lat} geo_lng={geo_lng} />
         </Suspense>
       </div>
     );
@@ -59,7 +61,7 @@ export function SmartTripMap({ destination, days, tripId }: Props) {
 
   return (
     <Suspense fallback={<MapFallback />}>
-      <GoogleTripMap destination={destination} days={days} tripId={tripId} onError={handleError} />
+      <GoogleTripMap destination={destination} days={days} tripId={tripId} onError={handleError} geo_lat={geo_lat} geo_lng={geo_lng} />
     </Suspense>
   );
 }

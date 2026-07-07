@@ -24,6 +24,8 @@ interface Props {
   destination: string;
   days: Day[];
   tripId: string;
+  geo_lat?: number | null;
+  geo_lng?: number | null;
 }
 
 type Geo = { lat: number; lng: number };
@@ -96,11 +98,13 @@ function makeIcon(color: string, label: string | number): L.DivIcon {
   });
 }
 
-export function TripMap({ destination, days, tripId }: Props) {
+export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) {
   const { t } = useTranslation();
   const [pins, setPins] = useState<Pin[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const [center, setCenter] = useState<Geo | null>(null);
+  const [center, setCenter] = useState<Geo | null>(
+    geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : null
+  );
   const cancelled = useRef(false);
 
   const tasks = useMemo(() => {
@@ -161,8 +165,11 @@ export function TripMap({ destination, days, tripId }: Props) {
     const pushUnique = (g: Geo, item: (typeof tasks)[number]) => pushPin(spread(g), item);
 
     (async () => {
-      // 1. Resolve destination + flush cached pins instantly (no waiting)
-      const destGeo = cache["__dest__"] ?? (await geocode(destination));
+      // 1. Use provided coordinates or geocode destination + flush cached pins instantly (no waiting)
+      const destGeo =
+        (geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : null) ??
+        cache["__dest__"] ??
+        (await geocode(destination));
       if (cancelled.current) return;
       if (destGeo) {
         cache["__dest__"] = destGeo;
@@ -181,9 +188,8 @@ export function TripMap({ destination, days, tripId }: Props) {
         }
       }
 
-      // 2. Fetch missing geocodes with a small concurrency window so the UI
-      //    keeps updating progressively without blocking.
-      const CONCURRENCY = 3;
+      // 2. Fetch missing geocodes with higher concurrency to speed up loading
+      const CONCURRENCY = 6;
       let cursor = 0;
       const worker = async () => {
         while (!cancelled.current && cursor < pending.length) {
@@ -206,8 +212,8 @@ export function TripMap({ destination, days, tripId }: Props) {
             pushUnique(g, item);
           }
           setProgress((p) => ({ done: p.done + 1, total: p.total }));
-          // small breather to stay polite with Nominatim
-          await new Promise((r) => setTimeout(r, 300));
+          // minimal delay to stay polite with Nominatim (100ms vs 300ms)
+          await new Promise((r) => setTimeout(r, 100));
         }
       };
       await Promise.all(
@@ -224,7 +230,7 @@ export function TripMap({ destination, days, tripId }: Props) {
     return () => {
       cancelled.current = true;
     };
-  }, [tasks, destination, tripId]);
+  }, [tasks, destination, tripId, geo_lat, geo_lng]);
 
   const fallbackCenter: Geo = center ?? { lat: 40.4168, lng: -3.7038 };
   const loading = progress.total > 0 && progress.done < progress.total;
