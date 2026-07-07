@@ -45,7 +45,7 @@ export function BudgetRangeSlider({ min = 0, max = 10000, step = 50, value, onCh
 
   return (
     <div>
-      <div className="relative h-9">
+      <div className="relative h-11">
         <div className="absolute left-0 right-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-sky-200" />
         <div
           className="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-[#1E6B9A]"
@@ -59,7 +59,7 @@ export function BudgetRangeSlider({ min = 0, max = 10000, step = 50, value, onCh
           step={step}
           value={lo}
           onChange={(e) => setLo(Number(e.target.value))}
-          className="itineraya-range pointer-events-none absolute inset-x-0 top-1/2 h-9 w-full -translate-y-1/2 appearance-none bg-transparent"
+          className="itineraya-range pointer-events-none absolute inset-x-0 top-1/2 h-11 w-full -translate-y-1/2 appearance-none bg-transparent"
           style={{ zIndex: lo > max - step ? 5 : 3 }}
         />
         <input
@@ -70,7 +70,7 @@ export function BudgetRangeSlider({ min = 0, max = 10000, step = 50, value, onCh
           step={step}
           value={hi}
           onChange={(e) => setHi(Number(e.target.value))}
-          className="itineraya-range pointer-events-none absolute inset-x-0 top-1/2 h-9 w-full -translate-y-1/2 appearance-none bg-transparent"
+          className="itineraya-range pointer-events-none absolute inset-x-0 top-1/2 h-11 w-full -translate-y-1/2 appearance-none bg-transparent"
           style={{ zIndex: 4 }}
         />
       </div>

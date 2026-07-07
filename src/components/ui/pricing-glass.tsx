@@ -1,40 +1,41 @@
-import React, { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Check } from "lucide-react"
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check } from "lucide-react";
 
-const NOISE_PATTERN = 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")'
+const NOISE_PATTERN =
+  'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")';
 
 export type TierType = {
-  name: string
-  priceMonthly: string
-  priceAnnual: string
-  priceIdMonthly?: string
-  priceIdAnnual?: string
-  description: string
-  isPopular?: boolean
-  isCurrent?: boolean
-  features: string[]
-  ctaLabel: string
-  onSelect?: (priceId?: string) => void
-}
+  name: string;
+  priceMonthly: string;
+  priceAnnual: string;
+  priceIdMonthly?: string;
+  priceIdAnnual?: string;
+  description: string;
+  isPopular?: boolean;
+  isCurrent?: boolean;
+  features: string[];
+  ctaLabel: string;
+  onSelect?: (priceId?: string) => void;
+};
 
 function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) {
-  const mouseX = React.useRef(0)
-  const mouseY = React.useRef(0)
-  const cardRef = React.useRef<HTMLDivElement>(null)
-  const glowRef = React.useRef<HTMLDivElement>(null)
+  const mouseX = React.useRef(0);
+  const mouseY = React.useRef(0);
+  const cardRef = React.useRef<HTMLDivElement>(null);
+  const glowRef = React.useRef<HTMLDivElement>(null);
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    mouseX.current = e.clientX - rect.left
-    mouseY.current = e.clientY - rect.top
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.current = e.clientX - rect.left;
+    mouseY.current = e.clientY - rect.top;
     if (glowRef.current) {
-      glowRef.current.style.background = `radial-gradient(600px at ${mouseX.current}px ${mouseY.current}px, rgba(255,255,255,0.12), transparent)`
+      glowRef.current.style.background = `radial-gradient(600px at ${mouseX.current}px ${mouseY.current}px, rgba(255,255,255,0.12), transparent)`;
     }
   }
 
-  const displayPrice = isAnnual ? tier.priceAnnual : tier.priceMonthly
-  const isZero = displayPrice === "0"
+  const displayPrice = isAnnual ? tier.priceAnnual : tier.priceMonthly;
+  const isZero = displayPrice === "0";
 
   return (
     <motion.div
@@ -108,9 +109,7 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
               </motion.span>
             </AnimatePresence>
           </div>
-          {!isZero && (
-            <span className="text-base font-medium text-white/40">/mes</span>
-          )}
+          {!isZero && <span className="text-base font-medium text-white/40">/mes</span>}
         </div>
 
         {isAnnual && !isZero && (
@@ -163,7 +162,7 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
         </motion.button>
       </div>
     </motion.div>
-  )
+  );
 }
 
 export function PricingGlass({
@@ -172,12 +171,12 @@ export function PricingGlass({
   tiers,
   className,
 }: {
-  title?: string
-  description?: string
-  tiers: TierType[]
-  className?: string
+  title?: string;
+  description?: string;
+  tiers: TierType[];
+  className?: string;
 }) {
-  const [isAnnual, setIsAnnual] = useState(false)
+  const [isAnnual, setIsAnnual] = useState(false);
 
   return (
     <motion.div
@@ -200,7 +199,7 @@ export function PricingGlass({
           <button
             onClick={() => setIsAnnual(false)}
             className={[
-              "relative z-10 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors duration-200",
+              "relative z-10 flex h-11 items-center rounded-full px-5 text-sm font-semibold transition-colors duration-200",
               !isAnnual ? "text-white" : "text-white/45 hover:text-white/65",
             ].join(" ")}
           >
@@ -209,7 +208,7 @@ export function PricingGlass({
           <button
             onClick={() => setIsAnnual(true)}
             className={[
-              "relative z-10 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors duration-200",
+              "relative z-10 flex h-11 items-center rounded-full px-5 text-sm font-semibold transition-colors duration-200",
               isAnnual ? "text-white" : "text-white/45 hover:text-white/65",
             ].join(" ")}
           >
@@ -233,5 +232,5 @@ export function PricingGlass({
         ))}
       </div>
     </motion.div>
-  )
+  );
 }

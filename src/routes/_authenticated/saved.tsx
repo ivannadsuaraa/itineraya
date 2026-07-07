@@ -107,7 +107,7 @@ function SavedPage() {
             <p className="mt-2 text-sm text-slate-500">{t("saved.emptyDesc")}</p>
             <Link
               to="/explore"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-[#15577E]"
+              className="mt-6 inline-flex h-11 items-center gap-2 rounded-full bg-[#1E6B9A] px-5 text-sm font-bold text-white shadow-md transition hover:bg-[#15577E]"
             >
               <Compass className="h-4 w-4" />
               {t("saved.emptyCta")}
@@ -150,7 +150,7 @@ function SavedPage() {
                   <button
                     type="button"
                     onClick={() => remixSaved(s)}
-                    className="inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
+                    className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
                   >
                     <Wand2 className="h-3 w-3" />
                     {t("dashboard.savedRemix")}
@@ -159,7 +159,7 @@ function SavedPage() {
                     type="button"
                     onClick={() => removeSaved(s.id)}
                     aria-label={t("dashboard.savedRemove")}
-                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>

@@ -166,18 +166,18 @@ function ProfilePage() {
               <img
                 src={avatar}
                 alt=""
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-white/30"
+                className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-white/30"
               />
             ) : (
-              <div className="grid h-14 w-14 place-items-center rounded-full bg-white/15 text-white ring-2 ring-white/20">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-white/15 text-white ring-2 ring-white/20">
                 <UserIcon className="h-6 w-6" />
               </div>
             )}
-            <div>
-              <p className="font-display text-xl font-bold text-white">
+            <div className="min-w-0">
+              <p className="truncate font-display text-xl font-bold text-white">
                 {fullName || email.split("@")[0] || t("profilePrefs.defaultName")}
               </p>
-              <p className="text-sm text-sky-300">{email}</p>
+              <p className="truncate text-sm text-sky-300">{email}</p>
             </div>
           </div>
         </div>
@@ -240,7 +240,7 @@ function ProfilePage() {
               </div>
               <Link
                 to="/pricing"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-md hover:opacity-95"
+                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 px-4 text-sm font-semibold text-white shadow-md hover:opacity-95"
               >
                 <Sparkles className="h-4 w-4" />
                 {plan === "explorador" ? t("profilePrefs.manage") : t("profilePrefs.upgrade")}

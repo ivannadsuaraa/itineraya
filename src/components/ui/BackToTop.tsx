@@ -29,7 +29,11 @@ export function BackToTop({ threshold = 640 }: { threshold?: number }) {
           transition={{ duration: 0.25, ease: EASE_OUT }}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label={t("common.backToTop")}
-          className="fixed bottom-20 right-4 z-40 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-sky-900 text-white shadow-lg shadow-sky-900/30 transition hover:bg-sky-800 active:scale-95 md:bottom-6 md:right-6"
+          // bottom-20 (80px) despeja la MobileBottomBar en la mayoría de
+          // móviles, pero en phones con home indicator (iPhone con
+          // Dynamic Island/notch) el safe-area-inset-bottom añade ~34px a la
+          // barra y el FAB quedaba pisándola. Se suma el inset real.
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-sky-900 text-white shadow-lg shadow-sky-900/30 transition hover:bg-sky-800 active:scale-95 md:bottom-6 md:right-6"
         >
           <ArrowUp className="h-5 w-5" />
         </motion.button>

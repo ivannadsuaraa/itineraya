@@ -25,7 +25,10 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "bg-background group/calendar p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
+        // Cell size is 44px on touch/mobile widths (meets the tap-target
+        // minimum) and drops to the original compact 32px at sm+ where a
+        // mouse gives precise pointing and two months need to fit side by side.
+        "bg-background group/calendar p-3 [--cell-size:2.75rem] sm:[--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className,

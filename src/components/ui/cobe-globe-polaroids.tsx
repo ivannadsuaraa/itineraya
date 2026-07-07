@@ -357,7 +357,7 @@ export function GlobePolaroids({
               <Link
                 to="/my-trip/$tripId"
                 params={{ tripId: popup.marker.id }}
-                className="-ml-1 mt-1 inline-flex items-center gap-1 px-1 py-2 text-[11px] font-semibold text-[#1E6B9A] transition hover:underline"
+                className="-ml-1 mt-1 inline-flex min-h-11 items-center gap-1 px-1 text-[11px] font-semibold text-[#1E6B9A] transition hover:underline"
               >
                 {t("dashboard.globeViewItinerary")}
                 <ArrowRight className="h-3 w-3" />
@@ -367,7 +367,7 @@ export function GlobePolaroids({
               type="button"
               onClick={() => setPopup(null)}
               aria-label={t("dashboard.globeClose")}
-              className="absolute right-0 top-0 flex h-9 w-9 items-center justify-center"
+              className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center"
             >
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm transition hover:bg-black/40">
                 <X className="h-3 w-3" />

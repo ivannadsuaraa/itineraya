@@ -215,7 +215,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
               setSuggestions([]);
               onChange(null);
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-sky-500 hover:bg-sky-100 before:absolute before:-inset-2.5 before:content-['']"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-sky-500 hover:bg-sky-100 before:absolute before:-inset-3 before:content-['']"
             aria-label="Limpiar"
           >
             <X className="h-3.5 w-3.5" />
@@ -228,7 +228,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
                 <button
                   type="button"
                   onClick={() => handleSelect(s)}
-                  className="block w-full px-4 py-2.5 text-left text-sm text-sky-900 hover:bg-sky-50"
+                  className="block min-h-11 w-full px-4 py-2.5 text-left text-sm text-sky-900 hover:bg-sky-50"
                 >
                   <div className="font-medium">{s.name ?? s.display_name.split(",")[0]}</div>
                   <div className="truncate text-xs text-sky-500">{s.display_name}</div>
@@ -250,7 +250,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
 
       <p className="text-xs text-sky-600">
         {value
-          ? value.address ?? `${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`
+          ? (value.address ?? `${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`)
           : "Busca tu hotel o haz clic en el mapa para colocar el pin."}
       </p>
       {searching && <p className="text-[11px] text-sky-400">Buscando…</p>}

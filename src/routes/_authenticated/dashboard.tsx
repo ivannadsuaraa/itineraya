@@ -395,7 +395,7 @@ function DashboardPage() {
             </div>
             <Link
               to="/pricing"
-              className="flex h-9 shrink-0 items-center rounded-full bg-amber-500 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95"
+              className="flex h-11 shrink-0 items-center rounded-full bg-amber-500 px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-amber-600 active:scale-95"
             >
               {t("dashboard.trialKeep")}
             </Link>
@@ -415,7 +415,7 @@ function DashboardPage() {
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                className={`flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-all ${
                   activeTab === tab
                     ? "bg-sky-900 text-white shadow-sm"
                     : "text-slate-500 hover:text-slate-800"
@@ -448,7 +448,7 @@ function DashboardPage() {
                             type="button"
                             onClick={() => setTripsView(v)}
                             aria-pressed={tripsView === v}
-                            className={`flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition ${
+                            className={`flex h-11 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition ${
                               tripsView === v
                                 ? "bg-sky-900 text-white shadow-sm"
                                 : "text-slate-500 hover:text-slate-800"
@@ -466,7 +466,7 @@ function DashboardPage() {
                   {trips && trips.length > 0 && (
                     <Link
                       to="/new-trip"
-                      className="inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
+                      className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       {t("dashboard.newTrip")}
@@ -781,7 +781,7 @@ function TripCard({
         <Link
           to="/my-trip/$tripId"
           params={{ tripId: trip.id }}
-          className="inline-flex h-9 items-center gap-1 rounded-full bg-slate-100 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
+          className="inline-flex h-11 items-center gap-1 rounded-full bg-slate-100 px-3 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-95"
         >
           <Eye className="h-3 w-3" />
           {t("dashboard.view")}
@@ -796,14 +796,14 @@ function TripCard({
                   setConfirmDelete(false);
                   onDelete();
                 }}
-                className="flex h-9 items-center px-1 text-[11px] font-bold text-red-600 hover:text-red-700"
+                className="flex h-11 items-center px-2 text-[11px] font-bold text-red-600 hover:text-red-700"
               >
                 {t("dashboard.deleteTripYes")}
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmDelete(false)}
-                className="flex h-9 items-center px-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600"
+                className="flex h-11 items-center px-2 text-[11px] font-semibold text-slate-400 hover:text-slate-600"
               >
                 ✕
               </button>

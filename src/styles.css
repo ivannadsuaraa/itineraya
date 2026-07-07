@@ -153,7 +153,10 @@
   }
 }
 
-/* Dual-thumb budget range slider (BudgetRangeSlider.tsx) */
+/* Dual-thumb budget range slider (BudgetRangeSlider.tsx). Thumb hit target is
+   44px (touch minimum) with the visible white disc drawn smaller via layered
+   radial-gradient backgrounds, so the circle still reads as a slim ~26px
+   handle while the actual draggable area meets the touch-target guideline. */
 .itineraya-range {
   -webkit-appearance: none;
   appearance: none;
@@ -162,11 +165,12 @@
   -webkit-appearance: none;
   appearance: none;
   pointer-events: auto;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border-radius: 9999px;
-  background: #ffffff;
-  border: 2.5px solid #1e6b9a;
+  background:
+    radial-gradient(circle, #ffffff 0 11px, transparent 11.5px 22px),
+    radial-gradient(circle, transparent 0 11px, #1e6b9a 11.5px 13.5px, transparent 14px 22px);
   box-shadow: 0 2px 8px rgba(30, 107, 154, 0.35);
   cursor: pointer;
   transition: transform 0.15s ease;
@@ -176,11 +180,13 @@
 }
 .itineraya-range::-moz-range-thumb {
   pointer-events: auto;
-  width: 28px;
-  height: 28px;
+  width: 44px;
+  height: 44px;
   border-radius: 9999px;
-  background: #ffffff;
-  border: 2.5px solid #1e6b9a;
+  border: none;
+  background:
+    radial-gradient(circle, #ffffff 0 11px, transparent 11.5px 22px),
+    radial-gradient(circle, transparent 0 11px, #1e6b9a 11.5px 13.5px, transparent 14px 22px);
   box-shadow: 0 2px 8px rgba(30, 107, 154, 0.35);
   cursor: pointer;
   transition: transform 0.15s ease;
@@ -192,13 +198,13 @@
   background: transparent;
 }
 .itineraya-range::-webkit-slider-thumb:active {
-  transform: scale(1.22);
+  transform: scale(1.1);
   box-shadow:
     0 2px 8px rgba(30, 107, 154, 0.35),
     0 0 0 8px rgba(30, 107, 154, 0.12);
 }
 .itineraya-range::-moz-range-thumb:active {
-  transform: scale(1.22);
+  transform: scale(1.1);
   box-shadow:
     0 2px 8px rgba(30, 107, 154, 0.35),
     0 0 0 8px rgba(30, 107, 154, 0.12);

@@ -352,7 +352,7 @@ function OnboardingPage() {
       <div className="relative mx-auto flex min-h-dvh max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <Link
           to="/new-trip"
-          className="mb-6 inline-flex w-fit items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
+          className="mb-6 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-white/70 px-4 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("onboarding.back")}
@@ -665,7 +665,7 @@ function OnboardingPage() {
                           }))
                         }
                         className={cn(
-                          "rounded-full border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.97]",
+                          "flex h-11 items-center rounded-full border px-4 text-sm font-semibold transition active:scale-[0.97]",
                           selected
                             ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
                             : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white",
