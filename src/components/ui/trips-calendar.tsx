@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Plane, CalendarDays, LayoutGrid, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 export interface CalendarTrip {
   id: string;
@@ -17,21 +18,21 @@ interface TripsCalendarProps {
   className?: string;
 }
 
-const MONTH_NAMES = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-];
-const DAY_NAMES_SHORT = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const MONTH_KEYS = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+] as const;
+const DAY_KEYS_SHORT = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 const PALETTE = [
   { solid: "#0284c7", soft: "#bae6fd", text: "#0c4a6e" },
@@ -110,10 +111,12 @@ function TripDetailPanel({
   color: (typeof PALETTE)[0];
   onClose: () => void;
 }) {
+  const { t, i18n } = useTranslation();
   const { start, end } = tripRange(trip);
   const nights = daysBetween(trip.start_date, trip.end_date);
+  const dateLocale = i18n.language.startsWith("en") ? "en-US" : i18n.language;
   const fmt = (d: Date) =>
-    d.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+    d.toLocaleDateString(dateLocale, { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <motion.div
@@ -143,7 +146,7 @@ function TripDetailPanel({
             type="button"
             onClick={onClose}
             className="absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60"
-            aria-label="Cerrar"
+            aria-label={t("dashboard.globeClose")}
           >
             <X className="h-4 w-4" />
           </button>
@@ -151,9 +154,7 @@ function TripDetailPanel({
             <p className="font-display text-lg font-bold text-white drop-shadow">
               {trip.destination.split(",")[0]}
             </p>
-            <p className="text-xs text-white/75">
-              {nights} {nights === 1 ? "día" : "días"}
-            </p>
+            <p className="text-xs text-white/75">{t("trip.daysCount", { count: nights })}</p>
           </div>
         </div>
 
@@ -169,7 +170,7 @@ function TripDetailPanel({
               className="inline-flex h-11 items-center gap-2 rounded-full px-4 text-xs font-bold text-white shadow-sm transition hover:opacity-90"
               style={{ background: color.solid }}
             >
-              Ver itinerario →
+              {t("publicTrip.view")} →
             </Link>
           </div>
         </div>
@@ -179,6 +180,11 @@ function TripDetailPanel({
 }
 
 export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language.startsWith("en") ? "en-US" : i18n.language;
+  const monthNames = useMemo(() => MONTH_KEYS.map((k) => t(`calendar.months.${k}`)), [t]);
+  const dayNamesShort = useMemo(() => DAY_KEYS_SHORT.map((k) => t(`calendar.daysShort.${k}`)), [t]);
+
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -192,14 +198,14 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
 
   const tripColor = useMemo(() => {
     const map = new Map<string, (typeof PALETTE)[0]>();
-    trips.forEach((t, i) => map.set(t.id, PALETTE[i % PALETTE.length]));
+    trips.forEach((trip, i) => map.set(trip.id, PALETTE[i % PALETTE.length]));
     return map;
   }, [trips]);
 
   const monthStart = new Date(year, month, 1);
   const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
-  const monthTrips = trips.filter((t) => {
-    const { start, end } = tripRange(t);
+  const monthTrips = trips.filter((trip) => {
+    const { start, end } = tripRange(trip);
     return start <= monthEnd && end >= monthStart;
   });
 
@@ -237,7 +243,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
   };
 
   const handleDayClick = (date: Date) => {
-    const hit = trips.find((t) => isInTrip(date, t));
+    const hit = trips.find((trip) => isInTrip(date, trip));
     if (!hit) return;
     setSelectedTrip((prev) => (prev?.id === hit.id ? null : hit));
   };
@@ -245,7 +251,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
   const renderDayCell = (date: Date, isCurrentMonth: boolean, idx: number, isWeekMode = false) => {
     const colIdx = idx % 7;
     const todayDay = isToday(date);
-    const trip = trips.find((t) => isInTrip(date, t));
+    const trip = trips.find((tr) => isInTrip(date, tr));
     const color = trip ? tripColor.get(trip.id) : undefined;
     const isTripStart = trip ? isSameDay(date, new Date(trip.start_date)) : false;
     const isTripEnd = trip ? isSameDay(date, new Date(trip.end_date)) : false;
@@ -385,16 +391,16 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
               {viewMode === "month" ? (
                 <>
                   <span className="font-display text-2xl font-bold tracking-tight text-white">
-                    {MONTH_NAMES[month]}
+                    {monthNames[month]}
                   </span>
                   <span className="text-sm font-medium text-white/45">{year}</span>
                 </>
               ) : (
                 <>
                   <span className="font-display text-lg font-bold tracking-tight text-white">
-                    {weekDays[0].toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                    {weekDays[0].toLocaleDateString(dateLocale, { day: "numeric", month: "short" })}
                     {" — "}
-                    {weekDays[6].toLocaleDateString("es-ES", {
+                    {weekDays[6].toLocaleDateString(dateLocale, {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
@@ -419,11 +425,11 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
           {/* Trip chips */}
           {monthTrips.length > 0 && viewMode === "month" && (
             <div className="flex flex-wrap items-center gap-2">
-              {monthTrips.slice(0, 3).map((t) => {
-                const c = tripColor.get(t.id)!;
+              {monthTrips.slice(0, 3).map((trip) => {
+                const c = tripColor.get(trip.id)!;
                 return (
                   <span
-                    key={t.id}
+                    key={trip.id}
                     className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold"
                     style={{
                       background: c.solid + "33",
@@ -432,13 +438,13 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
                     }}
                   >
                     <span className="h-2 w-2 rounded-full" style={{ background: c.solid }} />
-                    {t.destination.split(",")[0]}
+                    {trip.destination.split(",")[0]}
                   </span>
                 );
               })}
               {monthTrips.length > 3 && (
                 <span className="text-xs font-medium text-white/40">
-                  +{monthTrips.length - 3} más
+                  {t("calendar.moreCount", { count: monthTrips.length - 3 })}
                 </span>
               )}
             </div>
@@ -448,7 +454,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
               type="button"
               onClick={() => setViewMode("month")}
               className={`flex h-11 w-11 items-center justify-center rounded-full transition ${viewMode === "month" ? "bg-white text-sky-900 shadow" : "text-white/60 hover:text-white"}`}
-              title="Vista mensual"
+              title={t("calendar.monthView")}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
             </button>
@@ -456,7 +462,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
               type="button"
               onClick={() => setViewMode("week")}
               className={`flex h-11 w-11 items-center justify-center rounded-full transition ${viewMode === "week" ? "bg-white text-sky-900 shadow" : "text-white/60 hover:text-white"}`}
-              title="Vista semanal"
+              title={t("calendar.weekView")}
             >
               <CalendarDays className="h-3.5 w-3.5" />
             </button>
@@ -466,7 +472,7 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
 
       {/* ── Day names ── */}
       <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/70">
-        {DAY_NAMES_SHORT.map((d) => (
+        {dayNamesShort.map((d) => (
           <div
             key={d}
             className="py-3 text-center text-[11px] font-bold uppercase tracking-widest text-slate-400"
@@ -532,27 +538,27 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
           {monthTrips.length > 0 ? (
             <div className="border-t border-slate-100 p-4">
               <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Viajes este mes
+                {t("calendar.tripsThisMonth")}
               </p>
               <div className="space-y-1.5">
-                {monthTrips.map((t) => {
-                  const c = tripColor.get(t.id)!;
-                  const { start, end } = tripRange(t);
+                {monthTrips.map((trip) => {
+                  const c = tripColor.get(trip.id)!;
+                  const { start, end } = tripRange(trip);
                   return (
                     <button
-                      key={t.id}
+                      key={trip.id}
                       type="button"
-                      onClick={() => setSelectedTrip(t)}
+                      onClick={() => setSelectedTrip(trip)}
                       className="group/row flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-slate-50"
                     >
                       <span
                         className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl"
                         style={{ background: c.solid }}
                       >
-                        {t.hero_image_url ? (
+                        {trip.hero_image_url ? (
                           <img
-                            src={t.hero_image_url}
-                            alt={t.destination}
+                            src={trip.hero_image_url}
+                            alt={trip.destination}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -561,12 +567,12 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-slate-800">
-                          {t.destination.split(",")[0]}
+                          {trip.destination.split(",")[0]}
                         </p>
                         <p className="text-xs text-slate-400">
-                          {start.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                          {start.toLocaleDateString(dateLocale, { day: "numeric", month: "short" })}
                           {" – "}
-                          {end.toLocaleDateString("es-ES", {
+                          {end.toLocaleDateString(dateLocale, {
                             day: "numeric",
                             month: "short",
                             year: "numeric",
@@ -584,8 +590,8 @@ export function TripsCalendar({ trips = [], className }: TripsCalendarProps) {
               <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
                 <Plane className="h-5 w-5 text-slate-300" />
               </div>
-              <p className="text-sm font-medium text-slate-400">Sin viajes este mes</p>
-              <p className="mt-0.5 text-xs text-slate-300">Tus aventuras aparecerán aquí</p>
+              <p className="text-sm font-medium text-slate-400">{t("calendar.noTripsThisMonth")}</p>
+              <p className="mt-0.5 text-xs text-slate-300">{t("calendar.adventuresAppearHere")}</p>
             </div>
           )}
         </>

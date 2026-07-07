@@ -17,7 +17,17 @@
     "modalTitle": "Crea tu cuenta para planificar {{dest}}",
     "modalDesc": "Es gratis. En menos de un minuto tendrás tu itinerario listo y guardado.",
     "modalSignup": "Crear cuenta gratis",
-    "modalLogin": "Ya tengo cuenta"
+    "modalLogin": "Ya tengo cuenta",
+    "tags": {
+      "bali": "Paraíso tropical",
+      "tokio": "Ciudad vibrante",
+      "paris": "Romántica",
+      "nuevaYork": "Icónica",
+      "tailandia": "Exótica",
+      "roma": "Historia",
+      "maldivas": "Playa de ensueño",
+      "islandia": "Naturaleza"
+    }
   },
   "hero": {
     "badge": "Tu planificador de viajes personal",
@@ -264,7 +274,12 @@
       "a3": "No. El plan gratuito es permanente. Además, los nuevos usuarios disfrutan de 7 días del plan Viajero gratis para probarlo sin compromiso.",
       "q4": "¿Puedo cambiar de plan más adelante?",
       "a4": "Por supuesto. Puedes subir o bajar de plan cuando quieras desde tu perfil. El cambio se aplica en el siguiente ciclo de facturación."
-    }
+    },
+    "billingMonthly": "Mensual",
+    "billingAnnual": "Anual",
+    "annualNote": "Pago único anual · sin cancelación",
+    "currentCta": "Plan activo",
+    "perMonth": "/mes"
   },
   "welcome": {
     "step": "Paso {{n}} de 2",
@@ -378,7 +393,8 @@
     "defaultName": "Viajero",
     "currentPlan": "Plan actual",
     "manage": "Gestionar",
-    "upgrade": "Mejorar"
+    "upgrade": "Mejorar",
+    "billing": "Suscripción y pagos"
   },
   "layout": {
     "back": "Atrás",
@@ -494,6 +510,12 @@
       "adventure": "Aventura",
       "special": "Eventos especiales",
       "architecture": "Arquitectura"
+    },
+    "hotelPicker": {
+      "searchPh": "Buscar hotel o dirección…",
+      "clear": "Limpiar",
+      "searching": "Buscando…",
+      "helper": "Busca tu hotel o haz clic en el mapa para colocar el pin."
     }
   },
   "trip": {
@@ -877,5 +899,36 @@
       "eyebrow": "Sellos",
       "empty": "Tus sellos aparecerán aquí con cada viaje que planifiques."
     }
+  },
+  "calendar": {
+    "months": {
+      "jan": "Enero",
+      "feb": "Febrero",
+      "mar": "Marzo",
+      "apr": "Abril",
+      "may": "Mayo",
+      "jun": "Junio",
+      "jul": "Julio",
+      "aug": "Agosto",
+      "sep": "Septiembre",
+      "oct": "Octubre",
+      "nov": "Noviembre",
+      "dec": "Diciembre"
+    },
+    "daysShort": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb",
+      "sun": "Dom"
+    },
+    "monthView": "Vista mensual",
+    "weekView": "Vista semanal",
+    "tripsThisMonth": "Viajes este mes",
+    "noTripsThisMonth": "Sin viajes este mes",
+    "adventuresAppearHere": "Tus aventuras aparecerán aquí",
+    "moreCount": "+{{count}} más"
   }
 }

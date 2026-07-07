@@ -17,7 +17,17 @@
     "modalTitle": "Create your account to plan {{dest}}",
     "modalDesc": "It's free. In under a minute your itinerary will be ready and saved.",
     "modalSignup": "Create free account",
-    "modalLogin": "I already have an account"
+    "modalLogin": "I already have an account",
+    "tags": {
+      "bali": "Tropical paradise",
+      "tokio": "Vibrant city",
+      "paris": "Romantic",
+      "nuevaYork": "Iconic",
+      "tailandia": "Exotic",
+      "roma": "History",
+      "maldivas": "Dream beach",
+      "islandia": "Nature"
+    }
   },
   "hero": {
     "badge": "Your personal travel planner",
@@ -264,7 +274,12 @@
       "a3": "No. The free plan is permanent. New users also get 7 free days of the Viajero plan to try everything with no commitment.",
       "q4": "Can I change plans later?",
       "a4": "Of course. Upgrade or downgrade whenever you want from your profile. The change applies on the next billing cycle."
-    }
+    },
+    "billingMonthly": "Monthly",
+    "billingAnnual": "Annual",
+    "annualNote": "Single annual payment · no cancellation",
+    "currentCta": "Active plan",
+    "perMonth": "/month"
   },
   "welcome": {
     "step": "Step {{n}} of 2",
@@ -378,7 +393,8 @@
     "defaultName": "Traveler",
     "currentPlan": "Current plan",
     "manage": "Manage",
-    "upgrade": "Upgrade"
+    "upgrade": "Upgrade",
+    "billing": "Subscription & billing"
   },
   "layout": {
     "back": "Back",
@@ -494,6 +510,12 @@
       "adventure": "Adventure",
       "special": "Special events",
       "architecture": "Architecture"
+    },
+    "hotelPicker": {
+      "searchPh": "Search hotel or address…",
+      "clear": "Clear",
+      "searching": "Searching…",
+      "helper": "Search your hotel or click the map to drop the pin."
     }
   },
   "trip": {
@@ -877,5 +899,36 @@
       "eyebrow": "Stamps",
       "empty": "Your stamps will appear here with every trip you plan."
     }
+  },
+  "calendar": {
+    "months": {
+      "jan": "January",
+      "feb": "February",
+      "mar": "March",
+      "apr": "April",
+      "may": "May",
+      "jun": "June",
+      "jul": "July",
+      "aug": "August",
+      "sep": "September",
+      "oct": "October",
+      "nov": "November",
+      "dec": "December"
+    },
+    "daysShort": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "monthView": "Month view",
+    "weekView": "Week view",
+    "tripsThisMonth": "Trips this month",
+    "noTripsThisMonth": "No trips this month",
+    "adventuresAppearHere": "Your adventures will appear here",
+    "moreCount": "+{{count}} more"
   }
 }

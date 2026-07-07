@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const NOISE_PATTERN =
   'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")';
@@ -20,6 +21,7 @@ export type TierType = {
 };
 
 function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) {
+  const { t } = useTranslation();
   const mouseX = React.useRef(0);
   const mouseY = React.useRef(0);
   const cardRef = React.useRef<HTMLDivElement>(null);
@@ -83,7 +85,7 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
                 : "border-white/15 bg-white/10 text-white/85",
             ].join(" ")}
           >
-            {tier.isCurrent ? "Tu plan actual" : "Más popular"}
+            {tier.isCurrent ? t("pricing.current") : t("pricing.popular")}
           </div>
         </div>
       )}
@@ -105,16 +107,18 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
                 transition={{ type: "spring", stiffness: 380, damping: 28 }}
                 className="block font-display text-[52px] font-bold text-white tracking-tight leading-none"
               >
-                {isZero ? "Gratis" : displayPrice}
+                {isZero ? t("pricing.free.name") : displayPrice}
               </motion.span>
             </AnimatePresence>
           </div>
-          {!isZero && <span className="text-base font-medium text-white/40">/mes</span>}
+          {!isZero && (
+            <span className="text-base font-medium text-white/40">{t("pricing.perMonth")}</span>
+          )}
         </div>
 
         {isAnnual && !isZero && (
           <p className="mt-1.5 text-[11px] font-medium text-amber-400/80 leading-snug">
-            Pago único anual · sin cancelación
+            {t("pricing.annualNote")}
           </p>
         )}
         <p className="mt-2 text-sm leading-relaxed text-white/40">{tier.description}</p>
@@ -158,7 +162,7 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
                 : "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/18",
           ].join(" ")}
         >
-          {tier.isCurrent ? "Plan activo" : tier.ctaLabel}
+          {tier.isCurrent ? t("pricing.currentCta") : tier.ctaLabel}
         </motion.button>
       </div>
     </motion.div>
@@ -176,6 +180,7 @@ export function PricingGlass({
   tiers: TierType[];
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
@@ -203,7 +208,7 @@ export function PricingGlass({
               !isAnnual ? "text-white" : "text-white/45 hover:text-white/65",
             ].join(" ")}
           >
-            Mensual
+            {t("pricing.billingMonthly")}
           </button>
           <button
             onClick={() => setIsAnnual(true)}
@@ -212,7 +217,7 @@ export function PricingGlass({
               isAnnual ? "text-white" : "text-white/45 hover:text-white/65",
             ].join(" ")}
           >
-            Anual
+            {t("pricing.billingAnnual")}
             <span className="absolute -right-5 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-bold text-sky-950">
               -20%
             </span>

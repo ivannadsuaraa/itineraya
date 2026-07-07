@@ -3,6 +3,7 @@ import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-lea
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Loader2, Search, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export interface HotelSelection {
   name: string | null;
@@ -76,6 +77,7 @@ function ClickCapture({ onPick }: { onPick: (lat: number, lng: number) => void }
 }
 
 export function HotelMapPicker({ destination, value, onChange }: Props) {
+  const { t } = useTranslation();
   const [center, setCenter] = useState<[number, number]>(
     value ? [value.lat, value.lng] : [40.4168, -3.7038],
   );
@@ -204,7 +206,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
           type="text"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          placeholder="Buscar hotel o dirección…"
+          placeholder={t("onboarding.hotelPicker.searchPh")}
           className="w-full rounded-2xl border border-sky-200 bg-white/90 py-3 pl-11 pr-10 text-base text-sky-900 placeholder-sky-400 outline-none focus:border-[#1E6B9A] focus:ring-4 focus:ring-[#1E6B9A]/10 sm:text-sm"
         />
         {searchInput && (
@@ -216,7 +218,7 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
               onChange(null);
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-sky-500 hover:bg-sky-100 before:absolute before:-inset-3 before:content-['']"
-            aria-label="Limpiar"
+            aria-label={t("onboarding.hotelPicker.clear")}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -251,9 +253,11 @@ export function HotelMapPicker({ destination, value, onChange }: Props) {
       <p className="text-xs text-sky-600">
         {value
           ? (value.address ?? `${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}`)
-          : "Busca tu hotel o haz clic en el mapa para colocar el pin."}
+          : t("onboarding.hotelPicker.helper")}
       </p>
-      {searching && <p className="text-[11px] text-sky-400">Buscando…</p>}
+      {searching && (
+        <p className="text-[11px] text-sky-400">{t("onboarding.hotelPicker.searching")}</p>
+      )}
     </div>
   );
 }

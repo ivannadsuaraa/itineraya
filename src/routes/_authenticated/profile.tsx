@@ -359,7 +359,7 @@ function ProfilePage() {
             >
               <span className="flex items-center gap-3 text-sm font-semibold text-slate-800">
                 <CreditCard className="h-4 w-4 text-slate-500" />
-                Suscripción y pagos
+                {t("profilePrefs.billing")}
               </span>
               <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>
@@ -369,7 +369,7 @@ function ProfilePage() {
             >
               <span className="flex items-center gap-3 text-sm font-semibold text-slate-800">
                 <UserIcon className="h-4 w-4 text-slate-500" />
-                Mis viajes
+                {t("nav.myTrips")}
               </span>
               <ArrowRight className="h-4 w-4 text-slate-400" />
             </Link>

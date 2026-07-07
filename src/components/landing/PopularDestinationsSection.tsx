@@ -12,7 +12,8 @@ type Destination = {
   name: string;
   country: string;
   image: string;
-  tag: string;
+  /** Key into popular.tags.* — the actual tag label is resolved via t() at render time. */
+  tagKey: string;
   themeColor: string;
 };
 
@@ -23,56 +24,56 @@ const DESTINATIONS: Destination[] = [
     name: "Bali",
     country: "Indonesia",
     image: `https://images.unsplash.com/photo-1537996194471-e657df975ab4${W}`,
-    tag: "Paraíso tropical",
+    tagKey: "bali",
     themeColor: "163 55% 25%",
   },
   {
     name: "Tokio",
     country: "Japón",
     image: `https://images.unsplash.com/photo-1540959733332-eab4deabeeaf${W}`,
-    tag: "Ciudad vibrante",
+    tagKey: "tokio",
     themeColor: "345 60% 35%",
   },
   {
     name: "París",
     country: "Francia",
     image: `https://images.unsplash.com/photo-1502602898657-3e91760cbb34${W}`,
-    tag: "Romántica",
+    tagKey: "paris",
     themeColor: "280 45% 35%",
   },
   {
     name: "Nueva York",
     country: "EE. UU.",
     image: `https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9${W}`,
-    tag: "Icónica",
+    tagKey: "nuevaYork",
     themeColor: "210 70% 28%",
   },
   {
     name: "Tailandia",
     country: "Asia",
     image: `https://images.unsplash.com/photo-1528181304800-259b08848526${W}`,
-    tag: "Exótica",
+    tagKey: "tailandia",
     themeColor: "35 70% 35%",
   },
   {
     name: "Roma",
     country: "Italia",
     image: `https://images.unsplash.com/photo-1552832230-c0197dd311b5${W}`,
-    tag: "Historia",
+    tagKey: "roma",
     themeColor: "20 55% 32%",
   },
   {
     name: "Maldivas",
     country: "Océano Índico",
     image: `https://images.unsplash.com/photo-1514282401047-d79a71a590e8${W}`,
-    tag: "Playa de ensueño",
+    tagKey: "maldivas",
     themeColor: "190 65% 28%",
   },
   {
     name: "Islandia",
     country: "Europa",
     image: `https://images.unsplash.com/photo-1531366936337-7c912a4589a7${W}`,
-    tag: "Naturaleza",
+    tagKey: "islandia",
     themeColor: "220 50% 30%",
   },
 ];
@@ -143,7 +144,8 @@ export function PopularDestinationsSection() {
                 imageUrl={d.image}
                 location={d.name}
                 country={d.country}
-                tag={d.tag}
+                tag={t(`popular.tags.${d.tagKey}`)}
+                ctaLabel={t("popular.cta")}
                 themeColor={d.themeColor}
                 onClick={() => handlePick(d)}
                 className="h-full"
