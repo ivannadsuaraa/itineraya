@@ -404,10 +404,10 @@ function ItineraryPage() {
       <ReadingProgress />
       {/* ── Sticky toolbar ── */}
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:px-5">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
           <Link
             to="/dashboard"
-            className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-100 px-4 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             aria-label={t("trip.backDashboard")}
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -415,9 +415,9 @@ function ItineraryPage() {
           </Link>
 
           {/* 4 botones principales: Tarjetas, Mapa, Compartir, Editar */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {/* Tarjetas */}
-            <span className="inline-flex h-11 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white">
+            <span className="inline-flex h-11 items-center gap-2 rounded-full bg-sky-900 px-3.5 text-xs font-semibold text-white">
               <LayoutGrid className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.viewCards")}</span>
             </span>
@@ -425,7 +425,7 @@ function ItineraryPage() {
             {/* Mapa */}
             <button
               onClick={() => setMapModalOpen(true)}
-              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <MapIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.viewMap")}</span>
@@ -434,7 +434,7 @@ function ItineraryPage() {
             {/* Compartir */}
             <button
               onClick={() => setShareOpen(true)}
-              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <Share2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.share")}</span>
@@ -442,7 +442,7 @@ function ItineraryPage() {
             {plan && plan !== "free" ? (
               <button
                 onClick={() => setAssistantOpen(true)}
-                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800"
+                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-sky-900 px-3.5 text-xs font-semibold text-white shadow-sm transition hover:bg-sky-800"
               >
                 <Wand2 className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">{t("trip.editAssistant")}</span>
@@ -450,7 +450,7 @@ function ItineraryPage() {
             ) : plan === "free" ? (
               <Link
                 to="/pricing"
-                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200"
+                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-slate-100 px-3.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-200"
                 title={t("trip.editAssistantLocked")}
               >
                 <Wand2 className="h-3.5 w-3.5" />
@@ -502,10 +502,10 @@ function ItineraryPage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="mx-auto max-w-5xl px-4 py-6 md:px-6 md:py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-8">
         {/* Boarding pass del viaje: el itinerario empieza como empieza un
             vuelo. Descargable como imagen. */}
-        <div className="mb-6">
+        <div className="mb-8">
           <BoardingPass
             tripId={trip.id}
             destination={trip.destination}
@@ -589,11 +589,11 @@ function ItineraryPage() {
           <DayScrollNav count={itin.days.length} active={activeDay} onActiveChange={setActiveDay} />
         )}
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
+        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           {/* Cards / Text / Timeline panel */}
           <div>
             {/* Tarjetas de días: reveladas en cascada al aparecer la página. */}
-            <div className="space-y-5">
+            <div className="space-y-7">
               {itin.days.map((day, dayIdx) => (
                 <div key={day.day} id={`day-section-${dayIdx}`} data-day-anchor={dayIdx}>
                   <DayReveal index={dayIdx}>
@@ -892,7 +892,7 @@ function DayScrollNav({
   return (
     <nav
       aria-label={t("trip.dayNavAria")}
-      className="sticky top-16 z-10 -mx-4 mb-5 overflow-x-auto bg-slate-50/95 px-4 py-2 backdrop-blur-sm scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] md:-mx-6 md:px-6"
+      className="sticky top-16 z-10 -mx-4 mb-6 overflow-x-auto bg-slate-50/95 px-4 py-2.5 backdrop-blur-sm scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] md:-mx-6 md:px-6"
     >
       <div className="flex w-max gap-1.5 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-100">
         {Array.from({ length: count }).map((_, idx) => (
@@ -1054,7 +1054,7 @@ function DayCard({
     <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:shadow-md">
       {/* Day image */}
       {day.image_url ? (
-        <div ref={imageRef} className="relative aspect-[16/7] w-full overflow-hidden">
+        <div ref={imageRef} className="relative aspect-[4/3] w-full overflow-hidden sm:aspect-[16/7]">
           <motion.div
             style={parallaxOn ? { y: parallaxY, scale: 1.12 } : undefined}
             className="h-full w-full will-change-transform"
@@ -1074,20 +1074,22 @@ function DayCard({
               {weatherEmoji(dayWeather.main)} {dayWeather.tempMax}° / {dayWeather.tempMin}°
             </span>
           )}
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
             <span
               className={`inline-flex items-center rounded-full bg-gradient-to-r px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm ${dayAccent(dayIdx)}`}
             >
               {t("trip.dayLabel", { n: day.day })}
             </span>
-            <h3 className="mt-1.5 font-display text-xl font-bold text-white drop-shadow sm:text-2xl">
+            <h3 className="mt-2 font-display text-2xl font-bold text-white drop-shadow sm:text-2xl">
               {day.title}
             </h3>
-            {day.subtitle && <p className="text-xs text-white/80 sm:text-sm">{day.subtitle}</p>}
+            {day.subtitle && (
+              <p className="mt-0.5 text-sm text-white/80 sm:text-sm">{day.subtitle}</p>
+            )}
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-sky-50 to-slate-50 px-5 py-4">
+        <div className="flex items-center gap-3.5 border-b border-slate-100 bg-gradient-to-r from-sky-50 to-slate-50 px-5 py-5">
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white ${dayAccent(dayIdx)}`}
           >
@@ -1097,8 +1099,8 @@ function DayCard({
             <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600">
               {t("trip.dayLabel", { n: day.day })}
             </span>
-            <h3 className="font-display text-lg font-bold text-slate-900">{day.title}</h3>
-            {day.subtitle && <p className="text-xs text-slate-500">{day.subtitle}</p>}
+            <h3 className="mt-0.5 font-display text-xl font-bold text-slate-900">{day.title}</h3>
+            {day.subtitle && <p className="mt-0.5 text-sm text-slate-500">{day.subtitle}</p>}
           </div>
           {dayWeather && (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
@@ -1110,14 +1112,14 @@ function DayCard({
 
       {/* Aviso de lluvia: sutil, no bloquea nada, solo orienta la planificación */}
       {dayWeather?.isRain && (
-        <div className="flex items-center gap-2 border-b border-blue-100 bg-blue-50/70 px-4 py-2 sm:px-5">
+        <div className="flex items-center gap-2.5 border-b border-blue-100 bg-blue-50/70 px-5 py-3">
           <CloudRain className="h-3.5 w-3.5 shrink-0 text-blue-500" />
           <p className="text-xs text-blue-700">{t("trip.rainyDayWarning")}</p>
         </div>
       )}
 
       {/* Activities — cascada con stagger de 40 ms al entrar en pantalla */}
-      <RevealGroup stagger={0.04} amount={0.08} className="space-y-2.5 p-4 sm:p-5">
+      <RevealGroup stagger={0.04} amount={0.08} className="space-y-4 p-5 sm:p-6">
         {day.activities.map((a, i) => (
           <RevealItem key={i}>
             <ActivityRow
@@ -1132,7 +1134,7 @@ function DayCard({
       </RevealGroup>
 
       {/* Footer actions */}
-      <div className="flex gap-2 border-t border-slate-100 bg-slate-50/70 p-3 sm:p-4">
+      <div className="flex gap-3 border-t border-slate-100 bg-slate-50/70 p-4 sm:p-5">
         <button
           onClick={download}
           disabled={busy !== null}
@@ -1198,33 +1200,33 @@ function ActivityRow({
 
   return (
     <div
-      className={`group flex gap-3 rounded-xl border p-3 transition-all ${
+      className={`group flex gap-3.5 rounded-2xl border p-4 transition-all ${
         activity.completed
           ? "border-slate-100 bg-slate-50/30 opacity-55"
           : "border-slate-100 bg-slate-50/50 hover:bg-slate-50"
       }`}
     >
       {/* Time chip */}
-      <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-sky-900 text-white">
+      <div className="flex h-14 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-sky-900 text-white">
         <CalendarIcon className="h-3 w-3 opacity-60" />
-        <span className="mt-0.5 text-xs font-bold leading-none">{activity.time}</span>
+        <span className="mt-1 text-xs font-bold leading-none">{activity.time}</span>
       </div>
 
       {/* Content */}
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-start gap-2">
-            <span className="text-base leading-tight">{activity.emoji ?? "📍"}</span>
+          <div className="flex min-w-0 items-start gap-2.5">
+            <span className="text-lg leading-tight">{activity.emoji ?? "📍"}</span>
             <div className="min-w-0">
               <p
-                className={`font-semibold leading-tight ${
+                className={`font-semibold leading-snug ${
                   activity.completed ? "line-through text-slate-400" : "text-slate-900"
                 }`}
               >
                 {activity.title}
               </p>
               {activity.place && (
-                <p className="truncate text-xs text-slate-500">{activity.place}</p>
+                <p className="mt-0.5 truncate text-xs text-slate-500">{activity.place}</p>
               )}
             </div>
           </div>
@@ -1246,18 +1248,18 @@ function ActivityRow({
         {/* Category badge */}
         {activity.category && activity.category !== "other" && (
           <span
-            className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${catColor}`}
+            className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${catColor}`}
           >
             <CatIcon className="h-3 w-3" />
             {activity.category}
           </span>
         )}
 
-        <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{activity.description}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-600">{activity.description}</p>
 
         {/* Insider tip */}
         {activity.tip && (
-          <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2">
+          <div className="mt-2.5 flex items-start gap-2.5 rounded-lg border border-amber-200/70 bg-amber-50/70 px-3.5 py-2.5">
             <span className="text-sm leading-tight">💎</span>
             <p className="text-xs leading-relaxed text-amber-800">
               <span className="font-semibold">{t("trip.tipLabel")}</span> {activity.tip}
@@ -1267,7 +1269,7 @@ function ActivityRow({
 
         {/* Inline notes */}
         {showNotes && (
-          <div className="mt-2">
+          <div className="mt-2.5">
             <textarea
               className="w-full resize-none rounded-lg border border-slate-200 bg-white p-2.5 text-base text-slate-700 outline-none placeholder:text-slate-400 focus:border-sky-400 focus:ring-1 focus:ring-sky-400 sm:text-sm"
               rows={2}
@@ -1279,10 +1281,10 @@ function ActivityRow({
           </div>
         )}
         {!showNotes && activity.notes && (
-          <p className="mt-1 text-xs italic text-slate-400">"{activity.notes}"</p>
+          <p className="mt-1.5 text-xs italic text-slate-400">"{activity.notes}"</p>
         )}
 
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap gap-2">
           <a
             href={googleMapsUrl(placeQuery)}
             target="_blank"

@@ -221,7 +221,7 @@ export function BoardingPass({
         />
         <div className="flex flex-col sm:flex-row">
           {/* ── Cuerpo principal ── */}
-          <div className="min-w-0 flex-1 p-5 sm:p-6">
+          <div className="min-w-0 flex-1 p-6 sm:p-7">
             <div className="flex items-center justify-between gap-3">
               <span className="flex items-center gap-2">
                 <img src="/itineraya-mark.png" alt="" className="h-5 w-5" draggable={false} />
@@ -233,12 +233,12 @@ export function BoardingPass({
             </div>
 
             {/* Origen → destino */}
-            <div className="mt-5 flex items-center gap-3 sm:gap-5">
+            <div className="mt-6 flex items-center gap-3.5 sm:gap-5">
               <div className="min-w-0">
                 <p className="font-flight text-[10px] uppercase tracking-[0.2em] text-sky-300/70">
                   {t("airport.from")}
                 </p>
-                <p className="font-flight text-2xl font-bold tracking-wide sm:text-3xl">
+                <p className="mt-1 font-flight text-2xl font-bold tracking-wide sm:text-3xl">
                   {t("airport.yourCity")}
                 </p>
               </div>
@@ -259,12 +259,12 @@ export function BoardingPass({
                 <p className="font-flight text-[10px] uppercase tracking-[0.2em] text-sky-300/70">
                   {t("airport.to")}
                 </p>
-                <p className="truncate font-flight text-2xl font-bold tracking-wide text-amber-300 sm:text-3xl">
+                <p className="mt-1 truncate font-flight text-2xl font-bold tracking-wide text-amber-300 sm:text-3xl">
                   {destinationCode(destination)}
                 </p>
               </div>
             </div>
-            <div className="mt-1 flex items-baseline justify-between gap-3">
+            <div className="mt-2 flex items-baseline justify-between gap-3">
               <p className="truncate font-display text-lg font-bold text-white/95 sm:text-xl">
                 {country?.flagEmoji && <span className="mr-1.5">{country.flagEmoji}</span>}
                 {destCity}
@@ -277,13 +277,13 @@ export function BoardingPass({
             </div>
 
             {/* Datos del vuelo */}
-            <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-3 border-t border-white/10 pt-4 sm:grid-cols-6">
+            <div className="mt-6 grid grid-cols-3 gap-x-4 gap-y-4 border-t border-white/10 pt-5 sm:grid-cols-6">
               {fields.map(([label, value]) => (
                 <div key={label} className="min-w-0">
                   <p className="font-flight text-[9px] uppercase tracking-[0.18em] text-sky-300/60">
                     {label}
                   </p>
-                  <p className="truncate font-flight text-sm font-bold uppercase">{value}</p>
+                  <p className="mt-1 truncate font-flight text-sm font-bold uppercase">{value}</p>
                 </div>
               ))}
             </div>
@@ -292,25 +292,25 @@ export function BoardingPass({
                 datos que llegaron a tiempo; si las 3 APIs fallan, la sección
                 desaparece sin dejar huecos vacíos. */}
             {enrichFields.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 gap-x-4 gap-y-3 border-t border-white/10 pt-4">
+              <div className="mt-5 grid grid-cols-3 gap-x-4 gap-y-4 border-t border-white/10 pt-5">
                 {enrichFields.map(([label, value]) => (
                   <div key={label} className="min-w-0">
                     <p className="font-flight text-[9px] uppercase tracking-[0.18em] text-sky-300/60">
                       {label}
                     </p>
-                    <p className="truncate font-flight text-sm font-bold">{value}</p>
+                    <p className="mt-1 truncate font-flight text-sm font-bold">{value}</p>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Pasajero + clase */}
-            <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-white/10 pt-4">
+            <div className="mt-5 flex flex-wrap items-end justify-between gap-3.5 border-t border-white/10 pt-5">
               <div className="min-w-0">
                 <p className="font-flight text-[9px] uppercase tracking-[0.18em] text-sky-300/60">
                   {t("airport.passenger")}
                 </p>
-                <p className="truncate font-flight text-base font-bold uppercase">
+                <p className="mt-1 truncate font-flight text-base font-bold uppercase">
                   {passenger || "—"}
                 </p>
               </div>
@@ -331,7 +331,7 @@ export function BoardingPass({
           </div>
 
           {/* ── Talón con código de barras ── */}
-          <div className="flex shrink-0 items-center justify-between gap-4 p-5 sm:w-36 sm:flex-col sm:items-stretch sm:justify-center sm:p-4">
+          <div className="flex shrink-0 items-center justify-between gap-4 p-6 sm:w-36 sm:flex-col sm:items-stretch sm:justify-center sm:p-5">
             <div className="sm:text-center">
               <p className="font-flight text-[9px] uppercase tracking-[0.18em] text-sky-300/60">
                 {t("airport.flight")}
@@ -349,7 +349,7 @@ export function BoardingPass({
         </div>
       </div>
 
-      <div className="mt-2.5 flex justify-end">
+      <div className="mt-3 flex justify-end">
         <button
           type="button"
           onClick={download}
