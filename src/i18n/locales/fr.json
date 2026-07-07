@@ -575,6 +575,15 @@
     "nights_other": "{{count}} nuits",
     "readyShare": "Votre itinéraire est prêt ! Partagez-le avec vos compagnons de voyage ✈️",
     "loadingHint": "Cela prend généralement moins d'une minute",
+    "loadingWeatherMsg": "Votre voyage à {{destination}} en {{month}} : {{temp}}° et {{condition}}",
+    "rainyDayWarning": "Jour pluvieux — pensez à prévoir des activités en intérieur",
+    "destInfoTitle": "Infos sur la destination",
+    "destInfoLanguage": "Langue",
+    "destInfoCurrency": "Devise",
+    "destInfoTimezone": "Fuseau horaire",
+    "destInfoTypicalWeather": "Météo actuelle",
+    "newsTitle": "Avant de partir",
+    "newsSource": "{{source}} · {{date}}",
     "brochureCta": "Brochure",
     "brochureTitle": "Brochure du voyage",
     "brochureEyebrow": "Brochure de voyage",
@@ -888,7 +897,30 @@
       "title": "Passeport numérique",
       "eyebrow": "Tampons",
       "empty": "Tes tampons apparaîtront ici à chaque voyage planifié."
-    }
+    },
+    "weatherLabel": "Météo",
+    "currencyLabel": "Devise",
+    "timezoneLabel": "Fuseau horaire",
+    "timezoneSame": "Même heure qu'en Espagne",
+    "timezoneAhead": "{{hours}}h d'avance sur l'Espagne",
+    "timezoneBehind": "{{hours}}h de retard sur l'Espagne"
+  },
+  "weather": {
+    "Clear": "Dégagé",
+    "Clouds": "Nuageux",
+    "Rain": "Pluie",
+    "Drizzle": "Bruine",
+    "Thunderstorm": "Orage",
+    "Snow": "Neige",
+    "Mist": "Brume",
+    "Fog": "Brouillard",
+    "Haze": "Brume sèche",
+    "Smoke": "Fumée",
+    "Dust": "Poussière",
+    "Sand": "Sable",
+    "Ash": "Cendres",
+    "Squall": "Grain",
+    "Tornado": "Tornade"
   },
   "calendar": {
     "months": {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { ArrowLeft, ArrowRight, Loader2, Sparkles, Trophy } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   type InspireQuestion,
 } from "@/lib/inspire/questions";
 import { suggestDestinations, type SuggestedDestination } from "@/lib/inspire.functions";
+import { getCountryInfo } from "@/lib/country";
 
 export const Route = createFileRoute("/_authenticated/inspire")({
   head: () => ({ meta: [{ title: "Ayúdame a elegir destino – Itineraya" }] }),
@@ -317,6 +318,18 @@ function DestinationCard({
 }) {
   const { t } = useTranslation();
   const medal = rank === 0 ? "🥇" : rank === 1 ? "🥈" : "🥉";
+  const [flag, setFlag] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void getCountryInfo(d.country).then((info) => {
+      if (!cancelled && info?.flagEmoji) setFlag(info.flagEmoji);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [d.country]);
+
   return (
     <div
       
@@ -335,7 +348,10 @@ function DestinationCard({
           <div className="font-display text-2xl font-bold drop-shadow">
             {d.name}
           </div>
-          <div className="text-sm opacity-90">{d.country}</div>
+          <div className="text-sm opacity-90">
+            {flag && <span className="mr-1">{flag}</span>}
+            {d.country}
+          </div>
         </div>
       </div>
       <div className="p-5">

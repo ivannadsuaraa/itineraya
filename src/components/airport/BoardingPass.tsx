@@ -20,6 +20,8 @@ import {
   travelClassForPlan,
 } from "@/lib/flight";
 import { EASE_OUT } from "@/lib/motion";
+import { getCountryInfo, timezoneDiffFromSpain, type CountryInfo } from "@/lib/country";
+import { getWeather, weatherEmoji, type WeatherNow } from "@/lib/weather";
 
 const NAVY_DARK = "#050b16";
 
@@ -80,8 +82,13 @@ export function BoardingPass({
   const [downloading, setDownloading] = useState(false);
   const [passenger, setPassenger] = useState<string>("");
   const [coords, setCoords] = useState<[number, number] | null>(null);
+  const [country, setCountry] = useState<CountryInfo | null>(null);
+  const [weather, setWeather] = useState<WeatherNow | null>(null);
 
   const destCity = destination.split(",")[0].trim();
+  const destCountryName = destination.includes(",")
+    ? destination.split(",").slice(-1)[0].trim()
+    : destination;
   const klass = travelClassForPlan(plan);
 
   useEffect(() => {
@@ -102,6 +109,29 @@ export function BoardingPass({
       cancelled = true;
     };
   }, [destination]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getCountryInfo(destCountryName).then((info) => {
+      if (!cancelled) setCountry(info);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [destCountryName]);
+
+  useEffect(() => {
+    if (!coords) return;
+    let cancelled = false;
+    void getWeather(coords[0], coords[1]).then(({ current }) => {
+      if (!cancelled) setWeather(current);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [coords]);
+
+  const tzDiff = country ? timezoneDiffFromSpain(country.utcOffsetHours) : null;
 
   const dateLabel = startDate
     ? new Date(`${startDate}T00:00:00`)
@@ -143,6 +173,32 @@ export function BoardingPass({
     [t("airport.passengers"), paxLabel(companion)],
     [t("airport.seat"), seatCode(tripId)],
   ];
+
+  const enrichFields: Array<[string, string]> = [];
+  if (weather) {
+    enrichFields.push([
+      t("airport.weatherLabel"),
+      `${weatherEmoji(weather.main)} ${weather.temp}°C`,
+    ]);
+  }
+  if (country?.currencyCode) {
+    enrichFields.push([
+      t("airport.currencyLabel"),
+      country.currencySymbol
+        ? `${country.currencyCode} (${country.currencySymbol})`
+        : country.currencyCode,
+    ]);
+  }
+  if (tzDiff !== null) {
+    enrichFields.push([
+      t("airport.timezoneLabel"),
+      tzDiff === 0
+        ? t("airport.timezoneSame")
+        : tzDiff > 0
+          ? t("airport.timezoneAhead", { hours: Math.abs(tzDiff) })
+          : t("airport.timezoneBehind", { hours: Math.abs(tzDiff) }),
+    ]);
+  }
 
   return (
     <motion.div
@@ -210,6 +266,7 @@ export function BoardingPass({
             </div>
             <div className="mt-1 flex items-baseline justify-between gap-3">
               <p className="truncate font-display text-lg font-bold text-white/95 sm:text-xl">
+                {country?.flagEmoji && <span className="mr-1.5">{country.flagEmoji}</span>}
                 {destCity}
               </p>
               {coords && (
@@ -230,6 +287,22 @@ export function BoardingPass({
                 </div>
               ))}
             </div>
+
+            {/* Clima, moneda y huso horario del destino — solo se muestran los
+                datos que llegaron a tiempo; si las 3 APIs fallan, la sección
+                desaparece sin dejar huecos vacíos. */}
+            {enrichFields.length > 0 && (
+              <div className="mt-4 grid grid-cols-3 gap-x-4 gap-y-3 border-t border-white/10 pt-4">
+                {enrichFields.map(([label, value]) => (
+                  <div key={label} className="min-w-0">
+                    <p className="font-flight text-[9px] uppercase tracking-[0.18em] text-sky-300/60">
+                      {label}
+                    </p>
+                    <p className="truncate font-flight text-sm font-bold">{value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Pasajero + clase */}
             <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-white/10 pt-4">

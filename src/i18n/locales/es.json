@@ -577,6 +577,15 @@
     "nights_other": "{{count}} noches",
     "readyShare": "¡Tu itinerario está listo! Compártelo con tus compañeros de viaje ✈️",
     "loadingHint": "Suele tardar menos de un minuto",
+    "loadingWeatherMsg": "Tu viaje a {{destination}} en {{month}}: {{temp}}° y {{condition}}",
+    "rainyDayWarning": "Día lluvioso — ten en cuenta actividades de interior",
+    "destInfoTitle": "Info del destino",
+    "destInfoLanguage": "Idioma",
+    "destInfoCurrency": "Moneda",
+    "destInfoTimezone": "Zona horaria",
+    "destInfoTypicalWeather": "Clima actual",
+    "newsTitle": "Antes de viajar",
+    "newsSource": "{{source}} · {{date}}",
     "visualMapCta": "Ver mapa del viaje",
     "visualMapTitle": "Tu viaje, ilustrado",
     "visualMapEyebrow": "Mapa del viaje",
@@ -898,7 +907,30 @@
       "title": "Pasaporte digital",
       "eyebrow": "Sellos",
       "empty": "Tus sellos aparecerán aquí con cada viaje que planifiques."
-    }
+    },
+    "weatherLabel": "Clima",
+    "currencyLabel": "Moneda",
+    "timezoneLabel": "Huso horario",
+    "timezoneSame": "Misma hora que España",
+    "timezoneAhead": "{{hours}}h por delante de España",
+    "timezoneBehind": "{{hours}}h por detrás de España"
+  },
+  "weather": {
+    "Clear": "Despejado",
+    "Clouds": "Nublado",
+    "Rain": "Lluvia",
+    "Drizzle": "Llovizna",
+    "Thunderstorm": "Tormenta",
+    "Snow": "Nieve",
+    "Mist": "Neblina",
+    "Fog": "Niebla",
+    "Haze": "Bruma",
+    "Smoke": "Humo",
+    "Dust": "Polvo",
+    "Sand": "Arena",
+    "Ash": "Ceniza",
+    "Squall": "Ráfagas",
+    "Tornado": "Tornado"
   },
   "calendar": {
     "months": {

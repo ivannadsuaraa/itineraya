@@ -577,6 +577,15 @@
     "nights_other": "{{count}} nights",
     "readyShare": "Your itinerary is ready! Share it with your travel buddies ✈️",
     "loadingHint": "Usually takes under a minute",
+    "loadingWeatherMsg": "Your trip to {{destination}} in {{month}}: {{temp}}° and {{condition}}",
+    "rainyDayWarning": "Rainy day — you may want to plan indoor activities",
+    "destInfoTitle": "Destination info",
+    "destInfoLanguage": "Language",
+    "destInfoCurrency": "Currency",
+    "destInfoTimezone": "Timezone",
+    "destInfoTypicalWeather": "Current weather",
+    "newsTitle": "Before you go",
+    "newsSource": "{{source}} · {{date}}",
     "visualMapCta": "View trip map",
     "visualMapTitle": "Your trip, illustrated",
     "visualMapEyebrow": "Trip map",
@@ -898,7 +907,30 @@
       "title": "Digital passport",
       "eyebrow": "Stamps",
       "empty": "Your stamps will appear here with every trip you plan."
-    }
+    },
+    "weatherLabel": "Weather",
+    "currencyLabel": "Currency",
+    "timezoneLabel": "Timezone",
+    "timezoneSame": "Same time as Spain",
+    "timezoneAhead": "{{hours}}h ahead of Spain",
+    "timezoneBehind": "{{hours}}h behind Spain"
+  },
+  "weather": {
+    "Clear": "Clear",
+    "Clouds": "Cloudy",
+    "Rain": "Rain",
+    "Drizzle": "Drizzle",
+    "Thunderstorm": "Thunderstorm",
+    "Snow": "Snow",
+    "Mist": "Mist",
+    "Fog": "Fog",
+    "Haze": "Haze",
+    "Smoke": "Smoke",
+    "Dust": "Dust",
+    "Sand": "Sand",
+    "Ash": "Ash",
+    "Squall": "Squall",
+    "Tornado": "Tornado"
   },
   "calendar": {
     "months": {

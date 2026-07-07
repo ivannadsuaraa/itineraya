@@ -32,6 +32,9 @@ import {
   CheckCircle2,
   Circle,
   StickyNote,
+  CloudRain,
+  Newspaper,
+  Globe2,
 } from "lucide-react";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { Timeline, type TimelineEntry } from "@/components/ui/timeline";
@@ -51,6 +54,16 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { ReadingProgress } from "@/components/ui/ReadingProgress";
 import { BoardingPass } from "@/components/airport/BoardingPass";
 import { RevealGroup, RevealItem } from "@/components/ui/ScrollReveal";
+import { geocodeDestination } from "@/lib/geocode";
+import { getCountryInfo, timezoneDiffFromSpain, type CountryInfo } from "@/lib/country";
+import {
+  getWeather,
+  weatherForDate,
+  weatherEmoji,
+  type WeatherDay,
+  type WeatherNow,
+} from "@/lib/weather";
+import { getDestinationNews, type NewsArticle } from "@/lib/news.functions";
 
 const TripMap = lazy(() =>
   import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })),
@@ -139,6 +152,12 @@ function formatDateRange(start: string, end: string, lang: string): string {
   const a = new Date(`${start}T00:00:00`).toLocaleDateString(locale, fmt);
   const b = new Date(`${end}T00:00:00`).toLocaleDateString(locale, fmt);
   return `${a} – ${b}`;
+}
+
+function addDaysToDateString(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 // Acento visual rotatorio: cada día del itinerario tiene su propio color en
@@ -234,6 +253,7 @@ function ItineraryPage() {
 
   const [loading, setLoading] = useState(true);
   const [loadingDestination, setLoadingDestination] = useState<string | null>(null);
+  const [loadingStartDate, setLoadingStartDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [trip, setTrip] = useState<{
@@ -309,7 +329,10 @@ function ItineraryPage() {
           .maybeSingle();
         if (e1) throw e1;
         if (!data) throw new Error(t("trip.notFound"));
-        if (!cancelled) setLoadingDestination(data.destination);
+        if (!cancelled) {
+          setLoadingDestination(data.destination);
+          setLoadingStartDate(data.start_date ?? null);
+        }
 
         if (data.status === "ready" && data.itinerary) {
           if (!cancelled) {
@@ -350,7 +373,8 @@ function ItineraryPage() {
     };
   }, [tripId, generate, t, i18n.language, retryKey]);
 
-  if (loading) return <LoadingScreen destination={loadingDestination} />;
+  if (loading)
+    return <LoadingScreen destination={loadingDestination} startDate={loadingStartDate} />;
 
   if (error) {
     return (
@@ -642,6 +666,7 @@ function ItineraryPage() {
                         day={day}
                         destination={trip.destination}
                         dayIdx={dayIdx}
+                        date={trip.start_date ? addDaysToDateString(trip.start_date, dayIdx) : null}
                         onActivityUpdate={updateActivity}
                       />
                     </DayReveal>
@@ -722,6 +747,13 @@ function ItineraryPage() {
             </motion.div>
           </div>
         </div>
+
+        {/* Info del destino + noticias: viven fuera de la grid de dos
+            columnas para ocupar el ancho completo en cualquier tamaño. */}
+        <div className="mt-6 space-y-6">
+          <DestinationInfoPanel destination={trip.destination} />
+          <BeforeYouGoNews destination={trip.destination} />
+        </div>
       </div>
 
       {/* Fullscreen map modal */}
@@ -795,6 +827,157 @@ function ItineraryPage() {
         destination={trip.destination}
       />
     </PageTransition>
+  );
+}
+
+// Bandera, idioma, moneda, zona horaria y clima actual del destino — todo
+// viene de APIs gratuitas (RestCountries + OpenWeatherMap) y cachea en
+// localStorage, así que si fallan la sección simplemente no aparece.
+function DestinationInfoPanel({ destination }: { destination: string }) {
+  const { t } = useTranslation();
+  const [country, setCountry] = useState<CountryInfo | null>(null);
+  const [weather, setWeather] = useState<WeatherNow | null>(null);
+
+  const countryName = destination.includes(",")
+    ? destination.split(",").slice(-1)[0].trim()
+    : destination;
+
+  useEffect(() => {
+    let cancelled = false;
+    void getCountryInfo(countryName).then((info) => {
+      if (!cancelled) setCountry(info);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [countryName]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const coords = await geocodeDestination(destination);
+      if (!coords || cancelled) return;
+      const { current } = await getWeather(coords[0], coords[1]);
+      if (!cancelled) setWeather(current);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [destination]);
+
+  const items: Array<{ label: string; value: string }> = [];
+  if (country?.languages.length) {
+    items.push({ label: t("trip.destInfoLanguage"), value: country.languages.join(", ") });
+  }
+  if (country?.currencyCode) {
+    items.push({
+      label: t("trip.destInfoCurrency"),
+      value: country.currencySymbol
+        ? `${country.currencyName || country.currencyCode} (${country.currencySymbol})`
+        : country.currencyCode,
+    });
+  }
+  if (country?.utcOffsetHours !== null && country?.utcOffsetHours !== undefined) {
+    const sign = country.utcOffsetHours >= 0 ? "+" : "";
+    items.push({ label: t("trip.destInfoTimezone"), value: `UTC${sign}${country.utcOffsetHours}` });
+  }
+  if (weather) {
+    items.push({
+      label: t("trip.destInfoTypicalWeather"),
+      value: `${weatherEmoji(weather.main)} ${weather.temp}°C · ${t(`weather.${weather.main}`, { defaultValue: weather.main })}`,
+    });
+  }
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+      <h2 className="flex items-center gap-2 font-display text-base font-bold text-sky-900">
+        <Globe2 className="h-4.5 w-4.5 text-[#1E6B9A]" />
+        {country?.flagEmoji ? `${country.flagEmoji} ` : ""}
+        {t("trip.destInfoTitle")}
+      </h2>
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {items.map((item) => (
+          <div key={item.label} className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              {item.label}
+            </p>
+            <p className="mt-0.5 truncate text-sm font-semibold text-slate-800">{item.value}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Noticias de viaje/turismo/cultura de los últimos 30 días. Se piden a un
+// server function (NewsAPI bloquea CORS en cliente) que cachea 24h en
+// Supabase; si no hay resultados, la sección no se renderiza.
+function BeforeYouGoNews({ destination }: { destination: string }) {
+  const { t, i18n } = useTranslation();
+  const fetchNews = useServerFn(getDestinationNews);
+  const [articles, setArticles] = useState<NewsArticle[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchNews({ data: { destination } })
+      .then((result) => {
+        if (!cancelled) setArticles(result);
+      })
+      .catch(() => {
+        if (!cancelled) setArticles([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [destination, fetchNews]);
+
+  if (!articles || articles.length === 0) return null;
+
+  const locale = i18n.language.startsWith("en") ? "en-US" : i18n.language;
+
+  return (
+    <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+      <h2 className="flex items-center gap-2 font-display text-base font-bold text-sky-900">
+        <Newspaper className="h-4.5 w-4.5 text-[#1E6B9A]" />
+        {t("trip.newsTitle")}
+      </h2>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        {articles.map((a) => (
+          <a
+            key={a.url}
+            href={a.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group overflow-hidden rounded-xl ring-1 ring-slate-100 transition hover:shadow-md"
+          >
+            {a.imageUrl && (
+              <div className="aspect-[16/9] w-full overflow-hidden bg-slate-100">
+                <img
+                  src={a.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+              </div>
+            )}
+            <div className="p-3">
+              <p className="line-clamp-2 text-sm font-semibold text-slate-800">{a.title}</p>
+              <p className="mt-1.5 text-[11px] text-slate-400">
+                {t("trip.newsSource", {
+                  source: a.source,
+                  date: new Date(a.publishedAt).toLocaleDateString(locale, {
+                    day: "numeric",
+                    month: "short",
+                  }),
+                })}
+              </p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -898,15 +1081,34 @@ function DayCard({
   day,
   destination,
   dayIdx,
+  date,
   onActivityUpdate,
 }: {
   day: Day;
   destination: string;
   dayIdx: number;
+  date: string | null;
   onActivityUpdate: (dayIdx: number, actIdx: number, updates: Partial<Activity>) => void;
 }) {
   const { t, i18n } = useTranslation();
   const [busy, setBusy] = useState<null | "download" | "share">(null);
+  const [dayWeather, setDayWeather] = useState<WeatherDay | null>(null);
+
+  // Clima previsto de este día concreto (solo disponible dentro de la
+  // ventana de 5 días de OpenWeatherMap; fuera de rango, no se muestra nada).
+  useEffect(() => {
+    if (!date) return;
+    let cancelled = false;
+    (async () => {
+      const coords = await geocodeDestination(destination);
+      if (!coords || cancelled) return;
+      const { forecast } = await getWeather(coords[0], coords[1]);
+      if (!cancelled) setDayWeather(weatherForDate(forecast, date));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [destination, date]);
 
   // Parallax sutil de la foto del día: la imagen (escalada un 12 %) se
   // desplaza con el scroll. Desactivado en móvil y con reduced-motion.
@@ -1000,6 +1202,11 @@ function DayCard({
             />
           </motion.div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+          {dayWeather && (
+            <span className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+              {weatherEmoji(dayWeather.main)} {dayWeather.tempMax}° / {dayWeather.tempMin}°
+            </span>
+          )}
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
             <span
               className={`inline-flex items-center rounded-full bg-gradient-to-r px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm ${dayAccent(dayIdx)}`}
@@ -1019,13 +1226,26 @@ function DayCard({
           >
             <span className="text-sm font-bold">{day.day}</span>
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <span className="text-[10px] font-bold uppercase tracking-widest text-sky-600">
               {t("trip.dayLabel", { n: day.day })}
             </span>
             <h3 className="font-display text-lg font-bold text-slate-900">{day.title}</h3>
             {day.subtitle && <p className="text-xs text-slate-500">{day.subtitle}</p>}
           </div>
+          {dayWeather && (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+              {weatherEmoji(dayWeather.main)} {dayWeather.tempMax}° / {dayWeather.tempMin}°
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Aviso de lluvia: sutil, no bloquea nada, solo orienta la planificación */}
+      {dayWeather?.isRain && (
+        <div className="flex items-center gap-2 border-b border-blue-100 bg-blue-50/70 px-4 py-2 sm:px-5">
+          <CloudRain className="h-3.5 w-3.5 shrink-0 text-blue-500" />
+          <p className="text-xs text-blue-700">{t("trip.rainyDayWarning")}</p>
         </div>
       )}
 
@@ -1245,11 +1465,34 @@ const LOADING_STAGES = [
   { key: "loadingStage5", at: 85 },
 ] as const;
 
-function LoadingScreen({ destination }: { destination: string | null }) {
-  const { t } = useTranslation();
+function LoadingScreen({
+  destination,
+  startDate,
+}: {
+  destination: string | null;
+  startDate: string | null;
+}) {
+  const { t, i18n } = useTranslation();
   const [progress, setProgress] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [bgLoaded, setBgLoaded] = useState(false);
+  const [weather, setWeather] = useState<WeatherNow | null>(null);
+
+  // Clima actual del destino, solo para el mensaje de bienvenida — el forecast
+  // real del viaje se muestra más tarde en cada day card.
+  useEffect(() => {
+    if (!destination) return;
+    let cancelled = false;
+    (async () => {
+      const coords = await geocodeDestination(destination);
+      if (!coords || cancelled) return;
+      const { current } = await getWeather(coords[0], coords[1]);
+      if (!cancelled) setWeather(current);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [destination]);
 
   // Asintótico hacia 97 con τ=9 s: ~87 % a los 20 s (duración típica de la
   // generación) y nunca se congela; el contador real de segundos da honestidad.
@@ -1265,6 +1508,21 @@ function LoadingScreen({ destination }: { destination: string | null }) {
 
   const destLabel = destination ?? t("trip.loadingDestFallback");
   const stageIdx = LOADING_STAGES.reduce((acc, s, i) => (progress >= s.at ? i : acc), 0);
+  const monthLabel = startDate
+    ? new Date(`${startDate}T00:00:00`).toLocaleDateString(
+        i18n.language.startsWith("en") ? "en-US" : i18n.language,
+        { month: "long" },
+      )
+    : null;
+  const weatherMsg =
+    weather && monthLabel
+      ? t("trip.loadingWeatherMsg", {
+          destination: destLabel,
+          month: monthLabel,
+          temp: weather.temp,
+          condition: t(`weather.${weather.main}`, { defaultValue: weather.main }),
+        })
+      : null;
   // Misma fuente de imágenes sin clave que el fallback del servidor.
   const bgUrl = destination
     ? `https://loremflickr.com/1600/900/${encodeURIComponent(destination.split(",")[0].trim() + ",travel")}`
@@ -1324,6 +1582,8 @@ function LoadingScreen({ destination }: { destination: string | null }) {
         <h1 className="mt-4 font-display text-4xl font-bold text-white drop-shadow-lg md:text-5xl">
           {destLabel}
         </h1>
+
+        {weatherMsg && <p className="mt-2 text-sm text-sky-200/90">{weatherMsg}</p>}
 
         <div className="mt-6 min-h-8">
           <TextShimmerWave
