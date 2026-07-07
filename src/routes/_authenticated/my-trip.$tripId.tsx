@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Download,
   Share2,
-  FileText,
   LayoutGrid,
   Loader2,
   Sparkles,
@@ -17,11 +16,8 @@ import {
   Calendar as CalendarIcon,
   Wand2,
   Map as MapIcon,
-  Route as RouteIcon,
-  Users,
   Clock,
   X,
-  GanttChartSquare,
   Building2,
   UtensilsCrossed,
   Train,
@@ -37,16 +33,12 @@ import {
   Globe2,
 } from "lucide-react";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
-import { Timeline, type TimelineEntry } from "@/components/ui/timeline";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { generateItinerary } from "@/lib/itinerary.functions";
 import { AssistantEditPanel } from "@/components/AssistantEditPanel";
 import { ShareDialog } from "@/components/trip/ShareDialog";
 import { PublishToggle } from "@/components/trip/PublishToggle";
-import { TripmatesModal } from "@/components/trip/TripmatesModal";
-import { TripVisualMap } from "@/components/trip/TripVisualMap";
-import { TripBrochure } from "@/components/trip/TripBrochure";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
@@ -266,15 +258,11 @@ function ItineraryPage() {
     end_date: string | null;
     companion?: string | null;
   } | null>(null);
-  const [view, setView] = useState<"cards" | "text" | "timeline">("cards");
   const [mapModalOpen, setMapModalOpen] = useState(false);
-  const [visualMapOpen, setVisualMapOpen] = useState(false);
-  const [brochureOpen, setBrochureOpen] = useState(false);
   const [activeDay, setActiveDay] = useState(0);
   const [plan, setPlan] = useState<"free" | "viajero" | "explorador" | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
-  const [tripmatesOpen, setTripmatesOpen] = useState(false);
 
   const updateActivity = (dayIdx: number, actIdx: number, updates: Partial<Activity>) => {
     setTrip((prev) => {
@@ -426,77 +414,27 @@ function ItineraryPage() {
             <span className="hidden sm:inline">{t("trip.backDashboard")}</span>
           </Link>
 
-          {/* Grupo de acciones con scroll horizontal propio: en móvil los ~7
-              botones no caben en una fila y, sin esto, `overflow-x: clip`
-              (regla global anti-scroll-horizontal) los recortaba fuera de
-              pantalla en vez de dejarlos alcanzables. */}
-          <div className="flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none]">
-            {/* View toggle */}
-            <div className="flex shrink-0 rounded-full bg-slate-100 p-0.5">
-              {(["cards", "text", "timeline"] as const).map((v) => {
-                const Icon =
-                  v === "cards" ? LayoutGrid : v === "text" ? FileText : GanttChartSquare;
-                const label =
-                  v === "cards"
-                    ? t("trip.viewCards")
-                    : v === "text"
-                      ? t("trip.viewText")
-                      : t("trip.viewTimeline");
-                return (
-                  <button
-                    key={v}
-                    onClick={() => setView(v)}
-                    className={`flex h-11 items-center gap-1 rounded-full px-2.5 text-[11px] font-semibold transition sm:px-3 sm:text-xs ${
-                      view === v
-                        ? "bg-sky-900 text-white shadow-sm"
-                        : "text-slate-600 hover:text-slate-900"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
+          {/* 4 botones principales: Tarjetas, Mapa, Compartir, Editar */}
+          <div className="flex items-center gap-2">
+            {/* Tarjetas */}
+            <span className="inline-flex h-11 items-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-semibold text-white">
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("trip.viewCards")}</span>
+            </span>
 
-            {/* Fullscreen map */}
+            {/* Mapa */}
             <button
               onClick={() => setMapModalOpen(true)}
-              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <MapIcon className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.viewMap")}</span>
             </button>
 
-            {/* Mapa ilustrado del viaje (póster descargable) */}
-            <button
-              onClick={() => setVisualMapOpen(true)}
-              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
-            >
-              <RouteIcon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t("trip.visualMapCta")}</span>
-            </button>
-
-            {/* Folleto A4 del viaje completo (descargable) */}
-            <button
-              onClick={() => setBrochureOpen(true)}
-              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t("trip.brochureCta")}</span>
-            </button>
-
-            {/* Action buttons */}
-            <button
-              onClick={() => setTripmatesOpen(true)}
-              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
-            >
-              <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{t("trip.invite")}</span>
-            </button>
+            {/* Compartir */}
             <button
               onClick={() => setShareOpen(true)}
-              className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+              className="inline-flex h-11 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
             >
               <Share2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">{t("trip.share")}</span>
@@ -646,80 +584,30 @@ function ItineraryPage() {
         </div>
 
         {/* Navegación de días: sticky bajo el toolbar, el indicador sigue el
-            scroll con animación suave (layoutId). Solo en vista de tarjetas. */}
-        {view === "cards" && itin.days.length > 1 && (
+            scroll con animación suave (layoutId). */}
+        {itin.days.length > 1 && (
           <DayScrollNav count={itin.days.length} active={activeDay} onActiveChange={setActiveDay} />
         )}
 
         <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
           {/* Cards / Text / Timeline panel */}
           <div>
-            {view === "cards" && (
-              <div className="space-y-5">
-                {/* El itinerario se revela día a día: los primeros en cascada
-                    al aparecer la página, el resto según entran en pantalla,
-                    con un desenfoque que "enfoca" cada día como algo especial. */}
-                {itin.days.map((day, dayIdx) => (
-                  <div key={day.day} id={`day-section-${dayIdx}`} data-day-anchor={dayIdx}>
-                    <DayReveal index={dayIdx}>
-                      <DayCard
-                        day={day}
-                        destination={trip.destination}
-                        dayIdx={dayIdx}
-                        date={trip.start_date ? addDaysToDateString(trip.start_date, dayIdx) : null}
-                        onActivityUpdate={updateActivity}
-                      />
-                    </DayReveal>
-                  </div>
-                ))}
-              </div>
-            )}
-            {view === "text" && (
-              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100 md:p-8">
-                {itin.days.map((day) => (
-                  <div key={day.day} className="mb-6 last:mb-0">
-                    <h2 className="font-display text-lg font-bold text-sky-900">
-                      {t("trip.dayHeading", { n: day.day, title: day.title })}
-                    </h2>
-                    {day.subtitle && <p className="text-sm text-slate-500">{day.subtitle}</p>}
-                    <ul className="mt-3 space-y-2">
-                      {day.activities.map((a, i) => (
-                        <li key={i} className="text-sm text-slate-700">
-                          <span className="mr-1">{a.emoji ?? "📍"}</span>
-                          <span className="font-semibold text-sky-700">{a.time}</span> —{" "}
-                          <span className="font-semibold">{a.place ?? a.title}</span>.{" "}
-                          <span className="text-slate-500">{a.description}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            )}
-            {view === "timeline" && (
-              <Timeline
-                data={itin.days.map((day, dayIdx): TimelineEntry => ({
-                  title: t("trip.dayHeading", { n: day.day, title: day.title }),
-                  content: (
-                    <div className="space-y-3">
-                      {day.subtitle && (
-                        <p className="text-sm text-slate-500 italic">{day.subtitle}</p>
-                      )}
-                      {day.activities.map((a, actIdx) => (
-                        <ActivityRow
-                          key={actIdx}
-                          activity={a}
-                          destination={trip.destination}
-                          dayIdx={dayIdx}
-                          actIdx={actIdx}
-                          onUpdate={updateActivity}
-                        />
-                      ))}
-                    </div>
-                  ),
-                }))}
-              />
-            )}
+            {/* Tarjetas de días: reveladas en cascada al aparecer la página. */}
+            <div className="space-y-5">
+              {itin.days.map((day, dayIdx) => (
+                <div key={day.day} id={`day-section-${dayIdx}`} data-day-anchor={dayIdx}>
+                  <DayReveal index={dayIdx}>
+                    <DayCard
+                      day={day}
+                      destination={trip.destination}
+                      dayIdx={dayIdx}
+                      date={trip.start_date ? addDaysToDateString(trip.start_date, dayIdx) : null}
+                      onActivityUpdate={updateActivity}
+                    />
+                  </DayReveal>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Map panel (persistent preview on desktop) — se despliega de
@@ -787,24 +675,6 @@ function ItineraryPage() {
         </div>
       )}
 
-      <TripVisualMap
-        open={visualMapOpen}
-        onClose={() => setVisualMapOpen(false)}
-        destination={trip.destination}
-        days={itin.days}
-        startDate={trip.start_date}
-        endDate={trip.end_date}
-      />
-
-      <TripBrochure
-        open={brochureOpen}
-        onClose={() => setBrochureOpen(false)}
-        destination={trip.destination}
-        days={itin.days}
-        startDate={trip.start_date}
-        endDate={trip.end_date}
-      />
-
       <AssistantEditPanel
         open={assistantOpen}
         onClose={() => setAssistantOpen(false)}
@@ -817,12 +687,6 @@ function ItineraryPage() {
       <ShareDialog
         open={shareOpen}
         onClose={() => setShareOpen(false)}
-        tripId={trip.id}
-        destination={trip.destination}
-      />
-      <TripmatesModal
-        open={tripmatesOpen}
-        onClose={() => setTripmatesOpen(false)}
         tripId={trip.id}
         destination={trip.destination}
       />
