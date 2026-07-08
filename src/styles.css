@@ -216,10 +216,18 @@
 
 /* Chips de selección (onboarding): vibración sutil al seleccionarse. */
 @keyframes chip-pop {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.05) rotate(-1.2deg); }
-  65% { transform: scale(0.99) rotate(0.8deg); }
-  100% { transform: scale(1) rotate(0); }
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.05) rotate(-1.2deg);
+  }
+  65% {
+    transform: scale(0.99) rotate(0.8deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
 }
 .chip-selected {
   animation: chip-pop 320ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -227,9 +235,15 @@
 
 /* Estrellas de valoración: pop al puntuar. */
 @keyframes star-pop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.45) rotate(-8deg); }
-  100% { transform: scale(1) rotate(0); }
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.45) rotate(-8deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
 }
 .star-pop {
   animation: star-pop 360ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -237,9 +251,17 @@
 
 /* Bookmark de guardar inspiración: el icono se rellena con rebote. */
 @keyframes bookmark-fill {
-  0% { transform: scale(0.6); opacity: 0.4; }
-  55% { transform: scale(1.25); opacity: 1; }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  55% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .bookmark-filled {
   animation: bookmark-fill 420ms cubic-bezier(0.23, 1, 0.32, 1);
@@ -247,9 +269,15 @@
 
 /* Iconos de la barra de navegación: pop elástico al activarse. */
 @keyframes nav-icon-pop {
-  0% { transform: scale(1) translateY(0); }
-  45% { transform: scale(1.22) translateY(-2px); }
-  100% { transform: scale(1.1) translateY(0); }
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  45% {
+    transform: scale(1.22) translateY(-2px);
+  }
+  100% {
+    transform: scale(1.1) translateY(0);
+  }
 }
 .nav-icon-active {
   animation: nav-icon-pop 340ms cubic-bezier(0.23, 1, 0.32, 1) both;
@@ -259,6 +287,41 @@
 .font-flight {
   font-family: var(--font-flight);
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Boarding pass que respira ─────────────────────────────────────────────
+   El pase se siente vivo: un halo sky detrás late en bucle (solo opacidad y
+   escala → GPU) mientras el parallax 3D lo inclina con el puntero. */
+.boarding-pass-3d {
+  will-change: transform;
+}
+@keyframes boarding-pass-breathe {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.985);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.02);
+  }
+}
+.boarding-pass-breathe {
+  animation: boarding-pass-breathe 4.8s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+
+/* ── Toasts que se desvanecen como humo ────────────────────────────────────
+   Al salir, el toast se difumina además de desaparecer: el desenfoque disuelve
+   los bordes en lugar de un corte seco (técnica de blur-para-enmascarar). El
+   kill-switch global de reduced-motion anula la transición. */
+[data-sonner-toaster] [data-sonner-toast] {
+  transition:
+    filter 420ms cubic-bezier(0.37, 0, 0.63, 1),
+    opacity 420ms cubic-bezier(0.37, 0, 0.63, 1),
+    transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+[data-sonner-toaster] [data-sonner-toast][data-removed="true"] {
+  filter: blur(5px);
 }
 
 /* ── Scroll snapping suave entre secciones de la landing ──────────────────

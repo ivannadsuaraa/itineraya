@@ -10,6 +10,7 @@ import {
 } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DestinationTicker } from "@/components/airport/DestinationTicker";
+import { HeroAtmosphere } from "@/components/three/HeroAtmosphere";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
@@ -55,7 +56,6 @@ export function HeroSection() {
     offset: ["start start", "end start"],
   });
   const scrollParallaxOn = !reduceMotion && !isMobile;
-  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "26%"]);
   const mockupY = useTransform(scrollYProgress, [0, 1], ["0%", "14%"]);
   const textY = useTransform(scrollYProgress, [0, 1], ["0%", "7%"]);
 
@@ -96,19 +96,26 @@ export function HeroSection() {
         mx.set(((e.clientX - rect.left) / rect.width) * 2 - 1);
         my.set(((e.clientY - rect.top) / rect.height) * 2 - 1);
       }}
-      className="relative overflow-hidden bg-gradient-to-b from-sky-950 via-sky-900 to-sky-800 pt-28 pb-24 sm:pt-36 sm:pb-32"
+      className="relative overflow-hidden bg-[#050b16] pt-28 pb-24 sm:pt-36 sm:pb-32"
     >
-      {/* Decorative blobs — capa de fondo con parallax de scroll */}
-      <motion.div
-        style={scrollParallaxOn ? { y: bgY } : undefined}
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        <div className="absolute -top-24 -right-24 h-[480px] w-[480px] rounded-full bg-sky-700/25 blur-3xl" />
-        <div className="absolute top-1/2 -left-32 h-[360px] w-[360px] rounded-full bg-[#1E6B9A]/30 blur-3xl" />
-        <div className="absolute bottom-0 right-1/3 h-[280px] w-[280px] rounded-full bg-sky-600/20 blur-3xl" />
-      </motion.div>
+      {/* Fondo 3D cinematográfico — planeta punteado, balizas, arcos de vuelo.
+          Sólo se monta en desktop sin reduced-motion; el resto ve un fallback
+          CSS que comparte la paleta. Vive detrás de todo el contenido. */}
+      <HeroAtmosphere />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* Capa de legibilidad: garantiza contraste del texto blanco sobre el 3D
+          (izquierda más oscura) y asienta el ticker inferior. Accesible por
+          diseño — nunca sacrificamos el contraste por el espectáculo. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#050b16]/90 via-[#050b16]/45 to-transparent"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#050b16] via-[#050b16]/70 to-transparent"
+      />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* ── Text side ── */}
           <motion.div
