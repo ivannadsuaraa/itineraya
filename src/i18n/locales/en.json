@@ -597,6 +597,7 @@
     "mapLoading": "Locating places… {{done}}/{{total}}",
     "mapReady": "{{count}} places on the map",
     "mapFallbackNotice": "Using alternative map (OpenStreetMap) — Google Maps is unavailable right now.",
+    "mapFallbackRetry": "Retry with Google Maps",
     "nights_one": "{{count}} night",
     "nights_other": "{{count}} nights",
     "readyShare": "Your itinerary is ready! Share it with your travel buddies ✈️",

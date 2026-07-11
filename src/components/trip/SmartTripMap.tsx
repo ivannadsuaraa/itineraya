@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { resetGoogleMapsAuthFailure } from "@/lib/google-maps-loader";
 
 const GoogleTripMap = lazy(() =>
   import("./GoogleTripMap").then((m) => ({ default: m.GoogleTripMap })),
@@ -41,19 +42,48 @@ function MapFallback() {
 export function SmartTripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) {
   const { t } = useTranslation();
   const [googleFailed, setGoogleFailed] = useState(false);
+  // Bumping this forces GoogleTripMap to fully unmount/remount on retry, so
+  // it re-runs its load/init effects from a clean slate instead of reusing
+  // stale refs from the failed attempt.
+  const [retryKey, setRetryKey] = useState(0);
   const handleError = useCallback(() => setGoogleFailed(true), []);
+  const handleRetry = useCallback(() => {
+    // A failure can be stale (e.g. recorded earlier in this SPA session by an
+    // unrelated component) or the underlying issue may already be fixed —
+    // without this, there was previously no way back to Google Maps short of
+    // a full page reload.
+    resetGoogleMapsAuthFailure();
+    setGoogleFailed(false);
+    setRetryKey((k) => k + 1);
+  }, []);
 
   if (googleFailed) {
     return (
       <div>
-        <div className="mb-3 flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
-          {t("trip.mapFallbackNotice", {
-            defaultValue:
-              "Usando mapa alternativo (OpenStreetMap) — Google Maps no está disponible ahora mismo.",
-          })}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-amber-50 px-4 py-2.5 text-xs font-medium text-amber-700 ring-1 ring-amber-100">
+          <span>
+            {t("trip.mapFallbackNotice", {
+              defaultValue:
+                "Usando mapa alternativo (OpenStreetMap) — Google Maps no está disponible ahora mismo.",
+            })}
+          </span>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="inline-flex shrink-0 items-center gap-1 font-semibold text-amber-800 underline underline-offset-2 hover:text-amber-900"
+          >
+            <RotateCcw className="h-3 w-3" />
+            {t("trip.mapFallbackRetry", { defaultValue: "Reintentar con Google Maps" })}
+          </button>
         </div>
         <Suspense fallback={<MapFallback />}>
-          <TripMap destination={destination} days={days} tripId={tripId} geo_lat={geo_lat} geo_lng={geo_lng} />
+          <TripMap
+            destination={destination}
+            days={days}
+            tripId={tripId}
+            geo_lat={geo_lat}
+            geo_lng={geo_lng}
+          />
         </Suspense>
       </div>
     );
@@ -61,7 +91,15 @@ export function SmartTripMap({ destination, days, tripId, geo_lat, geo_lng }: Pr
 
   return (
     <Suspense fallback={<MapFallback />}>
-      <GoogleTripMap destination={destination} days={days} tripId={tripId} onError={handleError} geo_lat={geo_lat} geo_lng={geo_lng} />
+      <GoogleTripMap
+        key={retryKey}
+        destination={destination}
+        days={days}
+        tripId={tripId}
+        onError={handleError}
+        geo_lat={geo_lat}
+        geo_lng={geo_lng}
+      />
     </Suspense>
   );
 }

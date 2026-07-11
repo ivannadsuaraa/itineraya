@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
-  loadGoogleMaps,
+  loadGoogleMapsCoreLibraries,
   onGoogleMapsAuthFailure,
   reportGoogleMapsFailure,
 } from "@/lib/google-maps-loader";
@@ -44,17 +44,33 @@ type Pin = { geo: Geo; activity: Activity; day: number; dayTitle: string; index:
 
 const GEO_CACHE_KEY = (id: string) => `itineraya:geo:${id}`;
 
-async function geocode(query: string, geocoder: google.maps.Geocoder): Promise<Geo | null> {
+// `critical` marks the single, well-formed destination-level geocode — a
+// reliable systemic health check. Per-activity geocodes (many per itinerary,
+// fired in a loop) are NOT critical: a REQUEST_DENIED on one AI-generated
+// place string among dozens doesn't mean Google Maps is broken, and treating
+// it as such used to nuke the entire map (Leaflet fallback, session-wide,
+// unrecoverable) over a single skippable pin. Those just resolve null and
+// fall back to the destination center further down.
+async function geocode(
+  query: string,
+  geocoder: google.maps.Geocoder,
+  critical = false,
+): Promise<Geo | null> {
   return new Promise((resolve) => {
     geocoder.geocode({ address: query }, (results, status) => {
       if (status === "OK" && results && results[0]) {
         const loc = results[0].geometry.location;
         resolve({ lat: loc.lat(), lng: loc.lng() });
       } else {
-        // REQUEST_DENIED covers expired/invalid keys and disabled APIs — treat it
-        // as an auth failure so the whole map switches to the Leaflet fallback
-        // instead of silently placing zero pins.
-        if (status === "REQUEST_DENIED") reportGoogleMapsFailure();
+        if (status === "REQUEST_DENIED") {
+          if (critical) {
+            reportGoogleMapsFailure();
+          } else {
+            console.warn(
+              `[GoogleTripMap] Geocode denied for "${query}" — skipping this pin only, not treated as a global failure.`,
+            );
+          }
+        }
         resolve(null);
       }
     });
@@ -79,7 +95,8 @@ export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo
   const [pins, setPins] = useState<Pin[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const cancelled = useRef(false);
-  const initialCenter = geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : { lat: 40.4168, lng: -3.7038 };
+  const initialCenter =
+    geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : { lat: 40.4168, lng: -3.7038 };
 
   // Google's auth-failure callback fires asynchronously and can't be caught
   // by a try/catch around the loader promise — listen for it explicitly.
@@ -105,17 +122,18 @@ export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo
     let mounted = true;
     (async () => {
       try {
-        await loadGoogleMaps();
+        const { maps } = await loadGoogleMapsCoreLibraries();
         if (!mounted || !mapRef.current) return;
-        mapInstance.current = new google.maps.Map(mapRef.current, {
+        mapInstance.current = new maps.Map(mapRef.current, {
           center: initialCenter,
           zoom: 12,
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
         });
-        infoRef.current = new google.maps.InfoWindow();
-      } catch {
+        infoRef.current = new maps.InfoWindow();
+      } catch (err) {
+        console.error("[GoogleTripMap] Failed to initialize map:", err);
         onError?.();
       }
     })();
@@ -150,16 +168,18 @@ export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo
     const collected: Pin[] = [];
 
     (async () => {
+      let geocoder: google.maps.Geocoder;
       try {
-        await loadGoogleMaps();
-      } catch {
+        const { geocoding } = await loadGoogleMapsCoreLibraries();
+        geocoder = new geocoding.Geocoder();
+      } catch (err) {
+        console.error("[GoogleTripMap] Failed to load geocoding library:", err);
         onError?.();
         return;
       }
       if (cancelled.current || !mapInstance.current) return;
-      const geocoder = new google.maps.Geocoder();
 
-      const destGeo = cache["__dest__"] ?? (await geocode(destination, geocoder));
+      const destGeo = cache["__dest__"] ?? (await geocode(destination, geocoder, true));
       if (destGeo) {
         cache["__dest__"] = destGeo;
         mapInstance.current.setCenter(destGeo);

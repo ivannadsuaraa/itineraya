@@ -94,7 +94,10 @@ export function DestinationAutocomplete({
   useEffect(() => {
     console.info("[DestinationAutocomplete] Mounting: attempting to load Google Maps...");
     loadGoogleMaps().catch((err) => {
-      console.warn("[DestinationAutocomplete] Google Maps load failed, falling back to Nominatim:", err.message);
+      console.warn(
+        "[DestinationAutocomplete] Google Maps load failed, falling back to Nominatim:",
+        err.message,
+      );
       setUsingFallback(true);
     });
   }, []);
@@ -205,7 +208,11 @@ export function DestinationAutocomplete({
               // status with an empty array, which looks identical to "no matches"
               // unless we check status explicitly.
               if (status !== "OK" && status !== "ZERO_RESULTS") {
-                reportGoogleMapsFailure();
+                // Only REQUEST_DENIED is a reliable signal the key/config is
+                // actually broken. OVER_QUERY_LIMIT/UNKNOWN_ERROR are
+                // transient and must not poison Google Maps for the rest of
+                // the session (including a map viewed later on this trip).
+                if (status === "REQUEST_DENIED") reportGoogleMapsFailure();
                 setUsingFallback(true);
                 void runFallback();
                 return;
@@ -222,8 +229,19 @@ export function DestinationAutocomplete({
             },
           );
         }
-      } catch {
-        reportGoogleMapsFailure();
+      } catch (err) {
+        // A network blip or any other exception in THIS search attempt does
+        // not mean Google Maps itself is broken — only fall back locally for
+        // this component. Calling reportGoogleMapsFailure() here used to
+        // poison the shared, session-wide "Google Maps is dead" flag on any
+        // transient error, so a single flaky keystroke on /demo or
+        // /onboarding could force every Google map viewed afterward (e.g.
+        // the itinerary map) into the Leaflet fallback for the rest of the
+        // SPA session — even once Google Maps was fully healthy again.
+        console.warn(
+          "[DestinationAutocomplete] Search failed, falling back to Nominatim for this query:",
+          err,
+        );
         setUsingFallback(true);
         await runFallback();
       } finally {

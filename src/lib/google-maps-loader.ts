@@ -21,7 +21,9 @@ const GOOGLE_KEY = ENV.VITE_GOOGLE_MAPS_KEY || ENV.VITE_LOVABLE_CONNECTOR_GOOGLE
 if (typeof window !== "undefined") {
   console.log(
     "[GoogleMaps] 🔑 API key configured:",
-    GOOGLE_KEY ? `${GOOGLE_KEY.substring(0, 20)}...${GOOGLE_KEY.substring(GOOGLE_KEY.length - 4)}` : "❌ NO KEY FOUND"
+    GOOGLE_KEY
+      ? `${GOOGLE_KEY.substring(0, 20)}...${GOOGLE_KEY.substring(GOOGLE_KEY.length - 4)}`
+      : "❌ NO KEY FOUND",
   );
 }
 
@@ -44,12 +46,12 @@ if (typeof window !== "undefined") {
     existing?.();
     console.error(
       "[GoogleMaps] ❌ gm_authFailure fired. This means one of:\n" +
-      "  1. The API key is invalid or expired.\n" +
-      "  2. The Maps JavaScript API is not enabled in Google Cloud Console.\n" +
-      "  3. HTTP referrer restrictions are blocking this domain " +
-      "(itineraya.com must be in the allowed referrers list).\n" +
-      "  4. Billing is not enabled on the Google Cloud project.\n" +
-      "See instructions in src/lib/google-maps-loader.ts for how to fix.",
+        "  1. The API key is invalid or expired.\n" +
+        "  2. The Maps JavaScript API is not enabled in Google Cloud Console.\n" +
+        "  3. HTTP referrer restrictions are blocking this domain " +
+        "(itineraya.com must be in the allowed referrers list).\n" +
+        "  4. Billing is not enabled on the Google Cloud project.\n" +
+        "See instructions in src/lib/google-maps-loader.ts for how to fix.",
     );
     markAuthFailed();
   };
@@ -62,6 +64,20 @@ export function isGoogleMapsAuthFailed(): boolean {
 export function onGoogleMapsAuthFailure(cb: () => void): () => void {
   authFailureListeners.add(cb);
   return () => authFailureListeners.delete(cb);
+}
+
+// Lets a consumer (e.g. a "retry" button on the map fallback) clear a
+// previously recorded failure and try loading Google Maps again. Without
+// this, a single stale/transient failure earlier in the SPA session (e.g. a
+// flaky network blip on the destination search) permanently forces every
+// Google Maps consumer on the page into its fallback for the rest of that
+// session, even after the underlying cause is gone.
+export function resetGoogleMapsAuthFailure(): void {
+  authFailed = false;
+  coreLibsPromise = null;
+  if (typeof window !== "undefined") {
+    window.__itineraya_gmap_loaded__ = undefined;
+  }
 }
 
 export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
@@ -80,7 +96,7 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
     if (!GOOGLE_KEY) {
       console.error(
         "[GoogleMaps] ❌ VITE_GOOGLE_MAPS_KEY is not set. " +
-        "Add it to your .env file and to Vercel's environment variables.",
+          "Add it to your .env file and to Vercel's environment variables.",
       );
       markAuthFailed();
       return reject(new Error("Missing Google Maps key"));
@@ -93,7 +109,9 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
 
     const existing = document.querySelector<HTMLScriptElement>('script[data-itineraya="gmaps"]');
     if (existing) {
-      console.warn("[GoogleMaps] ⚠️ Script tag already exists, attaching listeners to existing tag");
+      console.warn(
+        "[GoogleMaps] ⚠️ Script tag already exists, attaching listeners to existing tag",
+      );
       existing.addEventListener("load", () => {
         console.info("[GoogleMaps] ✓ Script loaded from existing tag");
         resolve();
@@ -110,14 +128,22 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
     s.defer = true;
     s.dataset.itineraya = "gmaps";
     s.onload = () => {
-      console.info("[GoogleMaps] ✅ Script loaded successfully | window.google?.maps:", !!window.google?.maps);
+      console.info(
+        "[GoogleMaps] ✅ Script loaded successfully | window.google?.maps:",
+        !!window.google?.maps,
+      );
       if (!window.google?.maps) {
-        console.warn("[GoogleMaps] ⚠️ Script loaded but window.google.maps is undefined — check for auth failures");
+        console.warn(
+          "[GoogleMaps] ⚠️ Script loaded but window.google.maps is undefined — check for auth failures",
+        );
       }
       resolve();
     };
     s.onerror = () => {
-      console.error("[GoogleMaps] ❌ Script load failed (network error or invalid key) | src:", s.src);
+      console.error(
+        "[GoogleMaps] ❌ Script load failed (network error or invalid key) | src:",
+        s.src,
+      );
       markAuthFailed();
       reject(new Error("Failed to load Google Maps"));
     };
@@ -132,4 +158,53 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
 // from any catch block around a places/geocoder call to keep the shared flag in sync.
 export function reportGoogleMapsFailure() {
   markAuthFailed();
+}
+
+type CoreLibs = {
+  maps: google.maps.MapsLibrary;
+  geocoding: google.maps.GeocodingLibrary;
+  marker: google.maps.MarkerLibrary;
+  core: google.maps.CoreLibrary;
+};
+
+let coreLibsPromise: Promise<CoreLibs> | null = null;
+
+// With `loading=async`, the outer <script> tag's `onload` event fires as soon
+// as the bootstrap file itself has executed — but that bootstrap kicks off
+// its OWN async setup, so `google.maps.importLibrary` (and even
+// `google.maps.Map`) can still be undefined for a brief moment after `onload`
+// resolves. Reproduced live: calling `new google.maps.Map(...)` or
+// `google.maps.importLibrary(...)` immediately after `loadGoogleMaps()`
+// resolved threw "is not a constructor" / "is not a function", which the old
+// bare catch swallowed and misreported as an auth failure — forcing the
+// Leaflet fallback for what was really just a load-timing race, not a broken
+// key. Poll briefly for `importLibrary` to actually exist before calling it.
+async function waitForImportLibrary(timeoutMs = 5000): Promise<void> {
+  const start = Date.now();
+  while (typeof window.google?.maps?.importLibrary !== "function") {
+    if (Date.now() - start > timeoutMs) {
+      throw new Error("google.maps.importLibrary did not become available in time");
+    }
+    await new Promise((r) => setTimeout(r, 30));
+  }
+}
+
+// importLibrary() is Google's documented, race-free way to obtain a
+// library's classes once it's actually ready — safer than referencing
+// `google.maps.X` globals synchronously right after the script tag loads.
+export async function loadGoogleMapsCoreLibraries(): Promise<CoreLibs> {
+  await loadGoogleMaps();
+  if (!coreLibsPromise) {
+    coreLibsPromise = waitForImportLibrary()
+      .then(() =>
+        Promise.all([
+          google.maps.importLibrary("maps") as Promise<google.maps.MapsLibrary>,
+          google.maps.importLibrary("geocoding") as Promise<google.maps.GeocodingLibrary>,
+          google.maps.importLibrary("marker") as Promise<google.maps.MarkerLibrary>,
+          google.maps.importLibrary("core") as Promise<google.maps.CoreLibrary>,
+        ]),
+      )
+      .then(([maps, geocoding, marker, core]) => ({ maps, geocoding, marker, core }));
+  }
+  return coreLibsPromise;
 }
