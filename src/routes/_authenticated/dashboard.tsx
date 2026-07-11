@@ -31,6 +31,7 @@ import {
   Gift,
   Copy,
   Check,
+  Globe2,
 } from "lucide-react";
 import { DepartureBoard } from "@/components/airport/DepartureBoard";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -303,6 +304,30 @@ function DashboardPage() {
     [trips, upcoming],
   );
 
+  // Stats destacadas del Bento command center — todo derivado de datos reales.
+  const totalTrips = trips?.length ?? 0;
+  const countriesCount = useMemo(
+    () =>
+      new Set(
+        (trips ?? [])
+          .map((tr) => tr.destination.split(",").pop()?.trim().toLowerCase())
+          .filter((c): c is string => !!c),
+      ).size,
+    [trips],
+  );
+  const daysPlanned = useMemo(
+    () =>
+      (trips ?? []).reduce(
+        (sum, tr) =>
+          tr.start_date && tr.end_date
+            ? sum + differenceInCalendarDays(parseISO(tr.end_date), parseISO(tr.start_date)) + 1
+            : sum,
+        0,
+      ),
+    [trips],
+  );
+  const savedCount = saved?.length ?? 0;
+
   const locale = dateLocale(i18n.language);
   const inspirations = useMemo(() => getSeasonalInspirations(), []);
 
@@ -381,53 +406,79 @@ function DashboardPage() {
 
   return (
     <PageTransition className="min-h-dvh bg-slate-50">
-      {/* ── Dark header with globe ── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-10 pt-8 sm:px-6 sm:pb-12 sm:pt-10 lg:px-8">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-sky-700/25 blur-3xl" />
-          <div className="absolute -bottom-8 left-0 h-48 w-80 rounded-full bg-[#1E6B9A]/30 blur-3xl" />
-        </div>
-        <div className="relative mx-auto max-w-6xl">
-          <div className="grid items-center gap-6 lg:grid-cols-[1fr_320px]">
-            {/* Left: text + CTA + next trip */}
-            <div>
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-sky-300">
-                    {t("dashboard.hello", { name })}
-                  </p>
-                  <h1 className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">
-                    {t("dashboard.where")}
-                  </h1>
-                </div>
+      {/* ── Bento command center ──
+          Banda oscura (navy) de tiles asimétricos: bienvenida + globo (medio,
+          alto) + próximo viaje, más una fila de stats destacadas. Paleta
+          limitada navy/sky-400/blanco/slate; rounded-3xl; sombras casi nulas. */}
+      <section className="bg-slate-50 px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-4">
+            {/* Bienvenida + CTA */}
+            <div className="flex min-h-[180px] flex-col justify-between rounded-3xl bg-[#0c1a2e] p-6 sm:p-8 lg:col-span-2">
+              <div>
+                <p className="text-sm font-semibold text-[#38bdf8]">
+                  {t("dashboard.hello", { name })}
+                </p>
+                <h1 className="mt-2 font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+                  {t("dashboard.where")}
+                </h1>
+              </div>
+              <Link
+                to="/new-trip"
+                className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-[#38bdf8] px-5 py-3 text-sm font-bold text-[#0c1a2e] transition hover:bg-[#5cc7f9] active:scale-[0.97]"
+              >
+                <Plus className="h-4 w-4" />
+                {t("dashboard.newTrip")}
+              </Link>
+            </div>
+
+            {/* Globo — tile medio y alto (ocupa dos filas en desktop) */}
+            <div className="flex flex-col rounded-3xl bg-[#0c1a2e] p-5 sm:p-6 lg:col-span-2 lg:row-span-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#38bdf8]/80">
+                {t("dashboard.yourWorld")}
+              </p>
+              <div className="mx-auto flex w-full max-w-[280px] flex-1 items-center justify-center lg:max-w-[340px]">
+                {/* Solo los destinos reales del usuario. */}
+                <Suspense
+                  fallback={
+                    <div className="aspect-square w-full animate-pulse rounded-full bg-white/5" />
+                  }
+                >
+                  <GlobePolaroids markers={globeMarkers ?? []} className="w-full" speed={0.003} />
+                </Suspense>
+              </div>
+            </div>
+
+            {/* Próximo viaje (o prompt si no hay ninguno próximo) */}
+            <div className="lg:col-span-2">
+              {upcoming && upcoming.start_date ? (
+                <NextTripHero trip={upcoming} locale={locale} />
+              ) : (
                 <Link
                   to="/new-trip"
-                  className="inline-flex items-center gap-2 self-start rounded-full bg-white px-5 py-2.5 text-sm font-bold text-sky-900 shadow-md transition hover:bg-sky-50 active:scale-[0.97] sm:self-auto"
+                  className="flex h-full min-h-[148px] flex-col justify-center rounded-3xl bg-[#0c1a2e] p-6 ring-1 ring-white/10 transition hover:ring-white/25"
                 >
-                  <Plus className="h-4 w-4" />
-                  {t("dashboard.newTrip")}
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#38bdf8]">
+                    {t("dashboard.planNextLabel")}
+                  </p>
+                  <p className="mt-1 font-display text-lg font-bold text-white">
+                    {t("dashboard.planNextTitle")}
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#38bdf8]">
+                    {t("dashboard.newTrip")}
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
                 </Link>
-              </div>
-
-              {upcoming && upcoming.start_date && (
-                <div className="mt-6">
-                  <NextTripHero trip={upcoming} locale={locale} />
-                </div>
               )}
             </div>
+          </div>
 
-            {/* Right: Globe */}
-            <div className="mx-auto w-full max-w-[300px] lg:max-w-none">
-              <Suspense
-                fallback={
-                  <div className="aspect-square w-full rounded-full bg-sky-100/50 animate-pulse" />
-                }
-              >
-                {/* Solo los destinos reales del usuario: nunca los marcadores
-                    de muestra del componente (eso es cosa de la landing). */}
-                <GlobePolaroids markers={globeMarkers ?? []} className="w-full" speed={0.003} />
-              </Suspense>
-            </div>
+          {/* Stats destacadas */}
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-4 sm:gap-4">
+            <StatTile icon={MapPin} value={totalTrips} label={t("dashboard.statTrips")} />
+            <StatTile icon={Globe2} value={countriesCount} label={t("dashboard.statCountries")} />
+            <StatTile icon={CalendarDays} value={daysPlanned} label={t("dashboard.statDays")} />
+            <StatTile icon={Bookmark} value={savedCount} label={t("dashboard.statSaved")} />
           </div>
         </div>
       </section>
@@ -464,7 +515,9 @@ function DashboardPage() {
                 <Gift className="h-4 w-4 text-[#1E6B9A]" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-sky-900">{t("dashboard.referral.title")}</p>
+                <p className="text-sm font-semibold text-sky-900">
+                  {t("dashboard.referral.title")}
+                </p>
                 <p className="text-xs text-sky-700">{t("dashboard.referral.subtitle")}</p>
               </div>
             </div>
@@ -485,7 +538,11 @@ function DashboardPage() {
                 onClick={copyReferralLink}
                 className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-95"
               >
-                {referralCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {referralCopied ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
                 {t("dashboard.referral.copyLink")}
               </button>
             </div>
@@ -570,7 +627,7 @@ function DashboardPage() {
                   {Array.from({ length: 6 }).map((_, i) => (
                     <div
                       key={i}
-                      className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100"
+                      className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100"
                     >
                       <div className="aspect-[4/3] animate-pulse bg-slate-200" />
                       <div className="space-y-2 p-4">
@@ -652,7 +709,7 @@ function DashboardPage() {
                   {saved.map((s) => (
                     <div
                       key={s.id}
-                      className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                      className="group relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
                         <div className="relative aspect-[4/3] overflow-hidden">
@@ -713,7 +770,7 @@ function DashboardPage() {
                 {inspirations.map((insp) => (
                   <div
                     key={insp.destination}
-                    className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
+                    className="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
                       <img
@@ -793,6 +850,28 @@ function DashboardPage() {
   );
 }
 
+/* ─── Stat tile (Bento) ─── */
+
+function StatTile({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof MapPin;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="rounded-3xl bg-white p-4 ring-1 ring-slate-200/70 sm:p-5">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#38bdf8]/10 text-[#0ea5e9]">
+        <Icon className="h-4 w-4" />
+      </div>
+      <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[#0c1a2e]">{value}</p>
+      <p className="mt-0.5 text-xs font-medium text-slate-500">{label}</p>
+    </div>
+  );
+}
+
 /* ─── Trip Card ─── */
 
 function TripCard({
@@ -821,7 +900,7 @@ function TripCard({
       : null;
 
   return (
-    <article className="group relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-lg">
+    <article className="group relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-lg">
       <Link to="/my-trip/$tripId" params={{ tripId: trip.id }} className="block">
         <div className="relative aspect-[4/3] overflow-hidden">
           <SmartImage
@@ -987,9 +1066,9 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
 
   return (
     <Link to="/my-trip/$tripId" params={{ tripId: trip.id }}>
-      <div className="group overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur-sm transition hover:bg-white/15">
-        <div className="grid md:grid-cols-[1.4fr_1fr]">
-          <div className="relative h-44 overflow-hidden md:h-56 md:rounded-l-2xl">
+      <div className="group h-full overflow-hidden rounded-3xl bg-[#0c1a2e] ring-1 ring-white/10 transition hover:ring-white/25">
+        <div className="grid h-full md:grid-cols-[1.4fr_1fr]">
+          <div className="relative h-44 overflow-hidden md:h-full md:min-h-[176px] md:rounded-l-3xl">
             <SmartImage
               src={trip.hero_image_url}
               fallbackSrc={destinationFallback(trip.destination, 1200, 700)}
@@ -1017,7 +1096,7 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
 
           <div className="flex flex-col justify-center gap-4 p-5 md:p-6">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-300">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#38bdf8]">
                 {t("dashboard.countdown")}
               </p>
               <div className="mt-1 flex items-baseline gap-1.5">
@@ -1030,7 +1109,7 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
               </div>
             </div>
             <div className="rounded-xl bg-white/10 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-sky-300">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#38bdf8]">
                 {t("dashboard.weatherNow")}
               </p>
               {weather === undefined ? (
@@ -1043,7 +1122,7 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
                   </span>
                 </div>
               ) : (
-                <p className="mt-1 text-sm text-sky-300">—</p>
+                <p className="mt-1 text-sm text-[#38bdf8]">—</p>
               )}
             </div>
           </div>

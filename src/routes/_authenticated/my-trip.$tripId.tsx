@@ -314,7 +314,9 @@ function ItineraryPage() {
       try {
         const { data, error: e1 } = await supabase
           .from("trips")
-          .select("id,destination,hero_image_url,itinerary,status,start_date,end_date,companion,geo_lat,geo_lng")
+          .select(
+            "id,destination,hero_image_url,itinerary,status,start_date,end_date,companion,geo_lat,geo_lng",
+          )
           .eq("id", tripId)
           .maybeSingle();
         if (e1) throw e1;
@@ -511,7 +513,7 @@ function ItineraryPage() {
       </div>
 
       {/* ── Content ── */}
-      <div className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-8">
+      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-6 md:py-8 lg:px-8">
         {/* Boarding pass del viaje: el itinerario empieza como empieza un
             vuelo. Descargable como imagen. */}
         <div className="mb-8">
@@ -598,11 +600,15 @@ function ItineraryPage() {
           <DayScrollNav count={itin.days.length} active={activeDay} onActiveChange={setActiveDay} />
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        {/* grid-cols-1 + minmax(0,1fr) es CRÍTICO: sin columna base explícita, en
+            móvil la rejilla creaba una columna implícita auto que se estiraba al
+            ancho intrínseco de la imagen del día (~640px) y quedaba recortada por
+            el overflow-x:clip global → las cards "se cortaban". */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Cards / Text / Timeline panel */}
-          <div>
+          <div className="min-w-0">
             {/* Tarjetas de días: reveladas en cascada al aparecer la página. */}
-            <div className="space-y-7">
+            <div className="space-y-6 sm:space-y-7">
               {itin.days.map((day, dayIdx) => (
                 <div key={day.day} id={`day-section-${dayIdx}`} data-day-anchor={dayIdx}>
                   <DayReveal index={dayIdx}>
@@ -1072,10 +1078,13 @@ function DayCard({
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:shadow-md">
+    <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:shadow-md">
       {/* Day image */}
       {day.image_url ? (
-        <div ref={imageRef} className="relative aspect-[4/3] w-full overflow-hidden sm:aspect-[16/7]">
+        <div
+          ref={imageRef}
+          className="relative aspect-[4/3] w-full overflow-hidden sm:aspect-[16/7]"
+        >
           <motion.div
             style={parallaxOn ? { y: parallaxY, scale: 1.12 } : undefined}
             className="h-full w-full will-change-transform"
@@ -1140,7 +1149,7 @@ function DayCard({
       )}
 
       {/* Activities — cascada con stagger de 40 ms al entrar en pantalla */}
-      <RevealGroup stagger={0.04} amount={0.08} className="space-y-4 p-5 sm:p-6">
+      <RevealGroup stagger={0.04} amount={0.08} className="space-y-3.5 p-4 sm:space-y-4 sm:p-6">
         {day.activities.map((a, i) => (
           <RevealItem key={i}>
             <ActivityRow
@@ -1221,14 +1230,14 @@ function ActivityRow({
 
   return (
     <div
-      className={`group flex gap-3.5 rounded-2xl border p-4 transition-all ${
+      className={`group flex gap-3 rounded-2xl border p-3.5 transition-all sm:gap-3.5 sm:p-4 ${
         activity.completed
           ? "border-slate-100 bg-slate-50/30 opacity-55"
           : "border-slate-100 bg-slate-50/50 hover:bg-slate-50"
       }`}
     >
-      {/* Time chip */}
-      <div className="flex h-14 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-sky-900 text-white">
+      {/* Time chip — más compacto en móvil para dar aire al contenido */}
+      <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-sky-900 text-white sm:h-14 sm:w-16">
         <CalendarIcon className="h-3 w-3 opacity-60" />
         <span className="mt-1 text-xs font-bold leading-none">{activity.time}</span>
       </div>
