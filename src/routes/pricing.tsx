@@ -182,14 +182,13 @@ function PricingPage() {
   ];
 
   return (
-    <div className="min-h-dvh bg-sky-950">
+    <div className="min-h-dvh bg-[#0c1a2e]">
       <PaymentTestModeBanner />
 
-      {/* Ambient background */}
+      {/* Ambient background — resplandor sky muy sutil */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-sky-700/20 blur-3xl" />
-        <div className="absolute -bottom-24 left-0 h-72 w-96 rounded-full bg-[#1E6B9A]/25 blur-3xl" />
-        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-sky-800/15 blur-3xl" />
+        <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#38bdf8]/10 blur-3xl" />
+        <div className="absolute -bottom-24 left-0 h-72 w-96 rounded-full bg-[#38bdf8]/8 blur-3xl" />
       </div>
 
       {/* Nav */}
@@ -227,7 +226,10 @@ function PricingPage() {
             { labelKey: "pricing.trust2", icon: "✓" },
             { labelKey: "pricing.trust3", icon: "🔒" },
           ].map((item) => (
-            <span key={item.labelKey} className="flex items-center gap-1.5 text-xs font-medium text-white/35">
+            <span
+              key={item.labelKey}
+              className="flex items-center gap-1.5 text-xs font-medium text-white/35"
+            >
               <span>{item.icon}</span>
               {t(item.labelKey)}
             </span>
@@ -316,17 +318,27 @@ const FEATURES: Array<{
   viajero: boolean | string;
   explorador: boolean | string;
 }> = [
-  { labelKey: "pricing.cmp.ai",         free: true,  viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.images",     free: true,  viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.map",        free: true,  viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.share",      free: true,  viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.trips",      free: "pricing.cmp.freeTrips", viajero: "pricing.cmp.viajeroTrips", explorador: "pricing.cmp.unlimited" },
-  { labelKey: "pricing.cmp.assistant",  free: false, viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.tripmates",  free: false, viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.postcards",  free: false, viajero: true,  explorador: true },
-  { labelKey: "pricing.cmp.copilot",    free: "pricing.cmp.copilotFree", viajero: true, explorador: true },
-  { labelKey: "pricing.cmp.pdf",        free: false, viajero: false, explorador: true },
-  { labelKey: "pricing.cmp.support",    free: false, viajero: false, explorador: true },
+  { labelKey: "pricing.cmp.ai", free: true, viajero: true, explorador: true },
+  { labelKey: "pricing.cmp.images", free: true, viajero: true, explorador: true },
+  { labelKey: "pricing.cmp.map", free: true, viajero: true, explorador: true },
+  { labelKey: "pricing.cmp.share", free: true, viajero: true, explorador: true },
+  {
+    labelKey: "pricing.cmp.trips",
+    free: "pricing.cmp.freeTrips",
+    viajero: "pricing.cmp.viajeroTrips",
+    explorador: "pricing.cmp.unlimited",
+  },
+  { labelKey: "pricing.cmp.assistant", free: false, viajero: true, explorador: true },
+  { labelKey: "pricing.cmp.tripmates", free: false, viajero: true, explorador: true },
+  { labelKey: "pricing.cmp.postcards", free: false, viajero: true, explorador: true },
+  {
+    labelKey: "pricing.cmp.copilot",
+    free: "pricing.cmp.copilotFree",
+    viajero: true,
+    explorador: true,
+  },
+  { labelKey: "pricing.cmp.pdf", free: false, viajero: false, explorador: true },
+  { labelKey: "pricing.cmp.support", free: false, viajero: false, explorador: true },
 ];
 
 function FeatureCell({ val }: { val: boolean | string }) {
@@ -362,9 +374,15 @@ function ComparisonTable() {
               }`}
             >
               <div className="text-white/70">{t(f.labelKey)}</div>
-              <div className="text-center"><FeatureCell val={f.free} /></div>
-              <div className="text-center"><FeatureCell val={f.viajero} /></div>
-              <div className="text-center"><FeatureCell val={f.explorador} /></div>
+              <div className="text-center">
+                <FeatureCell val={f.free} />
+              </div>
+              <div className="text-center">
+                <FeatureCell val={f.viajero} />
+              </div>
+              <div className="text-center">
+                <FeatureCell val={f.explorador} />
+              </div>
             </div>
           ))}
         </div>
@@ -395,7 +413,11 @@ function PricingFAQ() {
               aria-expanded={open === i}
             >
               <span className="text-sm font-semibold text-white/85">{t(`pricing.faq.q${n}`)}</span>
-              <span className={`shrink-0 text-white/40 transition-transform duration-200 ${open === i ? "rotate-45" : ""}`}>＋</span>
+              <span
+                className={`shrink-0 text-white/40 transition-transform duration-200 ${open === i ? "rotate-45" : ""}`}
+              >
+                ＋
+              </span>
             </button>
             {open === i && (
               <div className="border-t border-white/6 bg-white/3 px-5 py-4">

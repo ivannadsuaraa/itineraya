@@ -12,6 +12,9 @@ interface DestinationCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Label for the "explore" pill revealed on hover. Caller supplies the translated string. */
   ctaLabel: string;
   onClick?: () => void;
+  /** Bento mode: la tarjeta llena la altura de su celda en vez de bloquear un
+   *  aspect-ratio fijo — permite mosaicos de tamaños variados. */
+  fill?: boolean;
 }
 
 const DestinationCard = React.forwardRef<HTMLDivElement, DestinationCardProps>(
@@ -26,6 +29,7 @@ const DestinationCard = React.forwardRef<HTMLDivElement, DestinationCardProps>(
       themeColor = "210 80% 35%",
       ctaLabel,
       onClick,
+      fill = false,
       ...props
     },
     ref,
@@ -34,19 +38,22 @@ const DestinationCard = React.forwardRef<HTMLDivElement, DestinationCardProps>(
       <div
         ref={ref}
         style={{ "--theme-color": themeColor } as React.CSSProperties}
-        className={cn("group relative w-full overflow-hidden", className)}
+        className={cn("group relative w-full overflow-hidden", fill && "h-full", className)}
         {...props}
       >
         <button
           type="button"
           onClick={onClick}
-          className="relative block w-full overflow-hidden rounded-2xl shadow-lg transition-all duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+          className={cn(
+            "relative block w-full overflow-hidden rounded-3xl shadow-lg transition-all duration-500 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#38bdf8]",
+            fill && "h-full",
+          )}
           style={{
             boxShadow: `0 4px 24px -8px hsl(var(--theme-color) / 0.45)`,
           }}
         >
           {/* Image with parallax zoom */}
-          <div className="aspect-[4/5] overflow-hidden">
+          <div className={cn("overflow-hidden", fill ? "h-full min-h-[160px]" : "aspect-[4/5]")}>
             <div
               className="h-full w-full bg-cover bg-center transition-transform duration-700 ease-in-out group-hover:scale-110"
               style={{ backgroundImage: `url(${imageUrl})` }}

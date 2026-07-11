@@ -1,174 +1,158 @@
-# Itineraya — Design Revolution
+# Itineraya — Sistema de diseño Bento
 
-> Rediseño de dirección creativa + ingeniería. Sesión enfocada en **fundamentos + piezas
-> flagship** sobre una app **viva** (Stripe, Supabase, auth, i18n en Vercel), con la
-> consigna acordada: **elevar sin romper**. Cero commits, cero push.
-
----
-
-## 0. Lectura honesta del punto de partida
-
-Antes de tocar nada leí el código real. Conclusión de director: **Itineraya no era
-"template slop"**. Ya tenía cimientos de gama alta que conviene reconocer, no demoler:
-
-- Un **vocabulario de motion compartido** (`src/lib/motion.ts`) con curva `EASE_OUT = [0.23,1,0.32,1]`
-  — exactamente el _strong ease-out_ que recomienda Emil Kowalski — y personalidades por
-  superficie (rise / focus / scale / stagger).
-- Sistema de **tokens OKLCH** (`src/styles.css`), tipografía de panel de aeropuerto con
-  numerales tabulares, scroll-snap por proximidad.
-- Hero cinematográfico con entrada _blur-resolve_, parallax de scroll y de ratón por muelles.
-- Un **globo WebGL** (cobe) con drag, proyección de marcadores y popups.
-- Un **boarding pass** con perforación real, código de barras determinista y enriquecimiento
-  en vivo (clima / moneda / huso horario).
-- `prefers-reduced-motion` respetado en toda la app.
-
-Por eso la decisión (validada contigo) fue **elevar y extender**, no reescribir la
-arquitectura ni eliminar features de negocio en un diff sin verificar.
-
-### Decisiones de arquitectura acordadas
-| Pregunta | Decisión |
-| --- | --- |
-| Stack 3D (no estaba instalado) | **Three.js lazy por ruta** — `three`/R3F/drei se cargan solo donde vive el 3D |
-| Nivel de riesgo | **Elevar y extender** — flujos de pago/auth/datos intactos, cero regresiones |
-| Foco de la sesión | **Fundamentos + flagship** — sistema de motion + hero 3D + boarding pass |
+> Rediseño completo al estilo **Bento**: limpio, modular, minimalista y profesional.
+> Reemplaza la dirección 3D/cinematográfica anterior (Three.js retirado por completo).
+> Consigna: **claridad y velocidad sobre espectáculo**, elevar sin romper flujos de negocio
+> (Stripe, Supabase, auth, i18n).
 
 ---
 
-## 1. Bloqueos honestos (no los he fingido)
+## 1. Principios
 
-El brief pedía conectar dos MCP que **no están disponibles en este entorno**:
-
-- **Figma MCP** — requiere OAuth y esta sesión es no interactiva: no puedo ejecutar el flujo
-  de autorización aquí. **No hubo ida y vuelta con Figma.** Los componentes se construyeron
-  directamente en código, que es donde vive el producto real. _Para habilitarlo: autoriza el
-  conector de Figma desde una sesión interactiva de Claude Code / ajustes de conectores._
-- **Higgsfield MCP** — no está registrado en este entorno; no existe la herramienta. Para los
-  assets visuales usé **WebGL/shaders procedurales** (sin dependencias de imágenes externas,
-  compatibles con CSP) en lugar de fingir una integración.
-
-Nada de esto bloqueó el trabajo de producto: el 3D, el motion y los componentes son reales,
-implementados y **verificados en navegador**.
-
----
-
-## 2. Lo que se implementó (real + verificado)
-
-### 2.1 Flagship — Hero 3D "universo donde entras"
-**Archivos nuevos:** `src/components/three/HeroAtmosphereScene.tsx`,
-`src/components/three/HeroAtmosphere.tsx` · **Integración:** `src/components/landing/HeroSection.tsx`
-
-Una escena React-Three-Fiber que reemplaza los _blobs_ borrosos del hero por un **planeta
-punteado que respira**, con el mismo lenguaje visual que el globo cobe del dashboard (cohesión
-de marca):
-
-- **Planeta punteado procedural** — esfera con shader GLSL propio: rejilla de puntos en
-  coordenadas esféricas (con compensación de convergencia en los polos) + guiño por celda +
-  **rim de fresnel**. Una sola malla, rinde en cualquier GPU.
-- **Atmósfera** — cáscara aditiva con fresnel (halo del planeta).
-- **Balizas de destino** — núcleo emisivo + **halo aditivo que late** en ciudades reales
-  (Bali, Tokio, París, NY, Londres…). Efecto "faro" **sin postprocessing** → 60fps.
-- **Arcos de vuelo** — tubos con un **pulso de luz recorriéndolos** entre destinos (eco del
-  guion punteado del boarding pass).
-- **Bokeh + campo de estrellas** para profundidad.
-- **Parallax de cámara con lerp** siguiendo al puntero; el planeta rota lento.
-- **Legibilidad primero**: gradiente de contraste sobre el 3D para que el texto blanco
-  mantenga WCAG. Hermoso **y** legible.
-
-**Rendimiento (Parte 7):**
-- El chunk de `three` es **lazy** (`React.lazy` + import dinámico): **no entra al bundle
-  principal** ni penaliza el resto de la app.
-- **Móvil / pantallas pequeñas / `prefers-reduced-motion` → NO se monta WebGL**: fallback CSS
-  que comparte la paleta. En móvil el chunk de three **ni siquiera se descarga**.
-- Presupuesto adaptativo de `dpr` según `hardwareConcurrency` / `deviceMemory` / `saveData`.
-- Se monta solo cuando el hero está en viewport (IntersectionObserver).
-
-> **Nota de ingeniería honesta:** el `EffectComposer` de `@react-three/postprocessing` dejaba
-> la escena en negro en este entorno (con versiones peer compatibles y sin errores de shader).
-> En vez de perseguir el composer indefinidamente, cambié a **glow aditivo por malla** (halos)
-> — que además rinde mejor y es más seguro en móvil. El bloom "real" queda como mejora futura
-> documentada abajo.
-
-### 2.2 Flagship — Boarding pass que respira
-**Archivo:** `src/components/airport/BoardingPass.tsx` (+ keyframes en `src/styles.css`)
-
-El pase pasa de tarjeta 2D a **objeto con profundidad que se siente vivo** — todo CSS/Framer
-(sin Three.js, por rendimiento):
-
-- **Parallax 3D con muelles** — `rotateX`/`rotateY` con `useSpring`, `perspective: 1400`.
-- **Halo que respira** — resplandor sky detrás en bucle (solo opacidad + escala → GPU).
-- **Brillo holográfico** que sigue al puntero (`useMotionTemplate` → radial-gradient).
-- **La descarga PNG sigue intacta por construcción**: el brillo es **hermano** de `passRef`,
-  así que `toPng(passRef)` nunca lo captura. La funcionalidad de negocio no se toca.
-- Todo desactivado con `prefers-reduced-motion`.
-
-### 2.3 Microdetalle — Toasts que se desvanecen como humo
-**Archivos:** `src/components/ui/sonner.tsx`, `src/styles.css`
-
-- Superficie **glass** (blur + saturación), esquinas `rounded-2xl`, ring sutil.
-- **Salida con desenfoque** (`filter: blur` en `[data-removed]`) — técnica de _blur para
-  enmascarar transiciones_ (Emil): el toast se disuelve en lugar de cortarse en seco.
-- Anulado por el kill-switch global de reduced-motion.
+- **Grid asimétrico de tiles.** Cada superficie es un mosaico de piezas de tamaños distintos
+  (2×2, 2×1, 1×2, 1×1). Nada de rejillas uniformes aburridas; nada de amontonamiento.
+- **Espacios negativos amplios.** `gap-3`/`gap-4` entre tiles, `py-20 sm:py-28` entre secciones.
+  Todo respira.
+- **Jerarquía tipográfica de 3 tamaños.** Display (`font-display`, títulos), body, small. Sin
+  escalas intermedias que ensucien.
+- **Paleta limitada. PUNTO.** (ver §2).
+- **Animaciones sutiles.** Fade + leve subida, stagger corto, hover delicado. Cero parallax,
+  cero 3D, cero mouse-glow caótico. Todo respeta `prefers-reduced-motion`.
+- **Bordes redondeados generosos:** `rounded-3xl` (24px) en tiles y cards.
+- **Sombras casi nulas.** Se prefiere `ring-1 ring-slate-200/70` (claridad) sobre sombras
+  pesadas (profundidad). Elevación con color, no con blur.
+- **Mobile-first real.** Cada tile perfecto en 375px; verificado que **nada se corta ni
+  desborda** (`scrollWidth == viewport`). El grid colapsa a 1 columna en móvil.
 
 ---
 
-## 3. Skills aplicadas
-- **emil-design-eng** — cargada y aplicada: curvas de easing fuertes, nunca `scale(0)`,
-  springs para interacciones decorativas de ratón, blur para enmascarar transiciones,
-  transform/opacity-only para GPU. (La app ya cumplía gran parte → confirmó "elevar, no romper").
-- **threejs-fundamentals / geometry / materials / shaders / lighting-como-glow** — escena R3F,
-  shaders GLSL propios (fresnel, dots procedurales, pulso de arcos), instancing ligero.
-- **impeccable / taste-skill / ui-ux-pro-max** — jerarquía, contraste, cohesión de marca,
-  legibilidad sobre espectáculo.
-- **ui-animation / css-animation** — vocabulario de motion, keyframes GPU, breathing.
+## 2. Paleta
 
-> Skills mencionadas en el brief que no existen como tal en este entorno: `review-animations`
-> (su función de revisión la cubre `ui-animation`). `brand`/`brandkit`/`design-system` existen
-> pero su salida principal es generación de imágenes/branding — no aplicaban a esta fase de
-> ingeniería de producto.
+Cuatro colores. Se usan como literales Tailwind (`bg-[#0c1a2e]`, `text-[#38bdf8]`) porque el
+token `sky-400` del proyecto es un pastel OKLCH que se apaga sobre navy — el Bento necesita el
+sky-400 vivo real.
 
----
+| Rol | Valor | Uso |
+| --- | --- | --- |
+| **Navy** | `#0c1a2e` | Tiles oscuros (command center, hero, features), texto principal sobre claro |
+| **Sky accent** | `#38bdf8` (hover `#5cc7f9`) | CTAs, badges, iconos, números destacados, tier popular |
+| **Sky icon** | `#0ea5e9` | Iconos/acento sobre fondos claros (contraste sobre blanco) |
+| **Blanco** | `#ffffff` | Tiles claros |
+| **Slate** | `slate-50` / `slate-500` / `slate-200` | Fondos de sección, texto secundario, rings |
 
-## 4. Verificación (evidencia real, no "confía en mí")
-Todo verificado en el dev server de esta sesión (puerto 5182), no en teoría:
+Regla de contraste: navy tile → texto blanco + `text-white/70` secundario + `#38bdf8` acento.
+Tile blanco → texto `#0c1a2e` + `text-slate-500` secundario + `#0ea5e9`/`#38bdf8` acento.
 
-- **Hero desktop:** canvas WebGL montado (1425×819), **0 errores de consola**, planeta + balizas
-  + atmósfera + estrellas renderizando; parallax de cámara y tilt confirmados.
-- **Hero móvil (375px):** `canvasMounted: false` → fallback CSS, three no se descarga.
-- **Boarding pass:** montado vía ruta de prueba temporal (creada y **eliminada** tras validar);
-  tilt 3D confirmado (`transform` pasó de `none` a `matrix3d` al mover el puntero); breathing
-  activo; **0 errores**.
-- **Calidad de código:** `tsc --noEmit` limpio en todo lo tocado (el único error preexistente,
-  `explore.index.tsx:258`, **no es mío**); `eslint` exit 0; `prettier` aplicado.
-- `routeTree.gen.ts` regenerado limpio (sin restos de la ruta de prueba).
+Colores semánticos que se conservan por significado (no decorativos): `amber` (trial/estrellas),
+`emerald` (plan actual/upcoming). Todo lo demás es navy/sky/white/slate.
 
 ---
 
-## 5. Roadmap — el resto de la visión (documentado para continuar)
-Estas piezas del brief están **diseñadas pero no implementadas** en esta sesión (para no
-entregar un diff enorme sin verificar sobre una app de pagos). Orden sugerido:
+## 3. Patrones de tiles por pantalla
 
-1. **Bloom real** en el hero — resolver `EffectComposer` (o `postprocessing` vanilla con un
-   `RenderPass`+`UnrealBloomPass` manual) para el glow físico.
-2. **Globo 3D del dashboard** — migrar de cobe a la misma escena R3F (atmósfera + balizas que
-   emiten luz + pulsaciones), reutilizando `HeroAtmosphereScene`.
-3. **Mapa del viaje en 3D** — ruta dibujada en 3D con arcos + efecto "sobrevolar", lazy por ruta.
-4. **Transición entre páginas cinematográfica** — "disolverse en aire" (blur+scale+opacity)
-   sobre `RouteTransition.tsx`, con fallback CSS.
-5. **Loading screen "universo"** mientras se genera el itinerario.
-6. **Panel de salidas del dashboard** tipo flip-clock con luz reflejada.
-7. **Días del itinerario** como capas de parallax con profundidad.
-8. **Microdetalles restantes**: cursor con historia (sutil, opt-in), foco épico en inputs,
-   checkboxes como micro-obras, loaders con personalidad.
-9. **Figma + Higgsfield** — cuando estén autorizados: exportar el sistema a Figma y generar
-   assets complejos.
+### Dashboard — "command center"
+`src/routes/_authenticated/dashboard.tsx`
+- Banda oscura de 3 tiles navy asimétricos en `lg:grid-cols-4`:
+  - **Bienvenida** `lg:col-span-2` (saludo + CTA sky).
+  - **Globo** `lg:col-span-2 lg:row-span-2` (medio, alto) — destinos reales del usuario.
+  - **Próximo viaje** `lg:col-span-2` (countdown + clima) o prompt si no hay ninguno.
+- Fila de **stats destacadas** (`StatTile`): Viajes · Países · Días planeados · Guardados,
+  derivadas de datos reales.
+
+### Landing hero
+`src/components/landing/HeroSection.tsx`
+- Hero navy full-width, 2 columnas: texto claro + **mockup del producto real** (tarjeta de
+  itinerario). Sin Three.js. Entrada = fade + subida escalonada.
+
+### Landing — destinos (mosaico asimétrico)
+`src/components/landing/PopularDestinationsSection.tsx`
+- `grid grid-cols-2 lg:grid-cols-4 auto-rows-[…] grid-flow-dense` con `BENTO_SPANS`:
+  Bali `col-span-2 row-span-2` (feature), NY/Islandia `col-span-2` (ancho), Tailandia
+  `row-span-2` (alto), resto `1×1`.
+
+### Landing — cómo funciona
+`src/components/landing/HowItWorksSection.tsx`
+- Paso 1 = tile navy grande `lg:col-span-2 lg:row-span-2`; pasos 2-3 = tiles claros.
+
+### Landing — showcase
+`src/components/landing/ProductShowcaseSection.tsx`
+- Ladrillo asimétrico `lg:grid-cols-3 items-start`: Map & Feed `col-span-2` (anchos),
+  Schedule & Postcard `1 col`.
+
+### Landing — testimonios
+`src/components/landing/TestimonialsSection.tsx`
+- Quote destacada navy `lg:row-span-2` (alta) + dos cards anchas claras `lg:col-span-2`.
+
+### Feed — Masonry Bento
+`src/routes/explore.index.tsx`
+- Columnas CSS `columns-1 sm:columns-2 lg:columns-3` + `break-inside-avoid`. Alturas naturales
+  → efecto masonry. Cards `featured` (retrato `aspect-[3/4]`) para mezcla de tamaños.
+
+### Precios — grid limpio
+`src/routes/pricing.tsx` + `src/components/ui/pricing-glass.tsx`
+- Página navy, `md:grid-cols-3` equitativo (sin amontonamiento). Glassmorphism (ruido +
+  mouse-glow) **retirado** por claridad. Tier popular resaltado con `ring-[#38bdf8]/45` y CTA
+  `#38bdf8`. Lógica de Stripe intacta.
+
+### Itinerario
+`src/routes/_authenticated/my-trip.$tripId.tsx`
+- Fix crítico móvil: `grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px]` (la falta de columna
+  base explícita hacía que la card del día se estirara al ancho de la imagen y quedara recortada
+  por `overflow-x:clip`). Day cards `rounded-3xl`, densidad reducida en móvil (chip de hora más
+  compacto) para que el contenido respire.
 
 ---
 
-## 6. Cómo probarlo
-```bash
-npm run dev           # dev server
-# Landing "/" en desktop → hero 3D. En móvil → fallback CSS.
-# Boarding pass: en un viaje real (/my-trip/$tripId) — pasa el ratón por encima.
-```
-Dependencias añadidas: `three`, `@react-three/fiber`, `@react-three/drei`,
-`@react-three/postprocessing` (todas **lazy**, fuera del bundle principal).
+## 4. Variantes de componentes reutilizables
+
+- **`DestinationCard` — prop `fill`** (`src/components/ui/destination-card.tsx`): en vez de
+  bloquear `aspect-[4/5]`, la card llena la altura de su celda (`h-full`). Permite mosaicos de
+  tamaños variados. Sin `fill`, mantiene el aspect fijo para otros usos.
+- **`FeedCard` — prop `featured`** (`src/routes/explore.index.tsx`): imagen en retrato
+  (`aspect-[3/4]`) en vez de `aspect-[4/3]`, para dar mezcla de alturas al masonry.
+- **`StatTile`** (dashboard): tile blanco con icono en pastilla `#38bdf8/10`, número grande
+  `tabular-nums` navy y label slate.
+
+---
+
+## 5. Motion
+
+- Curva única de la casa: `EASE_OUT = [0.23, 1, 0.32, 1]` (`src/lib/motion.ts`).
+- Entradas: fade + subida de ~16px, stagger de 60-140 ms. Springs suaves donde aporta
+  (`stiffness ~280, damping ~26`).
+- Todo desactivable con `useReducedMotion` + kill-switch global en `src/styles.css`.
+- Nada que ralentice: solo `transform`/`opacity` (GPU). Sin parallax de scroll ni de ratón.
+
+---
+
+## 6. Rendimiento
+
+- **Three.js eliminado** por completo (deps `three`/`@react-three/*` desinstaladas, chunk de
+  ~867KB fuera del bundle). La velocidad ganó sobre el espectáculo.
+- Masonry con CSS puro (`columns`), sin librerías.
+- Lazy-loading conservado donde ya existía (globo cobe, calendario, pricing-glass, mapa).
+
+---
+
+## 7. Verificación
+
+Cada pantalla se validó en navegador (dev server) midiendo el DOM, no "a ojo":
+- **Overflow:** `document.documentElement.scrollWidth == viewport` a 320/375/1280px.
+- **Grids:** `gridTemplateColumns`/`gridAutoRows` resueltos y tamaños de tiles reales
+  (p. ej. destinos tiló exacto `593×416` / `593×200` / `288×416` / `288×200`; feed masonry
+  254px de varianza de altura).
+- **Colores:** `getComputedStyle` confirmó navy `rgb(12,26,46)` y accent `rgb(56,189,248)`.
+- Vistas tras auth/datos (dashboard, feed) se verificaron con rutas de prueba temporales que
+  renderizaban los componentes reales con mock data, y luego se eliminaron.
+- Calidad: `tsc --noEmit` **0 errores**, `eslint` limpio, Prettier aplicado, **build de
+  producción exit 0** en cada paso.
+
+> Nota: el subsistema de screenshots del preview estuvo caído durante la sesión, así que la
+> verificación fue **estructural** (medición del DOM) en lugar de capturas de pantalla.
+
+---
+
+## 8. Estado
+
+Rediseño Bento **completo** en toda la app, en este orden: Itinerario → Dashboard → Landing
+(hero + 4 secciones) → Feed → Precios. Un único sistema de diseño coherente, sin Three.js.

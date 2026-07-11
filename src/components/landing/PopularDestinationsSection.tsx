@@ -7,6 +7,20 @@ import { Sparkles } from "lucide-react";
 import { AuthModal } from "@/components/AuthModal";
 import { DestinationCard } from "@/components/ui/destination-card";
 import { RevealGroup, RevealItem, ScrollReveal } from "@/components/ui/ScrollReveal";
+import { cn } from "@/lib/utils";
+
+// Mosaico Bento asimétrico: Bali manda como pieza grande, y las demás respiran
+// en tamaños variados (ancho, alto, 1×1). grid-flow-dense rellena huecos.
+const BENTO_SPANS = [
+  "col-span-2 row-span-2", // Bali — feature
+  "", // Tokio
+  "", // París
+  "col-span-2", // Nueva York — ancho
+  "row-span-2", // Tailandia — alto
+  "", // Roma
+  "", // Maldivas
+  "col-span-2", // Islandia — ancho
+];
 
 type Destination = {
   name: string;
@@ -124,23 +138,27 @@ export function PopularDestinationsSection() {
         <ScrollReveal direction="left" amount={0.4}>
           <div className="mb-10 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-[#0c1a2e] sm:text-4xl">
                 {t("popular.title")}
               </h2>
-              <p className="mt-2 max-w-xl text-base text-sky-600">{t("popular.subtitle")}</p>
+              <p className="mt-2 max-w-xl text-base text-slate-500">{t("popular.subtitle")}</p>
             </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-100 px-3 py-1.5 text-xs font-semibold text-sky-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#38bdf8]/10 px-3 py-1.5 text-xs font-semibold text-[#0ea5e9] ring-1 ring-[#38bdf8]/20">
               <Sparkles className="h-3.5 w-3.5" />
               {t("popular.badge")}
             </span>
           </div>
         </ScrollReveal>
 
-        {/* Cards en cascada: stagger de 80 ms */}
-        <RevealGroup stagger={0.08} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {DESTINATIONS.map((d) => (
-            <RevealItem key={d.name} className="h-full">
+        {/* Mosaico Bento: tamaños variados, stagger de 80 ms */}
+        <RevealGroup
+          stagger={0.08}
+          className="grid auto-rows-[150px] grid-flow-dense grid-cols-2 gap-3 sm:auto-rows-[180px] sm:gap-4 lg:auto-rows-[200px] lg:grid-cols-4"
+        >
+          {DESTINATIONS.map((d, i) => (
+            <RevealItem key={d.name} className={cn(BENTO_SPANS[i], "h-full")}>
               <DestinationCard
+                fill
                 imageUrl={d.image}
                 location={d.name}
                 country={d.country}

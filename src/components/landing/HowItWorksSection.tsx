@@ -1,6 +1,6 @@
 // "Cómo funciona" con metáforas de aeropuerto: Check-in → Gate → Boarding.
-// Los pasos entran en secuencia (stagger largo) y la línea que los une se
-// dibuja como una pista de despegue mientras la sección entra en pantalla.
+// Mosaico Bento asimétrico: el primer paso manda como pieza grande (navy) y los
+// dos siguientes lo acompañan en tiles claros. Entrada en cascada sutil.
 
 import { ClipboardCheck, DoorOpen, PlaneTakeoff } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -30,46 +30,67 @@ export function HowItWorksSection() {
       description: t("how.step3Desc"),
     },
   ];
+
   return (
-    <section id="how-it-works" className="relative bg-sky-50 py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section id="how-it-works" className="relative bg-slate-50 py-20 sm:py-28">
+      <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         {/* Cabecera con blur que se resuelve — distinto del resto de secciones */}
         <ScrollReveal direction="blur" amount={0.5}>
           <div className="mx-auto max-w-2xl text-center">
-            <span className="font-flight text-xs font-semibold uppercase tracking-[0.28em] text-sky-500">
+            <span className="font-flight text-xs font-semibold uppercase tracking-[0.28em] text-[#0ea5e9]">
               {t("how.kicker")}
             </span>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-[#0c1a2e] sm:text-4xl">
               {t("how.title")}
             </h2>
-            <p className="mt-4 text-lg text-sky-600">{t("how.subtitle")}</p>
+            <p className="mt-4 text-lg text-slate-500">{t("how.subtitle")}</p>
           </div>
         </ScrollReveal>
 
-        {/* Pasos en secuencia clara (stagger largo, 180 ms) */}
+        {/* Bento asimétrico: paso 1 grande (navy), pasos 2-3 en tiles claros */}
         <RevealGroup
-          stagger={0.18}
+          stagger={0.14}
           amount={0.25}
-          className="relative mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3"
+          className="mt-14 grid gap-4 lg:auto-rows-fr lg:grid-cols-3"
         >
-          {/* Línea de pista que conecta los pasos en desktop */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute left-[12%] right-[12%] top-7 hidden h-px bg-[repeating-linear-gradient(90deg,rgba(30,107,154,0.35)_0_12px,transparent_12px_24px)] lg:block"
-          />
-          {steps.map((step) => (
-            <RevealItem key={step.code}>
-              <div className="group relative h-full rounded-3xl bg-white p-8 shadow-[0_8px_32px_rgba(46,107,138,0.06)] ring-1 ring-sky-100 transition-all hover:shadow-[0_12px_40px_rgba(46,107,138,0.1)] hover:-translate-y-1">
-                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-600 transition-colors group-hover:bg-sky-600 group-hover:text-white">
-                  <step.icon className="h-6 w-6" />
+          {/* Paso 1 — feature */}
+          <RevealItem className="lg:col-span-2 lg:row-span-2">
+            <div className="flex h-full flex-col justify-between rounded-3xl bg-[#0c1a2e] p-8 sm:p-10">
+              <div className="flex items-start justify-between">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#38bdf8] text-[#0c1a2e]">
+                  <ClipboardCheck className="h-7 w-7" />
                 </div>
-                <span className="absolute top-8 right-8 font-flight text-xs font-bold uppercase tracking-[0.22em] text-sky-300 select-none">
-                  {step.code}
+                <span className="font-flight text-xs font-bold uppercase tracking-[0.22em] text-[#38bdf8]/70 select-none">
+                  {steps[0].code}
                 </span>
-                <h3 className="mt-6 font-display text-xl font-semibold text-sky-900">
+              </div>
+              <div className="mt-10">
+                <h3 className="font-display text-2xl font-bold text-white sm:text-3xl">
+                  {steps[0].title}
+                </h3>
+                <p className="mt-3 max-w-md leading-relaxed text-white/65">
+                  {steps[0].description}
+                </p>
+              </div>
+            </div>
+          </RevealItem>
+
+          {/* Pasos 2 y 3 — tiles claros */}
+          {steps.slice(1).map((step) => (
+            <RevealItem key={step.code}>
+              <div className="group flex h-full flex-col rounded-3xl bg-white p-7 ring-1 ring-slate-200/70 transition hover:ring-[#38bdf8]/40">
+                <div className="flex items-start justify-between">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#38bdf8]/10 text-[#0ea5e9] transition-colors group-hover:bg-[#38bdf8] group-hover:text-[#0c1a2e]">
+                    <step.icon className="h-6 w-6" />
+                  </div>
+                  <span className="font-flight text-xs font-bold uppercase tracking-[0.22em] text-slate-300 select-none">
+                    {step.code}
+                  </span>
+                </div>
+                <h3 className="mt-5 font-display text-xl font-semibold text-[#0c1a2e]">
                   {step.title}
                 </h3>
-                <p className="mt-3 text-sky-600 leading-relaxed">{step.description}</p>
+                <p className="mt-2 leading-relaxed text-slate-500">{step.description}</p>
               </div>
             </RevealItem>
           ))}

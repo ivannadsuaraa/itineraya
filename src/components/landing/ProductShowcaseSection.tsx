@@ -24,30 +24,39 @@ export function ProductShowcaseSection() {
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <ScrollReveal direction="up" amount={0.5}>
           <div className="mx-auto max-w-2xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
+            <span className="text-sm font-semibold uppercase tracking-wider text-[#0ea5e9]">
               {t("showcase.kicker")}
             </span>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-[#0c1a2e] sm:text-4xl">
               {t("showcase.title")}
             </h2>
-            <p className="mt-4 text-lg text-sky-600">{t("showcase.subtitle")}</p>
+            <p className="mt-4 text-lg text-slate-500">{t("showcase.subtitle")}</p>
           </div>
         </ScrollReveal>
 
-        {/* Cada bloque entra desde su lado del grid: izquierda/derecha alternos */}
-        <div className="mt-16 grid gap-6 lg:grid-cols-2">
-          <ScrollReveal direction="left" amount={0.25}>
-            <MapBlock />
-          </ScrollReveal>
-          <ScrollReveal direction="right" amount={0.25} delay={0.08}>
-            <ScheduleBlock />
-          </ScrollReveal>
-          <ScrollReveal direction="left" amount={0.25}>
-            <PostcardBlock />
-          </ScrollReveal>
-          <ScrollReveal direction="right" amount={0.25} delay={0.08}>
-            <FeedBlock />
-          </ScrollReveal>
+        {/* Mosaico Bento asimétrico: mapa y feed anchos (2 col), agenda y
+            postales normales (1 col). items-start → alturas naturales limpias. */}
+        <div className="mt-14 grid gap-4 sm:gap-6 lg:grid-cols-3 lg:items-start">
+          <div className="lg:col-span-2">
+            <ScrollReveal direction="up" amount={0.2}>
+              <MapBlock />
+            </ScrollReveal>
+          </div>
+          <div>
+            <ScrollReveal direction="up" amount={0.2} delay={0.06}>
+              <ScheduleBlock />
+            </ScrollReveal>
+          </div>
+          <div>
+            <ScrollReveal direction="up" amount={0.2}>
+              <PostcardBlock />
+            </ScrollReveal>
+          </div>
+          <div className="lg:col-span-2">
+            <ScrollReveal direction="up" amount={0.2} delay={0.06}>
+              <FeedBlock />
+            </ScrollReveal>
+          </div>
         </div>
       </div>
     </section>
@@ -66,15 +75,15 @@ function BlockShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="group overflow-hidden rounded-3xl bg-sky-50/60 ring-1 ring-sky-100 transition-all hover:shadow-xl hover:shadow-sky-900/8">
+    <div className="group h-full overflow-hidden rounded-3xl bg-slate-50 ring-1 ring-slate-200/70 transition-all hover:ring-[#38bdf8]/40">
       <div className="p-6 pb-0 sm:p-8 sm:pb-0">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-900 text-white">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0c1a2e] text-white">
             {icon}
           </div>
-          <h3 className="font-display text-xl font-bold text-sky-900">{title}</h3>
+          <h3 className="font-display text-xl font-bold text-[#0c1a2e]">{title}</h3>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-sky-700/80 sm:text-base">{description}</p>
+        <p className="mt-3 text-sm leading-relaxed text-slate-500 sm:text-base">{description}</p>
       </div>
       <div className="mt-6 px-6 sm:px-8">{children}</div>
     </div>

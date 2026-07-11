@@ -1,6 +1,23 @@
 import { Star } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { RevealGroup, RevealItem, ScrollReveal } from "@/components/ui/ScrollReveal";
+import { cn } from "@/lib/utils";
+
+function Stars({ dark }: { dark?: boolean }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={cn(
+            "h-4 w-4",
+            dark ? "fill-[#38bdf8] text-[#38bdf8]" : "fill-amber-400 text-amber-400",
+          )}
+        />
+      ))}
+    </div>
+  );
+}
 
 export function TestimonialsSection() {
   const { t } = useTranslation();
@@ -9,75 +26,86 @@ export function TestimonialsSection() {
       name: "María García",
       role: t("testimonials.t1Role"),
       avatar: "M",
-      color: "bg-rose-100 text-rose-600",
       text: t("testimonials.t1Text"),
     },
     {
       name: "Carlos Mendoza",
       role: t("testimonials.t2Role"),
       avatar: "C",
-      color: "bg-emerald-100 text-emerald-600",
       text: t("testimonials.t2Text"),
     },
     {
       name: "Laura Fernández",
       role: t("testimonials.t3Role"),
       avatar: "L",
-      color: "bg-amber-100 text-amber-600",
       text: t("testimonials.t3Text"),
     },
   ];
-  return (
-    <section id="testimonials" className="relative overflow-hidden bg-sky-50 py-20 sm:py-28">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-0 left-0 h-[300px] w-[300px] rounded-full bg-sky-200/30 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[250px] w-[250px] rounded-full bg-sky-300/20 blur-3xl" />
-      </div>
+  const [feature, ...rest] = testimonials;
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  return (
+    <section id="testimonials" className="relative overflow-hidden bg-slate-50 py-20 sm:py-28">
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
         {/* Cabecera con scale — la sección "respira" al entrar */}
         <ScrollReveal direction="scale" amount={0.5}>
           <div className="mx-auto max-w-2xl text-center">
-            <span className="text-sm font-semibold uppercase tracking-wider text-sky-500">
+            <span className="text-sm font-semibold uppercase tracking-wider text-[#0ea5e9]">
               {t("testimonials.kicker")}
             </span>
-            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-sky-900 sm:text-4xl">
+            <h2 className="mt-3 font-display text-3xl font-bold tracking-tight text-[#0c1a2e] sm:text-4xl">
               {t("testimonials.title")}
             </h2>
-            <p className="mt-4 text-lg text-sky-600">{t("testimonials.subtitle")}</p>
+            <p className="mt-4 text-lg text-slate-500">{t("testimonials.subtitle")}</p>
           </div>
         </ScrollReveal>
 
+        {/* Bento: quote destacada (navy, alta) + dos anchas de apoyo */}
         <RevealGroup
           stagger={0.1}
           amount={0.2}
-          className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+          className="mt-14 grid gap-4 lg:auto-rows-fr lg:grid-cols-3"
         >
-          {testimonials.map((t) => (
-            <RevealItem
-              key={t.name}
-              className="relative rounded-3xl bg-white p-8 shadow-[0_8px_32px_rgba(46,107,138,0.06)] ring-1 ring-sky-100 transition-all hover:shadow-[0_12px_40px_rgba(46,107,138,0.1)] hover:-translate-y-1"
-            >
-              {/* Stars */}
-              <div className="flex gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                ))}
+          {/* Feature — navy, tall */}
+          <RevealItem className="lg:row-span-2">
+            <figure className="flex h-full flex-col justify-between rounded-3xl bg-[#0c1a2e] p-8">
+              <div>
+                <Stars dark />
+                <blockquote className="mt-5 font-display text-xl font-semibold leading-snug text-white sm:text-2xl">
+                  "{feature.text}"
+                </blockquote>
               </div>
-
-              <p className="mt-5 text-sky-700 leading-relaxed">"{t.text}"</p>
-
-              <div className="mt-6 flex items-center gap-3">
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${t.color}`}
-                >
-                  {t.avatar}
+              <figcaption className="mt-8 flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#38bdf8] text-sm font-bold text-[#0c1a2e]">
+                  {feature.avatar}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-sky-900">{t.name}</p>
-                  <p className="text-xs text-sky-500">{t.role}</p>
+                  <p className="text-sm font-semibold text-white">{feature.name}</p>
+                  <p className="text-xs text-white/55">{feature.role}</p>
                 </div>
-              </div>
+              </figcaption>
+            </figure>
+          </RevealItem>
+
+          {/* Apoyo — anchas, claras */}
+          {rest.map((r) => (
+            <RevealItem key={r.name} className="lg:col-span-2">
+              <figure className="flex h-full flex-col justify-between rounded-3xl bg-white p-7 ring-1 ring-slate-200/70 transition hover:ring-[#38bdf8]/40">
+                <div>
+                  <Stars />
+                  <blockquote className="mt-4 leading-relaxed text-slate-700">
+                    "{r.text}"
+                  </blockquote>
+                </div>
+                <figcaption className="mt-6 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#38bdf8]/10 text-sm font-bold text-[#0ea5e9]">
+                    {r.avatar}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#0c1a2e]">{r.name}</p>
+                    <p className="text-xs text-slate-400">{r.role}</p>
+                  </div>
+                </figcaption>
+              </figure>
             </RevealItem>
           ))}
         </RevealGroup>

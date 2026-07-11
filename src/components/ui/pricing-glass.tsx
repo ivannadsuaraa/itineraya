@@ -1,10 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
-const NOISE_PATTERN =
-  'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")';
 
 export type TierType = {
   name: string;
@@ -22,58 +19,29 @@ export type TierType = {
 
 function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) {
   const { t } = useTranslation();
-  const mouseX = React.useRef(0);
-  const mouseY = React.useRef(0);
-  const cardRef = React.useRef<HTMLDivElement>(null);
-  const glowRef = React.useRef<HTMLDivElement>(null);
-
-  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    mouseX.current = e.clientX - rect.left;
-    mouseY.current = e.clientY - rect.top;
-    if (glowRef.current) {
-      glowRef.current.style.background = `radial-gradient(600px at ${mouseX.current}px ${mouseY.current}px, rgba(255,255,255,0.12), transparent)`;
-    }
-  }
-
   const displayPrice = isAnnual ? tier.priceAnnual : tier.priceMonthly;
   const isZero = displayPrice === "0";
 
   return (
     <motion.div
-      ref={cardRef}
-      onMouseMove={handleMouseMove}
       variants={{
-        hidden: { opacity: 0, y: 48, scale: 0.96 },
+        hidden: { opacity: 0, y: 32, scale: 0.98 },
         visible: {
           opacity: 1,
           y: 0,
           scale: 1,
-          transition: { type: "spring", stiffness: 280, damping: 24 },
+          transition: { type: "spring", stiffness: 280, damping: 26 },
         },
       }}
       className={[
-        "group relative flex w-full flex-col overflow-hidden rounded-[28px]",
-        "bg-white/[0.04] backdrop-blur-2xl",
+        "group relative flex w-full flex-col overflow-hidden rounded-3xl transition-colors",
         tier.isCurrent
-          ? "border border-emerald-400/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_32px_64px_-12px_rgba(0,0,0,0.7)] md:-translate-y-3"
+          ? "bg-emerald-500/[0.06] ring-1 ring-emerald-400/40 md:-translate-y-3"
           : tier.isPopular
-            ? "border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.35),0_32px_64px_-12px_rgba(0,0,0,0.7)] md:-translate-y-3"
-            : "border border-white/8 shadow-[inset_0_1px_1px_rgba(255,255,255,0.12),0_20px_48px_-12px_rgba(0,0,0,0.55)]",
+            ? "bg-[#38bdf8]/[0.06] ring-1 ring-[#38bdf8]/45 md:-translate-y-3"
+            : "bg-white/[0.03] ring-1 ring-white/10",
       ].join(" ")}
     >
-      {/* Mouse glow */}
-      <div
-        ref={glowRef}
-        className="pointer-events-none absolute inset-0 z-0 rounded-[28px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-      />
-
-      {/* Noise texture */}
-      <div
-        className="pointer-events-none absolute inset-0 z-0 rounded-[28px] opacity-[0.03] mix-blend-overlay"
-        style={{ backgroundImage: NOISE_PATTERN }}
-      />
-
       {/* Popular / Current badge */}
       {(tier.isPopular || tier.isCurrent) && (
         <div className="absolute left-1/2 top-0 -translate-x-1/2">
@@ -82,7 +50,7 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
               "rounded-b-xl border-b border-x px-4 py-1 text-[10px] font-bold uppercase tracking-widest",
               tier.isCurrent
                 ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-300"
-                : "border-white/15 bg-white/10 text-white/85",
+                : "border-transparent bg-[#38bdf8] text-[#0c1a2e]",
             ].join(" ")}
           >
             {tier.isCurrent ? t("pricing.current") : t("pricing.popular")}
@@ -136,8 +104,8 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
               }}
               className="flex items-start gap-3"
             >
-              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/12 ring-1 ring-white/15">
-                <Check className="h-3 w-3 text-white/85" strokeWidth={3} />
+              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#38bdf8]/15 ring-1 ring-[#38bdf8]/25">
+                <Check className="h-3 w-3 text-[#38bdf8]" strokeWidth={3} />
               </div>
               <span className="text-sm font-medium leading-snug text-white/65">{feat}</span>
             </motion.li>
@@ -158,7 +126,7 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
             tier.isCurrent
               ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/30 cursor-default"
               : tier.isPopular
-                ? "bg-white text-sky-950 hover:bg-white/92 shadow-lg"
+                ? "bg-[#38bdf8] text-[#0c1a2e] hover:bg-[#5cc7f9]"
                 : "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/18",
           ].join(" ")}
         >
@@ -218,7 +186,7 @@ export function PricingGlass({
             ].join(" ")}
           >
             {t("pricing.billingAnnual")}
-            <span className="absolute -right-5 -top-3 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-bold text-sky-950">
+            <span className="absolute -right-5 -top-3 rounded-full bg-[#38bdf8] px-1.5 py-0.5 text-[9px] font-bold text-[#0c1a2e]">
               -20%
             </span>
           </button>
