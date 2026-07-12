@@ -1,5 +1,6 @@
 {
   "framework": null,
+  "outputDirectory": ".vercel/output",
   "regions": ["cdg1"],
   "headers": [
     {
