@@ -133,6 +133,13 @@ function DestinationPage() {
           alt={`Itinerario de viaje a ${d.name}`}
           className="h-full w-full object-cover"
           fetchPriority="high"
+          onError={(e) => {
+            // Si la foto curada falla (Unsplash retira IDs), degradar a una
+            // foto por keyword en vez de romper el hero de una landing SEO.
+            const img = e.currentTarget;
+            const fallback = `https://loremflickr.com/1600/900/${encodeURIComponent(d.name)},travel`;
+            if (img.src !== fallback) img.src = fallback;
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-sky-950/90 via-sky-950/40 to-sky-950/30" />
         <div className="absolute inset-x-0 bottom-0 p-6 pb-10 md:p-10">
@@ -188,9 +195,7 @@ function DestinationPage() {
 
         {/* Itinerario día a día */}
         <section className="mt-12">
-          <h2 className="font-display text-2xl font-bold text-sky-900">
-            El itinerario, día a día
-          </h2>
+          <h2 className="font-display text-2xl font-bold text-sky-900">El itinerario, día a día</h2>
           <div className="mt-6 space-y-5">
             {d.days.map((day, i) => (
               <article
@@ -303,6 +308,11 @@ function RelatedDestinations({ current }: { current: SeoDestination }) {
                 alt={`Itinerario de ${r.name}`}
                 loading="lazy"
                 className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                onError={(e) => {
+                  const img = e.currentTarget;
+                  const fallback = `https://loremflickr.com/800/600/${encodeURIComponent(r.name)},travel`;
+                  if (img.src !== fallback) img.src = fallback;
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-3 left-4 right-4 text-white">

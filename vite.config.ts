@@ -27,5 +27,10 @@ export default defineConfig(async ({ command }) => {
 
   plugins.push(viteReact());
 
-  return { plugins };
+  return {
+    plugins,
+    // @resvg/resvg-js es un módulo nativo (.node): no debe pasar por Rollup.
+    // Solo lo usa la ruta /api/og/$slug en runtime Node (Vercel).
+    ssr: { external: ["@resvg/resvg-js"] },
+  };
 });

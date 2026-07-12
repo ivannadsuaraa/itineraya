@@ -618,7 +618,16 @@
     "visualMapDownload": "Baixar",
     "visualMapDownloaded": "Mapa da viagem baixado ✨",
     "visualMapFooter": "Criado com Itineraya  ·  itineraya.com",
-    "visualMapAria": "Mapa ilustrado da viagem a {{destination}}"
+    "visualMapAria": "Mapa ilustrado da viagem a {{destination}}",
+    "limitTitle": "A sua próxima viagem está a um passo",
+    "limitTitleViajero": "Você usou os roteiros deste mês",
+    "limitSubtitle": "Você usou os 2 roteiros do plano gratuito. Desbloqueie esta viagem agora, sem assinatura.",
+    "limitSubtitleViajero": "Seu limite renova no dia 1 de cada mês. Não quer esperar?",
+    "limitPassTitle": "Passe de Viagem",
+    "limitPassDesc": "Pagamento único · desbloqueie este roteiro agora",
+    "limitUpgradeFree": "Ou plano Viajero: 5 viagens/mês + assistente IA",
+    "limitUpgradeViajero": "Atualizar para Explorador: viagens ilimitadas",
+    "limitRetry": "Já comprei — tentar de novo"
   },
   "tripmates": {
     "tag": "Companheiros de viagem",
@@ -677,7 +686,8 @@
     "saveLoginPrompt": "Entre para salvar inspirações",
     "goneTitle": "Este roteiro não está mais disponível",
     "goneBody": "Talvez o autor o tenha despublicado ou o link expirou. Mas você pode criar o seu em segundos!",
-    "goneCta": "Criar meu roteiro grátis"
+    "goneCta": "Criar meu roteiro grátis",
+    "stickyHint": "Gostou deste plano? Torne-o seu em 1 minuto"
   },
   "paywall": {
     "title": "Cadastre-se de graça para ver o roteiro completo",
@@ -740,7 +750,9 @@
     "buyPass": "Comprar Passe de Viagem (4,99€)",
     "limitCancel": "Voltar",
     "limitBannerFree": "{{count}} de {{limit}} roteiros usados no total",
-    "limitBannerViajero": "{{count}} de {{limit}} roteiros este mês"
+    "limitBannerViajero": "{{count}} de {{limit}} roteiros este mês",
+    "passTitle": "Passe de Viagem",
+    "passDesc": "Pagamento único · mais um roteiro completo, sem assinatura"
   },
   "inspire": {
     "back": "Voltar",

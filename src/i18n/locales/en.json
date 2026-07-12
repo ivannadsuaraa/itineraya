@@ -627,7 +627,16 @@
     "brochureRoute": "Trip route",
     "brochureDownloaded": "Trip brochure downloaded ✨",
     "brochureAria": "Brochure for the trip to {{destination}}",
-    "dayNavAria": "Day navigation"
+    "dayNavAria": "Day navigation",
+    "limitTitle": "Your next trip is one step away",
+    "limitTitleViajero": "You have used this month's itineraries",
+    "limitSubtitle": "You have used the 2 free-plan itineraries. Unlock this trip now — no subscription.",
+    "limitSubtitleViajero": "Your limit resets on the 1st of each month. Don't want to wait?",
+    "limitPassTitle": "Trip Pass",
+    "limitPassDesc": "One-time payment · unlock this itinerary now",
+    "limitUpgradeFree": "Or Viajero plan: 5 trips/month + AI assistant",
+    "limitUpgradeViajero": "Upgrade to Explorador: unlimited trips",
+    "limitRetry": "Already bought it — retry"
   },
   "tripmates": {
     "tag": "Tripmates",
@@ -686,7 +695,8 @@
     "saveLoginPrompt": "Sign in to save inspirations",
     "goneTitle": "This itinerary is no longer available",
     "goneBody": "The author may have unpublished it or the link expired. But you can create yours in seconds!",
-    "goneCta": "Create my free itinerary"
+    "goneCta": "Create my free itinerary",
+    "stickyHint": "Like this plan? Make it yours in 1 minute"
   },
   "paywall": {
     "title": "Sign up free to see the full itinerary",
@@ -749,7 +759,9 @@
     "buyPass": "Buy a Trip Pass (€4.99)",
     "limitCancel": "Go back",
     "limitBannerFree": "{{count}} of {{limit}} itineraries used in total",
-    "limitBannerViajero": "{{count}} of {{limit}} itineraries this month"
+    "limitBannerViajero": "{{count}} of {{limit}} itineraries this month",
+    "passTitle": "Trip Pass",
+    "passDesc": "One-time payment · one more full itinerary, no subscription"
   },
   "inspire": {
     "back": "Back",

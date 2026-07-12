@@ -2,6 +2,9 @@
 // Páginas en español a propósito: apuntan a keywords en español (GROWTH_REPORT §2);
 // las versiones EN irían bajo /en/travel/* con hreflang cuando se traduzcan.
 
+import { SEO_DESTINATIONS_EUROPA } from "./seo-destinations-europa";
+import { SEO_DESTINATIONS_MUNDO } from "./seo-destinations-mundo";
+
 export type SeoDay = {
   title: string;
   items: string[];
@@ -32,7 +35,10 @@ export type SeoDestination = {
 
 const U = "?w=1600&q=75&auto=format&fit=crop";
 
-export const SEO_DESTINATIONS: SeoDestination[] = [
+// Los 5 destinos fundacionales viven aquí; los 30 añadidos en la expansión
+// SEO del 2026-07-12 están en seo-destinations-europa.ts (20) y
+// seo-destinations-mundo.ts (10), concatenados al final del fichero.
+const SEO_DESTINATIONS_BASE: SeoDestination[] = [
   {
     slug: "paris",
     name: "París",
@@ -469,6 +475,12 @@ export const SEO_DESTINATIONS: SeoDestination[] = [
     ],
     related: ["tokio", "barcelona", "paris"],
   },
+];
+
+export const SEO_DESTINATIONS: SeoDestination[] = [
+  ...SEO_DESTINATIONS_BASE,
+  ...SEO_DESTINATIONS_EUROPA,
+  ...SEO_DESTINATIONS_MUNDO,
 ];
 
 export function getSeoDestination(slug: string): SeoDestination | undefined {

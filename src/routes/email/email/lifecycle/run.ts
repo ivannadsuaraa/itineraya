@@ -86,7 +86,11 @@ export const Route = createFileRoute("/email/email/lifecycle/run")({
         }
         const users: UserLite[] = (usersPage?.users ?? [])
           .filter((u) => u.email && u.created_at)
-          .map((u) => ({ id: u.id, email: u.email as string, createdAt: new Date(u.created_at).getTime() }));
+          .map((u) => ({
+            id: u.id,
+            email: u.email as string,
+            createdAt: new Date(u.created_at).getTime(),
+          }));
         const userById = new Map(users.map((u) => [u.id, u]));
         const userIds = users.map((u) => u.id);
 
@@ -112,7 +116,10 @@ export const Route = createFileRoute("/email/email/lifecycle/run")({
           const { data: sup } = await supabaseAdmin
             .from("suppressed_emails")
             .select("email")
-            .in("email", users.map((u) => u.email.toLowerCase()));
+            .in(
+              "email",
+              users.map((u) => u.email.toLowerCase()),
+            );
           for (const s of sup ?? []) suppressed.add(s.email.toLowerCase());
         }
 
@@ -187,14 +194,20 @@ export const Route = createFileRoute("/email/email/lifecycle/run")({
             });
           }
 
-          // E4 — fin de trial (ventana de ±1 día alrededor de trial_ends_at)
-          const trialEnds = profile?.trial_ends_at ? new Date(profile.trial_ends_at).getTime() : null;
-          if (
-            trialEnds !== null &&
-            trialEnds > now - DAY &&
-            trialEnds <= now + DAY &&
-            (profile?.plan ?? "free") === "free"
-          ) {
+          // E4a — trial expira mañana (ventana (now, now+1d]): el email de
+          // conversión llega cuando el usuario aún tiene acceso a lo que va a
+          // perder — el momento de máxima motivación para pagar.
+          const trialEnds = profile?.trial_ends_at
+            ? new Date(profile.trial_ends_at).getTime()
+            : null;
+          const isFreePlan = (profile?.plan ?? "free") === "free";
+          if (trialEnds !== null && trialEnds > now && trialEnds <= now + DAY && isFreePlan) {
+            pushSend(user, "trial_expiring", "trial_expiring");
+          }
+
+          // E4b — fin de trial (ventana (now-1d, now]): el "qué pasa ahora",
+          // ya sin solapar con E4a.
+          if (trialEnds !== null && trialEnds > now - DAY && trialEnds <= now && isFreePlan) {
             pushSend(user, "trial_end", "trial_end");
           }
 

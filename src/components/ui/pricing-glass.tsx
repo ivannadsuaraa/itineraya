@@ -149,7 +149,9 @@ export function PricingGlass({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const [isAnnual, setIsAnnual] = useState(false);
+  // Anual por defecto: es el precio que queremos anclar (5,99 € vs 7,99 €) y
+  // el plan con mejor LTV; quien prefiera mensual lo cambia con un clic.
+  const [isAnnual, setIsAnnual] = useState(true);
 
   return (
     <motion.div

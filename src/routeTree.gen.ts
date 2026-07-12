@@ -38,6 +38,7 @@ import { Route as AuthenticatedInspireRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCopilotRouteImport } from './routes/_authenticated/copilot'
 import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
+import { Route as ApiOgSlugRouteImport } from './routes/api/og/$slug'
 import { Route as AuthenticatedMyTripTripIdRouteImport } from './routes/_authenticated/my-trip.$tripId'
 import { Route as EmailEmailQueueProcessRouteImport } from './routes/email/email/queue/process'
 import { Route as EmailEmailLifecycleRunRouteImport } from './routes/email/email/lifecycle/run'
@@ -189,6 +190,11 @@ const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
   path: '/assistant',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiOgSlugRoute = ApiOgSlugRouteImport.update({
+  id: '/api/og/$slug',
+  path: '/api/og/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedMyTripTripIdRoute =
   AuthenticatedMyTripTripIdRouteImport.update({
     id: '/my-trip/$tripId',
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/explore/': typeof ExploreIndexRoute
   '/viajes/': typeof ViajesIndexRoute
   '/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
+  '/api/og/$slug': typeof ApiOgSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreIndexRoute
   '/viajes': typeof ViajesIndexRoute
   '/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
+  '/api/og/$slug': typeof ApiOgSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
@@ -326,6 +334,7 @@ export interface FileRoutesById {
   '/explore/': typeof ExploreIndexRoute
   '/viajes/': typeof ViajesIndexRoute
   '/_authenticated/my-trip/$tripId': typeof AuthenticatedMyTripTripIdRoute
+  '/api/og/$slug': typeof ApiOgSlugRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/email/email/auth/preview': typeof EmailEmailAuthPreviewRoute
   '/email/email/auth/webhook': typeof EmailEmailAuthWebhookRoute
@@ -364,6 +373,7 @@ export interface FileRouteTypes {
     | '/explore/'
     | '/viajes/'
     | '/my-trip/$tripId'
+    | '/api/og/$slug'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
@@ -400,6 +410,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/viajes'
     | '/my-trip/$tripId'
+    | '/api/og/$slug'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/explore/'
     | '/viajes/'
     | '/_authenticated/my-trip/$tripId'
+    | '/api/og/$slug'
     | '/api/public/payments/webhook'
     | '/email/email/auth/preview'
     | '/email/email/auth/webhook'
@@ -465,6 +477,7 @@ export interface RootRouteChildren {
   ViajesDestinoRoute: typeof ViajesDestinoRoute
   ExploreIndexRoute: typeof ExploreIndexRoute
   ViajesIndexRoute: typeof ViajesIndexRoute
+  ApiOgSlugRoute: typeof ApiOgSlugRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
   EmailEmailAuthPreviewRoute: typeof EmailEmailAuthPreviewRoute
   EmailEmailAuthWebhookRoute: typeof EmailEmailAuthWebhookRoute
@@ -677,6 +690,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/og/$slug': {
+      id: '/api/og/$slug'
+      path: '/api/og/$slug'
+      fullPath: '/api/og/$slug'
+      preLoaderRoute: typeof ApiOgSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/my-trip/$tripId': {
       id: '/_authenticated/my-trip/$tripId'
       path: '/my-trip/$tripId'
@@ -772,6 +792,7 @@ const rootRouteChildren: RootRouteChildren = {
   ViajesDestinoRoute: ViajesDestinoRoute,
   ExploreIndexRoute: ExploreIndexRoute,
   ViajesIndexRoute: ViajesIndexRoute,
+  ApiOgSlugRoute: ApiOgSlugRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
   EmailEmailAuthPreviewRoute: EmailEmailAuthPreviewRoute,
   EmailEmailAuthWebhookRoute: EmailEmailAuthWebhookRoute,

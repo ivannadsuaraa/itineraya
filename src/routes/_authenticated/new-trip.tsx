@@ -1,10 +1,27 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, MapPin, Compass, Lock, Sparkles, AlertCircle, Ticket, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  MapPin,
+  Compass,
+  Lock,
+  Sparkles,
+  AlertCircle,
+  Ticket,
+  X,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { isPaymentsConfigured } from "@/lib/stripe";
 import { TRIP_PASS_PRICE_ID } from "@/lib/trip-pass";
@@ -23,7 +40,12 @@ function NewTripPage() {
   const [bonusTrips, setBonusTrips] = useState(0);
   const [tripCount, setTripCount] = useState<number | null>(null);
   const [showLimit, setShowLimit] = useState(false);
-  const { openCheckout, closeCheckout, checkoutElement, isOpen: checkoutOpen } = useStripeCheckout();
+  const {
+    openCheckout,
+    closeCheckout,
+    checkoutElement,
+    isOpen: checkoutOpen,
+  } = useStripeCheckout();
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +82,9 @@ function NewTripPage() {
       if (cancelled) return;
       setTripCount(count ?? 0);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Must match the server gate (itinerary.functions.ts) and the pricing page:
@@ -73,7 +97,10 @@ function NewTripPage() {
 
   const handlePick = (to: "/onboarding" | "/inspire") => {
     if (!loaded) return;
-    if (overLimit) { setShowLimit(true); return; }
+    if (overLimit) {
+      setShowLimit(true);
+      return;
+    }
     navigate({ to });
   };
 
@@ -115,11 +142,13 @@ function NewTripPage() {
       <div className="mx-auto max-w-4xl px-4 pb-12 sm:px-6 lg:px-8">
         {/* Plan limit banner */}
         {loaded && planLimit !== null && (
-          <div className={`-mt-4 mb-4 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm ${
-            overLimit
-              ? "bg-amber-50 border border-amber-200 text-amber-800"
-              : "bg-sky-50 border border-sky-100 text-sky-700"
-          }`}>
+          <div
+            className={`-mt-4 mb-4 flex items-center gap-2 rounded-2xl px-4 py-3 text-sm ${
+              overLimit
+                ? "bg-amber-50 border border-amber-200 text-amber-800"
+                : "bg-sky-50 border border-sky-100 text-sky-700"
+            }`}
+          >
             {overLimit ? (
               <Lock className="h-4 w-4 shrink-0 text-amber-500" />
             ) : (
@@ -132,8 +161,12 @@ function NewTripPage() {
               })}
             </span>
             {overLimit && (
-              <Link to="/pricing" className="ml-auto shrink-0 text-xs font-bold text-amber-700 hover:underline">
-                {t(plan === "viajero" ? "newTrip.limitUpgradeExplorador" : "newTrip.limitUpgrade")} →
+              <Link
+                to="/pricing"
+                className="ml-auto shrink-0 text-xs font-bold text-amber-700 hover:underline"
+              >
+                {t(plan === "viajero" ? "newTrip.limitUpgradeExplorador" : "newTrip.limitUpgrade")}{" "}
+                →
               </Link>
             )}
           </div>
@@ -174,25 +207,39 @@ function NewTripPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-col gap-2 sm:flex-col">
+            {/* El Pase de Viaje primero: fricción mínima (4,99 €, sin
+                suscripción) en el momento exacto en que el usuario quería
+                crear un viaje y no puede. */}
+            {isPaymentsConfigured() && (
+              <button
+                type="button"
+                onClick={handleBuyPass}
+                className="flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-sky-950 to-sky-800 p-4 text-left text-white shadow-lg transition hover:shadow-xl active:scale-[0.99]"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#38bdf8]/20">
+                  <Ticket className="h-5 w-5 text-[#38bdf8]" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold">{t("newTrip.passTitle")}</span>
+                  <span className="block text-xs text-sky-200">{t("newTrip.passDesc")}</span>
+                </span>
+                <span className="shrink-0 rounded-full bg-[#38bdf8] px-3 py-1.5 text-sm font-bold text-sky-950">
+                  4,99 €
+                </span>
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => { setShowLimit(false); navigate({ to: "/pricing" }); }}
+              onClick={() => {
+                setShowLimit(false);
+                navigate({ to: "/pricing" });
+              }}
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl"
             >
               <Sparkles className="h-4 w-4" />
               {t(plan === "viajero" ? "newTrip.limitUpgradeExplorador" : "newTrip.limitUpgrade")}
               <ArrowRight className="h-4 w-4" />
             </button>
-            {plan === "free" && isPaymentsConfigured() && (
-              <button
-                type="button"
-                onClick={handleBuyPass}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-[#1E6B9A] ring-1 ring-sky-200 transition hover:bg-sky-50"
-              >
-                <Ticket className="h-4 w-4" />
-                {t("newTrip.buyPass")}
-              </button>
-            )}
             <button
               type="button"
               onClick={() => setShowLimit(false)}
@@ -260,14 +307,23 @@ function ModeCard({
       </div>
       <div>
         <div className="text-3xl">{emoji}</div>
-        <h3 className={"mt-1 font-display text-xl font-bold " + (highlight ? "text-white" : "text-slate-900")}>
+        <h3
+          className={
+            "mt-1 font-display text-xl font-bold " + (highlight ? "text-white" : "text-slate-900")
+          }
+        >
           {title}
         </h3>
         <p className={"mt-1 text-sm " + (highlight ? "text-white/85" : "text-slate-500")}>
           {description}
         </p>
       </div>
-      <div className={"mt-2 inline-flex items-center gap-1 text-sm font-semibold " + (highlight ? "text-white" : "text-[#1E6B9A]")}>
+      <div
+        className={
+          "mt-2 inline-flex items-center gap-1 text-sm font-semibold " +
+          (highlight ? "text-white" : "text-[#1E6B9A]")
+        }
+      >
         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
       </div>
       {highlight && (

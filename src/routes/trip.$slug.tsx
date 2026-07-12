@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import {
   MapPin,
   Sparkles,
@@ -39,8 +39,9 @@ export const Route = createFileRoute("/trip/$slug")({
     const title = `Itineraya — ${dest} Travel Itinerary`;
     const desc = loaderData.summary ?? `Personalized AI travel itinerary for ${dest}`;
     const url = `https://itineraya.com/trip/${params.slug}`;
-    // og:image priority: 1) trip hero, 2) official Itineraya logo.
-    const image = loaderData.hero_image_url ?? "https://itineraya.com/itineraya-logo.png";
+    // og:image dinámico y branded (/api/og/$slug): foto del destino + marca +
+    // nº de días + CTA. El endpoint degrada solo a hero/og-image.jpg si falla.
+    const image = `https://itineraya.com/api/og/${params.slug}`;
     return {
       meta: [
         { title },
@@ -53,6 +54,8 @@ export const Route = createFileRoute("/trip/$slug")({
         { property: "og:image:width", content: "1200" },
         { property: "og:image:height", content: "630" },
         { property: "og:image:alt", content: `${dest} — Itineraya` },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:image", content: image },
       ],
       links: [{ rel: "canonical", href: url }],
     };
@@ -93,6 +96,15 @@ function PublicTripPage() {
   const { authed, checked } = useAuthStatus();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Barra Remix sticky: aparece cuando el lector ya lleva un scroll (está
+  // interesado) y el botón Remix del hero quedó fuera de pantalla.
+  const [showStickyRemix, setShowStickyRemix] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowStickyRemix(window.scrollY > 480);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Friendly fallback when the trip no longer exists, was unpublished or never existed.
   if (!trip) return <PublicTripUnavailable />;
@@ -116,17 +128,32 @@ function PublicTripPage() {
   // Infer canonical trip-type ids from saved itinerary categories (best-effort).
   const inferTripTypes = (): string[] => {
     const cats = new Set<string>();
-    for (const d of days) for (const a of d.activities) if (a.category) cats.add(a.category.toLowerCase());
+    for (const d of days)
+      for (const a of d.activities) if (a.category) cats.add(a.category.toLowerCase());
     const map: Record<string, string> = {
-      beach: "beach", playa: "beach",
-      party: "party", fiesta: "party", nightlife: "party",
-      cultural: "cultural", culture: "cultural", museum: "cultural",
-      food: "food", gastronomy: "food", restaurant: "food",
-      relax: "relax", wellness: "relax", spa: "relax",
-      nature: "nature", outdoor: "nature", hiking: "nature",
-      romantic: "romantic", romance: "romantic",
-      family: "family", kids: "family",
-      adventure: "adventure", sport: "adventure",
+      beach: "beach",
+      playa: "beach",
+      party: "party",
+      fiesta: "party",
+      nightlife: "party",
+      cultural: "cultural",
+      culture: "cultural",
+      museum: "cultural",
+      food: "food",
+      gastronomy: "food",
+      restaurant: "food",
+      relax: "relax",
+      wellness: "relax",
+      spa: "relax",
+      nature: "nature",
+      outdoor: "nature",
+      hiking: "nature",
+      romantic: "romantic",
+      romance: "romantic",
+      family: "family",
+      kids: "family",
+      adventure: "adventure",
+      sport: "adventure",
     };
     const out = new Set<string>();
     for (const c of cats) {
@@ -161,19 +188,17 @@ function PublicTripPage() {
         openAuthModal({ mode: "login" });
         return;
       }
-      const { error } = await supabase
-        .from("saved_inspirations")
-        .upsert(
-          {
-            user_id: u.user.id,
-            slug: trip.slug,
-            destination: trip.destination,
-            hero_image_url: trip.hero_image_url,
-            summary: trip.summary,
-            n_days: nDays || null,
-          },
-          { onConflict: "user_id,slug" },
-        );
+      const { error } = await supabase.from("saved_inspirations").upsert(
+        {
+          user_id: u.user.id,
+          slug: trip.slug,
+          destination: trip.destination,
+          hero_image_url: trip.hero_image_url,
+          summary: trip.summary,
+          n_days: nDays || null,
+        },
+        { onConflict: "user_id,slug" },
+      );
       if (error) throw error;
       setSaved(true);
       toast.success(t("publicTrip.saved"));
@@ -327,10 +352,34 @@ function PublicTripPage() {
           <p className="mt-3 text-xs text-white/70">{t("publicTrip.ctaFooter")}</p>
         </div>
 
-        <footer className="mt-10 flex items-center justify-center gap-2 pb-6 text-xs text-sky-600">
+        <footer className="mt-10 flex items-center justify-center gap-2 pb-24 text-xs text-sky-600">
           <img src="/itineraya-wordmark.png" alt="Itineraya" className="h-4 w-auto opacity-70" />
           <span>itineraya.com</span>
         </footer>
+      </div>
+
+      {/* Barra Remix sticky — el CTA principal siempre a un pulgar de distancia */}
+      <div
+        className={`fixed inset-x-0 bottom-0 z-30 transition-transform duration-300 ${
+          showStickyRemix ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="border-t border-sky-100 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(12,74,110,0.12)] backdrop-blur-xl">
+          <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-sky-900">{trip.destination}</p>
+              <p className="truncate text-xs text-sky-600">{t("publicTrip.stickyHint")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemix}
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/30 transition hover:shadow-xl active:scale-[0.98]"
+            >
+              <Wand2 className="h-4 w-4" />
+              {t("publicTrip.remix")}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -380,10 +429,7 @@ function PublicDayCard({ day, date }: { day: PublicTripDay; date: string | null 
       {/* Activities */}
       <div className="space-y-2.5 p-4 sm:p-5">
         {day.activities.map((a, i) => (
-          <div
-            key={i}
-            className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3"
-          >
+          <div key={i} className="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3">
             <div className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-sky-900 text-white">
               <CalendarIcon className="h-3 w-3 opacity-60" />
               <span className="mt-0.5 text-xs font-bold leading-none">{a.time}</span>

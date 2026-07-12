@@ -31,6 +31,9 @@ import {
   CloudRain,
   Newspaper,
   Globe2,
+  Ticket,
+  Lock,
+  ArrowRight,
 } from "lucide-react";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { useTranslation } from "react-i18next";
@@ -42,6 +45,9 @@ import { PublishToggle } from "@/components/trip/PublishToggle";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import { generatePostcardDataUrl } from "@/lib/postcard";
 import { toast } from "sonner";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
+import { isPaymentsConfigured } from "@/lib/stripe";
+import { TRIP_PASS_PRICE_ID } from "@/lib/trip-pass";
 import { PageTransition } from "@/components/ui/PageTransition";
 import { ReadingProgress } from "@/components/ui/ReadingProgress";
 import { BoardingPass } from "@/components/airport/BoardingPass";
@@ -374,6 +380,22 @@ function ItineraryPage() {
 
   if (loading)
     return <LoadingScreen destination={loadingDestination} startDate={loadingStartDate} />;
+
+  // El momento de máxima motivación para pagar: el usuario acaba de describir
+  // su viaje, ha pulsado "generar" y choca con el límite. Aquí el error
+  // genérico se sustituye por la oferta concreta (Pase 4,99 € / Viajero).
+  if (error?.includes("LIMIT_REACHED")) {
+    return (
+      <LimitPaywall
+        plan={plan}
+        onRetry={() => {
+          setError(null);
+          setRetryKey((k) => k + 1);
+        }}
+        onBack={() => navigate({ to: "/dashboard" })}
+      />
+    );
+  }
 
   if (error) {
     return (
@@ -1543,6 +1565,113 @@ function LoadingScreen({
           99% { transform: translateY(-26px) scale(1.05); }
         }
       `}</style>
+    </div>
+  );
+}
+
+/* ─── Paywall al chocar con el límite de itinerarios ───
+   Se muestra en lugar del error genérico cuando la generación devuelve
+   LIMIT_REACHED: el Pase de Viaje (4,99 €, pago único) como héroe y el plan
+   Viajero como alternativa de mejor valor. */
+function LimitPaywall({
+  plan,
+  onRetry,
+  onBack,
+}: {
+  plan: "free" | "viajero" | "explorador" | null;
+  onRetry: () => void;
+  onBack: () => void;
+}) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { openCheckout, closeCheckout, checkoutElement, isOpen } = useStripeCheckout();
+  const isViajero = plan === "viajero";
+
+  const buyPass = () => {
+    if (!isPaymentsConfigured()) {
+      navigate({ to: "/pricing" });
+      return;
+    }
+    openCheckout({ priceId: TRIP_PASS_PRICE_ID, mode: "payment" });
+  };
+
+  return (
+    <div className="min-h-dvh bg-gradient-to-b from-sky-950 to-sky-900 flex items-center justify-center p-6">
+      <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white shadow-lg">
+          <Lock className="h-6 w-6" />
+        </div>
+        <h1 className="font-display text-2xl font-bold text-sky-900">
+          {t(isViajero ? "trip.limitTitleViajero" : "trip.limitTitle")}
+        </h1>
+        <p className="mt-2 text-sm text-sky-700">
+          {t(isViajero ? "trip.limitSubtitleViajero" : "trip.limitSubtitle")}
+        </p>
+
+        {/* Pase de Viaje — héroe */}
+        <button
+          type="button"
+          onClick={buyPass}
+          className="mt-6 flex w-full items-center gap-4 rounded-2xl bg-gradient-to-r from-sky-950 to-sky-800 p-5 text-left text-white shadow-lg transition hover:shadow-xl active:scale-[0.99]"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#38bdf8]/20">
+            <Ticket className="h-6 w-6 text-[#38bdf8]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold">{t("trip.limitPassTitle")}</span>
+            <span className="block text-xs text-sky-200">{t("trip.limitPassDesc")}</span>
+          </span>
+          <span className="shrink-0 rounded-full bg-[#38bdf8] px-3 py-1.5 text-sm font-bold text-sky-950">
+            4,99 €
+          </span>
+        </button>
+
+        {/* Alternativa: suscripción */}
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/pricing" })}
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-sky-50 px-5 py-3.5 text-sm font-semibold text-sky-800 ring-1 ring-sky-200 transition hover:bg-sky-100"
+        >
+          <Sparkles className="h-4 w-4" />
+          {t(isViajero ? "trip.limitUpgradeViajero" : "trip.limitUpgradeFree")}
+          <ArrowRight className="h-4 w-4" />
+        </button>
+
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs">
+          <button
+            type="button"
+            onClick={onRetry}
+            className="font-semibold text-sky-600 hover:underline"
+          >
+            {t("trip.limitRetry")}
+          </button>
+          <span className="text-sky-300">·</span>
+          <button
+            type="button"
+            onClick={onBack}
+            className="font-semibold text-sky-600 hover:underline"
+          >
+            {t("trip.errorBack")}
+          </button>
+        </div>
+      </div>
+
+      {/* Checkout embebido del Pase de Viaje */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-sky-950/70 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl rounded-3xl bg-white p-2 shadow-2xl">
+            <button
+              type="button"
+              onClick={closeCheckout}
+              className="absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-sky-700 shadow-md ring-1 ring-sky-100 hover:bg-sky-50"
+              aria-label={t("pricing.close")}
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="max-h-[85vh] overflow-y-auto rounded-2xl">{checkoutElement}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ export type LifecycleEmailKey =
   | "welcome"
   | "activation_nudge"
   | "day3_edit"
+  | "trial_expiring" // 24 h antes de que caduque el trial (conversión)
   | "trial_end"
   | "day30_habit"
   | "reactivation_60"
@@ -28,17 +29,19 @@ export type RenderedEmail = { subject: string; html: string; text: string };
 function esc(s: string): string {
   return s.replace(
     /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
   );
 }
 
-function layout(opts: { title: string; paragraphs: string[]; ctaLabel: string; ctaUrl: string; footer?: string }): string {
+function layout(opts: {
+  title: string;
+  paragraphs: string[];
+  ctaLabel: string;
+  ctaUrl: string;
+  footer?: string;
+}): string {
   const body = opts.paragraphs
-    .map(
-      (p) =>
-        `<p style="color:#0c4a6e;font-size:14px;line-height:1.65;margin:0 0 14px">${p}</p>`,
-    )
+    .map((p) => `<p style="color:#0c4a6e;font-size:14px;line-height:1.65;margin:0 0 14px">${p}</p>`)
     .join("");
   return `<div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:28px;background:#f0f9ff;border-radius:16px">
   <div style="font-weight:800;font-size:18px;color:#0c4a6e;margin-bottom:18px">Itineraya ✈️</div>
@@ -56,7 +59,14 @@ function toText(paragraphs: string[], ctaLabel: string, ctaUrl: string): string 
 
 type Builder = (p: LifecycleEmailParams) => RenderedEmail;
 
-function make(subject: string, title: string, paragraphs: string[], ctaLabel: string, ctaUrl: string, footer?: string): RenderedEmail {
+function make(
+  subject: string,
+  title: string,
+  paragraphs: string[],
+  ctaLabel: string,
+  ctaUrl: string,
+  footer?: string,
+): RenderedEmail {
   return {
     subject,
     html: layout({ title, paragraphs, ctaLabel, ctaUrl, footer }),
@@ -149,6 +159,35 @@ const EMAILS: Record<LifecycleEmailKey, Record<LifecycleLang, Builder>> = {
         `Edit my ${p.destination ?? "trip"}`,
         p.tripUrl ?? `${p.siteUrl}/dashboard`,
         "— Iván",
+      ),
+  },
+
+  trial_expiring: {
+    es: (p) =>
+      make(
+        "Mañana pierdes el asistente IA — 30 segundos para decidir",
+        `${esc(p.name)}, tu semana Viajero acaba mañana`,
+        [
+          "Mañana a esta hora, tu cuenta vuelve al plan gratuito. Tus viajes no se tocan — pero el asistente que edita por chat, los compañeros de viaje y los itinerarios ilimitados se pausan.",
+          "Si esta semana Itineraya te ha montado aunque sea un viaje que te apetece hacer de verdad, esto es lo que cuesta mantenerlo: <strong>5,99 €/mes con el plan anual</strong>. Un café con hielo al mes, para todos los viajes del año.",
+          "¿Solo tienes un viaje entre manos? También hay <strong>Pase de Viaje: 4,99 € una única vez</strong>, un itinerario completo más, sin suscripción.",
+        ],
+        "Mantener mi plan Viajero",
+        `${p.siteUrl}/pricing?plan=viajero`,
+        "Decidas lo que decidas, tus itinerarios son tuyos para siempre. — Iván",
+      ),
+    en: (p) =>
+      make(
+        "Tomorrow you lose the AI assistant — 30 seconds to decide",
+        `${esc(p.name)}, your Viajero week ends tomorrow`,
+        [
+          "This time tomorrow, your account goes back to the free plan. Your trips stay untouched — but the chat-editing assistant, tripmates and unlimited itineraries pause.",
+          "If Itineraya built you even one trip this week that you actually want to take, here's what keeping it costs: <strong>€5.99/month on the annual plan</strong>. One iced coffee a month, for every trip of the year.",
+          "Only planning one trip? There's also the <strong>Trip Pass: €4.99 one-time</strong> — one more full itinerary, no subscription.",
+        ],
+        "Keep my Viajero plan",
+        `${p.siteUrl}/pricing?plan=viajero`,
+        "Whatever you decide, your itineraries are yours forever. — Iván",
       ),
   },
 
@@ -301,4 +340,42 @@ export function renderLifecycleEmail(
 ): RenderedEmail {
   const l: LifecycleLang = (lang ?? "").toLowerCase().startsWith("es") ? "es" : "en";
   return EMAILS[key][l](params);
+}
+
+// ── Hitos de vistas (fuera de la secuencia: lo dispara getPublicTrip al
+// cruzar 10/50/100 vistas). Es el email con mejor ratio de apertura posible:
+// le dices al autor que su contenido está gustando. El CTA vuelve a compartir.
+export function renderViewMilestoneEmail(
+  lang: string | null | undefined,
+  p: { name: string; destination: string; views: number; tripUrl: string; siteUrl: string },
+): RenderedEmail {
+  const es = (lang ?? "").toLowerCase().startsWith("es");
+  if (es) {
+    return make(
+      `🔥 Tu itinerario de ${p.destination} ya tiene ${p.views} visitas`,
+      `${esc(p.name)}, tu viaje está gustando`,
+      [
+        `Tu itinerario público de <strong>${esc(p.destination)}</strong> acaba de superar las <strong>${p.views} visitas</strong>. Gente real está usando tu plan para decidir su viaje.`,
+        p.views >= 100
+          ? "Estás en el club de los itinerarios más vistos de Itineraya. Compártelo una vez más — los itinerarios que pasan de 100 vistas suelen multiplicarse desde ahí."
+          : "Los itinerarios que llegan aquí casi siempre siguen subiendo. Un empujón más (un grupo de WhatsApp, una historia de Instagram) y el contador se dispara.",
+      ],
+      "Ver mi itinerario y compartirlo",
+      p.tripUrl,
+      "Cada visita puede convertirse en un viajero que copia tu ruta. — Itineraya",
+    );
+  }
+  return make(
+    `🔥 Your ${p.destination} itinerary just hit ${p.views} views`,
+    `${esc(p.name)}, your trip is taking off`,
+    [
+      `Your public <strong>${esc(p.destination)}</strong> itinerary just passed <strong>${p.views} views</strong>. Real people are using your plan to decide their trip.`,
+      p.views >= 100
+        ? "You're in the club of Itineraya's most-viewed itineraries. Share it once more — itineraries that pass 100 views tend to snowball from there."
+        : "Itineraries that get here almost always keep climbing. One more push (a WhatsApp group, an Instagram story) and the counter takes off.",
+    ],
+    "See my itinerary and share it",
+    p.tripUrl,
+    "Every view can become a traveler copying your route. — Itineraya",
+  );
 }

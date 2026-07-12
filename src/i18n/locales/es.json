@@ -627,7 +627,16 @@
     "brochureRoute": "Ruta del viaje",
     "brochureDownloaded": "Folleto del viaje descargado ✨",
     "brochureAria": "Folleto del viaje a {{destination}}",
-    "dayNavAria": "Navegación por días"
+    "dayNavAria": "Navegación por días",
+    "limitTitle": "Tu próximo viaje está a un paso",
+    "limitTitleViajero": "Has usado tus itinerarios de este mes",
+    "limitSubtitle": "Has usado los 2 itinerarios del plan gratuito. Desbloquea este viaje ahora, sin suscripción.",
+    "limitSubtitleViajero": "Tu límite se renueva el día 1 de cada mes. ¿No quieres esperar?",
+    "limitPassTitle": "Pase de Viaje",
+    "limitPassDesc": "Pago único · desbloquea este itinerario ahora",
+    "limitUpgradeFree": "O plan Viajero: 5 viajes/mes + asistente IA",
+    "limitUpgradeViajero": "Actualizar a Explorador: viajes ilimitados",
+    "limitRetry": "Ya lo he comprado, reintentar"
   },
   "tripmates": {
     "tag": "Compañeros de viaje",
@@ -686,7 +695,8 @@
     "saveLoginPrompt": "Inicia sesión para guardar inspiraciones",
     "goneTitle": "Este itinerario ya no está disponible",
     "goneBody": "Quizá el autor lo despublicó o el enlace caducó. ¡Pero puedes crear el tuyo en segundos!",
-    "goneCta": "Crear mi itinerario gratis"
+    "goneCta": "Crear mi itinerario gratis",
+    "stickyHint": "¿Te gusta este plan? Hazlo tuyo en 1 minuto"
   },
   "paywall": {
     "title": "Regístrate gratis para ver el itinerario completo",
@@ -749,7 +759,9 @@
     "buyPass": "Comprar Pase de Viaje (4,99€)",
     "limitCancel": "Volver",
     "limitBannerFree": "{{count}} de {{limit}} itinerarios usados en total",
-    "limitBannerViajero": "{{count}} de {{limit}} itinerarios este mes"
+    "limitBannerViajero": "{{count}} de {{limit}} itinerarios este mes",
+    "passTitle": "Pase de Viaje",
+    "passDesc": "Pago único · un itinerario completo más, sin suscripción"
   },
   "inspire": {
     "back": "Atrás",

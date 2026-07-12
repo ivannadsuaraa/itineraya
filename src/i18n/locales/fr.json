@@ -618,7 +618,16 @@
     "visualMapDownload": "Télécharger",
     "visualMapDownloaded": "Carte du voyage téléchargée ✨",
     "visualMapFooter": "Créé avec Itineraya  ·  itineraya.com",
-    "visualMapAria": "Carte illustrée du voyage à {{destination}}"
+    "visualMapAria": "Carte illustrée du voyage à {{destination}}",
+    "limitTitle": "Votre prochain voyage est à un pas",
+    "limitTitleViajero": "Vous avez utilisé vos itinéraires du mois",
+    "limitSubtitle": "Vous avez utilisé les 2 itinéraires du plan gratuit. Débloquez ce voyage maintenant, sans abonnement.",
+    "limitSubtitleViajero": "Votre limite se renouvelle le 1er du mois. Vous ne voulez pas attendre ?",
+    "limitPassTitle": "Pass Voyage",
+    "limitPassDesc": "Paiement unique · débloquez cet itinéraire maintenant",
+    "limitUpgradeFree": "Ou plan Viajero : 5 voyages/mois + assistant IA",
+    "limitUpgradeViajero": "Passer à Explorador : voyages illimités",
+    "limitRetry": "Déjà acheté — réessayer"
   },
   "tripmates": {
     "tag": "Compagnons de voyage",
@@ -677,7 +686,8 @@
     "saveLoginPrompt": "Connectez-vous pour sauvegarder des inspirations",
     "goneTitle": "Cet itinéraire n'est plus disponible",
     "goneBody": "L'auteur l'a peut-être dépublié ou le lien a expiré. Mais vous pouvez créer le vôtre en quelques secondes !",
-    "goneCta": "Créer mon itinéraire gratuit"
+    "goneCta": "Créer mon itinéraire gratuit",
+    "stickyHint": "Ce plan vous plaît ? Faites-le vôtre en 1 minute"
   },
   "paywall": {
     "title": "Inscrivez-vous gratuitement pour voir l'itinéraire complet",
@@ -740,7 +750,9 @@
     "buyPass": "Acheter un Pass Voyage (4,99 €)",
     "limitCancel": "Retour",
     "limitBannerFree": "{{count}} sur {{limit}} itinéraires utilisés au total",
-    "limitBannerViajero": "{{count}} sur {{limit}} itinéraires ce mois-ci"
+    "limitBannerViajero": "{{count}} sur {{limit}} itinéraires ce mois-ci",
+    "passTitle": "Pass Voyage",
+    "passDesc": "Paiement unique · un itinéraire complet de plus, sans abonnement"
   },
   "inspire": {
     "back": "Retour",
