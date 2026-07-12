@@ -25,7 +25,14 @@ export function RouteTransition({ children }: { children: ReactNode }) {
       <motion.div
         key={pathname}
         suppressHydrationWarning
-        initial={reduce ? { opacity: 0 } : { opacity: 0, x: 24 }}
+        // AnimatePresence's own `initial={false}` no basta para suprimir la
+        // animación de entrada en la primera carga tras la hidratación SSR:
+        // la página entera (navbar incluida) se desliza x:24→0 en ~200ms,
+        // así que un tap rápido en el botón hamburguesa cae a la izquierda
+        // de su posición real y no abre el menú. `initial={false}` en el
+        // propio motion.div (solo antes del primer mount) evita el offset
+        // en la carga inicial sin tocar las transiciones entre páginas.
+        initial={!mounted ? false : reduce ? { opacity: 0 } : { opacity: 0, x: 24 }}
         animate={{
           opacity: 1,
           x: 0,

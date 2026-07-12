@@ -121,7 +121,22 @@ export function Navbar() {
             )}
           </div>
 
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-1.5 md:hidden">
+            {/* Antes solo estaba dentro del menú hamburguesa — nadie lo
+                encontraba. Visible directamente junto al toggle. */}
+            {mounted && !isLoggedIn && (
+              <button
+                type="button"
+                onClick={() => openAuthModal({ mode: "login" })}
+                className={`inline-flex h-11 items-center rounded-full px-3.5 text-xs font-bold transition-colors ${
+                  scrolled
+                    ? "bg-[#1E6B9A]/10 text-[#1E6B9A] hover:bg-[#1E6B9A]/15"
+                    : "bg-white/15 text-white hover:bg-white/25"
+                }`}
+              >
+                {t("nav.loginShort")}
+              </button>
+            )}
             <LanguageSwitcher compact />
             <button
               onClick={() => setOpen(!open)}
