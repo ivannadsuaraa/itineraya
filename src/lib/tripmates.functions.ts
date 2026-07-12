@@ -121,10 +121,7 @@ export const listTripmates = createServerFn({ method: "POST" })
         .select("id,email,status,created_at,accepted_at")
         .eq("trip_id", data.tripId)
         .order("created_at", { ascending: false }),
-      supabase
-        .from("trip_members")
-        .select("id,user_id,role,created_at")
-        .eq("trip_id", data.tripId),
+      supabase.from("trip_members").select("id,user_id,role,created_at").eq("trip_id", data.tripId),
     ]);
     return { invites: invites ?? [], members: members ?? [] };
   });
@@ -153,17 +150,32 @@ export const acceptInvite = createServerFn({ method: "POST" })
     ) {
       throw new Error("This invitation has already been used");
     }
+    // The invite is scoped to a specific email address ("Un amigo te ha
+    // invitado a colaborar" — a specific friend, not whoever holds the
+    // link). Without this check, anyone who obtains the token (a forwarded
+    // email, a shared screenshot, browser history, a corporate link-scanner
+    // that happens to be signed in) is silently added as a trip
+    // collaborator by /invite/$token, which auto-accepts on page load with
+    // no confirmation step. Reject a mismatched account instead of joining.
     if (email && invite.email.toLowerCase() !== email) {
-      // Allow accepting from any signed-in account but keep email record
+      throw new Error(
+        "This invitation was sent to a different email address. Sign in with that account to accept it.",
+      );
     }
-    await supabaseAdmin.from("trip_members").upsert(
-      { trip_id: invite.trip_id, user_id: userId, role: "collaborator" },
-      { onConflict: "trip_id,user_id" },
-    );
+    await supabaseAdmin
+      .from("trip_members")
+      .upsert(
+        { trip_id: invite.trip_id, user_id: userId, role: "collaborator" },
+        { onConflict: "trip_id,user_id" },
+      );
     if (invite.status !== "accepted") {
       await supabaseAdmin
         .from("trip_invites")
-        .update({ status: "accepted", accepted_user_id: userId, accepted_at: new Date().toISOString() })
+        .update({
+          status: "accepted",
+          accepted_user_id: userId,
+          accepted_at: new Date().toISOString(),
+        })
         .eq("id", invite.id);
     }
     void supabase; // unused
@@ -171,5 +183,8 @@ export const acceptInvite = createServerFn({ method: "POST" })
   });
 
 function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
 }

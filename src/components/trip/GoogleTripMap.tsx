@@ -249,7 +249,7 @@ export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo
         infoRef.current?.setContent(
           `<div style="min-width:220px;font-family:system-ui,-apple-system,sans-serif">
             <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:${color};letter-spacing:0.05em">${t("trip.dayLabel", { n: p.day })} · ${escapeHtml(p.dayTitle)}</div>
-            <div style="font-weight:700;color:#0c4a6e;margin-top:4px">${p.activity.emoji ?? "📍"} ${escapeHtml(p.activity.title)}</div>
+            <div style="font-weight:700;color:#0c4a6e;margin-top:4px">${escapeHtml(p.activity.emoji ?? "📍")} ${escapeHtml(p.activity.title)}</div>
             ${p.activity.place ? `<div style="font-size:12px;color:#075985">${escapeHtml(p.activity.place)}</div>` : ""}
             <div style="font-size:12px;color:#1E6B9A;font-weight:600;margin-top:2px">${escapeHtml(p.activity.time)}</div>
             <div style="font-size:12px;color:#0369a1;margin-top:4px">${escapeHtml(p.activity.description)}</div>

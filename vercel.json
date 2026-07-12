@@ -1,3 +1,34 @@
 {
-  "regions": ["cdg1"]
+  "regions": ["cdg1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(self), payment=(self \"https://js.stripe.com\")"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; object-src 'none'; upgrade-insecure-requests; script-src 'self' https://maps.googleapis.com https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://images.unsplash.com https://loremflickr.com https://*.basemaps.cartocdn.com https://maps.gstatic.com https://*.googleapis.com https://*.ggpht.com https://*.google.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://maps.googleapis.com https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.openweathermap.org https://api.restcountries.com https://nominatim.openstreetmap.org https://api.stripe.com; frame-src https://js.stripe.com"
+        }
+      ]
+    }
+  ]
 }

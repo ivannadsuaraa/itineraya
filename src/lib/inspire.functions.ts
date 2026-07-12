@@ -1,6 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
+
+// No cap existed before this audit — an authenticated user could call this
+// (2 API calls: Claude + Unsplash) with no limit at all. 30/day comfortably
+// covers real usage (users browse inspiration in short bursts) while
+// bounding cost from a compromised or scripted account.
+const DAILY_LIMIT = 30;
 
 const Input = z.object({
   tripType: z.array(z.string()).min(1),
@@ -58,9 +65,23 @@ async function unsplashImage(query: string, w = 1200, h = 800): Promise<string> 
 export const suggestDestinations = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const key = process.env.ANTHROPIC_API_KEY;
     if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "inspire_user", p_key: context.userId, p_limit: DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[inspire] rate limit check failed", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error(
+        `LIMIT_REACHED: Has alcanzado el límite de ${DAILY_LIMIT} sugerencias diarias. Inténtalo mañana.`,
+      );
+    }
 
     const month = new Date().toLocaleString("en-US", { month: "long" });
 
@@ -68,8 +89,8 @@ export const suggestDestinations = createServerFn({ method: "POST" })
       data.region === "spain"
         ? "ONLY destinations inside Spain (cities, regions, islands)."
         : data.region === "europe"
-        ? "ONLY destinations inside Europe."
-        : "Anywhere in the world.";
+          ? "ONLY destinations inside Europe."
+          : "Anywhere in the world.";
 
     const durationHint: Record<string, string> = {
       weekend: "2-3 days — short flight or train from origin",
@@ -145,7 +166,10 @@ Return ONLY valid JSON with this exact shape:
     try {
       parsed = JSON.parse(content);
     } catch {
-      const cleaned = content.replace(/```json\n?/gi, "").replace(/```/g, "").trim();
+      const cleaned = content
+        .replace(/```json\n?/gi, "")
+        .replace(/```/g, "")
+        .trim();
       parsed = JSON.parse(cleaned);
     }
 

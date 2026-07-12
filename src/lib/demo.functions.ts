@@ -2,11 +2,15 @@
 // calidad que la generación autenticada) pero sin cuenta. El resultado vive en
 // localStorage del navegador y se reclama al registrarse (dashboard.tsx).
 //
-// Coste acotado: máximo 4 días, rate-limit best-effort por IP (memoria del
-// lambda) y tope global diario por instancia.
+// Coste acotado: máximo 4 días, rate-limit real por IP + tope global diario,
+// ambos persistidos en Supabase (ver check_and_increment_rate_limit en
+// supabase/migrations/20260712090000_security_audit_fixes.sql) — no en
+// memoria del proceso, que en Vercel se reinicia por cada instancia lambda y
+// hacía el límite "6/día por IP" trivialmente eludible bajo auto-scaling.
 
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
   unsplashImage,
@@ -14,6 +18,7 @@ import {
   extractJson,
   type ParsedItinerary,
 } from "@/lib/itinerary-shared";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const DemoInput = z.object({
   destination: z.string().min(2).max(80),
@@ -23,31 +28,55 @@ const DemoInput = z.object({
   language: z.string().optional(),
 });
 
-// Rate limit en memoria: por instancia de lambda, así que es best-effort — su
-// objetivo es acotar el coste ante abuso casual, no ser un WAF.
-const ipHits = new Map<string, { day: string; count: number }>();
-let globalHits = { day: "", count: 0 };
 const PER_IP_DAILY = 6;
 const GLOBAL_DAILY = 400;
 
-function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+// Never store raw IPs — only a truncated hash, purely as a rate-limit key.
+function hashIp(ip: string): string {
+  return createHash("sha256").update(ip).digest("hex").slice(0, 32);
 }
 
-function checkRateLimit(ip: string): boolean {
-  const day = todayKey();
-  if (globalHits.day !== day) globalHits = { day, count: 0 };
-  if (globalHits.count >= GLOBAL_DAILY) return false;
-  const rec = ipHits.get(ip);
-  if (!rec || rec.day !== day) {
-    ipHits.set(ip, { day, count: 1 });
-    globalHits.count++;
-    return true;
+// x-forwarded-for's FIRST entry is whatever the client itself claims (an
+// attacker can send `X-Forwarded-For: 1.2.3.4` and get a fresh IP — and
+// therefore a fresh rate-limit bucket — on every request). Vercel appends
+// the real, edge-verified client IP as the LAST hop, and also sets
+// x-real-ip directly, so prefer those over the spoofable first entry.
+function resolveClientIp(request: Request | null): string {
+  const xri = request?.headers.get("x-real-ip");
+  if (xri) return xri.trim();
+  const xff = request?.headers.get("x-forwarded-for");
+  if (xff) {
+    const parts = xff
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
   }
-  if (rec.count >= PER_IP_DAILY) return false;
-  rec.count++;
-  globalHits.count++;
-  return true;
+  return "unknown";
+}
+
+async function checkRateLimit(ip: string): Promise<boolean> {
+  const { data: globalOk, error: globalErr } = await supabaseAdmin.rpc(
+    "check_and_increment_rate_limit" as never,
+    { p_scope: "demo_global", p_key: "global", p_limit: GLOBAL_DAILY } as never,
+  );
+  if (globalErr) {
+    // Fail closed on a broken rate limiter — better to briefly block the
+    // public demo than to silently remove the cost cap on the Anthropic API.
+    console.error("[demo] rate limit check failed (global)", globalErr);
+    return false;
+  }
+  if (!globalOk) return false;
+
+  const { data: ipOk, error: ipErr } = await supabaseAdmin.rpc(
+    "check_and_increment_rate_limit" as never,
+    { p_scope: "demo_ip", p_key: hashIp(ip), p_limit: PER_IP_DAILY } as never,
+  );
+  if (ipErr) {
+    console.error("[demo] rate limit check failed (ip)", ipErr);
+    return false;
+  }
+  return !!ipOk;
 }
 
 export const generateDemoItinerary = createServerFn({ method: "POST" })
@@ -57,11 +86,8 @@ export const generateDemoItinerary = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
 
     const request = getRequest();
-    const ip =
-      request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request?.headers.get("x-real-ip") ||
-      "unknown";
-    if (!checkRateLimit(ip)) {
+    const ip = resolveClientIp(request ?? null);
+    if (!(await checkRateLimit(ip))) {
       throw new Error(
         "DEMO_LIMIT: Has alcanzado el límite de demos por hoy. Crea una cuenta gratis para generar itinerarios completos.",
       );

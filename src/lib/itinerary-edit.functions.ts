@@ -1,6 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
+
+// No cap existed before this audit — being plan-gated (Viajero/Explorador)
+// deters casual abuse but not a compromised or scripted paying account
+// hammering the Anthropic API for free. 40/day is generous for legitimate
+// iterative editing while bounding worst-case cost.
+const DAILY_LIMIT = 40;
 
 const Input = z.object({
   tripId: z.string().uuid(),
@@ -13,7 +20,15 @@ type Activity = {
   title: string;
   place?: string;
   description: string;
-  category?: "hotel" | "restaurant" | "activity" | "transport" | "sight" | "nightlife" | "shopping" | "other";
+  category?:
+    | "hotel"
+    | "restaurant"
+    | "activity"
+    | "transport"
+    | "sight"
+    | "nightlife"
+    | "shopping"
+    | "other";
   tip?: string;
 };
 type Day = {
@@ -43,9 +58,25 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
       throw new Error("Esta función está disponible en los planes Viajero y Explorador.");
     }
 
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "itinerary_edit_user", p_key: userId, p_limit: DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[itinerary-edit] rate limit check failed", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error(
+        `LIMIT_REACHED: Has alcanzado el límite de ${DAILY_LIMIT} ediciones diarias. Inténtalo mañana.`,
+      );
+    }
+
     const { data: trip, error } = await supabase
       .from("trips")
-      .select("id,destination,itinerary,hero_image_url,start_date,end_date,budget,companion,trip_style")
+      .select(
+        "id,destination,itinerary,hero_image_url,start_date,end_date,budget,companion,trip_style",
+      )
       .eq("id", data.tripId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -59,17 +90,78 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
     // Determine if destination is coastal (same logic as main prompt)
     const isCoastalCity = (dest: string): boolean => {
       const inland = new Set([
-        "madrid", "toledo", "granada", "sevilla", "córdoba", "salamanca", "valladolid",
-        "zaragoza", "pamplona", "burgos", "segovia", "ávila", "mérida", "cáceres",
-        "león", "santiago", "london", "paris", "prague", "vienna", "budapest", "berlin",
-        "munich", "milan", "rome", "florence", "venice", "siena", "verona", "bologna",
-        "turin", "dublin", "edinburgh", "york", "oxford", "cambridge", "bath",
-        "moscow", "kyiv", "warsaw", "krakow", "bucharest", "sofia", "belgrade",
-        "luxembourg", "brussels", "amsterdam", "copenhagen", "stockholm", "oslo",
-        "helsinki", "reykjavik", "innsbruck", "salzburg", "zurich", "geneva",
-        "luxor", "cairo", "jaipur", "agra", "delhi", "kathmandu",
-        "mexico city", "guadalajara", "quito", "bogotá", "cusco", "la paz",
-        "lima", "santiago de chile", "buenos aires", "asunción",
+        "madrid",
+        "toledo",
+        "granada",
+        "sevilla",
+        "córdoba",
+        "salamanca",
+        "valladolid",
+        "zaragoza",
+        "pamplona",
+        "burgos",
+        "segovia",
+        "ávila",
+        "mérida",
+        "cáceres",
+        "león",
+        "santiago",
+        "london",
+        "paris",
+        "prague",
+        "vienna",
+        "budapest",
+        "berlin",
+        "munich",
+        "milan",
+        "rome",
+        "florence",
+        "venice",
+        "siena",
+        "verona",
+        "bologna",
+        "turin",
+        "dublin",
+        "edinburgh",
+        "york",
+        "oxford",
+        "cambridge",
+        "bath",
+        "moscow",
+        "kyiv",
+        "warsaw",
+        "krakow",
+        "bucharest",
+        "sofia",
+        "belgrade",
+        "luxembourg",
+        "brussels",
+        "amsterdam",
+        "copenhagen",
+        "stockholm",
+        "oslo",
+        "helsinki",
+        "reykjavik",
+        "innsbruck",
+        "salzburg",
+        "zurich",
+        "geneva",
+        "luxor",
+        "cairo",
+        "jaipur",
+        "agra",
+        "delhi",
+        "kathmandu",
+        "mexico city",
+        "guadalajara",
+        "quito",
+        "bogotá",
+        "cusco",
+        "la paz",
+        "lima",
+        "santiago de chile",
+        "buenos aires",
+        "asunción",
       ]);
       return !inland.has(dest.toLowerCase().trim());
     };
@@ -181,7 +273,10 @@ REQUISITOS:
     try {
       parsed = JSON.parse(content);
     } catch {
-      const cleaned = content.replace(/```json\n?/gi, "").replace(/```/g, "").trim();
+      const cleaned = content
+        .replace(/```json\n?/gi, "")
+        .replace(/```/g, "")
+        .trim();
       parsed = JSON.parse(cleaned);
     }
     if (!Array.isArray(parsed.days) || parsed.days.length === 0)
