@@ -7,6 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import viteReact from "@vitejs/plugin-react";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import type { Nitro } from "nitro/types";
 
 const require = createRequire(import.meta.url);
 
@@ -52,6 +53,22 @@ export default defineConfig(async ({ command }) => {
     // (npm solo instala el que coincide con el SO/arch de la máquina de
     // build: en Vercel será el de Linux) al directorio de salida del
     // servidor.
+    //
+    // IMPORTANTE: estos hooks NO se pasan como la clave de config `hooks`
+    // del plugin `nitro()` — el preset "vercel" registra sus PROPIOS hooks
+    // `rollup:before` (deprecateSWR) y `compiled` (generateFunctionFiles,
+    // que escribe .vercel/output/config.json y .vc-config.json — el
+    // manifiesto de Build Output API v3 sin el cual Vercel no sabe enrutar
+    // ninguna petición y todo el sitio da 404 tras un deploy "exitoso").
+    // Como la resolución de config de Nitro mezcla `hooks` vía defu
+    // (último objeto que define una clave gana, no se combinan listeners),
+    // pasar `hooks: { compiled: ... }` aquí SOBRESCRIBÍA por completo el
+    // `compiled` del preset en vez de coexistir con él. La solución es
+    // registrar nuestros handlers imperativamente vía `nitro.hooks.hook(...)`
+    // dentro de un módulo de Nitro: los módulos se instalan DESPUÉS de que
+    // `nitro.hooks.addHooks(nitro.options.hooks)` ya registró los hooks del
+    // preset, así que `.hook()` AÑADE un listener adicional en vez de
+    // reemplazar el existente — preset y lógica custom se ejecutan ambos.
     const resvgPkgPath = require.resolve("@resvg/resvg-js/package.json");
     const resvgDir = dirname(resvgPkgPath);
     const { optionalDependencies } = JSON.parse(readFileSync(resvgPkgPath, "utf8")) as {
@@ -64,34 +81,39 @@ export default defineConfig(async ({ command }) => {
     plugins.push(
       nitro({
         preset,
-        hooks: {
-          "rollup:before": (_nitro, rollupConfig) => {
-            rollupConfig.plugins = [
-              {
-                name: "resvg-js-external",
-                resolveId: {
-                  order: "pre",
-                  async handler(id, importer, opts) {
-                    if (!id.includes("resvg-js")) return null;
-                    const resolved = await this.resolve(id, importer, { ...opts, skipSelf: true });
-                    if (!resolved) return null;
-                    return { id: resolved.id, external: true };
+        modules: [
+          (nitroInstance: Nitro) => {
+            nitroInstance.hooks.hook("rollup:before", (_nitro, rollupConfig) => {
+              rollupConfig.plugins = [
+                {
+                  name: "resvg-js-external",
+                  resolveId: {
+                    order: "pre",
+                    async handler(id, importer, opts) {
+                      if (!id.includes("resvg-js")) return null;
+                      const resolved = await this.resolve(id, importer, {
+                        ...opts,
+                        skipSelf: true,
+                      });
+                      if (!resolved) return null;
+                      return { id: resolved.id, external: true };
+                    },
                   },
                 },
-              },
-              ...((rollupConfig.plugins as unknown[]) ?? []),
-            ] as typeof rollupConfig.plugins;
+                ...((rollupConfig.plugins as unknown[]) ?? []),
+              ] as typeof rollupConfig.plugins;
+            });
+            nitroInstance.hooks.hook("compiled", async (nitro) => {
+              const destBase = join(nitro.options.output.serverDir, "node_modules", "@resvg");
+              await mkdir(destBase, { recursive: true });
+              for (const name of ["resvg-js", ...resvgPlatformPkgs]) {
+                const src = name === "resvg-js" ? resvgDir : join(dirname(resvgDir), name);
+                if (!existsSync(src)) continue; // paquete opcional no instalado en esta plataforma
+                await cp(src, join(destBase, name), { recursive: true });
+              }
+            });
           },
-          async compiled(nitroInstance) {
-            const destBase = join(nitroInstance.options.output.serverDir, "node_modules", "@resvg");
-            await mkdir(destBase, { recursive: true });
-            for (const name of ["resvg-js", ...resvgPlatformPkgs]) {
-              const src = name === "resvg-js" ? resvgDir : join(dirname(resvgDir), name);
-              if (!existsSync(src)) continue; // paquete opcional no instalado en esta plataforma
-              await cp(src, join(destBase, name), { recursive: true });
-            }
-          },
-        },
+        ],
       }),
     );
   }
