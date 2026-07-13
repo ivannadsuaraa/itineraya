@@ -124,6 +124,22 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Sin esto, Safari/Chrome móvil tratan cada botón/enlace/input como
+     candidato a doble-tap-para-zoom: el navegador espera ~300ms tras el
+     primer tap para confirmar que no viene un segundo tap, así que un tap
+     real y rápido puede no registrarse como click/focus inmediato (el
+     síntoma exacto reportado en móvil: "el botón/input no responde al
+     tocarlo", no reproducible con clic de ratón en desktop). */
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  [role="combobox"] {
+    touch-action: manipulation;
+  }
+
   h1,
   h2,
   h3,

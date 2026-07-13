@@ -123,8 +123,14 @@ export function Navbar() {
 
           <div className="flex items-center gap-1.5 md:hidden">
             {/* Antes solo estaba dentro del menú hamburguesa — nadie lo
-                encontraba. Visible directamente junto al toggle. */}
-            {mounted && !isLoggedIn && (
+                encontraba. Visible directamente junto al toggle.
+                Sin gate de `mounted` (a diferencia de la versión desktop de
+                arriba, que ya usa un ternario con "logueado" por defecto a
+                false): exigir `mounted` aquí dejaba la navbar móvil sin
+                ningún CTA visible desde el primer paint hasta que el efecto
+                de auth resolviera — una ventana real y notable en redes
+                móviles lentas, no solo un detalle de hidratación. */}
+            {!isLoggedIn && (
               <button
                 type="button"
                 onClick={() => openAuthModal({ mode: "login" })}
