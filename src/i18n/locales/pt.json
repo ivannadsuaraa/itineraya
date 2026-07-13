@@ -115,6 +115,20 @@
     "terms": "Termos",
     "contact": "Contato"
   },
+  "authModal": {
+    "signupTitle": "Regista-te para guardar a tua viagem",
+    "loginTitle": "Bem-vindo de volta",
+    "google": "Continuar com o Google",
+    "or": "ou",
+    "email": "E-mail",
+    "password": "Palavra-passe",
+    "signupBtn": "Criar conta",
+    "loginBtn": "Iniciar sessão",
+    "haveAccount": "Já tens conta?",
+    "noAccount": "Não tens conta?",
+    "login": "Inicia sessão",
+    "signup": "Regista-te"
+  },
   "auth": {
     "back": "Início",
     "loginTab": "Entrar",
@@ -314,6 +328,13 @@
     "hello": "Olá, {{name}} 👋",
     "where": "Para onde vamos hoje?",
     "nextTrip": "Próxima viagem",
+    "yourWorld": "O teu mundo",
+    "statTrips": "Viagens",
+    "statCountries": "Países",
+    "statDays": "Dias planeados",
+    "statSaved": "Guardados",
+    "planNextLabel": "Começa a sonhar",
+    "planNextTitle": "Planeia a tua próxima aventura",
     "day": "dia",
     "days": "dias",
     "newTrip": "Criar nova viagem",
@@ -353,6 +374,8 @@
     "trialPerk": "— Aproveite o assistente de IA e todos os recursos premium.",
     "trialKeep": "Manter acesso",
     "nDays": "{{count}} dias",
+    "globeViewItinerary": "Ver itinerário",
+    "globeClose": "Fechar",
     "referral": {
       "title": "Convide 3 amigos e ganhe 1 mês grátis",
       "subtitle": "Quando 3 pessoas se cadastrarem com seu link, ativamos 1 mês do plano Viajante na sua conta.",
@@ -535,6 +558,18 @@
     }
   },
   "trip": {
+    "directions": "Como chegar",
+    "categories": "Categorias",
+    "category": {
+      "hotel": "Alojamento",
+      "restaurant": "Restaurante",
+      "sight": "Ponto de interesse",
+      "activity": "Atividade",
+      "nightlife": "Vida noturna",
+      "transport": "Transporte",
+      "shopping": "Compras",
+      "other": "Outros"
+    },
     "metaTitle": "Seu roteiro – Itineraya",
     "backDashboard": "Painel",
     "viewCards": "Cards",

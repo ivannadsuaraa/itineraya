@@ -74,8 +74,13 @@ function NewTripPage() {
         .eq("user_id", uid)
         .eq("status", "ready");
       if (resolvedPlan === "viajero") {
+        // Must match the server gate (itinerary.functions.ts), which computes
+        // the month boundary in UTC — using local time here would count trips
+        // from a slightly different window near the month change.
         const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const startOfMonth = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+        ).toISOString();
         countQuery = countQuery.gte("created_at", startOfMonth);
       }
       const { count } = await countQuery;

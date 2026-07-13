@@ -115,6 +115,20 @@
     "terms": "Conditions",
     "contact": "Contact"
   },
+  "authModal": {
+    "signupTitle": "Inscris-toi pour sauvegarder ton voyage",
+    "loginTitle": "Bon retour",
+    "google": "Continuer avec Google",
+    "or": "ou",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "signupBtn": "Créer un compte",
+    "loginBtn": "Se connecter",
+    "haveAccount": "Tu as déjà un compte ?",
+    "noAccount": "Tu n'as pas de compte ?",
+    "login": "Connecte-toi",
+    "signup": "Inscris-toi"
+  },
   "auth": {
     "back": "Accueil",
     "loginTab": "Se connecter",
@@ -314,6 +328,13 @@
     "hello": "Bonjour, {{name}} 👋",
     "where": "Où allons-nous aujourd'hui ?",
     "nextTrip": "Prochain voyage",
+    "yourWorld": "Ton monde",
+    "statTrips": "Voyages",
+    "statCountries": "Pays",
+    "statDays": "Jours planifiés",
+    "statSaved": "Enregistrés",
+    "planNextLabel": "Commence à rêver",
+    "planNextTitle": "Planifie ta prochaine aventure",
     "day": "jour",
     "days": "jours",
     "newTrip": "Créer un nouveau voyage",
@@ -353,6 +374,8 @@
     "trialPerk": "— Profite de l'assistant IA et de toutes les fonctionnalités premium.",
     "trialKeep": "Garder l'accès",
     "nDays": "{{count}} jours",
+    "globeViewItinerary": "Voir l'itinéraire",
+    "globeClose": "Fermer",
     "referral": {
       "title": "Invite 3 amis et obtiens 1 mois gratuit",
       "subtitle": "Dès que 3 personnes s'inscrivent avec ton lien, nous activons 1 mois du plan Voyageur sur ton compte.",
@@ -535,6 +558,18 @@
     }
   },
   "trip": {
+    "directions": "Itinéraire",
+    "categories": "Catégories",
+    "category": {
+      "hotel": "Hébergement",
+      "restaurant": "Restaurant",
+      "sight": "Site à voir",
+      "activity": "Activité",
+      "nightlife": "Vie nocturne",
+      "transport": "Transport",
+      "shopping": "Shopping",
+      "other": "Autre"
+    },
     "metaTitle": "Votre itinéraire – Itineraya",
     "backDashboard": "Tableau de bord",
     "viewCards": "Cartes",

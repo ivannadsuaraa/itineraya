@@ -115,6 +115,20 @@
     "terms": "Terms",
     "contact": "Contact"
   },
+  "authModal": {
+    "signupTitle": "Sign up to save your trip",
+    "loginTitle": "Welcome back",
+    "google": "Continue with Google",
+    "or": "or",
+    "email": "Email",
+    "password": "Password",
+    "signupBtn": "Create account",
+    "loginBtn": "Log in",
+    "haveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "login": "Log in",
+    "signup": "Sign up"
+  },
   "auth": {
     "back": "Home",
     "loginTab": "Log in",
@@ -544,6 +558,18 @@
     }
   },
   "trip": {
+    "directions": "Get directions",
+    "categories": "Categories",
+    "category": {
+      "hotel": "Accommodation",
+      "restaurant": "Restaurant",
+      "sight": "Sight",
+      "activity": "Activity",
+      "nightlife": "Nightlife",
+      "transport": "Transport",
+      "shopping": "Shopping",
+      "other": "Other"
+    },
     "metaTitle": "Your itinerary – Itineraya",
     "backDashboard": "Dashboard",
     "viewCards": "Cards",

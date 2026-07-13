@@ -115,6 +115,20 @@
     "terms": "Términos",
     "contact": "Contacto"
   },
+  "authModal": {
+    "signupTitle": "Regístrate para guardar tu viaje",
+    "loginTitle": "Bienvenido de nuevo",
+    "google": "Continuar con Google",
+    "or": "o",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "signupBtn": "Crear cuenta",
+    "loginBtn": "Iniciar sesión",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "noAccount": "¿No tienes cuenta?",
+    "login": "Inicia sesión",
+    "signup": "Regístrate"
+  },
   "auth": {
     "back": "Inicio",
     "loginTab": "Iniciar sesión",
@@ -544,6 +558,18 @@
     }
   },
   "trip": {
+    "directions": "Cómo llegar",
+    "categories": "Categorías",
+    "category": {
+      "hotel": "Alojamiento",
+      "restaurant": "Restaurante",
+      "sight": "Lugar de interés",
+      "activity": "Actividad",
+      "nightlife": "Vida nocturna",
+      "transport": "Transporte",
+      "shopping": "Compras",
+      "other": "Otros"
+    },
     "metaTitle": "Tu itinerario – Itineraya",
     "backDashboard": "Dashboard",
     "viewCards": "Tarjetas",
