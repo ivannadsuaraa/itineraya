@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X, LayoutDashboard } from "lucide-react";
 import { useScroll, useMotionValueEvent } from "framer-motion";
@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useTap } from "@/hooks/use-tap";
 
 export function Navbar() {
   const { t } = useTranslation();
@@ -15,29 +16,18 @@ export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // En iOS un tap dispara `touchend` y ~300 ms después un `click` sintético.
-  // Enganchamos ambos (touchend es más fiable que click en Safari móvil para
-  // botones dentro de subárboles animados), pero guardamos con un timestamp
-  // para que un único tap no alterne el menú dos veces (abrir→cerrar).
-  // En móvil un tap dispara `touchend` y, después, un `click` "fantasma"
-  // sintético. Enganchamos ambos (touchend es más fiable en Safari iOS) pero
-  // con el patrón estándar de flag: touchend alterna el menú y marca el flag;
-  // el click posterior se ignora mientras el flag está activo, así un único
-  // tap nunca alterna dos veces (abrir→cerrar). En desktop no hay touchend, así
-  // que el flag nunca se activa y el onClick funciona con normalidad.
-  const touchHandledRef = useRef(false);
-  const toggleMenu = () => setOpen((o) => !o);
-  const handleToggleTouch = () => {
-    touchHandledRef.current = true;
-    toggleMenu();
-    window.setTimeout(() => {
-      touchHandledRef.current = false;
-    }, 700);
-  };
-  const handleToggleClick = () => {
-    if (touchHandledRef.current) return; // ghost click tras un toque → ignorar
-    toggleMenu();
-  };
+  const toggleTap = useTap(() => setOpen((o) => !o));
+  const loginTap = useTap(() => openAuthModal({ mode: "login" }));
+  const signupTap = useTap(() => openAuthModal({ mode: "signup" }));
+  const mobileLoginTap = useTap(() => openAuthModal({ mode: "login" }));
+  const panelLoginTap = useTap(() => {
+    setOpen(false);
+    openAuthModal({ mode: "login" });
+  });
+  const panelSignupTap = useTap(() => {
+    setOpen(false);
+    openAuthModal({ mode: "signup" });
+  });
 
   // Transparente sobre el hero oscuro; sólida con blur al pasar 80 px de
   // scroll. useScroll de framer (rAF-batched) + setState solo al cruzar el
@@ -125,7 +115,9 @@ export function Navbar() {
               <>
                 <button
                   type="button"
-                  onClick={() => openAuthModal({ mode: "login" })}
+                  onClick={loginTap.onClick}
+                  onTouchEnd={loginTap.onTouchEnd}
+                  style={{ touchAction: "manipulation" }}
                   className={`text-sm font-semibold transition-colors ${
                     scrolled ? "text-sky-700 hover:text-sky-900" : "text-white/90 hover:text-white"
                   }`}
@@ -135,7 +127,9 @@ export function Navbar() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => openAuthModal({ mode: "signup" })}
+                  onClick={signupTap.onClick}
+                  onTouchEnd={signupTap.onTouchEnd}
+                  style={{ touchAction: "manipulation" }}
                   className="rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30 hover:scale-[1.02]"
                   suppressHydrationWarning
                 >
@@ -157,7 +151,9 @@ export function Navbar() {
             {!isLoggedIn && (
               <button
                 type="button"
-                onClick={() => openAuthModal({ mode: "login" })}
+                onClick={mobileLoginTap.onClick}
+                onTouchEnd={mobileLoginTap.onTouchEnd}
+                style={{ touchAction: "manipulation" }}
                 className={`inline-flex h-11 items-center rounded-full px-3.5 text-xs font-bold transition-colors ${
                   scrolled
                     ? "bg-[#1E6B9A]/10 text-[#1E6B9A] hover:bg-[#1E6B9A]/15"
@@ -170,8 +166,8 @@ export function Navbar() {
             <LanguageSwitcher compact />
             <button
               type="button"
-              onClick={handleToggleClick}
-              onTouchEnd={handleToggleTouch}
+              onClick={toggleTap.onClick}
+              onTouchEnd={toggleTap.onTouchEnd}
               className={`relative z-50 flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
                 scrolled ? "text-sky-800" : "text-white"
               }`}
@@ -214,20 +210,18 @@ export function Navbar() {
               <>
                 <button
                   type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    openAuthModal({ mode: "login" });
-                  }}
+                  onClick={panelLoginTap.onClick}
+                  onTouchEnd={panelLoginTap.onTouchEnd}
+                  style={{ touchAction: "manipulation" }}
                   className="rounded-xl px-4 py-3 text-center text-sm font-semibold text-sky-700 hover:bg-sky-50"
                 >
                   {t("nav.login")}
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    openAuthModal({ mode: "signup" });
-                  }}
+                  onClick={panelSignupTap.onClick}
+                  onTouchEnd={panelSignupTap.onTouchEnd}
+                  style={{ touchAction: "manipulation" }}
                   className="mt-1 rounded-full bg-[#1E6B9A] px-5 py-3 text-center text-sm font-bold text-white shadow-md shadow-[#1E6B9A]/20 transition-all hover:bg-[#15577E] hover:shadow-lg hover:shadow-[#1E6B9A]/30"
                 >
                   {t("nav.startFree")}

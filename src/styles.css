@@ -140,6 +140,18 @@
     touch-action: manipulation;
   }
 
+  /* Bug documentado de WebKit iOS: un elemento con estilos `:hover` que NO
+     declara `cursor: pointer` recibe tratamiento de "doble tap" — el primer
+     toque solo activa el `:hover` (para simular el paso del ratón) y el
+     click real no se dispara hasta el SEGUNDO toque. `<button>` no hereda
+     `cursor: pointer` por defecto (a diferencia de `<a>`), y Tailwind
+     Preflight tampoco lo fuerza, así que todo botón con clases `hover:` en
+     este proyecto podía necesitar dos toques en iOS para responder. */
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
   h1,
   h2,
   h3,
