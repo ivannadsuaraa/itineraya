@@ -1037,6 +1037,7 @@
     "daysTitle": "¿Cuántos días?",
     "daysSubtitle": "La demo genera hasta 4 días. La versión completa llega a 14.",
     "daysUnit": "días",
+    "destRequired": "Escribe un destino para continuar.",
     "disclaimer": "Demo con destino, días y estilo. La versión completa añade fechas reales, presupuesto, ritmo, dieta, mapa interactivo y edición con IA — gratis al registrarte.",
     "resultBadge": "Demo",
     "saveCta": "Guardar viaje",

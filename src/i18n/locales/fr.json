@@ -1039,6 +1039,7 @@
     "daysTitle": "Combien de jours ?",
     "daysSubtitle": "La démo génère jusqu'à 4 jours. La version complète va jusqu'à 14.",
     "daysUnit": "jours",
+    "destRequired": "Saisis une destination pour continuer.",
     "disclaimer": "Démo avec destination, jours et style. La version complète ajoute dates réelles, budget, rythme, régime, carte interactive et édition IA — gratuit à l'inscription.",
     "resultBadge": "Démo",
     "saveCta": "Enregistrer",

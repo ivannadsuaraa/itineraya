@@ -42,20 +42,24 @@ export function CookieBanner() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[2000] flex justify-center px-3 pb-3 sm:px-6 sm:pb-6">
-      <div className="w-full max-w-2xl rounded-2xl border border-sky-100 bg-white/95 p-5 shadow-2xl backdrop-blur-md">
+    // `pointer-events-none` en el envoltorio + `pointer-events-auto` solo en la
+    // tarjeta: fuera de la tarjeta los toques atraviesan al contenido de la
+    // página. La tarjeta ahora es compacta (una fila de texto + una de botones)
+    // para NO cubrir CTAs de la página: antes medía ~248px de alto y tapaba
+    // físicamente el botón "Siguiente" del wizard /demo en la primera visita,
+    // así que el toque impactaba en el banner y no en el botón.
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[2000] flex justify-center px-3 pb-3 sm:px-6 sm:pb-6">
+      <div className="pointer-events-auto w-full max-w-2xl rounded-2xl border border-sky-100 bg-white/95 p-3.5 shadow-2xl backdrop-blur-md sm:p-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
             <Cookie className="h-4 w-4" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-bold text-sky-900">Tu privacidad importa</h3>
-            <p className="mt-1 text-xs text-sky-700 sm:text-sm">
-              Usamos cookies necesarias para que la web funcione y, si nos lo permites,
-              cookies analíticas y de marketing para mejorar tu experiencia. Puedes leer más en
-              nuestra{" "}
+            <p className="text-xs text-sky-700 sm:text-sm">
+              <span className="font-bold text-sky-900">Tu privacidad importa. </span>
+              Usamos cookies necesarias y, si lo permites, analíticas y de marketing.{" "}
               <Link to="/cookies" className="font-semibold text-[#1E6B9A] underline">
-                Política de Cookies
+                Más info
               </Link>
               .
             </p>
@@ -100,18 +104,18 @@ export function CookieBanner() {
               </div>
             )}
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-2.5 flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => accept({ necessary: true, analytics: true, marketing: true })}
-                className="rounded-full bg-[#1E6B9A] px-4 py-2 text-xs font-bold text-white shadow hover:bg-[#15577E]"
+                className="rounded-full bg-[#1E6B9A] px-4 py-1.5 text-xs font-bold text-white shadow hover:bg-[#15577E]"
               >
                 Aceptar todas
               </button>
               <button
                 type="button"
                 onClick={() => accept({ necessary: true, analytics: false, marketing: false })}
-                className="rounded-full border border-sky-200 bg-white px-4 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+                className="rounded-full border border-sky-200 bg-white px-4 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50"
               >
                 Rechazar
               </button>
@@ -119,7 +123,7 @@ export function CookieBanner() {
                 <button
                   type="button"
                   onClick={() => setCustomize(true)}
-                  className="rounded-full px-4 py-2 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+                  className="rounded-full px-4 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50"
                 >
                   Personalizar
                 </button>
@@ -127,7 +131,7 @@ export function CookieBanner() {
                 <button
                   type="button"
                   onClick={() => accept({ necessary: true, analytics, marketing })}
-                  className="rounded-full bg-sky-700 px-4 py-2 text-xs font-bold text-white hover:bg-sky-800"
+                  className="rounded-full bg-sky-700 px-4 py-1.5 text-xs font-bold text-white hover:bg-sky-800"
                 >
                   Guardar selección
                 </button>

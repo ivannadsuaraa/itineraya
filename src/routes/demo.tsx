@@ -3,7 +3,7 @@
 // bloqueado tras el modal de registro. El itinerario vive en localStorage
 // (DEMO_TRIP_KEY) y dashboard.tsx lo reclama al crear la cuenta.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, useReducedMotion } from "framer-motion";
@@ -77,10 +77,19 @@ function DemoPage() {
   const [phase, setPhase] = useState<Phase>("form");
   const [step, setStep] = useState(0);
   const [destination, setDestination] = useState("");
+  const [destError, setDestError] = useState(false);
   const [nDays, setNDays] = useState(3);
   const [companion, setCompanion] = useState("pareja");
   const [tripTypes, setTripTypes] = useState<string[]>([]);
   const [result, setResult] = useState<DemoTrip | null>(null);
+  // Envuelve el DestinationAutocomplete para poder leer el valor real del
+  // <input> del DOM como red de seguridad: si en algún navegador móvil el
+  // onChange no llegara a sincronizar el estado `destination`, recuperamos el
+  // texto tecleado directamente del input en vez de bloquear al usuario.
+  const destWrapRef = useRef<HTMLDivElement>(null);
+  // Prevención de "ghost click": en móvil el touchend avanza y marca el flag;
+  // el click sintético posterior se ignora mientras el flag está activo.
+  const touchHandledRef = useRef(false);
 
   // Usuarios con sesión no necesitan la demo: al flujo completo.
   useEffect(() => {
@@ -98,8 +107,40 @@ function DemoPage() {
     }
   }, []);
 
-  const canContinue = step === 0 ? destination.trim().length > 1 : true;
   const totalSteps = 3;
+
+  // El botón de avanzar NUNCA está deshabilitado — así ningún desajuste de
+  // estado en móvil puede dejarlo "muerto". La validación del destino se hace
+  // aquí, al pulsar, mostrando un error inline en vez de bloquear el botón.
+  const runNext = () => {
+    if (step === 0) {
+      const domValue = destWrapRef.current?.querySelector("input")?.value ?? "";
+      const dest = (destination.trim() || domValue.trim()).trim();
+      if (dest.length < 2) {
+        setDestError(true);
+        return;
+      }
+      // Recupera el valor si el estado controlado no se había sincronizado.
+      if (dest !== destination) setDestination(dest);
+      setDestError(false);
+      setStep(1);
+      return;
+    }
+
+    if (step === totalSteps - 1) void runGeneration();
+    else setStep((s) => s + 1);
+  };
+  const handleNextTouch = () => {
+    touchHandledRef.current = true;
+    runNext();
+    window.setTimeout(() => {
+      touchHandledRef.current = false;
+    }, 700);
+  };
+  const handleNextClick = () => {
+    if (touchHandledRef.current) return; // ghost click tras un toque → ignorar
+    runNext();
+  };
 
   const runGeneration = async () => {
     setPhase("loading");
@@ -153,8 +194,13 @@ function DemoPage() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      <div className="pointer-events-none absolute inset-0">
+    <div className="relative min-h-dvh bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      {/* `overflow-hidden` vive AQUÍ (capa de blobs), no en el contenedor de
+          página: así los blobs decorativos siguen recortados pero la página
+          puede hacer scroll vertical si el contenido no cabe — necesario para
+          que en móviles bajos (≈667px) el botón de avanzar pueda subir por
+          encima del banner de cookies en vez de quedar atrapado debajo. */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
           style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
@@ -165,7 +211,7 @@ function DemoPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+      <div className="relative mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-6 pb-40 sm:px-6 sm:py-8 sm:pb-8">
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/"
@@ -217,16 +263,26 @@ function DemoPage() {
                 </h2>
                 <p className="mt-2 text-sm text-sky-600">{t("onboarding.destSubtitle")}</p>
               </div>
-              <div className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4">
+              <div
+                ref={destWrapRef}
+                className={cn(
+                  "rounded-2xl border border-dashed bg-white/60 p-4 transition-colors",
+                  destError ? "border-red-400 bg-red-50/40" : "border-[#1E6B9A]/40",
+                )}
+              >
                 <DestinationAutocomplete
                   value={destination}
-                  onChange={setDestination}
-                  onEnter={() => {
-                    if (canContinue) setStep(1);
+                  onChange={(v) => {
+                    setDestination(v);
+                    if (destError) setDestError(false);
                   }}
+                  onEnter={runNext}
                   placeholder={t("onboarding.destPh")}
                 />
               </div>
+              {destError && (
+                <p className="text-sm font-semibold text-red-500">{t("demo.destRequired")}</p>
+              )}
             </div>
           )}
 
@@ -337,13 +393,10 @@ function DemoPage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              if (!canContinue) return;
-              if (step === totalSteps - 1) void runGeneration();
-              else setStep((s) => s + 1);
-            }}
-            disabled={!canContinue}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
+            onClick={handleNextClick}
+            onTouchEnd={handleNextTouch}
+            style={{ touchAction: "manipulation" }}
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98]"
           >
             <Sparkles className="h-4 w-4" />
             {step === totalSteps - 1 ? t("onboarding.generate") : t("onboarding.next")}

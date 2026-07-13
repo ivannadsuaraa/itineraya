@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { Menu, X, LayoutDashboard } from "lucide-react";
 import { useScroll, useMotionValueEvent } from "framer-motion";
@@ -14,6 +14,30 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // En iOS un tap dispara `touchend` y ~300 ms después un `click` sintético.
+  // Enganchamos ambos (touchend es más fiable que click en Safari móvil para
+  // botones dentro de subárboles animados), pero guardamos con un timestamp
+  // para que un único tap no alterne el menú dos veces (abrir→cerrar).
+  // En móvil un tap dispara `touchend` y, después, un `click` "fantasma"
+  // sintético. Enganchamos ambos (touchend es más fiable en Safari iOS) pero
+  // con el patrón estándar de flag: touchend alterna el menú y marca el flag;
+  // el click posterior se ignora mientras el flag está activo, así un único
+  // tap nunca alterna dos veces (abrir→cerrar). En desktop no hay touchend, así
+  // que el flag nunca se activa y el onClick funciona con normalidad.
+  const touchHandledRef = useRef(false);
+  const toggleMenu = () => setOpen((o) => !o);
+  const handleToggleTouch = () => {
+    touchHandledRef.current = true;
+    toggleMenu();
+    window.setTimeout(() => {
+      touchHandledRef.current = false;
+    }, 700);
+  };
+  const handleToggleClick = () => {
+    if (touchHandledRef.current) return; // ghost click tras un toque → ignorar
+    toggleMenu();
+  };
 
   // Transparente sobre el hero oscuro; sólida con blur al pasar 80 px de
   // scroll. useScroll de framer (rAF-batched) + setState solo al cruzar el
@@ -145,11 +169,15 @@ export function Navbar() {
             )}
             <LanguageSwitcher compact />
             <button
-              onClick={() => setOpen(!open)}
-              className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
+              type="button"
+              onClick={handleToggleClick}
+              onTouchEnd={handleToggleTouch}
+              className={`relative z-50 flex h-11 w-11 items-center justify-center rounded-full transition-colors ${
                 scrolled ? "text-sky-800" : "text-white"
               }`}
+              style={{ touchAction: "manipulation" }}
               aria-label={t("nav.toggleMenu")}
+              aria-expanded={open}
             >
               {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
