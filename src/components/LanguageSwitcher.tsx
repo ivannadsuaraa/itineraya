@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { Check, Globe } from "lucide-react";
 import { LANGUAGE_OPTIONS, normalizeLang, type AppLang } from "@/i18n";
 import { setAppLanguage } from "@/components/LanguageProvider";
-import { useTap } from "@/hooks/use-tap";
 
 interface Props {
   variant?: "light" | "dark";
@@ -38,8 +37,6 @@ export function LanguageSwitcher({ variant = "light", compact = false }: Props) 
     await setAppLanguage(code);
   };
 
-  const triggerTap = useTap(() => setOpen((s) => !s));
-
   const triggerClass =
     variant === "dark"
       ? "bg-white/15 text-white hover:bg-white/25"
@@ -49,9 +46,7 @@ export function LanguageSwitcher({ variant = "light", compact = false }: Props) 
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={triggerTap.onClick}
-        onTouchEnd={triggerTap.onTouchEnd}
-        style={{ touchAction: "manipulation" }}
+        onClick={() => setOpen((s) => !s)}
         className={`inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold backdrop-blur-md transition ${triggerClass}`}
         aria-label="Language"
       >
@@ -79,13 +74,10 @@ function LanguageOption({
   selected: boolean;
   onSelect: (code: AppLang) => void;
 }) {
-  const tap = useTap(() => onSelect(opt.code));
   return (
     <button
       type="button"
-      onClick={tap.onClick}
-      onTouchEnd={tap.onTouchEnd}
-      style={{ touchAction: "manipulation" }}
+      onClick={() => onSelect(opt.code)}
       className={`flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-sky-50 ${
         selected ? "text-[#1E6B9A] font-semibold" : "text-sky-800"
       }`}

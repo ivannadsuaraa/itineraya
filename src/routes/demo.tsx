@@ -31,7 +31,6 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { TextShimmerWave } from "@/components/ui/text-shimmer-wave";
 import { EASE_OUT } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { useTap } from "@/hooks/use-tap";
 
 export const Route = createFileRoute("/demo")({
   head: () => ({
@@ -108,8 +107,6 @@ function DemoPage() {
     else setStep((s) => s + 1);
   };
   const runPrev = () => setStep((s) => Math.max(0, s - 1));
-  const nextTap = useTap(runNext);
-  const prevTap = useTap(runPrev);
 
   const runGeneration = async () => {
     setPhase("loading");
@@ -341,10 +338,8 @@ function DemoPage() {
         <div className="mt-6 flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={prevTap.onClick}
-            onTouchEnd={prevTap.onTouchEnd}
+            onClick={runPrev}
             disabled={step === 0}
-            style={{ touchAction: "manipulation" }}
             className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -352,10 +347,8 @@ function DemoPage() {
           </button>
           <button
             type="button"
-            onClick={nextTap.onClick}
-            onTouchEnd={nextTap.onTouchEnd}
+            onClick={runNext}
             disabled={!canContinue}
-            style={{ touchAction: "manipulation" }}
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
           >
             <Sparkles className="h-4 w-4" />
