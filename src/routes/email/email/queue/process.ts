@@ -223,7 +223,7 @@ export const Route = createFileRoute("/email/email/queue/process")({
 
             try {
               // Send email with Resend
-              const emailResult = await resend.emails.send({
+              await resend.emails.send({
                 from: payload.from,
                 to: [payload.to],
                 subject: payload.subject,

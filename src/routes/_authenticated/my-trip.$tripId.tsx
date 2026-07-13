@@ -53,7 +53,7 @@ import { ReadingProgress } from "@/components/ui/ReadingProgress";
 import { BoardingPass } from "@/components/airport/BoardingPass";
 import { RevealGroup, RevealItem } from "@/components/ui/ScrollReveal";
 import { geocodeDestination } from "@/lib/geocode";
-import { getCountryInfo, timezoneDiffFromSpain, type CountryInfo } from "@/lib/country";
+import { getCountryInfo, type CountryInfo } from "@/lib/country";
 import {
   getWeather,
   weatherForDate,

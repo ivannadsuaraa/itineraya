@@ -252,7 +252,7 @@ export function TripBrochure({ open, onClose, destination, days, startDate, endD
                   type="button"
                   onClick={download}
                   disabled={downloading}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-bold text-sky-900 shadow-lg transition hover:bg-sky-50 active:scale-[0.97] disabled:opacity-60"
+                  className="inline-flex h-11 items-center gap-1.5 rounded-full bg-white px-4 text-xs font-bold text-sky-900 shadow-lg transition hover:bg-sky-50 active:scale-[0.97] disabled:opacity-60"
                 >
                   {downloading ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -265,7 +265,7 @@ export function TripBrochure({ open, onClose, destination, days, startDate, endD
                   type="button"
                   onClick={onClose}
                   aria-label={t("dashboard.globeClose")}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25 active:scale-95"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25 active:scale-95"
                 >
                   <X className="h-4 w-4" />
                 </button>

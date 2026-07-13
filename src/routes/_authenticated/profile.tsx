@@ -9,7 +9,6 @@ import {
   LogOut,
   CreditCard,
   Sparkles,
-  Mail,
   ArrowRight,
   Heart,
   Loader2,
@@ -24,8 +23,6 @@ export const Route = createFileRoute("/_authenticated/profile")({
 });
 
 const TRAVEL_STYLES = ["adventure", "relax", "cultural", "romantic", "family", "party", "nature"];
-const BUDGET_RANGES = ["low", "medium", "high", "luxury"];
-const TRAVELER_TYPES = ["solo", "couple", "family", "friends", "business"];
 
 type ProfileTrip = StampTrip & { geo_lat?: number | null; geo_lng?: number | null };
 

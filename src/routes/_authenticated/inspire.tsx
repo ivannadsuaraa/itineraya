@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { ArrowLeft, ArrowRight, Loader2, Sparkles, Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { cn } from "@/lib/utils";
+import { EASE_OUT } from "@/lib/motion";
 import {
   INSPIRE_QUESTIONS,
   type InspireAnswers,
@@ -35,6 +37,7 @@ function InspirePage() {
   const [answers, setAnswers] = useState<InspireAnswers>(emptyAnswers);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SuggestedDestination[] | null>(null);
+  const reduceMotion = useReducedMotion();
 
   const total = INSPIRE_QUESTIONS.length;
   const current = INSPIRE_QUESTIONS[step];
@@ -131,10 +134,11 @@ function InspirePage() {
               <div className="flex gap-2">
                 {Array.from({ length: total }).map((_, i) => (
                   <div key={i} className="h-1.5 flex-1 overflow-hidden rounded-full bg-sky-100">
-                    <div
-                      
-                      
-                      
+                    <motion.div
+                      initial={false}
+                      animate={{ scaleX: i <= step ? 1 : 0 }}
+                      transition={{ duration: 0.35, ease: EASE_OUT }}
+                      style={{ transformOrigin: "left" }}
                       className="h-full rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2]"
                     />
                   </div>
@@ -142,15 +146,15 @@ function InspirePage() {
               </div>
             </div>
 
-            <div className="relative flex-1">
-              
-                <div
+            <div className="relative flex-1 overflow-hidden">
+              <AnimatePresence mode="wait" custom={direction} initial={false}>
+                <motion.div
                   key={current.id}
-                  
-                  
-                  
-                  
-                  
+                  custom={direction}
+                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction > 0 ? 44 : -44 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction > 0 ? -44 : 44 }}
+                  transition={{ duration: 0.3, ease: EASE_OUT }}
                   className="rounded-3xl bg-white/80 p-5 shadow-[0_20px_60px_-15px_rgba(46,107,138,0.25)] backdrop-blur-xl ring-1 ring-white/60 sm:p-8"
                 >
                   <QuestionView
@@ -158,8 +162,8 @@ function InspirePage() {
                     value={answers[current.id as keyof InspireAnswers]}
                     onChange={(v) => setAnswers({ ...answers, [current.id]: v } as InspireAnswers)}
                   />
-                </div>
-              
+                </motion.div>
+              </AnimatePresence>
             </div>
 
             <div className="mt-8 flex items-center justify-between gap-3">

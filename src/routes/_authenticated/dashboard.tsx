@@ -24,7 +24,6 @@ import {
   Lock,
   CalendarDays,
   Trash2,
-  Clock,
   Zap,
   LayoutGrid,
   Plane,
@@ -536,7 +535,7 @@ function DashboardPage() {
               <button
                 type="button"
                 onClick={copyReferralLink}
-                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-95"
+                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-95"
               >
                 {referralCopied ? (
                   <Check className="h-3.5 w-3.5" />

@@ -1,9 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import es from "./locales/es.json";
-import en from "./locales/en.json";
-import fr from "./locales/fr.json";
-import pt from "./locales/pt.json";
 
 export const SUPPORTED_LANGS = ["es", "en", "fr", "pt"] as const;
 export type AppLang = (typeof SUPPORTED_LANGS)[number];
@@ -21,16 +18,33 @@ export function normalizeLang(input: string | null | undefined): AppLang {
   return (SUPPORTED_LANGS as readonly string[]).includes(code) ? (code as AppLang) : "es";
 }
 
+// Solo "es" va bundleado de serie: es el idioma de SSR (fallbackLng) y el del
+// mercado principal, así que siempre debe estar disponible sin red. Los otros
+// 3 idiomas (~130 kB de JSON en total) se cargan bajo demanda vía import()
+// dinámico — evita descargarlos en cada carga de página para el ~75% de
+// visitas que nunca cambian de idioma o que ya usan es por defecto.
+const LOCALE_LOADERS: Record<Exclude<AppLang, "es">, () => Promise<{ default: object }>> = {
+  en: () => import("./locales/en.json"),
+  fr: () => import("./locales/fr.json"),
+  pt: () => import("./locales/pt.json"),
+};
+
+/** Garantiza que el bundle de traducciones de `lang` está cargado antes de usarlo. */
+export async function ensureLanguageLoaded(lang: AppLang): Promise<void> {
+  if (lang === "es") return;
+  if (i18n.hasResourceBundle(lang, "translation")) return;
+  const mod = await LOCALE_LOADERS[lang]();
+  i18n.addResourceBundle(lang, "translation", mod.default, true, true);
+}
+
 if (!i18n.isInitialized) {
   void i18n.use(initReactI18next).init({
     resources: {
       es: { translation: es },
-      en: { translation: en },
-      fr: { translation: fr },
-      pt: { translation: pt },
     },
     lng: "es",
     fallbackLng: "es",
+    partialBundledLanguages: true,
     interpolation: { escapeValue: false },
     returnNull: false,
   });

@@ -92,6 +92,10 @@ function ExplorePage() {
   const reduceMotion = useReducedMotion();
 
   const [destination, setDestination] = useState("");
+  // La query real solo sigue a `destination` tras una pausa de tecleo: sin
+  // esto, cada letra disparaba una petición al servidor y el skeleton
+  // parpadeaba en cada pulsación mientras el usuario aún estaba escribiendo.
+  const [debouncedDestination, setDebouncedDestination] = useState("");
   const [style, setStyle] = useState<(typeof STYLES)[number]>("all");
   const [durationBucket, setDurationBucket] = useState<(typeof DURATIONS)[number]>("all");
   const [sortBy, setSortBy] = useState<"newest" | "best">("newest");
@@ -107,9 +111,14 @@ function ExplorePage() {
   }, []);
 
   useEffect(() => {
+    const id = setTimeout(() => setDebouncedDestination(destination), 350);
+    return () => clearTimeout(id);
+  }, [destination]);
+
+  useEffect(() => {
     let cancel = false;
     setLoading(true);
-    list({ data: { destination, style, durationBucket, limit: 60 } })
+    list({ data: { destination: debouncedDestination, style, durationBucket, limit: 60 } })
       .then((res) => {
         if (!cancel) setItems(res);
       })
@@ -122,7 +131,7 @@ function ExplorePage() {
     return () => {
       cancel = true;
     };
-  }, [list, destination, style, durationBucket]);
+  }, [list, debouncedDestination, style, durationBucket]);
 
   const trending = useMemo(() => {
     if (items.length === 0) return [];

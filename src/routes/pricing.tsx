@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { ArrowLeft, X, Loader2, Check, Minus, Shield, Ticket } from "lucide-react";
+import { ArrowLeft, X, Check, Minus, Shield, Ticket } from "lucide-react";
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +52,7 @@ function PricingPage() {
   const { t } = useTranslation();
   const { openAuthModal } = useAuthModal();
   const { openCheckout, closeCheckout, checkoutElement, isOpen } = useStripeCheckout();
-  const { subscription, loading } = useSubscription();
+  const { loading } = useSubscription();
   const { user } = useAuthSession();
   const authedUserId = user?.id ?? null;
   const [starting, setStarting] = useState<string | null>(null);

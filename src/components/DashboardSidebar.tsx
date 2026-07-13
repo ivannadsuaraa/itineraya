@@ -95,7 +95,7 @@ export function DesktopTopNav() {
               type="button"
               onClick={() => setMenuOpen((o) => !o)}
               title="Menú"
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
             >
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -118,7 +118,7 @@ export function DesktopTopNav() {
           <button
             onClick={handleLogout}
             title={t("dashboard.logout")}
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-slate-600"
           >
             <LogOut className="h-4 w-4" />
           </button>

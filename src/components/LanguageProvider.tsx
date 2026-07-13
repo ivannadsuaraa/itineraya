@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import i18n, { normalizeLang, type AppLang } from "@/i18n";
+import i18n, { ensureLanguageLoaded, normalizeLang, type AppLang } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 
@@ -17,8 +17,19 @@ function readInitialLang(): AppLang {
   return normalizeLang(nav);
 }
 
-function applyLang(lang: AppLang) {
-  if (i18n.language !== lang) void i18n.changeLanguage(lang);
+async function applyLang(lang: AppLang) {
+  if (i18n.language !== lang) {
+    // en/fr/pt no vienen bundleados de serie (ver src/i18n/index.ts) — hay que
+    // esperar su import() dinámico antes de conmutar, o i18next renderizaría
+    // brevemente con el fallback (es) mientras el JSON aún no ha llegado. Si
+    // el import falla (red), seguimos en es en vez de dejar la app a medias.
+    try {
+      await ensureLanguageLoaded(lang);
+      await i18n.changeLanguage(lang);
+    } catch {
+      /* ignore — se queda en el idioma actual */
+    }
+  }
   if (typeof document !== "undefined") {
     document.documentElement.lang = lang;
   }
@@ -36,7 +47,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   // Apply locally cached language immediately, before auth resolves.
   useEffect(() => {
-    applyLang(readInitialLang());
+    void applyLang(readInitialLang());
   }, []);
 
   // Then sync from the authenticated user's profile once auth is known, and
@@ -54,7 +65,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         let query = supabase.from("profiles").select("language").eq("id", userId);
         if (accessToken) query = query.setHeader("Authorization", `Bearer ${accessToken}`);
         const { data: profile } = await query.maybeSingle();
-        if (!cancelled && profile?.language) applyLang(normalizeLang(profile.language));
+        if (!cancelled && profile?.language) void applyLang(normalizeLang(profile.language));
       } catch {
         /* ignore */
       }
@@ -68,7 +79,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 }
 
 export async function setAppLanguage(lang: AppLang) {
-  applyLang(lang);
+  await applyLang(lang);
   const { data } = await supabase.auth.getUser();
   if (data.user) {
     await supabase.from("profiles").update({ language: lang }).eq("id", data.user.id);
