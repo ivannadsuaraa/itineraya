@@ -123,7 +123,16 @@ function DemoPage() {
     if (step === totalSteps - 1) void runGeneration();
     else setStep((s) => s + 1);
   };
-  const runPrev = () => setStep((s) => Math.max(0, s - 1));
+  // En el paso 0 no hay paso anterior: el botón estaba `disabled` y en móvil
+  // eso es indistinguible de un botón roto (se toca y no pasa nada). Ahora
+  // siempre responde — desde el primer paso vuelve a la portada.
+  const runPrev = () => {
+    if (step === 0) {
+      void navigate({ to: "/" });
+      return;
+    }
+    setStep((s) => s - 1);
+  };
 
   const runGeneration = async () => {
     setPhase("loading");
@@ -372,18 +381,20 @@ function DemoPage() {
           <button
             type="button"
             onClick={runPrev}
-            disabled={step === 0}
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white active:scale-[0.97]"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
           </button>
-          {/* Nunca disabled: la validación pasa en runNext con error inline —
-              un botón muerto en móvil es indistinguible de un botón roto. */}
+          {/* Gris y deshabilitado mientras no haya destino; azul en cuanto se
+              escribe. DestinationAutocomplete sincroniza el estado también
+              desde el evento nativo, así que en iOS el botón no puede
+              quedarse gris con el input lleno. */}
           <button
             type="button"
             onClick={runNext}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98]"
+            disabled={destination.trim().length <= 1}
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             <Sparkles className="h-4 w-4" />
             {step === totalSteps - 1 ? t("onboarding.generate") : t("onboarding.next")}
