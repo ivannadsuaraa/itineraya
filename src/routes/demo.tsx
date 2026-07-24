@@ -3,7 +3,7 @@
 // bloqueado tras el modal de registro. El itinerario vive en localStorage
 // (DEMO_TRIP_KEY) y dashboard.tsx lo reclama al crear la cuenta.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, useReducedMotion } from "framer-motion";
@@ -77,10 +77,12 @@ function DemoPage() {
   const [phase, setPhase] = useState<Phase>("form");
   const [step, setStep] = useState(0);
   const [destination, setDestination] = useState("");
+  const [destError, setDestError] = useState(false);
   const [nDays, setNDays] = useState(3);
   const [companion, setCompanion] = useState("pareja");
   const [tripTypes, setTripTypes] = useState<string[]>([]);
   const [result, setResult] = useState<DemoTrip | null>(null);
+  const destBoxRef = useRef<HTMLDivElement>(null);
 
   // Usuarios con sesión no necesitan la demo: al flujo completo.
   useEffect(() => {
@@ -98,11 +100,23 @@ function DemoPage() {
     }
   }, []);
 
-  const canContinue = step === 0 ? destination.trim().length > 1 : true;
   const totalSteps = 3;
 
   const runNext = () => {
-    if (!canContinue) return;
+    if (step === 0) {
+      // En iOS el onChange de React puede no dispararse con autorrelleno o
+      // dictado: si el estado sigue vacío, el valor real vive en el DOM.
+      let dest = destination.trim();
+      if (dest.length <= 1) {
+        dest = destBoxRef.current?.querySelector("input")?.value.trim() ?? "";
+        if (dest.length > 1) setDestination(dest);
+      }
+      if (dest.length <= 1) {
+        setDestError(true);
+        return;
+      }
+      setDestError(false);
+    }
     if (step === totalSteps - 1) void runGeneration();
     else setStep((s) => s + 1);
   };
@@ -177,7 +191,12 @@ function DemoPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-6 pb-40 sm:px-6 sm:py-8 sm:pb-8">
+      {/* pb-56 (224px) en móvil: el banner de cookies fijo mide hasta ~178px
+          con su padding; con pb-40 (160px) el botón "Siguiente" quedaba
+          atrapado bajo el banner incluso con el scroll a tope y el tap
+          aterrizaba en el banner. 224px garantizan que la fila de acciones
+          siempre puede subir por encima del banner. */}
+      <div className="relative mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-6 pb-56 sm:px-6 sm:py-8 sm:pb-8">
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/"
@@ -229,13 +248,24 @@ function DemoPage() {
                 </h2>
                 <p className="mt-2 text-sm text-sky-600">{t("onboarding.destSubtitle")}</p>
               </div>
-              <div className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4">
+              <div
+                ref={destBoxRef}
+                className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4"
+              >
                 <DestinationAutocomplete
                   value={destination}
-                  onChange={setDestination}
+                  onChange={(v) => {
+                    setDestination(v);
+                    if (destError) setDestError(false);
+                  }}
                   onEnter={runNext}
                   placeholder={t("onboarding.destPh")}
                 />
+                {destError && (
+                  <p className="mt-2 text-sm font-semibold text-red-600" role="alert">
+                    {t("demo.destRequired")}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -340,16 +370,17 @@ function DemoPage() {
             type="button"
             onClick={runPrev}
             disabled={step === 0}
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
           </button>
+          {/* Nunca disabled: la validación pasa en runNext con error inline —
+              un botón muerto en móvil es indistinguible de un botón roto. */}
           <button
             type="button"
             onClick={runNext}
-            disabled={!canContinue}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98]"
           >
             <Sparkles className="h-4 w-4" />
             {step === totalSteps - 1 ? t("onboarding.generate") : t("onboarding.next")}

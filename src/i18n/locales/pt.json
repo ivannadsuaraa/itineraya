@@ -1047,6 +1047,23 @@
     "lockedCta": "Desbloquear este dia grátis",
     "signupTitle": "Salve sua viagem a {{destination}}",
     "signupDesc": "Crie sua conta grátis: seu roteiro é salvo automaticamente e você desbloqueia todos os dias, o mapa interativo e os cartões-postais.",
-    "claimedToast": "Sua viagem a {{destination}} foi salva na sua conta ✈️"
+    "claimedToast": "Sua viagem a {{destination}} foi salva na sua conta ✈️",
+    "destRequired": "Digite um destino para continuar."
+  },
+  "cookies": {
+    "title": "Sua privacidade importa.",
+    "body": "Usamos cookies necessários e, se você permitir, de análise e de marketing.",
+    "moreInfo": "Mais informações",
+    "necessary": "Necessários",
+    "necessaryDesc": "Sempre ativos. Sessão, idioma, preferências.",
+    "analytics": "Analíticos",
+    "analyticsDesc": "Ajudam-nos a entender como o site é usado.",
+    "marketing": "Marketing",
+    "marketingDesc": "Personalizar campanhas e medir resultados.",
+    "acceptAll": "Aceitar todos",
+    "reject": "Rejeitar",
+    "customize": "Personalizar",
+    "saveSelection": "Salvar seleção",
+    "close": "Fechar"
   }
 }
