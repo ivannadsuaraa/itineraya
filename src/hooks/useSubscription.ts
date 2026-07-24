@@ -70,8 +70,11 @@ export function useSubscription() {
     (async () => {
       if (userId) {
         await fetchLatest(userId);
+        // Unique per-mount name: supabase.channel() returns the same instance
+        // for a repeated name, and calling .on() on an already-subscribed
+        // channel throws ("cannot add postgres_changes callbacks after subscribe()").
         channel = supabase
-          .channel(`subs-${userId}`)
+          .channel(`subs-${userId}-${Math.random().toString(36).slice(2)}`)
           .on(
             "postgres_changes",
             { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${userId}` },

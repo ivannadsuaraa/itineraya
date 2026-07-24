@@ -97,6 +97,7 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
   const infoRef = useRef<google.maps.InfoWindow | null>(null);
   const [pins, setPins] = useState<Pin[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [mapFailed, setMapFailed] = useState(false);
   const cancelled = useRef(false);
 
   const tasks = useMemo(
@@ -123,7 +124,7 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
         });
         infoRef.current = new google.maps.InfoWindow();
       } catch {
-        // ignore
+        if (mounted) setMapFailed(true);
       }
     })();
     return () => {
@@ -156,7 +157,15 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
     const collected: Pin[] = [];
 
     (async () => {
-      await loadGoogleMaps();
+      try {
+        await loadGoogleMaps();
+      } catch {
+        if (!cancelled.current) {
+          setMapFailed(true);
+          setProgress({ done: 0, total: 0 });
+        }
+        return;
+      }
       if (cancelled.current || !mapInstance.current) return;
       const geocoder = new google.maps.Geocoder();
 
@@ -253,6 +262,11 @@ export function GoogleTripMap({ destination, days, tripId }: Props) {
 
       <div className="relative" style={{ height: "70vh", minHeight: 420 }}>
         <div ref={mapRef} className="h-full w-full" />
+        {mapFailed && (
+          <div className="absolute inset-0 flex items-center justify-center bg-sky-50/80 p-6 text-center">
+            <p className="text-sm font-medium text-sky-700">{t("trip.mapUnavailable")}</p>
+          </div>
+        )}
         {categories.length > 0 && (
           <div className="pointer-events-auto absolute bottom-3 left-3 z-10 rounded-2xl bg-white/95 px-3 py-2 shadow-lg ring-1 ring-sky-100 backdrop-blur">
             <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-sky-700">

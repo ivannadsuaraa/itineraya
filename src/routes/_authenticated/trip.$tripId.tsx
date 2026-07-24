@@ -287,10 +287,10 @@ function ItineraryPage() {
             <button
               onClick={() => setTripmatesOpen(true)}
               className="inline-flex h-9 items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-pink-500 px-3 text-xs font-bold text-white shadow-md shadow-pink-500/25 transition hover:shadow-lg"
-              aria-label="Invite tripmates"
+              aria-label={t("tripmates.invite")}
             >
               <Users className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Invite tripmates</span>
+              <span className="hidden sm:inline">{t("tripmates.invite")}</span>
             </button>
             <button
               onClick={() => setShareOpen(true)}

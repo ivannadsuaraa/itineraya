@@ -153,6 +153,20 @@
     "weakPassword": "La contraseña no cumple los requisitos.",
     "tooManyRequests": "Demasiados intentos. Espera unos minutos."
   },
+  "authModal": {
+    "signupTitle": "Crea tu cuenta para guardar tu viaje",
+    "loginTitle": "Bienvenido de nuevo",
+    "google": "Continuar con Google",
+    "or": "o",
+    "email": "Email",
+    "password": "Contraseña",
+    "signupBtn": "Crear cuenta",
+    "loginBtn": "Iniciar sesión",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "login": "Inicia sesión",
+    "noAccount": "¿No tienes cuenta?",
+    "signup": "Regístrate"
+  },
   "emailConfirmed": {
     "title": "¡Email verificado!",
     "bodyPre": "Tu cuenta en ",
@@ -270,6 +284,8 @@
     "home": "Inicio"
   },
   "onboarding": {
+    "errorDestination": "Escribe un destino para continuar.",
+    "errorDates": "Selecciona las fechas de tu viaje para continuar.",
     "metaTitle": "Cuéntanos sobre tu viaje – Itineraya",
     "back": "Atrás",
     "stepIndicator": "Paso {{n}} de {{total}}",
@@ -331,7 +347,33 @@
       "architecture": "Arquitectura"
     }
   },
+  "tripmates": {
+    "invite": "Invitar compañeros",
+    "sent": "¡Invitación enviada!",
+    "tag": "Compañeros de viaje",
+    "title": "Invita a tus amigos",
+    "subtitle": "Planificad {{dest}} juntos. Los amigos invitados pueden ver y colaborar.",
+    "emailPh": "amigo@email.com",
+    "send": "Invitar",
+    "joined": "Se han unido",
+    "invitesSent": "Invitados",
+    "accepted": "Aceptada",
+    "pending": "Pendiente"
+  },
   "trip": {
+    "mapUnavailable": "El mapa no está disponible ahora mismo. Usa los enlaces de Google Maps de cada actividad.",
+    "directions": "Cómo llegar",
+    "categories": "Categorías",
+    "category": {
+      "hotel": "Alojamiento",
+      "restaurant": "Restaurante",
+      "activity": "Actividad",
+      "transport": "Transporte",
+      "sight": "Monumento",
+      "nightlife": "Vida nocturna",
+      "shopping": "Compras",
+      "other": "Otro"
+    },
     "metaTitle": "Tu itinerario – Itineraya",
     "backDashboard": "Dashboard",
     "viewCards": "Tarjetas",

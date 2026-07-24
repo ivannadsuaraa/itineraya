@@ -42,8 +42,8 @@ export function CookieBanner() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[2000] flex justify-center px-3 pb-3 sm:px-6 sm:pb-6">
-      <div className="w-full max-w-2xl rounded-2xl border border-sky-100 bg-white/95 p-5 shadow-2xl backdrop-blur-md">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[2000] flex justify-center px-3 pb-3 sm:px-6 sm:pb-6">
+      <div className="pointer-events-auto w-full max-w-2xl rounded-2xl border border-sky-100 bg-white/95 p-5 shadow-2xl backdrop-blur-md">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
             <Cookie className="h-4 w-4" />

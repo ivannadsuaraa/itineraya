@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import { ArrowLeft, ArrowRight, Loader2, Sparkles } from "lucide-react";
@@ -92,6 +92,8 @@ function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [stepError, setStepError] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [data, setData] = useState<FormData>(() => ({
     destination: prefill?.destination ?? "",
     dateRange: undefined,
@@ -107,22 +109,52 @@ function OnboardingPage() {
   }));
 
   const totalSteps = 7;
-  const canContinue =
-    step === 0 ? data.destination.trim().length > 1 : step === 1 ? Boolean(data.dateRange?.from && data.dateRange?.to) : true;
+
+  // On some mobile browsers (iOS Safari) the autocomplete input can hold a
+  // value the React state never received. Read the DOM as fallback and sync it.
+  const resolveDestination = (): string => {
+    const fromState = data.destination.trim();
+    if (fromState) return fromState;
+    const domValue = cardRef.current?.querySelector("input")?.value.trim() ?? "";
+    if (domValue) setData((prevData) => ({ ...prevData, destination: domValue }));
+    return domValue;
+  };
+
+  const validateStep = (): string | null => {
+    if (step === 0 && resolveDestination().length < 2) {
+      return t("onboarding.errorDestination");
+    }
+    if (step === 1 && !(data.dateRange?.from && data.dateRange?.to)) {
+      return t("onboarding.errorDates");
+    }
+    return null;
+  };
 
   const next = () => {
-    if (!canContinue) return;
+    const error = validateStep();
+    if (error) {
+      setStepError(error);
+      return;
+    }
+    setStepError(null);
     setDirection(1);
     setStep((current) => Math.min(totalSteps - 1, current + 1));
   };
 
   const prev = () => {
+    setStepError(null);
     setDirection(-1);
     setStep((current) => Math.max(0, current - 1));
   };
 
   const finish = async () => {
-    if (!data.destination.trim()) return;
+    if (loading) return;
+    const destination = resolveDestination();
+    if (!destination) {
+      setStepError(t("onboarding.errorDestination"));
+      return;
+    }
+    setStepError(null);
     setLoading(true);
     try {
       const { data: auth } = await supabase.auth.getUser();
@@ -132,7 +164,7 @@ function OnboardingPage() {
         .from("trips")
         .insert({
           user_id: auth.user.id,
-          destination: data.destination.trim(),
+          destination,
           start_date: toDateInputValue(data.dateRange?.from),
           end_date: toDateInputValue(data.dateRange?.to),
           arrival_time: data.arrivalTime || null,
@@ -206,18 +238,18 @@ function OnboardingPage() {
               // Buttons handle Enter natively; textareas have their own handlers
               if (tag === "BUTTON" || tag === "TEXTAREA") return;
               e.preventDefault();
-              if (!canContinue) return;
               if (step === totalSteps - 1) void finish();
               else next();
             }}
+            ref={cardRef}
             className="rounded-3xl bg-white/85 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur-xl sm:p-8"
           >
             {step === 0 && (
               <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
                 <DestinationAutocomplete
                   value={data.destination}
-                  onChange={(destination) => setData((prevData) => ({ ...prevData, destination }))}
-                  onEnter={() => { if (canContinue) next(); }}
+                  onChange={(destination) => { setStepError(null); setData((prevData) => ({ ...prevData, destination })); }}
+                  onEnter={next}
                   placeholder={t("onboarding.destPh")}
                 />
               </StepShell>
@@ -227,7 +259,7 @@ function OnboardingPage() {
               <StepShell title={t("onboarding.datesTitle")} subtitle={t("onboarding.datesSubtitle")}>
                 <DateRangeField
                   value={data.dateRange}
-                  onChange={(dateRange) => setData((prevData) => ({ ...prevData, dateRange }))}
+                  onChange={(dateRange) => { setStepError(null); setData((prevData) => ({ ...prevData, dateRange })); }}
                   locale={locale}
                   startLabel={t("onboarding.dateStart")}
                   endLabel={t("onboarding.dateEnd")}
@@ -331,8 +363,14 @@ function OnboardingPage() {
                 />
               </StepShell>
             )}
+
+            {stepError && (
+              <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                {stepError}
+              </p>
+            )}
           </div>
-        
+
 
         <div className="mt-6 flex items-center justify-between gap-3">
           <button
@@ -347,7 +385,7 @@ function OnboardingPage() {
           <button
             type="button"
             onClick={step === totalSteps - 1 ? finish : next}
-            disabled={!canContinue || loading}
+            disabled={loading}
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
