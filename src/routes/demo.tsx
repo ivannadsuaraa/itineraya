@@ -78,11 +78,11 @@ function DemoPage() {
   const [step, setStep] = useState(0);
   const [destination, setDestination] = useState("");
   const [destError, setDestError] = useState(false);
-  const destBoxRef = useRef<HTMLDivElement>(null);
   const [nDays, setNDays] = useState(3);
   const [companion, setCompanion] = useState("pareja");
   const [tripTypes, setTripTypes] = useState<string[]>([]);
   const [result, setResult] = useState<DemoTrip | null>(null);
+  const destBoxRef = useRef<HTMLDivElement>(null);
 
   // Usuarios con sesión no necesitan la demo: al flujo completo.
   useEffect(() => {
@@ -194,7 +194,12 @@ function DemoPage() {
         />
       </div>
 
-      <div className="relative mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-6 pb-40 sm:px-6 sm:py-8 sm:pb-8">
+      {/* pb-56 (224px) en móvil: el banner de cookies fijo mide hasta ~178px
+          con su padding; con pb-40 (160px) el botón "Siguiente" quedaba
+          atrapado bajo el banner incluso con el scroll a tope y el tap
+          aterrizaba en el banner. 224px garantizan que la fila de acciones
+          siempre puede subir por encima del banner. */}
+      <div className="relative mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-6 pb-56 sm:px-6 sm:py-8 sm:pb-8">
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/"
@@ -368,11 +373,13 @@ function DemoPage() {
             type="button"
             onClick={runPrev}
             disabled={step === 0}
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
           </button>
+          {/* Nunca disabled: la validación pasa en runNext con error inline —
+              un botón muerto en móvil es indistinguible de un botón roto. */}
           <button
             type="button"
             onClick={runNext}

@@ -1046,6 +1046,22 @@
     "signupTitle": "Guarda tu viaje a {{destination}}",
     "signupDesc": "Crea tu cuenta gratis: tu itinerario se guarda automáticamente y desbloqueas todos los días, el mapa interactivo y las postales.",
     "claimedToast": "Tu viaje a {{destination}} se ha guardado en tu cuenta ✈️",
-    "destRequired": "Escribe un destino para continuar"
+    "destRequired": "Escribe un destino para continuar."
+  },
+  "cookies": {
+    "title": "Tu privacidad importa.",
+    "body": "Usamos cookies necesarias y, si lo permites, analíticas y de marketing.",
+    "moreInfo": "Más info",
+    "necessary": "Necesarias",
+    "necessaryDesc": "Siempre activas. Sesión, idioma, preferencias.",
+    "analytics": "Analíticas",
+    "analyticsDesc": "Nos ayudan a entender cómo se usa la web.",
+    "marketing": "Marketing",
+    "marketingDesc": "Personalizar campañas y medir resultados.",
+    "acceptAll": "Aceptar todas",
+    "reject": "Rechazar",
+    "customize": "Personalizar",
+    "saveSelection": "Guardar selección",
+    "close": "Cerrar"
   }
 }

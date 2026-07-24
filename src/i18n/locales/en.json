@@ -1046,6 +1046,22 @@
     "signupTitle": "Save your trip to {{destination}}",
     "signupDesc": "Create your free account: your itinerary is saved automatically and you unlock every day, the interactive map and the postcards.",
     "claimedToast": "Your trip to {{destination}} has been saved to your account ✈️",
-    "destRequired": "Type a destination to continue"
+    "destRequired": "Enter a destination to continue."
+  },
+  "cookies": {
+    "title": "Your privacy matters.",
+    "body": "We use necessary cookies and, if you allow it, analytics and marketing cookies.",
+    "moreInfo": "More info",
+    "necessary": "Necessary",
+    "necessaryDesc": "Always active. Session, language, preferences.",
+    "analytics": "Analytics",
+    "analyticsDesc": "They help us understand how the site is used.",
+    "marketing": "Marketing",
+    "marketingDesc": "Personalize campaigns and measure results.",
+    "acceptAll": "Accept all",
+    "reject": "Reject",
+    "customize": "Customize",
+    "saveSelection": "Save selection",
+    "close": "Close"
   }
 }

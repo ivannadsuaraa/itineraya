@@ -123,9 +123,9 @@ export default defineConfig(async ({ command }) => {
   return {
     plugins,
     // Mantiene @resvg/resvg-js fuera del bundle SSR de Vite en dev/preview.
-    // También fuera del optimizador de dependencias: su binario .node no es
-    // JS y esbuild aborta el arranque del dev server al intentar procesarlo.
-    ssr: { external: ["@resvg/resvg-js"] },
+    // El exclude del optimizador es necesario además del external: esbuild no
+    // tiene loader para los binarios .node y aborta el arranque de `vite dev`.
+    ssr: { external: ["@resvg/resvg-js"], optimizeDeps: { exclude: ["@resvg/resvg-js"] } },
     optimizeDeps: { exclude: ["@resvg/resvg-js"] },
   };
 });
