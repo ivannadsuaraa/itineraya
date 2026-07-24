@@ -3,7 +3,7 @@
 // bloqueado tras el modal de registro. El itinerario vive en localStorage
 // (DEMO_TRIP_KEY) y dashboard.tsx lo reclama al crear la cuenta.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { motion, useReducedMotion } from "framer-motion";
@@ -77,6 +77,8 @@ function DemoPage() {
   const [phase, setPhase] = useState<Phase>("form");
   const [step, setStep] = useState(0);
   const [destination, setDestination] = useState("");
+  const [destError, setDestError] = useState(false);
+  const destBoxRef = useRef<HTMLDivElement>(null);
   const [nDays, setNDays] = useState(3);
   const [companion, setCompanion] = useState("pareja");
   const [tripTypes, setTripTypes] = useState<string[]>([]);
@@ -98,11 +100,26 @@ function DemoPage() {
     }
   }, []);
 
-  const canContinue = step === 0 ? destination.trim().length > 1 : true;
   const totalSteps = 3;
 
+  // El botón Siguiente nunca se deshabilita: se valida al pulsar, con error
+  // inline. En iOS el onChange del autocompletado puede no dispararse (p. ej.
+  // autofill/diccionario), dejando el estado vacío aunque el input tenga
+  // texto — por eso, si el estado está vacío, se lee el valor directamente
+  // del DOM como respaldo.
   const runNext = () => {
-    if (!canContinue) return;
+    if (step === 0) {
+      let dest = destination.trim();
+      if (dest.length < 2) {
+        dest = (destBoxRef.current?.querySelector("input")?.value ?? "").trim();
+        if (dest.length >= 2) setDestination(dest);
+      }
+      if (dest.length < 2) {
+        setDestError(true);
+        return;
+      }
+      setDestError(false);
+    }
     if (step === totalSteps - 1) void runGeneration();
     else setStep((s) => s + 1);
   };
@@ -229,13 +246,24 @@ function DemoPage() {
                 </h2>
                 <p className="mt-2 text-sm text-sky-600">{t("onboarding.destSubtitle")}</p>
               </div>
-              <div className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4">
+              <div
+                ref={destBoxRef}
+                className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4"
+              >
                 <DestinationAutocomplete
                   value={destination}
-                  onChange={setDestination}
+                  onChange={(v) => {
+                    setDestination(v);
+                    if (destError && v.trim().length > 1) setDestError(false);
+                  }}
                   onEnter={runNext}
                   placeholder={t("onboarding.destPh")}
                 />
+                {destError && (
+                  <p role="alert" className="mt-2 text-sm font-semibold text-red-600">
+                    {t("demo.destRequired")}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -348,8 +376,7 @@ function DemoPage() {
           <button
             type="button"
             onClick={runNext}
-            disabled={!canContinue}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98]"
           >
             <Sparkles className="h-4 w-4" />
             {step === totalSteps - 1 ? t("onboarding.generate") : t("onboarding.next")}

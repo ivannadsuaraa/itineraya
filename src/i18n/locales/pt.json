@@ -1047,6 +1047,7 @@
     "lockedCta": "Desbloquear este dia grátis",
     "signupTitle": "Salve sua viagem a {{destination}}",
     "signupDesc": "Crie sua conta grátis: seu roteiro é salvo automaticamente e você desbloqueia todos os dias, o mapa interativo e os cartões-postais.",
-    "claimedToast": "Sua viagem a {{destination}} foi salva na sua conta ✈️"
+    "claimedToast": "Sua viagem a {{destination}} foi salva na sua conta ✈️",
+    "destRequired": "Digite um destino para continuar"
   }
 }

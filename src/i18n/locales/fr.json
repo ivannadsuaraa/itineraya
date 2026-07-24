@@ -1047,6 +1047,7 @@
     "lockedCta": "Débloquer ce jour gratuitement",
     "signupTitle": "Enregistrez votre voyage à {{destination}}",
     "signupDesc": "Créez votre compte gratuit : votre itinéraire est enregistré automatiquement et vous débloquez tous les jours, la carte interactive et les cartes postales.",
-    "claimedToast": "Votre voyage à {{destination}} a été enregistré dans votre compte ✈️"
+    "claimedToast": "Votre voyage à {{destination}} a été enregistré dans votre compte ✈️",
+    "destRequired": "Saisissez une destination pour continuer"
   }
 }

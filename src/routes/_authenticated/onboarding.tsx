@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -182,6 +182,8 @@ function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [destError, setDestError] = useState(false);
+  const destBoxRef = useRef<HTMLDivElement>(null);
   // Al terminar el wizard: animación de despegue antes de la pantalla de carga.
   const [takeoffTripId, setTakeoffTripId] = useState<string | null>(null);
   const [data, setData] = useState<FormData>(() => ({
@@ -223,15 +225,26 @@ function OnboardingPage() {
   // → alojamiento → restricciones. Un concepto por pantalla. Solo destino y
   // fechas son obligatorios; el resto ya trae valores por defecto razonables.
   const totalSteps = 8;
+  // El paso de destino nunca deshabilita "Siguiente": se valida al pulsar
+  // dentro de next(), con error inline. En iOS el onChange del autocompletado
+  // puede no dispararse (autofill/diccionario) dejando el estado vacío aunque
+  // el input tenga texto, así que se lee el DOM como respaldo.
   const canContinue =
-    step === 0
-      ? data.destination.trim().length > 1
-      : step === 1
-        ? Boolean(data.dateRange?.from && data.dateRange?.to) && !exceedsMaxDays
-        : true;
+    step === 1 ? Boolean(data.dateRange?.from && data.dateRange?.to) && !exceedsMaxDays : true;
 
   const next = () => {
-    if (!canContinue) return;
+    if (step === 0) {
+      let dest = data.destination.trim();
+      if (dest.length < 2) {
+        dest = (destBoxRef.current?.querySelector("input")?.value ?? "").trim();
+        if (dest.length >= 2) setData((prevData) => ({ ...prevData, destination: dest }));
+      }
+      if (dest.length < 2) {
+        setDestError(true);
+        return;
+      }
+      setDestError(false);
+    } else if (!canContinue) return;
     setDirection(1);
     setStep((current) => Math.min(totalSteps - 1, current + 1));
   };
@@ -448,7 +461,10 @@ function OnboardingPage() {
             <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
               {/* Mostrador de check-in: marco punteado tipo tarjeta de
                   embarque alrededor del buscador de destino. */}
-              <div className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4">
+              <div
+                ref={destBoxRef}
+                className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4"
+              >
                 <div className="mb-3 flex items-center justify-between">
                   <span className="flex items-center gap-2 font-flight text-[10px] font-bold uppercase tracking-[0.28em] text-[#1E6B9A]">
                     <Plane className="h-3.5 w-3.5 -rotate-45" />
@@ -461,12 +477,18 @@ function OnboardingPage() {
                 </div>
                 <DestinationAutocomplete
                   value={data.destination}
-                  onChange={(destination) => setData((prevData) => ({ ...prevData, destination }))}
-                  onEnter={() => {
-                    if (canContinue) next();
+                  onChange={(destination) => {
+                    setData((prevData) => ({ ...prevData, destination }));
+                    if (destError && destination.trim().length > 1) setDestError(false);
                   }}
+                  onEnter={next}
                   placeholder={t("onboarding.destPh")}
                 />
+                {destError && (
+                  <p role="alert" className="mt-2 text-sm font-semibold text-red-600">
+                    {t("demo.destRequired")}
+                  </p>
+                )}
               </div>
             </StepShell>
           )}
