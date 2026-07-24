@@ -9,86 +9,50 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as PricingRouteImport } from './routes/pricing'
-import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
-import { Route as DemoRouteImport } from './routes/demo'
-import { Route as CookiesRouteImport } from './routes/cookies'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ViajesIndexRouteImport } from './routes/viajes.index'
-import { Route as ExploreIndexRouteImport } from './routes/explore.index'
-import { Route as ViajesDestinoRouteImport } from './routes/viajes.$destino'
-import { Route as TripSlugRouteImport } from './routes/trip.$slug'
-import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
-import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
-import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
-import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
-import { Route as AuthenticatedNewTripRouteImport } from './routes/_authenticated/new-trip'
-import { Route as AuthenticatedInspireRouteImport } from './routes/_authenticated/inspire'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedCopilotRouteImport } from './routes/_authenticated/copilot'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as EmailConfirmedRouteImport } from './routes/email-confirmed'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
-import { Route as ApiOgSlugRouteImport } from './routes/api/og/$slug'
+import { Route as AuthenticatedCopilotRouteImport } from './routes/_authenticated/copilot'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedInspireRouteImport } from './routes/_authenticated/inspire'
+import { Route as AuthenticatedNewTripRouteImport } from './routes/_authenticated/new-trip'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedSavedRouteImport } from './routes/_authenticated/saved'
+import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
+import { Route as ExploreIndexRouteImport } from './routes/explore.index'
+import { Route as ExploreSlugRouteImport } from './routes/explore.$slug'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as TripSlugRouteImport } from './routes/trip.$slug'
+import { Route as ViajesIndexRouteImport } from './routes/viajes.index'
+import { Route as ViajesDestinoRouteImport } from './routes/viajes.$destino'
 import { Route as AuthenticatedMyTripTripIdRouteImport } from './routes/_authenticated/my-trip.$tripId'
-import { Route as EmailEmailQueueProcessRouteImport } from './routes/email/email/queue/process'
-import { Route as EmailEmailLifecycleRunRouteImport } from './routes/email/email/lifecycle/run'
-import { Route as EmailEmailAuthWebhookRouteImport } from './routes/email/email/auth/webhook'
-import { Route as EmailEmailAuthPreviewRouteImport } from './routes/email/email/auth/preview'
+import { Route as ApiOgSlugRouteImport } from './routes/api/og/$slug'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as EmailEmailAuthPreviewRouteImport } from './routes/email/email/auth/preview'
+import { Route as EmailEmailAuthWebhookRouteImport } from './routes/email/email/auth/webhook'
+import { Route as EmailEmailLifecycleRunRouteImport } from './routes/email/email/lifecycle/run'
+import { Route as EmailEmailQueueProcessRouteImport } from './routes/email/email/queue/process'
 
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PricingRoute = PricingRouteImport.update({
-  id: '/pricing',
-  path: '/pricing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailConfirmedRoute = EmailConfirmedRouteImport.update({
-  id: '/email-confirmed',
-  path: '/email-confirmed',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoRoute = DemoRouteImport.update({
-  id: '/demo',
-  path: '/demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CookiesRoute = CookiesRouteImport.update({
-  id: '/cookies',
-  path: '/cookies',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -96,88 +60,54 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ViajesIndexRoute = ViajesIndexRouteImport.update({
-  id: '/viajes/',
-  path: '/viajes/',
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExploreIndexRoute = ExploreIndexRouteImport.update({
-  id: '/explore/',
-  path: '/explore/',
+const EmailConfirmedRoute = EmailConfirmedRouteImport.update({
+  id: '/email-confirmed',
+  path: '/email-confirmed',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ViajesDestinoRoute = ViajesDestinoRouteImport.update({
-  id: '/viajes/$destino',
-  path: '/viajes/$destino',
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TripSlugRoute = TripSlugRouteImport.update({
-  id: '/trip/$slug',
-  path: '/trip/$slug',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InviteTokenRoute = InviteTokenRouteImport.update({
-  id: '/invite/$token',
-  path: '/invite/$token',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ExploreSlugRoute = ExploreSlugRouteImport.update({
-  id: '/explore/$slug',
-  path: '/explore/$slug',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
-  id: '/checkout/return',
-  path: '/checkout/return',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedWelcomeRoute = AuthenticatedWelcomeRouteImport.update({
-  id: '/welcome',
-  path: '/welcome',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
-  id: '/saved',
-  path: '/saved',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedNewTripRoute = AuthenticatedNewTripRouteImport.update({
-  id: '/new-trip',
-  path: '/new-trip',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedInspireRoute = AuthenticatedInspireRouteImport.update({
-  id: '/inspire',
-  path: '/inspire',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCopilotRoute = AuthenticatedCopilotRouteImport.update({
@@ -185,14 +115,79 @@ const AuthenticatedCopilotRoute = AuthenticatedCopilotRouteImport.update({
   path: '/copilot',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
-  id: '/assistant',
-  path: '/assistant',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiOgSlugRoute = ApiOgSlugRouteImport.update({
-  id: '/api/og/$slug',
-  path: '/api/og/$slug',
+const AuthenticatedInspireRoute = AuthenticatedInspireRouteImport.update({
+  id: '/inspire',
+  path: '/inspire',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNewTripRoute = AuthenticatedNewTripRouteImport.update({
+  id: '/new-trip',
+  path: '/new-trip',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSavedRoute = AuthenticatedSavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWelcomeRoute = AuthenticatedWelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
+  id: '/checkout/return',
+  path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreIndexRoute = ExploreIndexRouteImport.update({
+  id: '/explore/',
+  path: '/explore/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreSlugRoute = ExploreSlugRouteImport.update({
+  id: '/explore/$slug',
+  path: '/explore/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TripSlugRoute = TripSlugRouteImport.update({
+  id: '/trip/$slug',
+  path: '/trip/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ViajesIndexRoute = ViajesIndexRouteImport.update({
+  id: '/viajes/',
+  path: '/viajes/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ViajesDestinoRoute = ViajesDestinoRouteImport.update({
+  id: '/viajes/$destino',
+  path: '/viajes/$destino',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedMyTripTripIdRoute =
@@ -201,24 +196,9 @@ const AuthenticatedMyTripTripIdRoute =
     path: '/my-trip/$tripId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const EmailEmailQueueProcessRoute = EmailEmailQueueProcessRouteImport.update({
-  id: '/email/email/queue/process',
-  path: '/email/email/queue/process',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailEmailLifecycleRunRoute = EmailEmailLifecycleRunRouteImport.update({
-  id: '/email/email/lifecycle/run',
-  path: '/email/email/lifecycle/run',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailEmailAuthWebhookRoute = EmailEmailAuthWebhookRouteImport.update({
-  id: '/email/email/auth/webhook',
-  path: '/email/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailEmailAuthPreviewRoute = EmailEmailAuthPreviewRouteImport.update({
-  id: '/email/email/auth/preview',
-  path: '/email/email/auth/preview',
+const ApiOgSlugRoute = ApiOgSlugRouteImport.update({
+  id: '/api/og/$slug',
+  path: '/api/og/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPaymentsWebhookRoute =
@@ -227,6 +207,26 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const EmailEmailAuthPreviewRoute = EmailEmailAuthPreviewRouteImport.update({
+  id: '/email/email/auth/preview',
+  path: '/email/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailEmailAuthWebhookRoute = EmailEmailAuthWebhookRouteImport.update({
+  id: '/email/email/auth/webhook',
+  path: '/email/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailEmailLifecycleRunRoute = EmailEmailLifecycleRunRouteImport.update({
+  id: '/email/email/lifecycle/run',
+  path: '/email/email/lifecycle/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailEmailQueueProcessRoute = EmailEmailQueueProcessRouteImport.update({
+  id: '/email/email/queue/process',
+  path: '/email/email/queue/process',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -487,74 +487,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pricing': {
-      id: '/pricing'
-      path: '/pricing'
-      fullPath: '/pricing'
-      preLoaderRoute: typeof PricingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/email-confirmed': {
-      id: '/email-confirmed'
-      path: '/email-confirmed'
-      fullPath: '/email-confirmed'
-      preLoaderRoute: typeof EmailConfirmedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo': {
-      id: '/demo'
-      path: '/demo'
-      fullPath: '/demo'
-      preLoaderRoute: typeof DemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cookies': {
-      id: '/cookies'
-      path: '/cookies'
-      fullPath: '/cookies'
-      preLoaderRoute: typeof CookiesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -564,116 +501,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/viajes/': {
-      id: '/viajes/'
-      path: '/viajes'
-      fullPath: '/viajes/'
-      preLoaderRoute: typeof ViajesIndexRouteImport
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/explore/': {
-      id: '/explore/'
-      path: '/explore'
-      fullPath: '/explore/'
-      preLoaderRoute: typeof ExploreIndexRouteImport
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/viajes/$destino': {
-      id: '/viajes/$destino'
-      path: '/viajes/$destino'
-      fullPath: '/viajes/$destino'
-      preLoaderRoute: typeof ViajesDestinoRouteImport
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trip/$slug': {
-      id: '/trip/$slug'
-      path: '/trip/$slug'
-      fullPath: '/trip/$slug'
-      preLoaderRoute: typeof TripSlugRouteImport
+    '/email-confirmed': {
+      id: '/email-confirmed'
+      path: '/email-confirmed'
+      fullPath: '/email-confirmed'
+      preLoaderRoute: typeof EmailConfirmedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/invite/$token': {
-      id: '/invite/$token'
-      path: '/invite/$token'
-      fullPath: '/invite/$token'
-      preLoaderRoute: typeof InviteTokenRouteImport
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/explore/$slug': {
-      id: '/explore/$slug'
-      path: '/explore/$slug'
-      fullPath: '/explore/$slug'
-      preLoaderRoute: typeof ExploreSlugRouteImport
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/checkout/return': {
-      id: '/checkout/return'
-      path: '/checkout/return'
-      fullPath: '/checkout/return'
-      preLoaderRoute: typeof CheckoutReturnRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/welcome': {
-      id: '/_authenticated/welcome'
-      path: '/welcome'
-      fullPath: '/welcome'
-      preLoaderRoute: typeof AuthenticatedWelcomeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/saved': {
-      id: '/_authenticated/saved'
-      path: '/saved'
-      fullPath: '/saved'
-      preLoaderRoute: typeof AuthenticatedSavedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/profile': {
-      id: '/_authenticated/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedProfileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/onboarding': {
-      id: '/_authenticated/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/new-trip': {
-      id: '/_authenticated/new-trip'
-      path: '/new-trip'
-      fullPath: '/new-trip'
-      preLoaderRoute: typeof AuthenticatedNewTripRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/inspire': {
-      id: '/_authenticated/inspire'
-      path: '/inspire'
-      fullPath: '/inspire'
-      preLoaderRoute: typeof AuthenticatedInspireRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/copilot': {
@@ -683,18 +585,109 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCopilotRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/assistant': {
-      id: '/_authenticated/assistant'
-      path: '/assistant'
-      fullPath: '/assistant'
-      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/og/$slug': {
-      id: '/api/og/$slug'
-      path: '/api/og/$slug'
-      fullPath: '/api/og/$slug'
-      preLoaderRoute: typeof ApiOgSlugRouteImport
+    '/_authenticated/inspire': {
+      id: '/_authenticated/inspire'
+      path: '/inspire'
+      fullPath: '/inspire'
+      preLoaderRoute: typeof AuthenticatedInspireRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/new-trip': {
+      id: '/_authenticated/new-trip'
+      path: '/new-trip'
+      fullPath: '/new-trip'
+      preLoaderRoute: typeof AuthenticatedNewTripRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/saved': {
+      id: '/_authenticated/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof AuthenticatedSavedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/welcome': {
+      id: '/_authenticated/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof AuthenticatedWelcomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout/return': {
+      id: '/checkout/return'
+      path: '/checkout/return'
+      fullPath: '/checkout/return'
+      preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore/': {
+      id: '/explore/'
+      path: '/explore'
+      fullPath: '/explore/'
+      preLoaderRoute: typeof ExploreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore/$slug': {
+      id: '/explore/$slug'
+      path: '/explore/$slug'
+      fullPath: '/explore/$slug'
+      preLoaderRoute: typeof ExploreSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trip/$slug': {
+      id: '/trip/$slug'
+      path: '/trip/$slug'
+      fullPath: '/trip/$slug'
+      preLoaderRoute: typeof TripSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/viajes/': {
+      id: '/viajes/'
+      path: '/viajes'
+      fullPath: '/viajes/'
+      preLoaderRoute: typeof ViajesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/viajes/$destino': {
+      id: '/viajes/$destino'
+      path: '/viajes/$destino'
+      fullPath: '/viajes/$destino'
+      preLoaderRoute: typeof ViajesDestinoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/my-trip/$tripId': {
@@ -704,25 +697,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyTripTripIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/email/email/queue/process': {
-      id: '/email/email/queue/process'
-      path: '/email/email/queue/process'
-      fullPath: '/email/email/queue/process'
-      preLoaderRoute: typeof EmailEmailQueueProcessRouteImport
+    '/api/og/$slug': {
+      id: '/api/og/$slug'
+      path: '/api/og/$slug'
+      fullPath: '/api/og/$slug'
+      preLoaderRoute: typeof ApiOgSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/email/email/lifecycle/run': {
-      id: '/email/email/lifecycle/run'
-      path: '/email/email/lifecycle/run'
-      fullPath: '/email/email/lifecycle/run'
-      preLoaderRoute: typeof EmailEmailLifecycleRunRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/email/email/auth/webhook': {
-      id: '/email/email/auth/webhook'
-      path: '/email/email/auth/webhook'
-      fullPath: '/email/email/auth/webhook'
-      preLoaderRoute: typeof EmailEmailAuthWebhookRouteImport
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/email/email/auth/preview': {
@@ -732,11 +718,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/payments/webhook': {
-      id: '/api/public/payments/webhook'
-      path: '/api/public/payments/webhook'
-      fullPath: '/api/public/payments/webhook'
-      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+    '/email/email/auth/webhook': {
+      id: '/email/email/auth/webhook'
+      path: '/email/email/auth/webhook'
+      fullPath: '/email/email/auth/webhook'
+      preLoaderRoute: typeof EmailEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/email/lifecycle/run': {
+      id: '/email/email/lifecycle/run'
+      path: '/email/email/lifecycle/run'
+      fullPath: '/email/email/lifecycle/run'
+      preLoaderRoute: typeof EmailEmailLifecycleRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/email/queue/process': {
+      id: '/email/email/queue/process'
+      path: '/email/email/queue/process'
+      fullPath: '/email/email/queue/process'
+      preLoaderRoute: typeof EmailEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

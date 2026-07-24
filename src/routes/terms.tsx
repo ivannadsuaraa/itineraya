@@ -30,9 +30,10 @@ function TermsPage() {
     <div className="min-h-dvh bg-gradient-to-b from-sky-50 to-white">
       <header className="border-b border-sky-100 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-          {/* BrandLogo ya renderiza su propio <Link>: envolverlo en otro
-              anidaba <a> dentro de <a> y rompía la hidratación de la página. */}
-          <BrandLogo className="h-8 w-auto" />
+          {/* BrandLogo ya renderiza su propio <Link>: envolverlo en otro Link
+              anidaba <a> dentro de <a> (HTML inválido) y rompía la hidratación
+              de React en toda la página. */}
+          <BrandLogo linkTo="/" className="h-8 w-auto" />
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <Link

@@ -102,16 +102,19 @@ function DemoPage() {
 
   const totalSteps = 3;
 
+  // El botón Siguiente nunca se deshabilita: se valida al pulsar, con error
+  // inline. En iOS el onChange del autocompletado puede no dispararse (p. ej.
+  // autofill/diccionario), dejando el estado vacío aunque el input tenga
+  // texto — por eso, si el estado está vacío, se lee el valor directamente
+  // del DOM como respaldo.
   const runNext = () => {
     if (step === 0) {
-      // En iOS el onChange de React puede no dispararse con autorrelleno o
-      // dictado: si el estado sigue vacío, el valor real vive en el DOM.
       let dest = destination.trim();
-      if (dest.length <= 1) {
-        dest = destBoxRef.current?.querySelector("input")?.value.trim() ?? "";
-        if (dest.length > 1) setDestination(dest);
+      if (dest.length < 2) {
+        dest = (destBoxRef.current?.querySelector("input")?.value ?? "").trim();
+        if (dest.length >= 2) setDestination(dest);
       }
-      if (dest.length <= 1) {
+      if (dest.length < 2) {
         setDestError(true);
         return;
       }
@@ -256,13 +259,13 @@ function DemoPage() {
                   value={destination}
                   onChange={(v) => {
                     setDestination(v);
-                    if (destError) setDestError(false);
+                    if (destError && v.trim().length > 1) setDestError(false);
                   }}
                   onEnter={runNext}
                   placeholder={t("onboarding.destPh")}
                 />
                 {destError && (
-                  <p className="mt-2 text-sm font-semibold text-red-600" role="alert">
+                  <p role="alert" className="mt-2 text-sm font-semibold text-red-600">
                     {t("demo.destRequired")}
                   </p>
                 )}
