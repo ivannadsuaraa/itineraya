@@ -1045,6 +1045,7 @@
     "lockedCta": "Unlock this day for free",
     "signupTitle": "Save your trip to {{destination}}",
     "signupDesc": "Create your free account: your itinerary is saved automatically and you unlock every day, the interactive map and the postcards.",
-    "claimedToast": "Your trip to {{destination}} has been saved to your account ✈️"
+    "claimedToast": "Your trip to {{destination}} has been saved to your account ✈️",
+    "destRequired": "Type a destination to continue"
   }
 }
