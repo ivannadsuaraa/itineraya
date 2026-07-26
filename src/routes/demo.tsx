@@ -270,6 +270,16 @@ function DemoPage() {
                     setDestination(v);
                     if (destError && v.trim().length > 1) setDestError(false);
                   }}
+                  onSelect={(sel) => {
+                    // Elegir una sugerencia ya expresa la decisión: avanzar
+                    // solo ahorra el tap en "Siguiente".
+                    setDestination(sel.description);
+                    setDestError(false);
+                    // onSelect llega tras resolver coordenadas (async), así que
+                    // el usuario puede haber avanzado ya a mano: solo movemos
+                    // si sigue en el paso 0, nunca hacia atrás.
+                    setStep((s) => (s === 0 ? 1 : s));
+                  }}
                   onEnter={runNext}
                   placeholder={t("onboarding.destPh")}
                 />
