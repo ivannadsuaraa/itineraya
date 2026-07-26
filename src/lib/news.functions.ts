@@ -16,6 +16,11 @@ export type NewsArticle = {
 };
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+// The 24h cache makes repeat calls for the SAME destination free, but a
+// scripted caller feeding many distinct destination strings forces a real
+// NewsAPI call every time (cache miss). This bounds that regardless of cache
+// hit rate; legitimate use (browsing a handful of destinations) never gets close.
+const DAILY_LIMIT = 60;
 
 type CacheRow = { destination: string; articles: NewsArticle[]; fetched_at: string };
 
@@ -87,9 +92,19 @@ async function fetchFromNewsApi(destination: string): Promise<NewsArticle[] | nu
 export const getDestinationNews = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
-  .handler(async ({ data }): Promise<NewsArticle[]> => {
+  .handler(async ({ data, context }): Promise<NewsArticle[]> => {
     const key = data.destination.split(",")[0].trim().toLowerCase();
     if (!key) return [];
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "news_user", p_key: context.userId, p_limit: DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[news] rate limit check failed", rlErr);
+      return [];
+    }
+    if (!allowed) return [];
 
     try {
       const cached = await readCache(key);

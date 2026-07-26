@@ -2,22 +2,32 @@ import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { z } from "zod";
 
-type ChatRequestBody = {
-  messages?: unknown;
-  mode?: "planning" | "in-trip" | null;
-  clientNow?: string | null;
-  tripContext?: {
-    destination?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
-    budget?: string | null;
-    companion?: string | null;
-    tripStyle?: string | null;
-    /** Esquema compacto día-a-día del itinerario del viaje seleccionado. */
-    itineraryOutline?: string | null;
-  } | null;
-};
+// `messages` no se valida en profundidad contra el esquema UIMessage del AI
+// SDK (parts anidadas, tipos por proveedor) — acoplarse a esa forma exacta
+// es frágil frente a actualizaciones de la librería. Se valida su forma
+// mínima (array, tope de longitud) y se deja que convertToModelMessages
+// rechace cualquier mensaje mal formado. Los campos de tripContext sí son
+// texto libre del propio dominio de la app, interpolado tal cual en el
+// prompt — esos si se acotan.
+const ChatRequestSchema = z.object({
+  messages: z.array(z.unknown()).max(60),
+  mode: z.enum(["planning", "in-trip"]).nullable().optional(),
+  clientNow: z.string().max(50).nullable().optional(),
+  tripContext: z
+    .object({
+      destination: z.string().max(200).nullable().optional(),
+      startDate: z.string().max(20).nullable().optional(),
+      endDate: z.string().max(20).nullable().optional(),
+      budget: z.string().max(60).nullable().optional(),
+      companion: z.string().max(60).nullable().optional(),
+      tripStyle: z.string().max(400).nullable().optional(),
+      itineraryOutline: z.string().max(20000).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+});
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -46,12 +56,12 @@ export const Route = createFileRoute("/api/chat")({
 
         // Parse and validate the body BEFORE consuming quota, so malformed
         // requests don't burn a free-plan message.
-        const { messages, tripContext, mode, clientNow } = (await request.json()) as ChatRequestBody;
-        if (!Array.isArray(messages)) {
-          return new Response("Messages are required", { status: 400 });
-        }
-        if (messages.length > 60) {
-          return new Response("Conversation too long", { status: 400 });
+        let messages: unknown[], tripContext, mode, clientNow;
+        try {
+          const raw: unknown = await request.json();
+          ({ messages, tripContext, mode, clientNow } = ChatRequestSchema.parse(raw));
+        } catch {
+          return new Response("Invalid request body", { status: 400 });
         }
 
         // Enforce per-day message limit for the free plan.
@@ -62,9 +72,7 @@ export const Route = createFileRoute("/api/chat")({
           .eq("id", userId)
           .maybeSingle();
         const plan = ((profileRow?.plan as string | undefined) ?? "free") as
-          | "free"
-          | "viajero"
-          | "explorador";
+          "free" | "viajero" | "explorador";
         const FREE_DAILY_LIMIT = 10;
         const today = new Date().toISOString().slice(0, 10);
         if (plan === "free") {
@@ -87,6 +95,32 @@ export const Route = createFileRoute("/api/chat")({
               { user_id: userId, usage_date: today, message_count: used + 1 },
               { onConflict: "user_id,usage_date" },
             );
+        } else {
+          // Viajero/Explorador have no product-facing daily cap ("mensajes
+          // ilimitados" is the sales pitch), but "unlimited" must not mean
+          // "uncapped Anthropic spend on a single compromised paid account".
+          // Generous ceiling that no real conversational usage approaches.
+          const PAID_DAILY_SAFETY_LIMIT = 300;
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_and_increment_rate_limit" as never,
+            {
+              p_scope: "chat_message_user",
+              p_key: userId,
+              p_limit: PAID_DAILY_SAFETY_LIMIT,
+            } as never,
+          );
+          if (rlErr) {
+            console.error("[chat] rate limit check failed", rlErr);
+            return new Response("No se pudo procesar la solicitud. Inténtalo de nuevo.", {
+              status: 500,
+            });
+          }
+          if (!allowed) {
+            return new Response(
+              `LIMIT_REACHED: Has alcanzado el límite de ${PAID_DAILY_SAFETY_LIMIT} mensajes diarios. Inténtalo mañana.`,
+              { status: 429 },
+            );
+          }
         }
 
         const key = process.env.ANTHROPIC_API_KEY;
@@ -106,20 +140,28 @@ export const Route = createFileRoute("/api/chat")({
           outline
             ? `Itinerario actual del usuario (referénciate a él al responder — días, horas y sitios reales):\n${outline}`
             : null,
-        ].filter(Boolean).join("\n");
+        ]
+          .filter(Boolean)
+          .join("\n");
 
         const nowIso = clientNow || new Date().toISOString();
         const nowReadable = (() => {
           try {
             return new Date(nowIso).toLocaleString("es-ES", {
-              weekday: "long", hour: "2-digit", minute: "2-digit",
-              day: "2-digit", month: "long",
+              weekday: "long",
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "long",
             });
-          } catch { return nowIso; }
+          } catch {
+            return nowIso;
+          }
         })();
 
-        const system = mode === "in-trip"
-          ? `Eres el COPILOTO DE VIAJE en tiempo real de Itineraya. El usuario YA ESTÁ en ${ctx.destination ?? "su destino"} ahora mismo.
+        const system =
+          mode === "in-trip"
+            ? `Eres el COPILOTO DE VIAJE en tiempo real de Itineraya. El usuario YA ESTÁ en ${ctx.destination ?? "su destino"} ahora mismo.
 
 Hora local actual (aprox): ${nowReadable}.
 
@@ -132,7 +174,7 @@ Tu misión: ayudarle EN VIVO durante el viaje. NO generes itinerarios largos de 
 - Si pide un plan, hazlo solo para lo que queda del día u hoy + mañana como máximo.
 
 Responde en el idioma del usuario (por defecto español).`
-          : `Eres el asistente de viaje de Itineraya. Responde en español, con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
+            : `Eres el asistente de viaje de Itineraya. Responde en español, con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
 
 Contexto del viaje del usuario:
 ${contextLines || "Sin viaje seleccionado todavía."}`;
@@ -151,4 +193,3 @@ ${contextLines || "Sin viaje seleccionado todavía."}`;
     },
   },
 });
-
