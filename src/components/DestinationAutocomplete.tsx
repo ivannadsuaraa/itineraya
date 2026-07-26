@@ -91,6 +91,33 @@ export function DestinationAutocomplete({
   const tRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
 
+  // El input es controlado: si el evento no llega al sistema sintético de
+  // React (autorrelleno de Safari, dictado, gestores de contraseñas), el
+  // estado del padre se queda vacío con el input lleno — y cualquier UI que
+  // dependa de ese estado (el botón "Siguiente" de /demo) queda muerta.
+  // Escuchamos el evento nativo sobre el propio nodo y sincronizamos cuando
+  // difieran. Las refs evitan resuscribir en cada render (el padre suele
+  // pasar un onChange inline).
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const sync = () => {
+      if (el.value !== valueRef.current) onChangeRef.current(el.value);
+    };
+    el.addEventListener("input", sync);
+    el.addEventListener("change", sync);
+    el.addEventListener("blur", sync);
+    return () => {
+      el.removeEventListener("input", sync);
+      el.removeEventListener("change", sync);
+      el.removeEventListener("blur", sync);
+    };
+  }, []);
+
   useEffect(() => {
     console.info("[DestinationAutocomplete] Mounting: attempting to load Google Maps...");
     loadGoogleMaps().catch((err) => {

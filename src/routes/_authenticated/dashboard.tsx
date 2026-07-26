@@ -219,13 +219,17 @@ function DashboardPage() {
         }
       }
 
-      if (prof && !prof.welcome_completed) {
-        navigate({ to: "/welcome", replace: true });
+      // El viaje reclamado gana a /welcome: quien acaba de registrarse desde
+      // la demo (welcome_completed aún false) debe aterrizar en SU viaje sin
+      // desvíos — el cuestionario de bienvenida puede esperar a la próxima
+      // visita al dashboard.
+      if (claimedTripId) {
+        navigate({ to: "/my-trip/$tripId", params: { tripId: claimedTripId } });
         return;
       }
 
-      if (claimedTripId) {
-        navigate({ to: "/my-trip/$tripId", params: { tripId: claimedTripId } });
+      if (prof && !prof.welcome_completed) {
+        navigate({ to: "/welcome", replace: true });
         return;
       }
 
