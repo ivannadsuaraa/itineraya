@@ -10,6 +10,127 @@ const Input = z.object({
   language: z.string().optional(),
 });
 
+// Mismos valores que usan los selectores de onboarding.tsx (companion,
+// pace, dietaryIds, tripTypeIds) y el paceMap de este mismo fichero — un
+// valor fuera de este conjunto no tiene mapeo en el prompt y antes se
+// colaba tal cual porque la escritura era un INSERT directo desde el
+// cliente sin ninguna validación de servidor.
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const CreateTripInput = z
+  .object({
+    destination: z.string().trim().min(2).max(120),
+    startDate: z.string().regex(DATE_RE).nullable(),
+    endDate: z.string().regex(DATE_RE).nullable(),
+    arrivalTime: z.string().regex(TIME_RE).nullable(),
+    departureTime: z.string().regex(TIME_RE).nullable(),
+    companion: z.enum(["solo", "pareja", "amigos", "familia"]),
+    budgetRange: z
+      .tuple([z.number().int().min(0).max(200000), z.number().int().min(0).max(200000)])
+      .refine(([lo, hi]) => lo <= hi, "budgetRange must be [low, high] with low <= high"),
+    tripStyle: z.string().trim().max(400).nullable(),
+    avoid: z.string().trim().max(500).nullable(),
+    tripTypes: z
+      .array(
+        z.enum([
+          "beach",
+          "party",
+          "cultural",
+          "food",
+          "relax",
+          "nature",
+          "romantic",
+          "family",
+          "adventure",
+          "special",
+          "architecture",
+        ]),
+      )
+      .max(15),
+    hasAccommodation: z.boolean(),
+    hotelName: z.string().trim().max(200).nullable(),
+    hotelAddress: z.string().trim().max(300).nullable(),
+    hotelLat: z.number().min(-90).max(90).nullable(),
+    hotelLng: z.number().min(-180).max(180).nullable(),
+    pace: z.enum(["relaxed", "balanced", "intense"]),
+    firstVisit: z.boolean(),
+    dietary: z.array(z.enum(["vegetarian", "vegan", "glutenFree", "halal", "allergies"])).max(5),
+    geoLat: z.number().min(-90).max(90).nullable().optional(),
+    geoLng: z.number().min(-180).max(180).nullable().optional(),
+  })
+  .refine((d) => !d.startDate || !d.endDate || d.startDate <= d.endDate, {
+    message: "endDate must not be before startDate",
+    path: ["endDate"],
+  });
+
+// Crea el viaje "pending" que luego rellena generateItinerary. Antes era un
+// INSERT directo a Supabase desde onboarding.tsx (sin límites de longitud,
+// sin comprobar los enums) — el contenido de estos campos se interpola tal
+// cual en el prompt de generateItinerary, así que la validación aquí evita
+// tanto payloads absurdamente grandes (coste/calidad del prompt) como
+// valores fuera de los enums que el prompt-builder ya asume.
+export const createTrip = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => CreateTripInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const basePayload = {
+      user_id: userId,
+      destination: data.destination,
+      start_date: data.startDate,
+      end_date: data.endDate,
+      arrival_time: data.arrivalTime,
+      departure_time: data.departureTime,
+      companion: data.companion,
+      budget: `${data.budgetRange[0]}-${data.budgetRange[1]}`,
+      trip_style: data.tripStyle,
+      avoid: data.avoid,
+      trip_types: data.tripTypes,
+      has_accommodation: data.hasAccommodation,
+      hotel_name: data.hotelName,
+      hotel_address: data.hotelAddress,
+      hotel_lat: data.hotelLat,
+      hotel_lng: data.hotelLng,
+      status: "pending",
+    };
+    const personalization = {
+      pace: data.pace,
+      first_visit: data.firstVisit,
+      dietary: data.dietary.length > 0 ? data.dietary.join(",") : null,
+    };
+    const geo =
+      data.geoLat != null && data.geoLng != null
+        ? { geo_lat: data.geoLat, geo_lng: data.geoLng }
+        : {};
+
+    let { data: trip, error } = await supabase
+      .from("trips")
+      .insert({ ...basePayload, ...personalization, ...geo })
+      .select("id")
+      .single();
+
+    // Fallback: si alguna migración aún no está aplicada en prod (columnas
+    // pace/first_visit/dietary o geo_lat/geo_lng inexistentes), reintenta
+    // solo con el payload base para no bloquear la creación del viaje.
+    if (
+      error &&
+      /column|pace|first_visit|dietary|geo_lat|geo_lng|PGRST204/i.test(error.message ?? "")
+    ) {
+      console.warn("[createTrip] optional columns missing, retrying without them", error);
+      ({ data: trip, error } = await supabase
+        .from("trips")
+        .insert(basePayload)
+        .select("id")
+        .single());
+    }
+
+    if (error) throw new Error(error.message);
+    if (!trip) throw new Error("No se pudo crear el viaje");
+    return { id: trip.id as string };
+  });
+
 // Safety net independent of the plan-based lifetime/monthly cap below: that
 // cap only counts trips that already reached status="ready", so retrying
 // generation on the SAME not-yet-ready trip (a stuck AI call, a flaky

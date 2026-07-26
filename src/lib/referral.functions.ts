@@ -1,9 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { renderReferralCompleteEmail, renderReferralProgressEmail } from "@/lib/referral-emails";
 
 const REFERRAL_GOAL = 3;
+
+// referredBy/utmSource llegan directamente de query params de la URL
+// (?ref=<userId>&utm_source=<canal>, ver referral.ts) — atacante-controlados
+// por diseño (cualquiera puede fabricar el enlace). referredBy debe tener
+// forma de UUID o la RPC (que lo tipa como UUID) falla con un error crudo de
+// Postgres en vez de un 400 claro; utmSource se guarda tal cual en
+// profiles.acquisition_source (TEXT sin límite) así que se acota longitud.
+const Input = z.object({
+  referredBy: z.string().uuid().nullable().optional(),
+  utmSource: z.string().trim().max(100).nullable().optional(),
+});
 // Legitimate use is ONE real attribution ever (write-once in the RPC below),
 // but captureReferralFromLocation() runs on every root mount — a bug or a
 // scripted repeat caller would otherwise re-enqueue a "you have a referral"
@@ -26,7 +38,7 @@ function firstName(
 
 export const attributeAcquisition = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { referredBy?: string | null; utmSource?: string | null }) => data)
+  .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
 

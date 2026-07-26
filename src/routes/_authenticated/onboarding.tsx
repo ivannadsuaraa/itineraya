@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { motion, useReducedMotion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EASE_OUT } from "@/lib/motion";
@@ -25,6 +26,7 @@ import { DestinationAutocomplete } from "@/components/DestinationAutocomplete";
 import { BudgetRangeSlider } from "@/components/BudgetRangeSlider";
 import { supabase } from "@/integrations/supabase/client";
 import { geocodeDestination, geocodeAndPersistTrip } from "@/lib/geocode";
+import { createTrip } from "@/lib/itinerary.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
@@ -176,6 +178,7 @@ function toDateInputValue(date: Date | undefined) {
 function OnboardingPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const runCreateTrip = useServerFn(createTrip);
   const search = Route.useSearch();
   const prefill = useMemo(() => decodePrefill(search.prefill), [search.prefill]);
 
@@ -269,63 +272,35 @@ function OnboardingPage() {
         new Promise<null>((r) => setTimeout(() => r(null), 1800)),
       ]);
 
-      const basePayload = {
-        user_id: auth.user.id,
-        destination: data.destination.trim(),
-        start_date: toDateInputValue(data.dateRange?.from),
-        end_date: toDateInputValue(data.dateRange?.to),
-        arrival_time: data.arrivalTime || null,
-        departure_time: data.departureTime || null,
-        companion: data.companion,
-        budget: `${data.budgetRange[0]}-${data.budgetRange[1]}`,
-        trip_style: data.tripStyle || null,
-        avoid: data.avoid || null,
-        trip_types: data.tripTypes,
-        has_accommodation: data.hasAccommodation,
-        hotel_name: data.hotel?.name ?? null,
-        hotel_address: data.hotel?.address ?? null,
-        hotel_lat: data.hotel?.lat ?? null,
-        hotel_lng: data.hotel?.lng ?? null,
-        status: "pending",
-      };
-      const personalization = {
-        pace: data.pace,
-        first_visit: data.firstVisit,
-        dietary: data.dietary.length > 0 ? data.dietary.join(",") : null,
-      };
-      const geo = coords ? { geo_lat: coords[0], geo_lng: coords[1] } : {};
+      // La creación pasa por un server function validado con Zod
+      // (createTrip, en itinerary.functions.ts) en vez de un INSERT directo
+      // a Supabase desde el cliente: acota longitudes y enums antes de que
+      // estos campos lleguen al prompt de generateItinerary.
+      const trip = await runCreateTrip({
+        data: {
+          destination: data.destination.trim(),
+          startDate: toDateInputValue(data.dateRange?.from),
+          endDate: toDateInputValue(data.dateRange?.to),
+          arrivalTime: data.arrivalTime || null,
+          departureTime: data.departureTime || null,
+          companion: data.companion as "solo" | "pareja" | "amigos" | "familia",
+          budgetRange: data.budgetRange,
+          tripStyle: data.tripStyle || null,
+          avoid: data.avoid || null,
+          tripTypes: data.tripTypes as never,
+          hasAccommodation: data.hasAccommodation,
+          hotelName: data.hotel?.name ?? null,
+          hotelAddress: data.hotel?.address ?? null,
+          hotelLat: data.hotel?.lat ?? null,
+          hotelLng: data.hotel?.lng ?? null,
+          pace: data.pace as "relaxed" | "balanced" | "intense",
+          firstVisit: data.firstVisit,
+          dietary: data.dietary as never,
+          geoLat: coords ? coords[0] : null,
+          geoLng: coords ? coords[1] : null,
+        },
+      });
 
-      let { data: trip, error } = await supabase
-        .from("trips")
-        .insert({ ...basePayload, ...personalization, ...geo })
-        .select("id")
-        .single();
-
-      // Fallback: si alguna migración aún no está aplicada en prod (columnas
-      // pace/first_visit/dietary o geo_lat/geo_lng inexistentes), reintenta
-      // solo con el payload base para no bloquear la creación del viaje.
-      if (
-        error &&
-        /column|pace|first_visit|dietary|geo_lat|geo_lng|PGRST204/i.test(error.message ?? "")
-      ) {
-        console.warn("[onboarding] optional columns missing, retrying without them", error);
-        ({ data: trip, error } = await supabase
-          .from("trips")
-          .insert(basePayload)
-          .select("id")
-          .single());
-      }
-
-      if (error) {
-        // PostgrestError is not an Error instance — log the full object so the
-        // real DB error (message/hint/code) appears in Vercel logs.
-        console.error("[onboarding] trips INSERT failed", error);
-        const msg = (error as { message?: string }).message ?? t("onboarding.saveFail");
-        toast.error(msg);
-        setLoading(false);
-        return;
-      }
-      if (!trip) throw new Error(t("onboarding.saveFail"));
       // Si Nominatim no llegó a tiempo, geocodifica y persiste en segundo
       // plano — la navegación es SPA, así que la petición sigue viva.
       if (!coords) void geocodeAndPersistTrip(trip.id, data.destination.trim());

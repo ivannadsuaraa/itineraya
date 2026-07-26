@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
@@ -7,6 +8,18 @@ import type { PublicTrip, PublicTripDay } from "@/lib/share.functions";
 
 const PUBLISH_TOGGLE_DAILY_LIMIT = 30;
 const RATE_TRIP_DAILY_LIMIT = 20;
+
+// share_slug siempre tiene esta forma exacta: slugify(destino) + "-Ndias" +
+// "-" + sufijo aleatorio base36 (ver slugify/randomSuffix más abajo) — nunca
+// mayúsculas, espacios ni caracteres fuera de [a-z0-9-].
+const SlugInput = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9-]+$/),
+});
 
 function slugify(input: string): string {
   return (
@@ -42,7 +55,9 @@ function publicClient() {
 /** Toggle public visibility of a trip. Also ensures a share_slug exists. */
 export const setTripPublic = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { tripId: string; isPublic: boolean }) => data)
+  .inputValidator((d: unknown) =>
+    z.object({ tripId: z.string().uuid(), isPublic: z.boolean() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -124,15 +139,15 @@ export type PublicFeedItem = {
   view_count: number;
 };
 
+const ListPublicTripsInput = z.object({
+  destination: z.string().trim().max(120).optional(),
+  durationBucket: z.enum(["short", "medium", "long", "all"]).optional(),
+  style: z.string().trim().max(40).optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+});
+
 export const listPublicTrips = createServerFn({ method: "GET" })
-  .inputValidator(
-    (data: {
-      destination?: string;
-      durationBucket?: "short" | "medium" | "long" | "all";
-      style?: string;
-      limit?: number;
-    }) => data,
-  )
+  .inputValidator((d: unknown) => ListPublicTripsInput.parse(d))
   .handler(async ({ data }): Promise<PublicFeedItem[]> => {
     const client = publicClient();
     let query = client
@@ -229,11 +244,12 @@ export type DiscoverableTrip = PublicTrip & {
  *
  *   GRANT EXECUTE ON FUNCTION increment_trip_rating(text, int) TO anon, authenticated;
  */
+const RateTripInput = SlugInput.extend({ rating: z.number().int().min(1).max(5) });
+
 export const rateTrip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { slug: string; rating: number }) => data)
+  .inputValidator((d: unknown) => RateTripInput.parse(d))
   .handler(async ({ data, context }) => {
-    if (data.rating < 1 || data.rating > 5) throw new Error("Rating must be 1-5");
     // Use the authenticated supabase client from middleware context
     const { supabase, userId } = context;
 
@@ -268,7 +284,7 @@ export const rateTrip = createServerFn({ method: "POST" })
   });
 
 export const getDiscoverableTrip = createServerFn({ method: "GET" })
-  .inputValidator((data: { slug: string }) => data)
+  .inputValidator((d: unknown) => SlugInput.parse(d))
   .handler(async ({ data }): Promise<DiscoverableTrip | null> => {
     const client = publicClient();
     const { data: row, error } = await client

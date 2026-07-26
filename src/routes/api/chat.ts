@@ -2,22 +2,32 @@ import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 import { createClient } from "@supabase/supabase-js";
 import { createAnthropic } from "@ai-sdk/anthropic";
+import { z } from "zod";
 
-type ChatRequestBody = {
-  messages?: unknown;
-  mode?: "planning" | "in-trip" | null;
-  clientNow?: string | null;
-  tripContext?: {
-    destination?: string | null;
-    startDate?: string | null;
-    endDate?: string | null;
-    budget?: string | null;
-    companion?: string | null;
-    tripStyle?: string | null;
-    /** Esquema compacto día-a-día del itinerario del viaje seleccionado. */
-    itineraryOutline?: string | null;
-  } | null;
-};
+// `messages` no se valida en profundidad contra el esquema UIMessage del AI
+// SDK (parts anidadas, tipos por proveedor) — acoplarse a esa forma exacta
+// es frágil frente a actualizaciones de la librería. Se valida su forma
+// mínima (array, tope de longitud) y se deja que convertToModelMessages
+// rechace cualquier mensaje mal formado. Los campos de tripContext sí son
+// texto libre del propio dominio de la app, interpolado tal cual en el
+// prompt — esos si se acotan.
+const ChatRequestSchema = z.object({
+  messages: z.array(z.unknown()).max(60),
+  mode: z.enum(["planning", "in-trip"]).nullable().optional(),
+  clientNow: z.string().max(50).nullable().optional(),
+  tripContext: z
+    .object({
+      destination: z.string().max(200).nullable().optional(),
+      startDate: z.string().max(20).nullable().optional(),
+      endDate: z.string().max(20).nullable().optional(),
+      budget: z.string().max(60).nullable().optional(),
+      companion: z.string().max(60).nullable().optional(),
+      tripStyle: z.string().max(400).nullable().optional(),
+      itineraryOutline: z.string().max(20000).nullable().optional(),
+    })
+    .nullable()
+    .optional(),
+});
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -46,13 +56,12 @@ export const Route = createFileRoute("/api/chat")({
 
         // Parse and validate the body BEFORE consuming quota, so malformed
         // requests don't burn a free-plan message.
-        const { messages, tripContext, mode, clientNow } =
-          (await request.json()) as ChatRequestBody;
-        if (!Array.isArray(messages)) {
-          return new Response("Messages are required", { status: 400 });
-        }
-        if (messages.length > 60) {
-          return new Response("Conversation too long", { status: 400 });
+        let messages: unknown[], tripContext, mode, clientNow;
+        try {
+          const raw: unknown = await request.json();
+          ({ messages, tripContext, mode, clientNow } = ChatRequestSchema.parse(raw));
+        } catch {
+          return new Response("Invalid request body", { status: 400 });
         }
 
         // Enforce per-day message limit for the free plan.

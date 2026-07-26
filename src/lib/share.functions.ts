@@ -2,11 +2,22 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { getRequest } from "@tanstack/react-start/server";
 import { createHash } from "node:crypto";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 
 const SHARE_TOGGLE_DAILY_LIMIT = 30;
+// Misma forma que produce slugify()+randomSuffix() más abajo — nunca
+// mayúsculas ni caracteres fuera de [a-z0-9-].
+const SlugInput = z.object({
+  slug: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9-]+$/),
+});
 // getPublicTrip is public and unauthenticated (anyone with a slug can call
 // it), and every call writes trips.view_count via the RPC below — a scripted
 // loop against one slug can inflate the popularity signal /explore shows to
@@ -64,7 +75,7 @@ function daysBetween(start?: string | null, end?: string | null): number | null 
 
 export const enableTripShare = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { tripId: string }) => data)
+  .inputValidator((d: unknown) => z.object({ tripId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -230,7 +241,7 @@ async function maybeNotifyViewMilestone(slug: string, destination: string, views
 }
 
 export const getPublicTrip = createServerFn({ method: "GET" })
-  .inputValidator((data: { slug: string }) => data)
+  .inputValidator((d: unknown) => SlugInput.parse(d))
   .handler(async ({ data }): Promise<PublicTrip | null> => {
     const request = getRequest();
     const ip = resolveClientIp(request ?? null);
