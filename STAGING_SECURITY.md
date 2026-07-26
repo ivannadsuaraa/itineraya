@@ -167,17 +167,17 @@ más fuerte, no una protección adicional real.
 Construí el proyecto (preset `node-server` para poder ejecutarlo localmente)
 y serví el build resultante con distintos valores de `VERCEL_ENV`:
 
-| Escenario | Esperado | Obtenido |
-|---|---|---|
-| `preview`, sin cabecera `Authorization` | 401 | ✅ 401 |
-| `preview`, credenciales incorrectas | 401 | ✅ 401 |
-| `preview`, credenciales correctas | 200 | ✅ 200 |
-| `preview`, ruta del webhook de Stripe, sin auth | 200 (exenta) | ✅ 200 |
-| `preview`, **sin** `PREVIEW_BASIC_AUTH_USER/PASS` configuradas | 401 (falla cerrado) | ✅ 401 |
-| `production`, sin credenciales | 200 | ✅ 200 |
-| Cabecera `WWW-Authenticate` en el 401 | presente | ✅ `Basic realm="Itineraya preview"` |
-| Cabecera `X-Robots-Tag` en `preview` (autorizado) | presente | ✅ `noindex, nofollow, noarchive` |
-| Cabecera `X-Robots-Tag` en `production` | ausente | ✅ ausente |
+| Escenario                                                      | Esperado            | Obtenido                             |
+| -------------------------------------------------------------- | ------------------- | ------------------------------------ |
+| `preview`, sin cabecera `Authorization`                        | 401                 | ✅ 401                               |
+| `preview`, credenciales incorrectas                            | 401                 | ✅ 401                               |
+| `preview`, credenciales correctas                              | 200                 | ✅ 200                               |
+| `preview`, ruta del webhook de Stripe, sin auth                | 200 (exenta)        | ✅ 200                               |
+| `preview`, **sin** `PREVIEW_BASIC_AUTH_USER/PASS` configuradas | 401 (falla cerrado) | ✅ 401                               |
+| `production`, sin credenciales                                 | 200                 | ✅ 200                               |
+| Cabecera `WWW-Authenticate` en el 401                          | presente            | ✅ `Basic realm="Itineraya preview"` |
+| Cabecera `X-Robots-Tag` en `preview` (autorizado)              | presente            | ✅ `noindex, nofollow, noarchive`    |
+| Cabecera `X-Robots-Tag` en `production`                        | ausente             | ✅ ausente                           |
 
 `tsc --noEmit`, ESLint y Prettier: limpios en `src/server.ts`.
 
