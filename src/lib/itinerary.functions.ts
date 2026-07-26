@@ -3,11 +3,22 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { unsplashImage, itinerarySchema, extractJson } from "@/lib/itinerary-shared";
 import { geocodeAndPersistTrip } from "@/lib/geocode";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const Input = z.object({
   tripId: z.string().uuid(),
   language: z.string().optional(),
 });
+
+// Safety net independent of the plan-based lifetime/monthly cap below: that
+// cap only counts trips that already reached status="ready", so retrying
+// generation on the SAME not-yet-ready trip (a stuck AI call, a flaky
+// network) never increments it — a scripted retry loop could otherwise hit
+// the real Anthropic API without limit. The explorador plan also has no
+// lifetime/monthly cap at all (planLimit = null below). This RPC-backed
+// counter bounds real AI calls per user per day regardless of plan or trip
+// status.
+const DAILY_GENERATE_LIMIT = 20;
 
 export const generateItinerary = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -56,7 +67,9 @@ export const generateItinerary = createServerFn({ method: "POST" })
 
       if (plan === "viajero") {
         const now = new Date();
-        const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+        const startOfMonth = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+        ).toISOString();
         countQuery = countQuery.gte("created_at", startOfMonth);
       }
 
@@ -73,6 +86,22 @@ export const generateItinerary = createServerFn({ method: "POST" })
 
     if (trip.status === "ready" && trip.itinerary) {
       return { itinerary: trip.itinerary, hero_image_url: trip.hero_image_url };
+    }
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "itinerary_generate_user", p_key: userId, p_limit: DAILY_GENERATE_LIMIT } as never,
+    );
+    if (rlErr) {
+      // Fail closed on a broken rate limiter — better to briefly block
+      // generation than to silently remove the cost cap on the Anthropic API.
+      console.error("[itinerary] rate limit check failed", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error(
+        `LIMIT_REACHED: Has alcanzado el límite de ${DAILY_GENERATE_LIMIT} generaciones diarias. Inténtalo mañana.`,
+      );
     }
 
     const key = process.env.ANTHROPIC_API_KEY;

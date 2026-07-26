@@ -1,13 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { renderReferralCompleteEmail, renderReferralProgressEmail } from "@/lib/referral-emails";
 
 const REFERRAL_GOAL = 3;
+// Legitimate use is ONE real attribution ever (write-once in the RPC below),
+// but captureReferralFromLocation() runs on every root mount — a bug or a
+// scripted repeat caller would otherwise re-enqueue a "you have a referral"
+// email to the referrer on every call, since the RPC still returns a
+// non-null referrer_id even when the write-once UPDATE was a no-op.
+const DAILY_LIMIT = 10;
 
-function firstName(name: string | null | undefined, emailFallback: string | null | undefined): string {
+function firstName(
+  name: string | null | undefined,
+  emailFallback: string | null | undefined,
+): string {
   const n = name?.trim().split(/\s+/)[0];
   if (n) return n;
-  const local = emailFallback?.split("@")[0]?.replace(/[._-]+/g, " ").split(" ")[0];
+  const local = emailFallback
+    ?.split("@")[0]
+    ?.replace(/[._-]+/g, " ")
+    .split(" ")[0];
   return local ? local.charAt(0).toUpperCase() + local.slice(1) : "un amigo";
 }
 
@@ -16,6 +29,19 @@ export const attributeAcquisition = createServerFn({ method: "POST" })
   .inputValidator((data: { referredBy?: string | null; utmSource?: string | null }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "referral_attribute_user", p_key: userId, p_limit: DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[referral] rate limit check failed", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error("Has alcanzado el límite de solicitudes diarias. Inténtalo mañana.");
+    }
+
     // attribute_acquisition is SECURITY DEFINER and validates self-referral /
     // write-once itself, and also credits the referrer's referral_count and
     // grants the 3-referral reward — see
@@ -26,11 +52,13 @@ export const attributeAcquisition = createServerFn({ method: "POST" })
     );
     if (error) throw new Error(error.message);
 
-    const result = (rows as unknown as Array<{
-      referrer_id: string | null;
-      referrer_referral_count: number | null;
-      milestone_reached: boolean;
-    }> | null)?.[0];
+    const result = (
+      rows as unknown as Array<{
+        referrer_id: string | null;
+        referrer_referral_count: number | null;
+        milestone_reached: boolean;
+      }> | null
+    )?.[0];
 
     // Best-effort notification to the referrer — a failure here must never
     // block the new user's signup flow.

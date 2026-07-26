@@ -46,7 +46,8 @@ export const Route = createFileRoute("/api/chat")({
 
         // Parse and validate the body BEFORE consuming quota, so malformed
         // requests don't burn a free-plan message.
-        const { messages, tripContext, mode, clientNow } = (await request.json()) as ChatRequestBody;
+        const { messages, tripContext, mode, clientNow } =
+          (await request.json()) as ChatRequestBody;
         if (!Array.isArray(messages)) {
           return new Response("Messages are required", { status: 400 });
         }
@@ -62,9 +63,7 @@ export const Route = createFileRoute("/api/chat")({
           .eq("id", userId)
           .maybeSingle();
         const plan = ((profileRow?.plan as string | undefined) ?? "free") as
-          | "free"
-          | "viajero"
-          | "explorador";
+          "free" | "viajero" | "explorador";
         const FREE_DAILY_LIMIT = 10;
         const today = new Date().toISOString().slice(0, 10);
         if (plan === "free") {
@@ -87,6 +86,32 @@ export const Route = createFileRoute("/api/chat")({
               { user_id: userId, usage_date: today, message_count: used + 1 },
               { onConflict: "user_id,usage_date" },
             );
+        } else {
+          // Viajero/Explorador have no product-facing daily cap ("mensajes
+          // ilimitados" is the sales pitch), but "unlimited" must not mean
+          // "uncapped Anthropic spend on a single compromised paid account".
+          // Generous ceiling that no real conversational usage approaches.
+          const PAID_DAILY_SAFETY_LIMIT = 300;
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_and_increment_rate_limit" as never,
+            {
+              p_scope: "chat_message_user",
+              p_key: userId,
+              p_limit: PAID_DAILY_SAFETY_LIMIT,
+            } as never,
+          );
+          if (rlErr) {
+            console.error("[chat] rate limit check failed", rlErr);
+            return new Response("No se pudo procesar la solicitud. Inténtalo de nuevo.", {
+              status: 500,
+            });
+          }
+          if (!allowed) {
+            return new Response(
+              `LIMIT_REACHED: Has alcanzado el límite de ${PAID_DAILY_SAFETY_LIMIT} mensajes diarios. Inténtalo mañana.`,
+              { status: 429 },
+            );
+          }
         }
 
         const key = process.env.ANTHROPIC_API_KEY;
@@ -106,20 +131,28 @@ export const Route = createFileRoute("/api/chat")({
           outline
             ? `Itinerario actual del usuario (referénciate a él al responder — días, horas y sitios reales):\n${outline}`
             : null,
-        ].filter(Boolean).join("\n");
+        ]
+          .filter(Boolean)
+          .join("\n");
 
         const nowIso = clientNow || new Date().toISOString();
         const nowReadable = (() => {
           try {
             return new Date(nowIso).toLocaleString("es-ES", {
-              weekday: "long", hour: "2-digit", minute: "2-digit",
-              day: "2-digit", month: "long",
+              weekday: "long",
+              hour: "2-digit",
+              minute: "2-digit",
+              day: "2-digit",
+              month: "long",
             });
-          } catch { return nowIso; }
+          } catch {
+            return nowIso;
+          }
         })();
 
-        const system = mode === "in-trip"
-          ? `Eres el COPILOTO DE VIAJE en tiempo real de Itineraya. El usuario YA ESTÁ en ${ctx.destination ?? "su destino"} ahora mismo.
+        const system =
+          mode === "in-trip"
+            ? `Eres el COPILOTO DE VIAJE en tiempo real de Itineraya. El usuario YA ESTÁ en ${ctx.destination ?? "su destino"} ahora mismo.
 
 Hora local actual (aprox): ${nowReadable}.
 
@@ -132,7 +165,7 @@ Tu misión: ayudarle EN VIVO durante el viaje. NO generes itinerarios largos de 
 - Si pide un plan, hazlo solo para lo que queda del día u hoy + mañana como máximo.
 
 Responde en el idioma del usuario (por defecto español).`
-          : `Eres el asistente de viaje de Itineraya. Responde en español, con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
+            : `Eres el asistente de viaje de Itineraya. Responde en español, con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
 
 Contexto del viaje del usuario:
 ${contextLines || "Sin viaje seleccionado todavía."}`;
@@ -151,4 +184,3 @@ ${contextLines || "Sin viaje seleccionado todavía."}`;
     },
   },
 });
-

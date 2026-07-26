@@ -8,6 +8,7 @@ const InviteInput = z.object({
 });
 
 const INVITES_PER_DAY = 20;
+const ACCEPT_INVITE_DAILY_LIMIT = 20;
 
 const INVITE_COPY = {
   es: {
@@ -135,6 +136,21 @@ export const acceptInvite = createServerFn({ method: "POST" })
     const email = (claims as { email?: string } | null)?.email?.toLowerCase();
     // Read invite via admin (anonymous email match is awkward via RLS for non-matching email)
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "accept_invite_user", p_key: userId, p_limit: ACCEPT_INVITE_DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[tripmates] rate limit check failed (accept invite)", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error(
+        `Has alcanzado el límite de ${ACCEPT_INVITE_DAILY_LIMIT} solicitudes diarias. Inténtalo mañana.`,
+      );
+    }
+
     const { data: invite, error } = await supabaseAdmin
       .from("trip_invites")
       .select("id,trip_id,email,status,accepted_user_id")

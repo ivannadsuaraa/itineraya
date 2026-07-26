@@ -1,10 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
   type StripeEnv,
   createNativeStripeClient,
   getStripeErrorMessage,
 } from "@/lib/stripe.server";
+
+// Defense in depth against a scripted loop hammering Stripe's API (which has
+// its own, stricter rate limits — customers.search in particular — that a
+// throttled/banned key would affect for every real user, not just the
+// caller). Generous: legitimate checkout/portal usage is a handful of calls.
+const PAYMENTS_DAILY_LIMIT = 20;
 
 type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
@@ -62,6 +69,20 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     },
   )
   .handler(async ({ data, context }): Promise<CheckoutSessionResult> => {
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "checkout_user", p_key: context.userId, p_limit: PAYMENTS_DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[payments] rate limit check failed (checkout)", rlErr);
+      return { error: "No se pudo procesar la solicitud. Inténtalo de nuevo." };
+    }
+    if (!allowed) {
+      return {
+        error: `Has alcanzado el límite de ${PAYMENTS_DAILY_LIMIT} solicitudes diarias. Inténtalo mañana.`,
+      };
+    }
+
     try {
       const stripe = createNativeStripeClient(data.environment);
       const userId = context.userId;
@@ -101,6 +122,21 @@ export const createPortalSession = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }): Promise<PortalSessionResult> => {
     const { supabase, userId } = context;
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "portal_user", p_key: userId, p_limit: PAYMENTS_DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[payments] rate limit check failed (portal)", rlErr);
+      return { error: "No se pudo procesar la solicitud. Inténtalo de nuevo." };
+    }
+    if (!allowed) {
+      return {
+        error: `Has alcanzado el límite de ${PAYMENTS_DAILY_LIMIT} solicitudes diarias. Inténtalo mañana.`,
+      };
+    }
+
     const { data: sub, error: subError } = await supabase
       .from("subscriptions")
       .select("stripe_customer_id")

@@ -1,8 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import type { PublicTrip, PublicTripDay } from "@/lib/share.functions";
+
+const PUBLISH_TOGGLE_DAILY_LIMIT = 30;
+const RATE_TRIP_DAILY_LIMIT = 20;
 
 function slugify(input: string): string {
   return (
@@ -41,6 +45,21 @@ export const setTripPublic = createServerFn({ method: "POST" })
   .inputValidator((data: { tripId: string; isPublic: boolean }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "trip_publish_user", p_key: userId, p_limit: PUBLISH_TOGGLE_DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[explore] rate limit check failed (publish toggle)", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error(
+        `Has alcanzado el límite de ${PUBLISH_TOGGLE_DAILY_LIMIT} cambios diarios de este tipo. Inténtalo mañana.`,
+      );
+    }
+
     const { data: trip, error } = await supabase
       .from("trips")
       .select("id, destination, start_date, end_date, share_slug")
@@ -150,8 +169,7 @@ export const listPublicTrips = createServerFn({ method: "GET" })
         published_at: string | null;
       };
       const nDays =
-        daysBetween(row.start_date, row.end_date) ??
-        (row.itinerary?.days?.length ?? null);
+        daysBetween(row.start_date, row.end_date) ?? row.itinerary?.days?.length ?? null;
       const ratingSum = (r as { rating_sum?: number | null }).rating_sum ?? 0;
       const ratingCount = (r as { rating_count?: number | null }).rating_count ?? 0;
       return {
@@ -217,13 +235,31 @@ export const rateTrip = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     if (data.rating < 1 || data.rating > 5) throw new Error("Rating must be 1-5");
     // Use the authenticated supabase client from middleware context
-    const { supabase } = context;
+    const { supabase, userId } = context;
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "trip_rate_user", p_key: userId, p_limit: RATE_TRIP_DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[explore] rate limit check failed (rate trip)", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error(
+        `Has alcanzado el límite de ${RATE_TRIP_DAILY_LIMIT} valoraciones diarias. Inténtalo mañana.`,
+      );
+    }
+
     // Call SECURITY DEFINER function — bypasses RLS, works even if columns were
     // just added without a policy that permits user-driven updates.
-    const { error } = await supabase.rpc("increment_trip_rating" as never, {
-      p_slug: data.slug,
-      p_rating: data.rating,
-    } as never);
+    const { error } = await supabase.rpc(
+      "increment_trip_rating" as never,
+      {
+        p_slug: data.slug,
+        p_rating: data.rating,
+      } as never,
+    );
     if (error) {
       // Function not yet created → graceful no-op; optimistic UI already updated
       console.warn("[rateTrip] rpc error (migration pending?):", error.message);

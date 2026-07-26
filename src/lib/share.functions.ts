@@ -1,7 +1,42 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
+import { getRequest } from "@tanstack/react-start/server";
+import { createHash } from "node:crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
+
+const SHARE_TOGGLE_DAILY_LIMIT = 30;
+// getPublicTrip is public and unauthenticated (anyone with a slug can call
+// it), and every call writes trips.view_count via the RPC below — a scripted
+// loop against one slug can inflate the popularity signal /explore shows to
+// everyone. The cap is per-IP and generous: real browsing of many trip pages
+// never approaches it, but it stops view-count farming.
+const VIEW_PER_IP_DAILY_LIMIT = 300;
+
+// Never store raw IPs — only a truncated hash, purely as a rate-limit key.
+function hashIp(ip: string): string {
+  return createHash("sha256").update(ip).digest("hex").slice(0, 32);
+}
+
+// x-forwarded-for's FIRST entry is whatever the client itself claims (an
+// attacker can send `X-Forwarded-For: 1.2.3.4` and get a fresh IP — and
+// therefore a fresh rate-limit bucket — on every request). Vercel appends
+// the real, edge-verified client IP as the LAST hop, and also sets
+// x-real-ip directly, so prefer those over the spoofable first entry.
+function resolveClientIp(request: Request | null): string {
+  const xri = request?.headers.get("x-real-ip");
+  if (xri) return xri.trim();
+  const xff = request?.headers.get("x-forwarded-for");
+  if (xff) {
+    const parts = xff
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
+  return "unknown";
+}
 
 function slugify(input: string): string {
   return (
@@ -32,6 +67,21 @@ export const enableTripShare = createServerFn({ method: "POST" })
   .inputValidator((data: { tripId: string }) => data)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "trip_share_user", p_key: userId, p_limit: SHARE_TOGGLE_DAILY_LIMIT } as never,
+    );
+    if (rlErr) {
+      console.error("[share] rate limit check failed", rlErr);
+      throw new Error("No se pudo procesar la solicitud. Inténtalo de nuevo.");
+    }
+    if (!allowed) {
+      throw new Error(
+        `Has alcanzado el límite de ${SHARE_TOGGLE_DAILY_LIMIT} cambios diarios de este tipo. Inténtalo mañana.`,
+      );
+    }
+
     const { data: trip, error } = await supabase
       .from("trips")
       .select("id, destination, start_date, end_date, share_slug")
@@ -182,6 +232,18 @@ async function maybeNotifyViewMilestone(slug: string, destination: string, views
 export const getPublicTrip = createServerFn({ method: "GET" })
   .inputValidator((data: { slug: string }) => data)
   .handler(async ({ data }): Promise<PublicTrip | null> => {
+    const request = getRequest();
+    const ip = resolveClientIp(request ?? null);
+    const { data: viewAllowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      { p_scope: "trip_view_ip", p_key: hashIp(ip), p_limit: VIEW_PER_IP_DAILY_LIMIT } as never,
+    );
+    // Fail OPEN here, unlike the AI-cost endpoints: this is a public read
+    // that real visitors and social-media scrapers depend on, and a broken
+    // rate limiter must not take the page down. Only the write (the view
+    // counter increment) is skipped when the cap is hit or the check errors.
+    const countView = !rlErr && !!viewAllowed;
+
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY;
     if (!url || !key) throw new Error("Supabase not configured");
@@ -206,17 +268,22 @@ export const getPublicTrip = createServerFn({ method: "GET" })
     };
     // View counter — awaited (un RPC, ~decenas de ms) porque el valor devuelto
     // decide si toca notificar un hito al autor; el fallo sigue sin romper la página.
-    try {
-      const { data: newCount } = await client.rpc(
-        "increment_trip_view_count" as never,
-        { trip_slug: data.slug } as never,
-      );
-      const count = typeof newCount === "number" ? newCount : null;
-      if (count !== null && VIEW_MILESTONES.includes(count)) {
-        await maybeNotifyViewMilestone(data.slug, r.destination, count);
+    // Se omite por completo si el IP ya superó su cuota diaria (countView
+    // false): la página se sigue sirviendo con normalidad, solo no cuenta
+    // como una vista nueva.
+    if (countView) {
+      try {
+        const { data: newCount } = await client.rpc(
+          "increment_trip_view_count" as never,
+          { trip_slug: data.slug } as never,
+        );
+        const count = typeof newCount === "number" ? newCount : null;
+        if (count !== null && VIEW_MILESTONES.includes(count)) {
+          await maybeNotifyViewMilestone(data.slug, r.destination, count);
+        }
+      } catch (e) {
+        console.error("[share] view counter failed", e);
       }
-    } catch (e) {
-      console.error("[share] view counter failed", e);
     }
     return {
       destination: r.destination,
