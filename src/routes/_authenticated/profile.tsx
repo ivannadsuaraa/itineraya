@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
+import { updateProfilePrefs } from "@/lib/profile.functions";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +49,7 @@ async function fetchProfileTrips(userId: string): Promise<ProfileTrip[]> {
 function ProfilePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const runUpdatePrefs = useServerFn(updateProfilePrefs);
   const { isActive } = useSubscription();
   const [email, setEmail] = useState<string>("");
   const [fullName, setFullName] = useState<string>("");
@@ -122,19 +125,28 @@ function ProfilePage() {
     const destinations = preferredDestinations
       .split(",")
       .map((s) => s.trim())
-      .filter(Boolean);
-    await supabase
-      .from("profiles")
-      .update({
-        travel_style: travelStyle || null,
-        budget_range: budgetRange || null,
-        preferred_destinations: destinations,
-        traveler_type: travelerType || null,
-      } as never)
-      .eq("id", userId);
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2200);
+      .filter(Boolean)
+      .slice(0, 20);
+    try {
+      // Validado con Zod en el servidor (updateProfilePrefs) — antes era un
+      // UPDATE directo a Supabase sin comprobar los enums de los <select>
+      // ni acotar preferredDestinations, campos que generateItinerary
+      // interpola tal cual en el prompt.
+      await runUpdatePrefs({
+        data: {
+          travelStyle: (travelStyle || null) as never,
+          budgetRange: (budgetRange || null) as never,
+          travelerType: (travelerType || null) as never,
+          preferredDestinations: destinations,
+        },
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2200);
+    } catch (error) {
+      console.error("[profile] updateProfilePrefs failed", error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const filledCount = [travelStyle, budgetRange, travelerType, preferredDestinations.trim()].filter(
