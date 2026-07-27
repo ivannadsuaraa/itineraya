@@ -925,7 +925,15 @@
     "backHome": "Volver al inicio",
     "errorTitle": "Esta página no ha cargado",
     "errorBody": "Algo ha fallado por nuestra parte. Prueba a recargar o vuelve al inicio.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "boundaryTitle": "Algo ha ido mal",
+    "boundaryBody": "Ha ocurrido un error inesperado en esta sección. Prueba a recargar la página; si el problema continúa, vuelve al inicio.",
+    "reloadPage": "Recargar página",
+    "mapUnavailable": "No se pudo cargar el mapa.",
+    "widgetUnavailable": "No se pudo cargar esta sección.",
+    "notFoundSubtitleExtra": "Mientras tanto, aquí tienes un par de sitios a los que ir.",
+    "exploreTrips": "Explorar viajes",
+    "seePricing": "Ver precios"
   },
   "stats": {
     "itineraries": "Itinerarios creados",

@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "@/components/LanguageProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CookieBanner } from "@/components/CookieBanner";
 import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
@@ -25,19 +26,33 @@ import { captureReferralFromLocation } from "@/lib/referral";
 // fuera de los providers cuando el árbol entero falla.
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-sky-950 to-sky-900 px-4 text-center">
-      <img src="/itineraya-mark.png" alt="Itineraya" className="mb-6 h-12 w-auto opacity-80" />
-      <div className="text-8xl font-bold text-sky-700">404</div>
-      <h1 className="mt-4 font-display text-2xl font-bold text-white">
+    <div className="flex min-h-dvh flex-col items-center justify-center bg-white px-4 text-center">
+      <span className="text-6xl" aria-hidden>
+        ✈️
+      </span>
+      <div className="mt-3 font-display text-7xl font-bold text-[#0c1a2e]">404</div>
+      <h1 className="mt-4 font-display text-2xl font-bold text-[#0c1a2e]">
         {i18n.t("errors.notFoundTitle")}
       </h1>
-      <p className="mt-2 max-w-sm text-sky-400">{i18n.t("errors.notFoundBody")}</p>
+      <p className="mt-2 max-w-sm text-slate-500">{i18n.t("errors.notFoundBody")}</p>
       <Link
         to="/"
-        className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-sky-900 shadow-lg transition hover:bg-sky-50 active:scale-95"
+        className="mt-8 inline-flex h-11 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-95"
       >
         {i18n.t("errors.backHome")}
       </Link>
+      <p className="mt-6 text-xs font-medium text-slate-400">
+        {i18n.t("errors.notFoundSubtitleExtra")}
+      </p>
+      <div className="mt-2 flex items-center gap-4 text-sm font-semibold text-[#0ea5e9]">
+        <Link to="/explore" className="hover:underline">
+          {i18n.t("nav.explore")}
+        </Link>
+        <span className="text-slate-300">·</span>
+        <Link to="/pricing" className="hover:underline">
+          {i18n.t("nav.pricing")}
+        </Link>
+      </div>
     </div>
   );
 }
@@ -158,10 +173,15 @@ function RootComponent() {
       <AuthSessionProvider>
         <LanguageProvider>
           <AuthModalProvider>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <RouteTransition>
-              <Outlet />
-            </RouteTransition>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes.
+                ErrorBoundary aquí es la red de seguridad de última instancia para
+                toda la app — cualquier ruta que la rompa cae aquí en vez de
+                dejar una pantalla en blanco. */}
+            <ErrorBoundary>
+              <RouteTransition>
+                <Outlet />
+              </RouteTransition>
+            </ErrorBoundary>
             <AuthModalRouteSync />
             <CookieBanner />
             <Toaster position="top-center" richColors />

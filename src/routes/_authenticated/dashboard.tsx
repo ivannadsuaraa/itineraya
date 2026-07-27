@@ -50,6 +50,7 @@ import { lazy, Suspense } from "react";
 import { geocodeAndPersistTrip, primeGeocodeCache } from "@/lib/geocode";
 import { readDemoTrip, clearDemoTrip } from "@/lib/demo-trip";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
+import { ErrorBoundary, InlineErrorFallback } from "@/components/ErrorBoundary";
 import type { PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
 
 const GlobePolaroids = lazy(() =>
@@ -443,19 +444,25 @@ function DashboardPage() {
               </p>
               <div className="mx-auto flex w-full max-w-[280px] flex-1 items-center justify-center lg:max-w-[340px]">
                 {/* Solo los destinos reales del usuario. */}
-                <Suspense
-                  fallback={
-                    <div className="aspect-square w-full animate-pulse rounded-full bg-white/5" />
-                  }
+                <ErrorBoundary
+                  fallback={<InlineErrorFallback message={t("errors.widgetUnavailable")} />}
                 >
-                  <GlobePolaroids markers={globeMarkers ?? []} className="w-full" speed={0.003} />
-                </Suspense>
+                  <Suspense
+                    fallback={
+                      <div className="aspect-square w-full animate-pulse rounded-full bg-white/5" />
+                    }
+                  >
+                    <GlobePolaroids markers={globeMarkers ?? []} className="w-full" speed={0.003} />
+                  </Suspense>
+                </ErrorBoundary>
               </div>
             </div>
 
             {/* Próximo viaje (o prompt si no hay ninguno próximo) */}
             <div className="lg:col-span-2">
-              {upcoming && upcoming.start_date ? (
+              {trips === null ? (
+                <div className="h-full min-h-[148px] animate-pulse rounded-3xl bg-slate-100" />
+              ) : upcoming && upcoming.start_date ? (
                 <NextTripHero trip={upcoming} locale={locale} />
               ) : (
                 <Link
@@ -479,10 +486,20 @@ function DashboardPage() {
 
           {/* Stats destacadas — fondo gris claro */}
           <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-4 sm:gap-4">
-            <StatTile icon={MapPin} value={totalTrips} label={t("dashboard.statTrips")} />
-            <StatTile icon={Globe2} value={countriesCount} label={t("dashboard.statCountries")} />
-            <StatTile icon={CalendarDays} value={daysPlanned} label={t("dashboard.statDays")} />
-            <StatTile icon={Bookmark} value={savedCount} label={t("dashboard.statSaved")} />
+            {trips === null ? (
+              Array.from({ length: 4 }).map((_, i) => <StatTileSkeleton key={i} />)
+            ) : (
+              <>
+                <StatTile icon={MapPin} value={totalTrips} label={t("dashboard.statTrips")} />
+                <StatTile
+                  icon={Globe2}
+                  value={countriesCount}
+                  label={t("dashboard.statCountries")}
+                />
+                <StatTile icon={CalendarDays} value={daysPlanned} label={t("dashboard.statDays")} />
+                <StatTile icon={Bookmark} value={savedCount} label={t("dashboard.statSaved")} />
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -872,6 +889,16 @@ function StatTile({
       </div>
       <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[#0c1a2e]">{value}</p>
       <p className="mt-0.5 text-xs font-medium text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function StatTileSkeleton() {
+  return (
+    <div className="animate-pulse rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-100 sm:p-5">
+      <div className="h-9 w-9 rounded-xl bg-slate-200" />
+      <div className="mt-3 h-7 w-10 rounded bg-slate-200" />
+      <div className="mt-1.5 h-3 w-16 rounded bg-slate-200" />
     </div>
   );
 }

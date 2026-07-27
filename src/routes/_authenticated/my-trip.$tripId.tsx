@@ -62,6 +62,7 @@ import {
   type WeatherNow,
 } from "@/lib/weather";
 import { getDestinationNews, type NewsArticle } from "@/lib/news.functions";
+import { ErrorBoundary, InlineErrorFallback } from "@/components/ErrorBoundary";
 
 const TripMap = lazy(() =>
   import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })),
@@ -229,6 +230,11 @@ function ItineraryPage() {
   const reduceMotion = useReducedMotion();
 
   const [loading, setLoading] = useState(true);
+  // Distingue "leyendo el viaje ya generado de Supabase" (rápido, skeleton)
+  // de "generando el itinerario con IA" (lento, la pantalla de carga con
+  // etapas) — antes ambas fases compartían el mismo `loading` y la pantalla
+  // de carga elaborada tapaba también la simple lectura de datos.
+  const [generating, setGenerating] = useState(false);
   const [loadingDestination, setLoadingDestination] = useState<string | null>(null);
   const [loadingStartDate, setLoadingStartDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -295,6 +301,7 @@ function ItineraryPage() {
     let cancelled = false;
     (async () => {
       setLoading(true);
+      setGenerating(false);
       setError(null);
       try {
         const { data, error: e1 } = await supabase
@@ -324,6 +331,7 @@ function ItineraryPage() {
           return;
         }
 
+        if (!cancelled) setGenerating(true);
         const result = await generate({ data: { tripId, language: i18n.language } });
         if (cancelled) return;
         if (!result) throw new Error("Itinerary generation failed");
@@ -357,8 +365,16 @@ function ItineraryPage() {
     };
   }, [tripId, generate, t, i18n.language, retryKey]);
 
-  if (loading)
-    return <LoadingScreen destination={loadingDestination} startDate={loadingStartDate} />;
+  if (loading) {
+    // Generando con IA (lento): la pantalla de carga con etapas. Solo
+    // leyendo un itinerario ya existente (rápido): skeleton con la misma
+    // forma que el contenido real, no la animación completa.
+    return generating ? (
+      <LoadingScreen destination={loadingDestination} startDate={loadingStartDate} />
+    ) : (
+      <ItineraryPageSkeleton />
+    );
+  }
 
   // El momento de máxima motivación para pagar: el usuario acaba de describir
   // su viaje, ha pulsado "generar" y choca con el límite. Aquí el error
@@ -639,21 +655,25 @@ function ItineraryPage() {
               transition={{ duration: 0.8, ease: EASE_OUT, delay: 0.25 }}
               className="lg:sticky lg:top-[60px]"
             >
-              <Suspense
-                fallback={
-                  <div className="flex h-[60vh] items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-                    <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
-                  </div>
-                }
+              <ErrorBoundary
+                fallback={<InlineErrorFallback message={t("errors.mapUnavailable")} />}
               >
-                <TripMap
-                  destination={trip.destination}
-                  days={itin.days}
-                  tripId={trip.id}
-                  geo_lat={trip.geo_lat}
-                  geo_lng={trip.geo_lng}
-                />
-              </Suspense>
+                <Suspense
+                  fallback={
+                    <div className="flex h-[60vh] items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                      <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+                    </div>
+                  }
+                >
+                  <TripMap
+                    destination={trip.destination}
+                    days={itin.days}
+                    tripId={trip.id}
+                    geo_lat={trip.geo_lat}
+                    geo_lng={trip.geo_lng}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             </motion.div>
           </div>
         </div>
@@ -684,21 +704,23 @@ function ItineraryPage() {
             </button>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto bg-white p-3 sm:p-5">
-            <Suspense
-              fallback={
-                <div className="flex h-full min-h-[60vh] items-center justify-center rounded-2xl bg-white">
-                  <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
-                </div>
-              }
-            >
-              <TripMap
-                destination={trip.destination}
-                days={itin.days}
-                tripId={trip.id}
-                geo_lat={trip.geo_lat}
-                geo_lng={trip.geo_lng}
-              />
-            </Suspense>
+            <ErrorBoundary fallback={<InlineErrorFallback message={t("errors.mapUnavailable")} />}>
+              <Suspense
+                fallback={
+                  <div className="flex h-full min-h-[60vh] items-center justify-center rounded-2xl bg-white">
+                    <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+                  </div>
+                }
+              >
+                <TripMap
+                  destination={trip.destination}
+                  days={itin.days}
+                  tripId={trip.id}
+                  geo_lat={trip.geo_lat}
+                  geo_lng={trip.geo_lng}
+                />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </div>
       )}
@@ -1151,11 +1173,7 @@ function DayCard({
 
       {/* Activities — lista limpia con línea separadora; cascada con stagger
           de 40 ms al entrar en pantalla */}
-      <RevealGroup
-        stagger={0.04}
-        amount={0.08}
-        className="divide-y divide-slate-100 px-4 sm:px-6"
-      >
+      <RevealGroup stagger={0.04} amount={0.08} className="divide-y divide-slate-100 px-4 sm:px-6">
         {day.activities.map((a, i) => (
           <RevealItem key={i}>
             <ActivityRow
@@ -1351,6 +1369,67 @@ function ActivityRow({
                 ? t("trip.noteView")
                 : t("trip.noteAdd")}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton para la fase rápida de "leyendo un itinerario ya generado" — misma
+// forma que el contenido real (toolbar, hero, day cards con actividades),
+// nada de spinner genérico.
+function ItineraryPageSkeleton() {
+  return (
+    <div className="min-h-dvh animate-pulse bg-slate-50">
+      {/* Toolbar */}
+      <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-4 py-3.5 sm:px-5">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="h-11 w-24 rounded-full bg-slate-200" />
+          <div className="flex items-center gap-2.5">
+            <div className="h-11 w-11 rounded-full bg-slate-200 sm:w-28" />
+            <div className="h-11 w-11 rounded-full bg-slate-200 sm:w-24" />
+            <div className="h-11 w-11 rounded-full bg-slate-200 sm:w-24" />
+          </div>
+        </div>
+      </div>
+
+      {/* Hero */}
+      <div className="relative h-72 w-full bg-slate-200 md:h-96">
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="h-5 w-32 rounded-full bg-slate-300" />
+            <div className="mt-3 h-9 w-2/3 max-w-md rounded-lg bg-slate-300" />
+            <div className="mt-3 h-4 w-1/2 max-w-sm rounded-lg bg-slate-300" />
+          </div>
+        </div>
+      </div>
+
+      {/* Day cards */}
+      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-5">
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div className="space-y-6">
+            {[0, 1].map((day) => (
+              <div
+                key={day}
+                className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100"
+              >
+                <div className="h-40 w-full bg-slate-200" />
+                <div className="divide-y divide-slate-100 px-4 sm:px-6">
+                  {[0, 1, 2].map((act) => (
+                    <div key={act} className="flex gap-3 py-4">
+                      <div className="h-12 w-12 shrink-0 rounded-xl bg-slate-200 sm:h-14 sm:w-16" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-2/3 rounded bg-slate-200" />
+                        <div className="h-3 w-full rounded bg-slate-100" />
+                        <div className="h-3 w-4/5 rounded bg-slate-100" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="hidden h-[60vh] rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 lg:block" />
         </div>
       </div>
     </div>

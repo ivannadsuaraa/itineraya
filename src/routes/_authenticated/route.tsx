@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { consumePendingAuthToast } from "@/lib/post-auth-toast";
 import { getPendingReferral, clearPendingReferral } from "@/lib/referral";
 import { attributeAcquisition } from "@/lib/referral.functions";
@@ -103,7 +104,12 @@ function AuthenticatedLayout() {
         </header>
       )}
       <div className={hideChrome ? "" : "pb-16 md:pb-0 md:pt-14"}>
-        <Outlet />
+        {/* Boundary anidado: si una página autenticada (dashboard, itinerario…)
+            revienta, la barra de navegación sigue en pie y el usuario puede
+            salir de ahí sin perder el resto de la app. */}
+        <ErrorBoundary>
+          <Outlet />
+        </ErrorBoundary>
       </div>
       {!hideChrome && <MobileBottomBar />}
     </>

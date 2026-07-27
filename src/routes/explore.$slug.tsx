@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useAuthStatus } from "@/lib/use-auth-status";
 import { PaywallGate } from "@/components/trip/PaywallGate";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { ErrorBoundary, InlineErrorFallback } from "@/components/ErrorBoundary";
 
 const TripMap = lazy(() =>
   import("@/components/trip/TripMap").then((m) => ({ default: m.TripMap })),
@@ -30,7 +31,13 @@ export const Route = createFileRoute("/explore/$slug")({
     return trip; // may be null — handled in component
   },
   head: ({ loaderData, params }) => {
-    if (!loaderData) return { meta: [{ title: "Itineraya — Itinerario no disponible" }, { name: "robots", content: "noindex" }] };
+    if (!loaderData)
+      return {
+        meta: [
+          { title: "Itineraya — Itinerario no disponible" },
+          { name: "robots", content: "noindex" },
+        ],
+      };
     const dest = loaderData.destination;
     const nDays = loaderData.days?.length ?? 0;
     const title = nDays
@@ -73,6 +80,7 @@ export const Route = createFileRoute("/explore/$slug")({
       message="No pudimos cargar este viaje. Inténtalo de nuevo más tarde."
     />
   ),
+  pendingComponent: PublicTripSkeleton,
   component: DiscoverableTripPage,
 });
 
@@ -93,6 +101,41 @@ function FallbackPage({ title, message }: { title: string; message: string }) {
   );
 }
 
+// Mostrado por el router mientras el loader de la ruta resuelve (navegación
+// cliente a un itinerario público) — misma forma que la página real.
+function PublicTripSkeleton() {
+  return (
+    <div className="min-h-dvh animate-pulse bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+      <div className="sticky top-0 z-20 border-b border-sky-100/60 bg-white/80 px-4 py-3">
+        <div className="mx-auto flex max-w-5xl items-center justify-between">
+          <div className="h-7 w-28 rounded bg-sky-100" />
+          <div className="h-9 w-24 rounded-full bg-sky-100" />
+        </div>
+      </div>
+      <div className="h-72 w-full bg-sky-100 md:h-96" />
+      <div className="mx-auto max-w-5xl px-4 py-8 md:py-10">
+        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+          <div className="h-14 rounded-2xl bg-white/70" />
+          <div className="h-14 rounded-2xl bg-white/70" />
+          <div className="h-14 rounded-2xl bg-white/70" />
+        </div>
+        <div className="space-y-6">
+          {[0, 1].map((day) => (
+            <div key={day} className="overflow-hidden rounded-3xl bg-white/70">
+              <div className="h-48 w-full bg-sky-100 md:h-64" />
+              <div className="space-y-3 p-5 md:p-6">
+                {[0, 1, 2].map((act) => (
+                  <div key={act} className="h-16 rounded-2xl bg-sky-50" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DiscoverableTripPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -107,10 +150,19 @@ function DiscoverableTripPage() {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8] p-6 text-center">
         <div className="max-w-md rounded-3xl bg-white/85 p-8 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-3xl">✈️</div>
-          <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">Este itinerario ya no está disponible</h1>
-          <p className="mt-2 text-sky-700">Quizá el autor lo despublicó o el enlace caducó. ¡Pero puedes crear el tuyo en segundos!</p>
-          <Link to="/explore" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#15577E]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sky-100 text-3xl">
+            ✈️
+          </div>
+          <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">
+            Este itinerario ya no está disponible
+          </h1>
+          <p className="mt-2 text-sky-700">
+            Quizá el autor lo despublicó o el enlace caducó. ¡Pero puedes crear el tuyo en segundos!
+          </p>
+          <Link
+            to="/explore"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#15577E]"
+          >
             Descubrir otros viajes <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -156,19 +208,17 @@ function DiscoverableTripPage() {
         openAuthModal({ mode: "login" });
         return;
       }
-      const { error } = await supabase
-        .from("saved_inspirations")
-        .upsert(
-          {
-            user_id: u.user.id,
-            slug: trip.slug,
-            destination: trip.destination,
-            hero_image_url: trip.hero_image_url,
-            summary: trip.summary,
-            n_days: nDays || null,
-          },
-          { onConflict: "user_id,slug" },
-        );
+      const { error } = await supabase.from("saved_inspirations").upsert(
+        {
+          user_id: u.user.id,
+          slug: trip.slug,
+          destination: trip.destination,
+          hero_image_url: trip.hero_image_url,
+          summary: trip.summary,
+          n_days: nDays || null,
+        },
+        { onConflict: "user_id,slug" },
+      );
       if (error) throw error;
       setSaved(true);
       toast.success(t("publicTrip.saved"));
@@ -185,10 +235,18 @@ function DiscoverableTripPage() {
   };
 
   const renderDay = (day: PublicTripDay) => (
-    <article key={day.day} className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60">
+    <article
+      key={day.day}
+      className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60"
+    >
       {day.image_url ? (
         <div className="relative h-48 w-full overflow-hidden md:h-64">
-          <img src={day.image_url} alt={day.title} loading="lazy" className="h-full w-full object-cover" />
+          <img
+            src={day.image_url}
+            alt={day.title}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
             <span className="inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
@@ -241,7 +299,6 @@ function DiscoverableTripPage() {
       </ul>
     </article>
   );
-
 
   return (
     <div className="min-h-dvh bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
@@ -359,15 +416,17 @@ function DiscoverableTripPage() {
         )}
 
         {view === "map" ? (
-          <Suspense
-            fallback={
-              <div className="flex h-96 items-center justify-center rounded-3xl bg-white/80">
-                <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
-              </div>
-            }
-          >
-            <TripMap destination={trip.destination} days={days} tripId={trip.slug} />
-          </Suspense>
+          <ErrorBoundary fallback={<InlineErrorFallback message={t("errors.mapUnavailable")} />}>
+            <Suspense
+              fallback={
+                <div className="flex h-96 items-center justify-center rounded-3xl bg-white/80">
+                  <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
+                </div>
+              }
+            >
+              <TripMap destination={trip.destination} days={days} tripId={trip.slug} />
+            </Suspense>
+          </ErrorBoundary>
         ) : (
           <>
             <div className="mt-8 space-y-6">{visibleDays.map(renderDay)}</div>
@@ -386,9 +445,7 @@ function DiscoverableTripPage() {
           <h2 className="mt-4 font-display text-3xl font-bold md:text-4xl">
             {t("publicTrip.ctaTitle")}
           </h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/90">
-            {t("publicTrip.ctaSubtitle")}
-          </p>
+          <p className="mx-auto mt-3 max-w-xl text-white/90">{t("publicTrip.ctaSubtitle")}</p>
           <button
             type="button"
             onClick={() => openAuthModal({ mode: "login" })}

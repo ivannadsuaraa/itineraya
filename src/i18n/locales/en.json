@@ -925,7 +925,15 @@
     "backHome": "Back to home",
     "errorTitle": "This page didn't load",
     "errorBody": "Something went wrong on our end. Try refreshing or head back home.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "boundaryTitle": "Something went wrong",
+    "boundaryBody": "An unexpected error occurred in this section. Try reloading the page; if the problem continues, head back home.",
+    "reloadPage": "Reload page",
+    "mapUnavailable": "The map couldn't be loaded.",
+    "widgetUnavailable": "This section couldn't be loaded.",
+    "notFoundSubtitleExtra": "In the meantime, here are a couple of places to go.",
+    "exploreTrips": "Explore trips",
+    "seePricing": "See pricing"
   },
   "stats": {
     "itineraries": "Itineraries created",

@@ -66,12 +66,16 @@ function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [trips, setTrips] = useState<ProfileTrip[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       const user = u.user;
-      if (!user) return;
+      if (!user) {
+        setLoaded(true);
+        return;
+      }
       setUserId(user.id);
       setEmail(user.email ?? "");
       const { data: p } = await supabase
@@ -93,6 +97,7 @@ function ProfilePage() {
       );
       setTravelerType(((p as { traveler_type?: string } | null)?.traveler_type as string) ?? "");
       setTrips(await fetchProfileTrips(user.id));
+      setLoaded(true);
     })();
   }, []);
 
@@ -161,6 +166,8 @@ function ProfilePage() {
       : plan === "viajero"
         ? t("pricing.viajero.name")
         : t("pricing.free.name");
+
+  if (!loaded) return <ProfileSkeleton />;
 
   return (
     <div className="min-h-dvh bg-slate-50">
@@ -407,6 +414,35 @@ function ProfilePage() {
           </div>
         </main>
       </div>
+    </div>
+  );
+}
+
+// Misma forma que la página real: cabecera con avatar, panel de stats,
+// panel de plan, preferencias y lista de enlaces.
+function ProfileSkeleton() {
+  return (
+    <div className="min-h-dvh animate-pulse bg-slate-50">
+      <section className="bg-gradient-to-b from-sky-950 to-sky-900 px-4 pb-12 pt-6 sm:px-6 sm:pb-14 sm:pt-8 lg:px-8">
+        <div className="mx-auto flex max-w-2xl items-center gap-4">
+          <div className="h-14 w-14 shrink-0 rounded-full bg-white/15" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-5 w-32 rounded bg-white/15" />
+            <div className="h-3.5 w-44 rounded bg-white/10" />
+          </div>
+        </div>
+      </section>
+      <main className="mx-auto max-w-2xl px-5 py-6 md:px-10 md:py-8">
+        <div className="mt-2 h-28 rounded-2xl bg-slate-200" />
+        <div className="mt-4 h-20 rounded-2xl bg-slate-100" />
+        <div className="mt-4 h-64 rounded-2xl bg-slate-100" />
+        <div className="mt-4 h-24 rounded-2xl bg-slate-100" />
+        <div className="mt-4 space-y-2">
+          <div className="h-14 rounded-2xl bg-slate-100" />
+          <div className="h-14 rounded-2xl bg-slate-100" />
+          <div className="h-14 rounded-2xl bg-slate-100" />
+        </div>
+      </main>
     </div>
   );
 }
