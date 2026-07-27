@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { generateDemoItinerary } from "@/lib/demo.functions";
 import { DEMO_TRIP_KEY, readDemoTrip, type DemoTrip, type DemoDay } from "@/lib/demo-trip";
 import { DestinationAutocomplete } from "@/components/DestinationAutocomplete";
+import { StepCircles } from "@/components/ui/StepCircles";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
@@ -186,23 +187,7 @@ function DemoPage() {
   }
 
   return (
-    <div className="relative min-h-dvh bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      {/* `overflow-hidden` vive AQUÍ (capa de blobs), no en el contenedor de
-          página: así los blobs decorativos siguen recortados pero la página
-          puede hacer scroll vertical si el contenido no cabe — necesario para
-          que en móviles bajos (≈667px) el botón de avanzar pueda subir por
-          encima del banner de cookies en vez de quedar atrapado debajo. */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }}
-        />
-      </div>
-
+    <div className="relative min-h-dvh bg-white">
       {/* pb-56 (224px) en móvil: el banner de cookies fijo mide hasta ~178px
           con su padding; con pb-40 (160px) el botón "Siguiente" quedaba
           atrapado bajo el banner incluso con el scroll a tope y el tap
@@ -212,7 +197,7 @@ function DemoPage() {
         <div className="mb-6 flex items-center justify-between">
           <Link
             to="/"
-            className="inline-flex h-11 items-center gap-2 rounded-full bg-white/70 px-4 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-100 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
@@ -233,16 +218,8 @@ function DemoPage() {
         </div>
 
         {/* Progreso */}
-        <div className="mb-6 flex gap-2">
-          {Array.from({ length: totalSteps }).map((_, index) => (
-            <div
-              key={index}
-              className={cn(
-                "h-2 flex-1 rounded-full transition",
-                index <= step ? "bg-[#1E6B9A]" : "bg-white/70",
-              )}
-            />
-          ))}
+        <div className="mb-6">
+          <StepCircles total={totalSteps} current={step} />
         </div>
 
         <motion.div
@@ -250,7 +227,7 @@ function DemoPage() {
           initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 44 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, ease: EASE_OUT }}
-          className="rounded-3xl bg-white/85 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur-xl sm:p-8"
+          className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8"
         >
           {step === 0 && (
             <div className="space-y-6">
@@ -262,7 +239,7 @@ function DemoPage() {
               </div>
               <div
                 ref={destBoxRef}
-                className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4"
+                className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
               >
                 <DestinationAutocomplete
                   value={destination}
@@ -310,7 +287,7 @@ function DemoPage() {
                       "rounded-2xl border p-4 text-center transition active:scale-[0.97]",
                       nDays === n
                         ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
-                        : "border-sky-200 bg-white/70 text-sky-900 hover:border-sky-300 hover:bg-white",
+                        : "border-sky-200 bg-white text-sky-900 hover:border-sky-300 hover:bg-white",
                     )}
                   >
                     <span className="block font-display text-2xl font-bold">{n}</span>
@@ -339,7 +316,7 @@ function DemoPage() {
                         "flex items-center gap-2.5 rounded-2xl border px-4 py-3 text-left transition active:scale-[0.97]",
                         companion === id
                           ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
-                          : "border-sky-200 bg-white/70 text-sky-900 hover:border-sky-300 hover:bg-white",
+                          : "border-sky-200 bg-white text-sky-900 hover:border-sky-300 hover:bg-white",
                       )}
                     >
                       <span className="text-xl">{icon}</span>
@@ -375,7 +352,7 @@ function DemoPage() {
                         "rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition active:scale-[0.97]",
                         selected
                           ? "border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
-                          : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
+                          : "border-sky-200 bg-white text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
                       )}
                     >
                       {t(`onboarding.tripTypes.${id}`)}
@@ -391,12 +368,12 @@ function DemoPage() {
           <button
             type="button"
             onClick={runPrev}
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white active:scale-[0.97]"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-100 px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-[0.97]"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
           </button>
-          {/* Gris y deshabilitado mientras no haya destino; azul en cuanto se
+          {/* Gris y deshabilitado mientras no haya destino; negro en cuanto se
               escribe. DestinationAutocomplete sincroniza el estado también
               desde el evento nativo, así que en iOS el botón no puede
               quedarse gris con el input lleno. */}
@@ -404,7 +381,7 @@ function DemoPage() {
             type="button"
             onClick={runNext}
             disabled={destination.trim().length <= 1}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
           >
             <Sparkles className="h-4 w-4" />
             {step === totalSteps - 1 ? t("onboarding.generate") : t("onboarding.next")}

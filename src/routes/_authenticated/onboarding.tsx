@@ -24,6 +24,7 @@ import { DateRangeField, type DateRange } from "@/components/DateRangeField";
 import { HotelMapPicker, type HotelSelection } from "@/components/HotelMapPicker";
 import { DestinationAutocomplete } from "@/components/DestinationAutocomplete";
 import { BudgetRangeSlider } from "@/components/BudgetRangeSlider";
+import { StepCircles } from "@/components/ui/StepCircles";
 import { supabase } from "@/integrations/supabase/client";
 import { geocodeDestination, geocodeAndPersistTrip } from "@/lib/geocode";
 import { createTrip } from "@/lib/itinerary.functions";
@@ -320,54 +321,34 @@ function OnboardingPage() {
   const isMobile = useIsMobile();
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
+    <div className="relative min-h-dvh overflow-hidden bg-white">
       {takeoffTripId && (
         <TakeoffOverlay
           onDone={() => navigate({ to: "/my-trip/$tripId", params: { tripId: takeoffTripId } })}
         />
       )}
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #B8D4E8, transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: "radial-gradient(circle, #D6EAF8, transparent 70%)" }}
-        />
-      </div>
 
       <div className="relative mx-auto flex min-h-dvh max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-8">
         <Link
           to="/new-trip"
-          className="mb-6 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-white/70 px-4 text-sm font-semibold text-sky-800 backdrop-blur-md transition hover:bg-white"
+          className="mb-6 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-slate-100 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("onboarding.back")}
         </Link>
 
         <div className="mb-6">
-          <div className="mb-3 flex items-center justify-between text-xs font-semibold text-sky-700">
+          <div className="mb-3 flex items-center justify-between text-xs font-semibold text-slate-500">
             <span>{t("onboarding.stepIndicator", { n: step + 1, total: totalSteps })}</span>
             <span>{Math.round(((step + 1) / totalSteps) * 100)}%</span>
           </div>
-          <div className="flex gap-2">
-            {Array.from({ length: totalSteps }).map((_, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "h-2 flex-1 rounded-full transition",
-                  index <= step ? "bg-[#1E6B9A]" : "bg-white/70",
-                )}
-              />
-            ))}
-          </div>
+          <StepCircles total={totalSteps} current={step} />
         </div>
 
         {/* "Tarjeta de embarque": el viaje va tomando forma según respondes.
             Aparece en cuanto hay destino y acumula fechas y compañía. */}
         {step > 0 && data.destination.trim().length > 1 && (
-          <div className="mb-6 flex items-center gap-3 overflow-hidden rounded-2xl bg-white/85 p-2.5 pr-4 shadow-lg ring-1 ring-white/60 backdrop-blur-xl">
+          <div className="mb-6 flex items-center gap-3 overflow-hidden rounded-2xl bg-white p-2.5 pr-4 shadow-sm ring-1 ring-gray-100">
             <img
               src={`https://loremflickr.com/240/240/${encodeURIComponent(data.destination.split(",")[0].trim() + ",travel")}`}
               alt=""
@@ -430,7 +411,7 @@ function OnboardingPage() {
             if (step === totalSteps - 1) void finish();
             else next();
           }}
-          className="rounded-3xl bg-white/85 p-6 shadow-xl ring-1 ring-white/60 backdrop-blur-xl sm:p-8"
+          className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100 sm:p-8"
         >
           {step === 0 && (
             <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
@@ -438,10 +419,10 @@ function OnboardingPage() {
                   embarque alrededor del buscador de destino. */}
               <div
                 ref={destBoxRef}
-                className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4"
+                className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
               >
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="flex items-center gap-2 font-flight text-[10px] font-bold uppercase tracking-[0.28em] text-[#1E6B9A]">
+                  <span className="flex items-center gap-2 font-flight text-[10px] font-bold uppercase tracking-[0.28em] text-[#0ea5e9]">
                     <Plane className="h-3.5 w-3.5 -rotate-45" />
                     CHECK-IN
                   </span>
@@ -586,7 +567,7 @@ function OnboardingPage() {
                           "rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition active:scale-[0.97]",
                           selected
                             ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
-                            : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
+                            : "border-sky-200 bg-white text-sky-800 hover:border-sky-300 hover:bg-white hover:shadow-sm",
                         )}
                       >
                         {t(`onboarding.tripTypes.${id}`)}
@@ -606,7 +587,7 @@ function OnboardingPage() {
                     }
                   }}
                   placeholder={t("onboarding.stylePh")}
-                  className="mt-4 min-h-24 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
+                  className="mt-4 min-h-24 w-full rounded-2xl border border-sky-200 bg-white p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
                 />
               </div>
             </StepShell>
@@ -665,7 +646,7 @@ function OnboardingPage() {
                           "flex h-11 items-center rounded-full border px-4 text-sm font-semibold transition active:scale-[0.97]",
                           selected
                             ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
-                            : "border-sky-200 bg-white/70 text-sky-800 hover:border-sky-300 hover:bg-white",
+                            : "border-sky-200 bg-white text-sky-800 hover:border-sky-300 hover:bg-white",
                         )}
                       >
                         {t(`onboarding.dietary.${id}`)}
@@ -686,7 +667,7 @@ function OnboardingPage() {
                   }
                 }}
                 placeholder={t("onboarding.avoidPh")}
-                className="min-h-32 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
+                className="min-h-32 w-full rounded-2xl border border-sky-200 bg-white p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
                 autoFocus
               />
             </StepShell>
@@ -698,7 +679,7 @@ function OnboardingPage() {
             type="button"
             onClick={prev}
             disabled={step === 0 || loading}
-            className="inline-flex items-center gap-2 rounded-full bg-white/70 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-white active:scale-[0.97] disabled:opacity-40"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-slate-100 px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 active:scale-[0.97] disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("onboarding.back")}
@@ -707,7 +688,7 @@ function OnboardingPage() {
             type="button"
             onClick={step === totalSteps - 1 ? finish : next}
             disabled={!canContinue || loading}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#1E6B9A] to-[#3B92C2] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#1E6B9A]/25 transition hover:shadow-xl active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-black px-6 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -755,7 +736,7 @@ function TimeInput({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="block rounded-2xl border border-sky-200 bg-white/70 px-4 py-3">
+    <label className="block rounded-2xl border border-sky-200 bg-white px-4 py-3">
       <span className="text-[11px] font-semibold uppercase tracking-wider text-sky-600">
         {label}
       </span>
@@ -792,7 +773,7 @@ function OptionGrid({
             compact ? "flex items-center gap-2.5 px-4 py-3" : "p-5",
             value === id
               ? "chip-selected border-[#1E6B9A] bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/20"
-              : "border-sky-200 bg-white/70 text-sky-900 hover:border-sky-300 hover:bg-white hover:shadow-sm",
+              : "border-sky-200 bg-white text-sky-900 hover:border-sky-300 hover:bg-white hover:shadow-sm",
           )}
         >
           {code && (

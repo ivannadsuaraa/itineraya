@@ -1,6 +1,7 @@
 // "Cómo funciona" con metáforas de aeropuerto: Check-in → Gate → Boarding.
-// Mosaico Bento asimétrico: el primer paso manda como pieza grande (navy) y los
-// dos siguientes lo acompañan en tiles claros. Entrada en cascada sutil.
+// Mosaico Bento asimétrico: el primer paso manda como pieza grande (negra,
+// único tile oscuro puntual) y los dos siguientes lo acompañan en tiles
+// claros. Entrada en cascada sutil.
 
 import { ClipboardCheck, DoorOpen, PlaneTakeoff } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -55,7 +56,7 @@ export function HowItWorksSection() {
         >
           {/* Paso 1 — feature */}
           <RevealItem className="lg:col-span-2 lg:row-span-2">
-            <div className="flex h-full flex-col justify-between rounded-3xl bg-[#0c1a2e] p-8 sm:p-10">
+            <div className="flex h-full flex-col justify-between rounded-3xl bg-slate-950 p-8 sm:p-10">
               <div className="flex items-start justify-between">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#38bdf8] text-[#0c1a2e]">
                   <ClipboardCheck className="h-7 w-7" />

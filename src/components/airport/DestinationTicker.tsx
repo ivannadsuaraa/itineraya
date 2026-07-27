@@ -32,7 +32,7 @@ export function DestinationTicker({ label }: { label: string }) {
   }, [reduce]);
 
   return (
-    <div className="relative border-t border-white/10 bg-sky-950/60 backdrop-blur-sm">
+    <div className="relative border-t border-white/10 bg-slate-950">
       <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
         <span className="flex shrink-0 items-center gap-2 font-flight text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300/80">
           <Plane className="h-3.5 w-3.5 -rotate-45 text-sky-300" />
@@ -47,7 +47,7 @@ export function DestinationTicker({ label }: { label: string }) {
           key={idx}
           text={DESTINATIONS[idx]}
           charDelay={55}
-          className="shrink-0 text-sm font-bold tracking-[0.28em] text-amber-300 sm:text-base"
+          className="shrink-0 text-sm font-bold tracking-[0.28em] text-sky-300 sm:text-base"
         />
       </div>
     </div>

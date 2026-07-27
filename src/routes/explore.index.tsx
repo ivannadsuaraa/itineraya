@@ -196,25 +196,19 @@ function ExplorePage() {
       <main className={isAuthenticated ? "md:pt-14" : "pt-28"}>
         <PageTransition personality="scale">
           {/* ── Header ── */}
-          <section className="relative overflow-hidden bg-[#0c1a2e] px-4 py-12 sm:py-16">
-            {/* resplandor sky sutil */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-[#38bdf8]/10 blur-3xl" />
-              <div className="absolute -bottom-10 right-0 h-64 w-64 rounded-full bg-[#38bdf8]/10 blur-3xl" />
-            </div>
-
-            <div className="relative mx-auto max-w-3xl text-center">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#38bdf8]/10 px-3 py-1 text-xs font-semibold text-[#38bdf8] ring-1 ring-[#38bdf8]/25">
+          <section className="bg-white px-4 py-12 sm:py-16">
+            <div className="mx-auto max-w-3xl text-center">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#38bdf8]/10 px-3 py-1 text-xs font-semibold text-[#0ea5e9] ring-1 ring-[#38bdf8]/20">
                 <Compass className="h-3.5 w-3.5" />
                 {t("explore.eyebrow")}
               </span>
-              <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-white sm:text-5xl">
+              <h1 className="mt-4 font-display text-3xl font-bold tracking-tight text-[#0c1a2e] sm:text-5xl">
                 {t("explore.title")}
               </h1>
-              <p className="mt-3 text-base text-white/70 sm:text-lg">{t("explore.subtitle")}</p>
+              <p className="mt-3 text-base text-slate-500 sm:text-lg">{t("explore.subtitle")}</p>
 
               {/* Search bar */}
-              <div className="mx-auto mt-8 flex max-w-xl items-center gap-2.5 rounded-full bg-white px-4 py-2.5 shadow-xl ring-1 ring-white/10">
+              <div className="mx-auto mt-8 flex max-w-xl items-center gap-2.5 rounded-full bg-white px-4 py-2.5 shadow-sm ring-1 ring-slate-200">
                 <Search className="h-4 w-4 shrink-0 text-slate-400" />
                 <input
                   value={destination}
@@ -235,7 +229,7 @@ function ExplorePage() {
               </div>
 
               {/* Qué es el Remix: cada viaje del feed es una plantilla */}
-              <p className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-1.5 text-xs text-sky-300/90">
+              <p className="mx-auto mt-4 flex max-w-xl items-center justify-center gap-1.5 text-xs text-[#0ea5e9]">
                 <Sparkles className="h-3.5 w-3.5 shrink-0" />
                 {t("explore.remixExplainer")}
               </p>
@@ -289,7 +283,7 @@ function ExplorePage() {
                       onClick={() => setDurationBucket(active ? "all" : d)}
                       className={`inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-all ${
                         active
-                          ? "bg-[#1E6B9A] text-white shadow-md"
+                          ? "bg-sky-900 text-white shadow-md"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
@@ -307,7 +301,7 @@ function ExplorePage() {
                   onClick={() => setSortBy((s) => (s === "newest" ? "best" : "newest"))}
                   className={`inline-flex h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition-all ${
                     sortBy === "best"
-                      ? "bg-amber-500 text-white shadow-md"
+                      ? "bg-sky-900 text-white shadow-md"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >

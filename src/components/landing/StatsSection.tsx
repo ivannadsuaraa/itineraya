@@ -1,6 +1,4 @@
 // Banda de estadísticas: los números cuentan desde 0 al entrar en viewport.
-// Estética de panel de aeropuerto (fondo navy, mono, línea de pista) para
-// enlazar el hero con el resto de la landing.
 
 import { useTranslation } from "react-i18next";
 import { CountUp } from "@/components/ui/CountUp";
@@ -22,17 +20,12 @@ export function StatsSection() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-[#050b16] py-14 sm:py-16">
-      {/* Línea de pista superior */}
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-px bg-[repeating-linear-gradient(90deg,rgba(56,189,248,0.4)_0_12px,transparent_12px_24px)]"
-      />
+    <section className="relative overflow-hidden border-y border-slate-100 bg-white py-14 sm:py-16">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <RevealGroup stagger={0.12} amount={0.5} className="grid grid-cols-3 gap-6 sm:gap-10">
           {stats.map((s) => (
             <RevealItem key={s.label} className="text-center">
-              <p className="font-display text-3xl font-bold text-white sm:text-5xl">
+              <p className="font-display text-3xl font-bold text-[#0c1a2e] sm:text-5xl">
                 <CountUp
                   to={s.to}
                   decimals={s.decimals}
@@ -41,7 +34,7 @@ export function StatsSection() {
                   locale={i18n.language}
                 />
               </p>
-              <p className="mt-2 font-flight text-[10px] font-semibold uppercase tracking-[0.22em] text-sky-300/75 sm:text-xs">
+              <p className="mt-2 font-flight text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0ea5e9] sm:text-xs">
                 {s.label}
               </p>
             </RevealItem>

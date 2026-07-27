@@ -410,33 +410,34 @@ function DashboardPage() {
   return (
     <PageTransition className="min-h-dvh bg-slate-50">
       {/* ── Bento command center ──
-          Banda oscura (navy) de tiles asimétricos: bienvenida + globo (medio,
-          alto) + próximo viaje, más una fila de stats destacadas. Paleta
-          limitada navy/sky-400/blanco/slate; rounded-3xl; sombras casi nulas. */}
-      <section className="bg-slate-50 px-4 pt-6 sm:px-6 lg:px-8">
+          Fondo blanco; tiles asimétricos: bienvenida (blanca) + globo (medio,
+          alto, único tile oscuro puntual — el visor de planeta se lee mejor
+          sobre negro) + próximo viaje (foto full-bleed), más una fila de
+          stats en gris claro. rounded-3xl; sombras casi nulas. */}
+      <section className="bg-white px-4 pt-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-3 sm:gap-4 lg:grid-cols-4">
             {/* Bienvenida + CTA */}
-            <div className="flex min-h-[180px] flex-col justify-between rounded-3xl bg-[#0c1a2e] p-6 sm:p-8 lg:col-span-2">
+            <div className="flex min-h-[180px] flex-col justify-between rounded-3xl bg-white p-6 ring-1 ring-slate-100 sm:p-8 lg:col-span-2">
               <div>
-                <p className="text-sm font-semibold text-[#38bdf8]">
+                <p className="text-sm font-semibold text-[#0ea5e9]">
                   {t("dashboard.hello", { name })}
                 </p>
-                <h1 className="mt-2 font-display text-3xl font-bold leading-tight text-white sm:text-4xl">
+                <h1 className="mt-2 font-display text-3xl font-bold leading-tight text-[#0c1a2e] sm:text-4xl">
                   {t("dashboard.where")}
                 </h1>
               </div>
               <Link
                 to="/new-trip"
-                className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-[#38bdf8] px-5 py-3 text-sm font-bold text-[#0c1a2e] transition hover:bg-[#5cc7f9] active:scale-[0.97]"
+                className="mt-6 inline-flex h-11 w-fit items-center gap-2 rounded-full bg-black px-5 text-sm font-bold text-white transition hover:bg-slate-800 active:scale-[0.97]"
               >
                 <Plus className="h-4 w-4" />
                 {t("dashboard.newTrip")}
               </Link>
             </div>
 
-            {/* Globo — tile medio y alto (ocupa dos filas en desktop) */}
-            <div className="flex flex-col rounded-3xl bg-[#0c1a2e] p-5 sm:p-6 lg:col-span-2 lg:row-span-2">
+            {/* Globo — único tile oscuro, medio y alto (ocupa dos filas en desktop) */}
+            <div className="flex flex-col rounded-3xl bg-slate-950 p-5 sm:p-6 lg:col-span-2 lg:row-span-2">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#38bdf8]/80">
                 {t("dashboard.yourWorld")}
               </p>
@@ -459,15 +460,15 @@ function DashboardPage() {
               ) : (
                 <Link
                   to="/new-trip"
-                  className="flex h-full min-h-[148px] flex-col justify-center rounded-3xl bg-[#0c1a2e] p-6 ring-1 ring-white/10 transition hover:ring-white/25"
+                  className="flex h-full min-h-[148px] flex-col justify-center rounded-3xl bg-white p-6 ring-1 ring-slate-100 transition hover:ring-slate-200"
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#38bdf8]">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#0ea5e9]">
                     {t("dashboard.planNextLabel")}
                   </p>
-                  <p className="mt-1 font-display text-lg font-bold text-white">
+                  <p className="mt-1 font-display text-lg font-bold text-[#0c1a2e]">
                     {t("dashboard.planNextTitle")}
                   </p>
-                  <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#38bdf8]">
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#0ea5e9]">
                     {t("dashboard.newTrip")}
                     <ArrowRight className="h-4 w-4" />
                   </span>
@@ -476,7 +477,7 @@ function DashboardPage() {
             </div>
           </div>
 
-          {/* Stats destacadas */}
+          {/* Stats destacadas — fondo gris claro */}
           <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-4 sm:gap-4">
             <StatTile icon={MapPin} value={totalTrips} label={t("dashboard.statTrips")} />
             <StatTile icon={Globe2} value={countriesCount} label={t("dashboard.statCountries")} />
@@ -865,7 +866,7 @@ function StatTile({
   label: string;
 }) {
   return (
-    <div className="rounded-3xl bg-white p-4 ring-1 ring-slate-200/70 sm:p-5">
+    <div className="rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-100 sm:p-5">
       <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#38bdf8]/10 text-[#0ea5e9]">
         <Icon className="h-4 w-4" />
       </div>
@@ -1069,66 +1070,44 @@ function NextTripHero({ trip, locale }: { trip: Trip; locale: Locale }) {
 
   return (
     <Link to="/my-trip/$tripId" params={{ tripId: trip.id }}>
-      <div className="group h-full overflow-hidden rounded-3xl bg-[#0c1a2e] ring-1 ring-white/10 transition hover:ring-white/25">
-        <div className="grid h-full md:grid-cols-[1.4fr_1fr]">
-          <div className="relative h-44 overflow-hidden md:h-full md:min-h-[176px] md:rounded-l-3xl">
-            <SmartImage
-              src={trip.hero_image_url}
-              fallbackSrc={destinationFallback(trip.destination, 1200, 700)}
-              gradientClassName="bg-gradient-to-br from-sky-600 to-sky-800"
-              alt={trip.destination}
-              loading="eager"
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent md:bg-gradient-to-r" />
-            <div className="absolute bottom-4 left-5 right-5 text-white">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/70">
-                {t("dashboard.nextTrip")}
-              </p>
-              <h3 className="font-display text-xl font-bold drop-shadow md:text-2xl">
-                {trip.destination}
-              </h3>
-              {trip.start_date && trip.end_date && (
-                <p className="mt-0.5 text-xs text-white/85">
-                  {format(parseISO(trip.start_date), fmt, { locale })} –{" "}
-                  {format(parseISO(trip.end_date), fmt + " yyyy", { locale })}
-                </p>
-              )}
-            </div>
-          </div>
+      {/* Foto full-bleed: toda la info (countdown, clima, fechas) vive en
+          overlay sobre la foto, no en un panel de color aparte. */}
+      <div className="group relative h-full min-h-[220px] overflow-hidden rounded-3xl shadow-sm">
+        <SmartImage
+          src={trip.hero_image_url}
+          fallbackSrc={destinationFallback(trip.destination, 1200, 700)}
+          gradientClassName="bg-gradient-to-br from-sky-600 to-sky-800"
+          alt={trip.destination}
+          loading="eager"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
 
-          <div className="flex flex-col justify-center gap-4 p-5 md:p-6">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#38bdf8]">
-                {t("dashboard.countdown")}
-              </p>
-              <div className="mt-1 flex items-baseline gap-1.5">
-                <span className="font-display text-4xl font-bold tabular-nums text-white md:text-5xl">
-                  {displayed}
-                </span>
-                <span className="text-sm font-medium text-white/60">
-                  {days === 1 ? t("dashboard.day") : t("dashboard.days")}
-                </span>
-              </div>
-            </div>
-            <div className="rounded-xl bg-white/10 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#38bdf8]">
-                {t("dashboard.weatherNow")}
-              </p>
-              {weather === undefined ? (
-                <div className="mt-2 h-6 w-20 animate-pulse rounded bg-white/20" />
-              ) : weather ? (
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-2xl">{weatherEmoji(weather.code)}</span>
-                  <span className="font-display text-xl font-bold text-white">
-                    {weather.tempC}°C
-                  </span>
-                </div>
-              ) : (
-                <p className="mt-1 text-sm text-[#38bdf8]">—</p>
-              )}
-            </div>
-          </div>
+        <div className="absolute right-4 top-4 flex flex-col items-end gap-1.5">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#0c1a2e] shadow-sm">
+            <span className="font-display text-base tabular-nums">{displayed}</span>
+            {days === 1 ? t("dashboard.day") : t("dashboard.days")}
+          </span>
+          {weather && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-black/40 px-2.5 py-1 text-xs font-semibold text-white">
+              {weatherEmoji(weather.code)} {weather.tempC}°C
+            </span>
+          )}
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-6">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/70">
+            {t("dashboard.nextTrip")}
+          </p>
+          <h3 className="font-display text-xl font-bold drop-shadow md:text-2xl">
+            {trip.destination}
+          </h3>
+          {trip.start_date && trip.end_date && (
+            <p className="mt-0.5 text-xs text-white/85">
+              {format(parseISO(trip.start_date), fmt, { locale })} –{" "}
+              {format(parseISO(trip.end_date), fmt + " yyyy", { locale })}
+            </p>
+          )}
         </div>
       </div>
     </Link>

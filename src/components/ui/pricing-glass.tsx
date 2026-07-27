@@ -34,12 +34,10 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
         },
       }}
       className={[
-        "group relative flex w-full flex-col overflow-hidden rounded-3xl transition-colors",
-        tier.isCurrent
-          ? "bg-emerald-500/[0.06] ring-1 ring-emerald-400/40 md:-translate-y-3"
-          : tier.isPopular
-            ? "bg-[#38bdf8]/[0.06] ring-1 ring-[#38bdf8]/45 md:-translate-y-3"
-            : "bg-white/[0.03] ring-1 ring-white/10",
+        "group relative flex w-full flex-col overflow-hidden rounded-3xl bg-white transition-shadow",
+        tier.isPopular
+          ? "shadow-lg ring-1 ring-slate-200 md:-translate-y-3"
+          : "shadow-sm ring-1 ring-gray-100",
       ].join(" ")}
     >
       {/* Popular / Current badge */}
@@ -47,10 +45,8 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
         <div className="absolute left-1/2 top-0 -translate-x-1/2">
           <div
             className={[
-              "rounded-b-xl border-b border-x px-4 py-1 text-[10px] font-bold uppercase tracking-widest",
-              tier.isCurrent
-                ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-300"
-                : "border-transparent bg-[#38bdf8] text-[#0c1a2e]",
+              "rounded-b-xl px-4 py-1 text-[10px] font-bold uppercase tracking-widest",
+              tier.isCurrent ? "bg-emerald-100 text-emerald-700" : "bg-black text-white",
             ].join(" ")}
           >
             {tier.isCurrent ? t("pricing.current") : t("pricing.popular")}
@@ -60,11 +56,11 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
 
       <div className="relative z-10 flex flex-col p-7 md:p-9 flex-1 pt-8">
         {/* Tier name */}
-        <h3 className="text-base font-semibold text-white/65">{tier.name}</h3>
+        <h3 className="text-base font-semibold text-slate-500">{tier.name}</h3>
 
         {/* Price */}
         <div className="mt-4 flex items-baseline gap-1">
-          {!isZero && <span className="text-xl font-medium text-white/40">€</span>}
+          {!isZero && <span className="text-xl font-medium text-slate-400">€</span>}
           <div className="h-[56px] overflow-hidden flex items-center">
             <AnimatePresence mode="popLayout">
               <motion.span
@@ -73,25 +69,25 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -36, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 380, damping: 28 }}
-                className="block font-display text-[52px] font-bold text-white tracking-tight leading-none"
+                className="block font-display text-[52px] font-bold text-[#0c1a2e] tracking-tight leading-none"
               >
                 {isZero ? t("pricing.free.name") : displayPrice}
               </motion.span>
             </AnimatePresence>
           </div>
           {!isZero && (
-            <span className="text-base font-medium text-white/40">{t("pricing.perMonth")}</span>
+            <span className="text-base font-medium text-slate-400">{t("pricing.perMonth")}</span>
           )}
         </div>
 
         {isAnnual && !isZero && (
-          <p className="mt-1.5 text-[11px] font-medium text-amber-400/80 leading-snug">
+          <p className="mt-1.5 text-[11px] font-medium text-[#0ea5e9] leading-snug">
             {t("pricing.annualNote")}
           </p>
         )}
-        <p className="mt-2 text-sm leading-relaxed text-white/40">{tier.description}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-500">{tier.description}</p>
 
-        <div className="my-7 h-px w-full bg-white/10" />
+        <div className="my-7 h-px w-full bg-gray-100" />
 
         {/* Features */}
         <ul className="flex flex-1 flex-col gap-3.5">
@@ -104,10 +100,10 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
               }}
               className="flex items-start gap-3"
             >
-              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#38bdf8]/15 ring-1 ring-[#38bdf8]/25">
-                <Check className="h-3 w-3 text-[#38bdf8]" strokeWidth={3} />
+              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#38bdf8]/10 ring-1 ring-[#38bdf8]/20">
+                <Check className="h-3 w-3 text-[#0ea5e9]" strokeWidth={3} />
               </div>
-              <span className="text-sm font-medium leading-snug text-white/65">{feat}</span>
+              <span className="text-sm font-medium leading-snug text-slate-700">{feat}</span>
             </motion.li>
           ))}
         </ul>
@@ -122,12 +118,12 @@ function PricingCard({ tier, isAnnual }: { tier: TierType; isAnnual: boolean }) 
           whileTap={{ scale: 0.98 }}
           onClick={() => tier.onSelect?.(isAnnual ? tier.priceIdAnnual : tier.priceIdMonthly)}
           className={[
-            "mt-8 w-full rounded-2xl py-3.5 text-[15px] font-semibold transition-all duration-200",
+            "mt-8 w-full rounded-full py-3.5 text-[15px] font-semibold transition-all duration-200",
             tier.isCurrent
-              ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/30 cursor-default"
+              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 cursor-default"
               : tier.isPopular
-                ? "bg-[#38bdf8] text-[#0c1a2e] hover:bg-[#5cc7f9]"
-                : "bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/18",
+                ? "bg-black text-white hover:bg-slate-800"
+                : "bg-slate-100 text-slate-800 hover:bg-slate-200",
           ].join(" ")}
         >
           {tier.isCurrent ? t("pricing.currentCta") : tier.ctaLabel}
@@ -163,19 +159,19 @@ export function PricingGlass({
       {/* Header */}
       <div className="flex flex-col items-center gap-7 text-center">
         <div className="space-y-3">
-          <h2 className="font-display text-4xl font-bold text-white tracking-tight md:text-5xl">
+          <h2 className="font-display text-4xl font-bold text-[#0c1a2e] tracking-tight md:text-5xl">
             {title}
           </h2>
-          <p className="text-white/45 text-base max-w-xl mx-auto">{description}</p>
+          <p className="text-slate-500 text-base max-w-xl mx-auto">{description}</p>
         </div>
 
         {/* Toggle */}
-        <div className="relative flex items-center rounded-full bg-white/6 p-1.5 ring-1 ring-white/12">
+        <div className="relative flex items-center rounded-full bg-slate-100 p-1.5 ring-1 ring-gray-100">
           <button
             onClick={() => setIsAnnual(false)}
             className={[
               "relative z-10 flex h-11 items-center rounded-full px-5 text-sm font-semibold transition-colors duration-200",
-              !isAnnual ? "text-white" : "text-white/45 hover:text-white/65",
+              !isAnnual ? "text-slate-900" : "text-slate-400 hover:text-slate-600",
             ].join(" ")}
           >
             {t("pricing.billingMonthly")}
@@ -184,16 +180,16 @@ export function PricingGlass({
             onClick={() => setIsAnnual(true)}
             className={[
               "relative z-10 flex h-11 items-center rounded-full px-5 text-sm font-semibold transition-colors duration-200",
-              isAnnual ? "text-white" : "text-white/45 hover:text-white/65",
+              isAnnual ? "text-slate-900" : "text-slate-400 hover:text-slate-600",
             ].join(" ")}
           >
             {t("pricing.billingAnnual")}
-            <span className="absolute -right-5 -top-3 rounded-full bg-[#38bdf8] px-1.5 py-0.5 text-[9px] font-bold text-[#0c1a2e]">
+            <span className="absolute -right-5 -top-3 rounded-full bg-black px-1.5 py-0.5 text-[9px] font-bold text-white">
               -20%
             </span>
           </button>
           <motion.div
-            className="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-full bg-white/12 ring-1 ring-white/20"
+            className="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] rounded-full bg-white shadow-sm ring-1 ring-gray-100"
             animate={{ x: isAnnual ? "100%" : "0%" }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
           />

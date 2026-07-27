@@ -109,25 +109,11 @@ function getCategoryIcon(category: ActivityCategory | undefined) {
   }
 }
 
-function getCategoryColor(category: ActivityCategory | undefined): string {
-  switch (category) {
-    case "hotel":
-      return "bg-purple-100 text-purple-700";
-    case "restaurant":
-      return "bg-orange-100 text-orange-700";
-    case "activity":
-      return "bg-emerald-100 text-emerald-700";
-    case "transport":
-      return "bg-blue-100 text-blue-700";
-    case "sight":
-      return "bg-amber-100 text-amber-700";
-    case "nightlife":
-      return "bg-pink-100 text-pink-700";
-    case "shopping":
-      return "bg-rose-100 text-rose-700";
-    default:
-      return "bg-slate-100 text-slate-600";
-  }
+// Un único tratamiento neutro para todas las categorías — el icono ya las
+// distingue; el color queda reservado al único acento (sky) del resto de la
+// pantalla, en vez de un arcoíris por categoría.
+function getCategoryColor(_category: ActivityCategory | undefined): string {
+  return "bg-slate-100 text-slate-600";
 }
 
 type Day = {
@@ -158,18 +144,11 @@ function addDaysToDateString(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-// Acento visual rotatorio: cada día del itinerario tiene su propio color en
-// los chips de número y hora, para que los días se distingan de un vistazo.
-const DAY_ACCENTS = [
-  "from-sky-700 to-cyan-600",
-  "from-violet-700 to-purple-500",
-  "from-amber-500 to-orange-500",
-  "from-emerald-700 to-teal-500",
-  "from-rose-600 to-pink-500",
-] as const;
-
-function dayAccent(dayIdx: number): string {
-  return DAY_ACCENTS[dayIdx % DAY_ACCENTS.length];
+// Un único acento (sky) para los chips de día — antes rotaba por 5 colores
+// distintos, lo que ponía varios acentos a la vez en una pantalla con
+// muchos días visibles.
+function dayAccent(_dayIdx: number): string {
+  return "from-sky-700 to-sky-600";
 }
 
 function googleMapsUrl(query: string): string {
@@ -1170,8 +1149,13 @@ function DayCard({
         </div>
       )}
 
-      {/* Activities — cascada con stagger de 40 ms al entrar en pantalla */}
-      <RevealGroup stagger={0.04} amount={0.08} className="space-y-3.5 p-4 sm:space-y-4 sm:p-6">
+      {/* Activities — lista limpia con línea separadora; cascada con stagger
+          de 40 ms al entrar en pantalla */}
+      <RevealGroup
+        stagger={0.04}
+        amount={0.08}
+        className="divide-y divide-slate-100 px-4 sm:px-6"
+      >
         {day.activities.map((a, i) => (
           <RevealItem key={i}>
             <ActivityRow
@@ -1252,10 +1236,8 @@ function ActivityRow({
 
   return (
     <div
-      className={`group flex gap-3 rounded-2xl border p-3.5 transition-all sm:gap-3.5 sm:p-4 ${
-        activity.completed
-          ? "border-slate-100 bg-slate-50/30 opacity-55"
-          : "border-slate-100 bg-slate-50/50 hover:bg-slate-50"
+      className={`group flex gap-3 py-4 transition-opacity sm:gap-3.5 ${
+        activity.completed ? "opacity-55" : ""
       }`}
     >
       {/* Time chip — más compacto en móvil para dar aire al contenido */}

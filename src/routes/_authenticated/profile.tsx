@@ -15,6 +15,7 @@ import {
   Heart,
   Loader2,
   Check,
+  Bookmark,
 } from "lucide-react";
 import { PassportStamps, type StampTrip } from "@/components/airport/PassportStamps";
 import { CountUp } from "@/components/ui/CountUp";
@@ -362,6 +363,16 @@ function ProfilePage() {
           <PassportStamps trips={trips} />
 
           <section className="mt-4 grid gap-2">
+            <Link
+              to="/saved"
+              className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:border-sky-300"
+            >
+              <span className="flex items-center gap-3 text-sm font-semibold text-slate-800">
+                <Bookmark className="h-4 w-4 text-slate-500" />
+                {t("sidebar.saved")}
+              </span>
+              <ArrowRight className="h-4 w-4 text-slate-400" />
+            </Link>
             <Link
               to="/pricing"
               className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:border-sky-300"

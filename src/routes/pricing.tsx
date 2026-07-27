@@ -182,21 +182,15 @@ function PricingPage() {
   ];
 
   return (
-    <div className="min-h-dvh bg-[#0c1a2e]">
+    <div className="min-h-dvh bg-white">
       <PaymentTestModeBanner />
 
-      {/* Ambient background — resplandor sky muy sutil */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#38bdf8]/10 blur-3xl" />
-        <div className="absolute -bottom-24 left-0 h-72 w-96 rounded-full bg-[#38bdf8]/8 blur-3xl" />
-      </div>
-
       {/* Nav */}
-      <div className="relative border-b border-white/8">
+      <div className="relative border-b border-gray-100">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <Link
             to={authedUserId ? "/dashboard" : "/"}
-            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/8 px-3 text-xs font-semibold text-white/75 backdrop-blur-md transition hover:bg-white/14 hover:text-white sm:text-sm"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 sm:text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
             {authedUserId ? t("pricing.dashboard") : t("pricing.back")}
@@ -228,7 +222,7 @@ function PricingPage() {
           ].map((item) => (
             <span
               key={item.labelKey}
-              className="flex items-center gap-1.5 text-xs font-medium text-white/35"
+              className="flex items-center gap-1.5 text-xs font-medium text-slate-400"
             >
               <span>{item.icon}</span>
               {t(item.labelKey)}
@@ -241,13 +235,13 @@ function PricingPage() {
 
         {/* ── 30-day guarantee ── */}
         <div className="mt-16 flex flex-col items-center text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/8 ring-1 ring-white/15">
-            <Shield className="h-8 w-8 text-sky-300" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-gray-100">
+            <Shield className="h-8 w-8 text-[#0ea5e9]" />
           </div>
-          <h3 className="mt-4 font-display text-xl font-bold text-white">
+          <h3 className="mt-4 font-display text-xl font-bold text-[#0c1a2e]">
             {t("pricing.guaranteeTitle")}
           </h3>
-          <p className="mt-2 max-w-sm text-sm text-white/50">{t("pricing.guaranteeBody")}</p>
+          <p className="mt-2 max-w-sm text-sm text-slate-500">{t("pricing.guaranteeBody")}</p>
         </div>
 
         {/* ── Pricing FAQ ── */}
@@ -279,25 +273,25 @@ function PricingPage() {
 function TripPassCard({ onSelect }: { onSelect: () => void }) {
   const { t } = useTranslation();
   return (
-    <div className="mx-auto mt-8 flex max-w-xl flex-col items-center gap-4 rounded-2xl bg-white/[0.03] px-5 py-4 ring-1 ring-white/8 sm:flex-row sm:justify-between">
+    <div className="mx-auto mt-8 flex max-w-xl flex-col items-center gap-4 rounded-2xl bg-slate-50 px-5 py-4 ring-1 ring-gray-100 sm:flex-row sm:justify-between">
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/8 ring-1 ring-white/10">
-          <Ticket className="h-4 w-4 text-sky-300" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white ring-1 ring-gray-100">
+          <Ticket className="h-4 w-4 text-[#0ea5e9]" />
         </div>
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-white/85">{t("pricing.tripPass.eyebrow")}</p>
-            <span className="rounded-full bg-white/8 px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-white/50">
+            <p className="text-sm font-semibold text-slate-800">{t("pricing.tripPass.eyebrow")}</p>
+            <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-slate-500 ring-1 ring-gray-100">
               {t("pricing.tripPass.tag")}
             </span>
           </div>
-          <p className="mt-0.5 text-xs text-white/40">{t("pricing.tripPass.description")}</p>
+          <p className="mt-0.5 text-xs text-slate-500">{t("pricing.tripPass.description")}</p>
         </div>
       </div>
       <button
         type="button"
         onClick={onSelect}
-        className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-xs font-bold text-white ring-1 ring-white/15 transition hover:bg-white/18"
+        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-black px-4 text-xs font-bold text-white transition hover:bg-slate-800"
       >
         {t("pricing.tripPass.cta")}
         <span className="text-white/50">·</span>
@@ -343,37 +337,37 @@ const FEATURES: Array<{
 
 function FeatureCell({ val }: { val: boolean | string }) {
   const { t } = useTranslation();
-  if (val === true) return <Check className="mx-auto h-4 w-4 text-emerald-400" />;
-  if (val === false) return <Minus className="mx-auto h-4 w-4 text-white/15" />;
+  if (val === true) return <Check className="mx-auto h-4 w-4 text-emerald-500" />;
+  if (val === false) return <Minus className="mx-auto h-4 w-4 text-slate-300" />;
   const text = val.startsWith("pricing.") ? t(val) : val;
-  return <span className="text-xs font-semibold text-white/75">{text}</span>;
+  return <span className="text-xs font-semibold text-slate-700">{text}</span>;
 }
 
 function ComparisonTable() {
   const { t } = useTranslation();
   return (
     <div className="mt-20">
-      <h2 className="mb-8 text-center font-display text-2xl font-bold text-white">
+      <h2 className="mb-8 text-center font-display text-2xl font-bold text-[#0c1a2e]">
         {t("pricing.cmp.title")}
       </h2>
-      <div className="overflow-x-auto rounded-2xl ring-1 ring-white/10">
+      <div className="overflow-x-auto rounded-2xl ring-1 ring-gray-100">
         <div className="min-w-[560px]">
           {/* Header */}
-          <div className="grid grid-cols-4 bg-white/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white/40">
+          <div className="grid grid-cols-4 bg-slate-50 px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-400">
             <div>{t("pricing.cmp.feature")}</div>
             <div className="text-center">{t("pricing.free.name")}</div>
-            <div className="text-center text-sky-300">{t("pricing.viajero.name")}</div>
-            <div className="text-center text-purple-300">{t("pricing.explorador.name")}</div>
+            <div className="text-center text-[#0ea5e9]">{t("pricing.viajero.name")}</div>
+            <div className="text-center text-[#0c1a2e]">{t("pricing.explorador.name")}</div>
           </div>
           {/* Rows */}
           {FEATURES.map((f, i) => (
             <div
               key={i}
               className={`grid grid-cols-4 items-center px-4 py-3 text-sm ${
-                i % 2 === 0 ? "bg-white/3" : "bg-transparent"
+                i % 2 === 0 ? "bg-slate-50/60" : "bg-white"
               }`}
             >
-              <div className="text-white/70">{t(f.labelKey)}</div>
+              <div className="text-slate-600">{t(f.labelKey)}</div>
               <div className="text-center">
                 <FeatureCell val={f.free} />
               </div>
@@ -400,28 +394,28 @@ function PricingFAQ() {
   const [open, setOpen] = useState<number | null>(null);
   return (
     <div className="mt-20 mx-auto max-w-2xl">
-      <h2 className="mb-8 text-center font-display text-2xl font-bold text-white">
+      <h2 className="mb-8 text-center font-display text-2xl font-bold text-[#0c1a2e]">
         {t("pricing.faqTitle")}
       </h2>
-      <div className="divide-y divide-white/8 rounded-2xl bg-white/5 ring-1 ring-white/10">
+      <div className="divide-y divide-gray-100 rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
         {PRICING_FAQ_KEYS.map((n, i) => (
           <div key={n}>
             <button
               type="button"
               onClick={() => setOpen(open === i ? null : i)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-white/4"
+              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
               aria-expanded={open === i}
             >
-              <span className="text-sm font-semibold text-white/85">{t(`pricing.faq.q${n}`)}</span>
+              <span className="text-sm font-semibold text-slate-800">{t(`pricing.faq.q${n}`)}</span>
               <span
-                className={`shrink-0 text-white/40 transition-transform duration-200 ${open === i ? "rotate-45" : ""}`}
+                className={`shrink-0 text-slate-400 transition-transform duration-200 ${open === i ? "rotate-45" : ""}`}
               >
                 ＋
               </span>
             </button>
             {open === i && (
-              <div className="border-t border-white/6 bg-white/3 px-5 py-4">
-                <p className="text-sm leading-relaxed text-white/55">{t(`pricing.faq.a${n}`)}</p>
+              <div className="border-t border-gray-100 bg-slate-50/60 px-5 py-4">
+                <p className="text-sm leading-relaxed text-slate-600">{t(`pricing.faq.a${n}`)}</p>
               </div>
             )}
           </div>

@@ -65,9 +65,9 @@ export function TestimonialsSection() {
           amount={0.2}
           className="mt-14 grid gap-4 lg:auto-rows-fr lg:grid-cols-3"
         >
-          {/* Feature — navy, tall */}
+          {/* Feature — negra, tile alto puntual */}
           <RevealItem className="lg:row-span-2">
-            <figure className="flex h-full flex-col justify-between rounded-3xl bg-[#0c1a2e] p-8">
+            <figure className="flex h-full flex-col justify-between rounded-3xl bg-slate-950 p-8">
               <div>
                 <Stars dark />
                 <blockquote className="mt-5 font-display text-xl font-semibold leading-snug text-white sm:text-2xl">
