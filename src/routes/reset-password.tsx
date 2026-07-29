@@ -20,25 +20,42 @@ function ResetPasswordPage() {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  // Sin esto, el primer render mostraba "el enlace no es válido o ha caducado"
+  // a TODO el mundo — incluido quien acababa de abrir un enlace correcto —
+  // porque comprobar la sesión de recuperación es asíncrono. Mucha gente
+  // abandonaba ahí creyendo que el enlace estaba roto.
+  const [checking, setChecking] = useState(true);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Supabase JS auto-handles the recovery hash on load and emits PASSWORD_RECOVERY.
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") setReady(true);
+      if (event === "PASSWORD_RECOVERY") {
+        setReady(true);
+        setChecking(false);
+      }
     });
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (data.session) setReady(true);
+      })
+      .finally(() => setChecking(false));
     return () => sub.subscription.unsubscribe();
   }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (password.length < 6) { setError(t("auth.weakPassword")); return; }
-    if (password !== confirm) { setError(t("auth.passwordsMismatch")); return; }
+    if (password.length < 6) {
+      setError(t("auth.weakPassword"));
+      return;
+    }
+    if (password !== confirm) {
+      setError(t("auth.passwordsMismatch"));
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
@@ -63,7 +80,13 @@ function ResetPasswordPage() {
         {done ? (
           <div className="text-center py-4">
             <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
-            <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">{t("auth.resetSuccess")}</h1>
+            <h1 className="mt-4 font-display text-2xl font-bold text-sky-900">
+              {t("auth.resetSuccess")}
+            </h1>
+          </div>
+        ) : checking ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-6 w-6 animate-spin text-sky-500" />
           </div>
         ) : !ready ? (
           <div className="text-center py-6 text-sm text-sky-700">
@@ -92,7 +115,12 @@ function ResetPasswordPage() {
                   placeholder={t("auth.newPassword")}
                   className="w-full bg-transparent text-sm outline-none"
                 />
-                <button type="button" onClick={() => setShow((s) => !s)} className="text-sky-500" tabIndex={-1}>
+                <button
+                  type="button"
+                  onClick={() => setShow((s) => !s)}
+                  className="text-sky-500"
+                  tabIndex={-1}
+                >
                   {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -108,7 +136,11 @@ function ResetPasswordPage() {
                   className="w-full bg-transparent text-sm outline-none"
                 />
               </div>
-              {error && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={loading}

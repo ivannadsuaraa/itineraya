@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { getPublicTrip, type PublicTripDay } from "@/lib/share.functions";
+import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaywallGate } from "@/components/trip/PaywallGate";
@@ -239,9 +240,15 @@ function PublicTripPage() {
 
       {/* Hero */}
       <div className="relative h-72 w-full overflow-hidden md:h-96">
-        <img
-          src={trip.hero_image_url || "/images/hero-bg.jpg"}
+        {/* SmartImage y no <img>: esta es la página que se comparte en redes,
+            así que un hotlink caducado no puede dejar el icono de imagen rota
+            como primera impresión — cae a loremflickr y luego a un degradado. */}
+        <SmartImage
+          src={trip.hero_image_url}
+          fallbackSrc={destinationFallback(trip.destination, 1600, 900)}
+          gradientClassName="bg-gradient-to-br from-sky-950 to-sky-800"
           alt={trip.destination}
+          loading="eager"
           fetchPriority="high"
           className="h-full w-full object-cover"
         />
@@ -392,8 +399,10 @@ function PublicDayCard({ day, date }: { day: PublicTripDay; date: string | null 
       {/* Day header — photo when available, brand gradient otherwise */}
       {day.image_url ? (
         <div className="relative aspect-[16/7] w-full overflow-hidden">
-          <img
+          <SmartImage
             src={day.image_url}
+            fallbackSrc={destinationFallback(day.title, 1400, 620)}
+            gradientClassName="bg-gradient-to-br from-sky-700 to-sky-900"
             alt={day.title}
             loading="lazy"
             className="h-full w-full object-cover"

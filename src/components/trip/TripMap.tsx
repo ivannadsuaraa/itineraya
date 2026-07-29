@@ -78,6 +78,19 @@ function FitBounds({ pins }: { pins: Pin[] }) {
   return null;
 }
 
+// MapContainer solo lee `center` en el montaje: react-leaflet ignora los
+// cambios posteriores de esa prop. Sin esto, cuando el destino geocodifica
+// después del primer render el mapa se quedaba donde arrancó hasta que
+// aparecía el primer pin (o para siempre, si no aparecía ninguno).
+function RecenterOnChange({ center }: { center: Geo | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!center) return;
+    map.setView([center.lat, center.lng], Math.max(map.getZoom(), 11));
+  }, [center, map]);
+  return null;
+}
+
 function makeIcon(color: string, label: string | number): L.DivIcon {
   return L.divIcon({
     className: "itineraya-marker",
@@ -102,8 +115,10 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
   const { t } = useTranslation();
   const [pins, setPins] = useState<Pin[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
+  // `!= null` y no truthy: lat/lng 0 son coordenadas válidas (ecuador y
+  // meridiano de Greenwich) y con `&&` se descartaban como "sin coordenadas".
   const [center, setCenter] = useState<Geo | null>(
-    geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : null
+    geo_lat != null && geo_lng != null ? { lat: geo_lat, lng: geo_lng } : null,
   );
   const cancelled = useRef(false);
 
@@ -132,10 +147,7 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
     }
 
     const collected: Pin[] = [];
-    const pushPin = (
-      g: Geo,
-      item: (typeof tasks)[number],
-    ) => {
+    const pushPin = (g: Geo, item: (typeof tasks)[number]) => {
       collected.push({
         geo: g,
         day: item.day,
@@ -167,7 +179,7 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
     (async () => {
       // 1. Use provided coordinates or geocode destination + flush cached pins instantly (no waiting)
       const destGeo =
-        (geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : null) ??
+        (geo_lat != null && geo_lng != null ? { lat: geo_lat, lng: geo_lng } : null) ??
         cache["__dest__"] ??
         (await geocode(destination));
       if (cancelled.current) return;
@@ -199,7 +211,12 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
           // Try the most specific query first, fall back to title + destination
           const specific = `${item.activity.place || item.activity.title}, ${destination}`;
           let g = await geocode(specific);
-          if (!g && item.activity.place && item.activity.title && item.activity.place !== item.activity.title) {
+          if (
+            !g &&
+            item.activity.place &&
+            item.activity.title &&
+            item.activity.place !== item.activity.title
+          ) {
             g = await geocode(`${item.activity.title}, ${destination}`);
           }
           if (!g) {
@@ -232,7 +249,11 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
     };
   }, [tasks, destination, tripId, geo_lat, geo_lng]);
 
-  const fallbackCenter: Geo = center ?? { lat: 40.4168, lng: -3.7038 };
+  // Sin destino geocodificado no se centra en una ciudad concreta (antes:
+  // Madrid, que hacía que un viaje a Bali abriera sobre España). Vista de
+  // mundo alejada hasta saber dónde es de verdad.
+  const fallbackCenter: Geo = center ?? { lat: 20, lng: 0 };
+  const initialZoom = center ? 12 : 2;
   const loading = progress.total > 0 && progress.done < progress.total;
 
   return (
@@ -252,7 +273,7 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
       <div style={{ height: "70vh", minHeight: 480 }} className="relative">
         <MapContainer
           center={[fallbackCenter.lat, fallbackCenter.lng]}
-          zoom={12}
+          zoom={initialZoom}
           scrollWheelZoom
           zoomControl={false}
           style={{ height: "100%", width: "100%", background: "#EAF3FA" }}
@@ -282,7 +303,9 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
                     {p.activity.place && (
                       <div className="text-xs text-sky-700">{p.activity.place}</div>
                     )}
-                    <div className="mt-1 text-xs font-semibold text-[#1E6B9A]">{p.activity.time}</div>
+                    <div className="mt-1 text-xs font-semibold text-[#1E6B9A]">
+                      {p.activity.time}
+                    </div>
                     <div className="mt-1 text-xs text-sky-700">{p.activity.description}</div>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${q}`}
@@ -297,6 +320,7 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
               </Marker>
             );
           })}
+          <RecenterOnChange center={center} />
           <FitBounds pins={pins} />
         </MapContainer>
 

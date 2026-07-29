@@ -137,16 +137,28 @@ function DemoPage() {
 
   const runGeneration = async () => {
     setPhase("loading");
+    // Techo duro: si la generación nunca resuelve, el visitante se quedaba en
+    // la pantalla de carga para siempre. Aquí duele el doble — es la primera
+    // impresión del producto y no hay cuenta con la que volver.
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
-      const res = await generate({
-        data: {
-          destination: destination.trim(),
-          nDays,
-          companion: companion as "solo" | "pareja" | "amigos" | "familia",
-          tripTypes,
-          language: i18n.language,
-        },
-      });
+      const res = await Promise.race([
+        generate({
+          data: {
+            destination: destination.trim(),
+            nDays,
+            companion: companion as "solo" | "pareja" | "amigos" | "familia",
+            tripTypes,
+            language: i18n.language,
+          },
+        }),
+        new Promise<never>((_, rejectTimeout) => {
+          timeoutId = setTimeout(
+            () => rejectTimeout(new Error(t("trip.generationTimeout"))),
+            120_000,
+          );
+        }),
+      ]);
       const demoTrip: DemoTrip = {
         destination: destination.trim(),
         nDays,
@@ -166,6 +178,8 @@ function DemoPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("trip.somethingWrong"));
       setPhase("form");
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 

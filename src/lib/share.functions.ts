@@ -245,15 +245,26 @@ export const getPublicTrip = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<PublicTrip | null> => {
     const request = getRequest();
     const ip = resolveClientIp(request ?? null);
-    const { data: viewAllowed, error: rlErr } = await supabaseAdmin.rpc(
-      "check_and_increment_rate_limit" as never,
-      { p_scope: "trip_view_ip", p_key: hashIp(ip), p_limit: VIEW_PER_IP_DAILY_LIMIT } as never,
-    );
     // Fail OPEN here, unlike the AI-cost endpoints: this is a public read
     // that real visitors and social-media scrapers depend on, and a broken
     // rate limiter must not take the page down. Only the write (the view
     // counter increment) is skipped when the cap is hit or the check errors.
-    const countView = !rlErr && !!viewAllowed;
+    //
+    // The try/catch is load-bearing, not defensive noise: `supabaseAdmin` is a
+    // Proxy that THROWS on first property access when SUPABASE_SERVICE_ROLE_KEY
+    // is missing/rotated. Without it, that throw escaped before the fail-open
+    // logic below could run and every public trip page 500'd — the exact
+    // outcome this rate limiter is documented never to cause.
+    let countView = false;
+    try {
+      const { data: viewAllowed, error: rlErr } = await supabaseAdmin.rpc(
+        "check_and_increment_rate_limit" as never,
+        { p_scope: "trip_view_ip", p_key: hashIp(ip), p_limit: VIEW_PER_IP_DAILY_LIMIT } as never,
+      );
+      countView = !rlErr && !!viewAllowed;
+    } catch (e) {
+      console.error("[share] view rate-limit check unavailable — serving page without counting", e);
+    }
 
     const url = process.env.SUPABASE_URL;
     const key = process.env.SUPABASE_PUBLISHABLE_KEY;

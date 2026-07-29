@@ -30,10 +30,10 @@ function isActive(pathname: string, to: string) {
 }
 
 const LANDING_LINKS = [
-  { labelKey: "nav.explore",     href: "/explore" },
-  { labelKey: "nav.howItWorks",  href: "/#how-it-works" },
-  { labelKey: "nav.features",    href: "/#features" },
-  { labelKey: "nav.pricing",     href: "/pricing" },
+  { labelKey: "nav.explore", href: "/explore" },
+  { labelKey: "nav.howItWorks", href: "/#how-it-works" },
+  { labelKey: "nav.features", href: "/#product" },
+  { labelKey: "nav.pricing", href: "/pricing" },
 ] as const;
 
 export function DesktopTopNav() {

@@ -583,6 +583,8 @@
     "errorBack": "Volver",
     "notFound": "Viaje no encontrado",
     "somethingWrong": "Algo salió mal",
+    "generationTimeout": "La generación está tardando más de lo normal y se ha detenido. Pulsa \"Reintentar\": tu viaje sigue guardado y no se ha cobrado nada.",
+    "emptyItinerary": "Este viaje se guardó sin itinerario. Pulsa \"Reintentar\" para generarlo de nuevo.",
     "loadingTag": "Creando tu itinerario",
     "loadingDestFallback": "Tu próximo viaje",
     "loadingStage1": "Estudiando los barrios de {{destination}}…",

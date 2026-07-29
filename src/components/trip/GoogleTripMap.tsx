@@ -95,8 +95,16 @@ export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo
   const [pins, setPins] = useState<Pin[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const cancelled = useRef(false);
-  const initialCenter =
-    geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : { lat: 40.4168, lng: -3.7038 };
+  // Sin coordenadas conocidas NO se centra en una ciudad concreta: antes caía
+  // a Madrid, así que un viaje a Bali abría el mapa sobre España y, si el
+  // geocoding fallaba del todo, se quedaba ahí para siempre. Una vista de
+  // mundo alejada es honesta ("aún no sé dónde") y se corrige sola en cuanto
+  // el destino geocodifica más abajo.
+  const hasKnownCoords = geo_lat != null && geo_lng != null;
+  const initialCenter = hasKnownCoords
+    ? { lat: geo_lat as number, lng: geo_lng as number }
+    : { lat: 20, lng: 0 };
+  const initialZoom = hasKnownCoords ? 12 : 2;
 
   // Google's auth-failure callback fires asynchronously and can't be caught
   // by a try/catch around the loader promise — listen for it explicitly.
@@ -126,7 +134,7 @@ export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo
         if (!mounted || !mapRef.current) return;
         mapInstance.current = new maps.Map(mapRef.current, {
           center: initialCenter,
-          zoom: 12,
+          zoom: initialZoom,
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
@@ -183,6 +191,10 @@ export function GoogleTripMap({ destination, days, tripId, onError, geo_lat, geo
       if (destGeo) {
         cache["__dest__"] = destGeo;
         mapInstance.current.setCenter(destGeo);
+        // Si arrancamos en vista de mundo (sin coords conocidas), acercar al
+        // destino ahora que sí lo sabemos — si no, el usuario se queda mirando
+        // el planeta entero hasta que termine de geocodificar cada actividad.
+        if (!hasKnownCoords) mapInstance.current.setZoom(12);
       }
 
       for (const item of tasks) {

@@ -17,16 +17,6 @@ const ENV = (import.meta as { env: Record<string, string | undefined> }).env;
 // is kept as a fallback for environments that haven't migrated the env var yet.
 const GOOGLE_KEY = ENV.VITE_GOOGLE_MAPS_KEY || ENV.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
 
-// Log key presence immediately on module load
-if (typeof window !== "undefined") {
-  console.log(
-    "[GoogleMaps] 🔑 API key configured:",
-    GOOGLE_KEY
-      ? `${GOOGLE_KEY.substring(0, 20)}...${GOOGLE_KEY.substring(GOOGLE_KEY.length - 4)}`
-      : "❌ NO KEY FOUND",
-  );
-}
-
 // Google's loader does not reject the script promise on bad-key/expired-key/referrer
 // restrictions — it silently renders a broken grey map and calls this global callback
 // instead (InvalidKeyMapError, MissingKeyMapError, RefererNotAllowedMapError,
@@ -86,10 +76,7 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
     return Promise.reject(new Error("Google Maps auth failure"));
   }
   if (typeof window === "undefined") return Promise.resolve();
-  if (window.google?.maps) {
-    console.info("[GoogleMaps] Already loaded ✓");
-    return Promise.resolve();
-  }
+  if (window.google?.maps) return Promise.resolve();
   if (window.__itineraya_gmap_loaded__) return window.__itineraya_gmap_loaded__;
 
   window.__itineraya_gmap_loaded__ = new Promise((resolve, reject) => {
@@ -102,22 +89,11 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
       return reject(new Error("Missing Google Maps key"));
     }
     const url = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=${libraries}&loading=async&v=weekly`;
-    console.info(
-      `[GoogleMaps] 📡 Loading | key: …${GOOGLE_KEY.slice(-6)} | libraries: ${libraries}`,
-    );
-    console.info(`[GoogleMaps] 🔗 URL: ${url.substring(0, 80)}...`);
 
     const existing = document.querySelector<HTMLScriptElement>('script[data-itineraya="gmaps"]');
     if (existing) {
-      console.warn(
-        "[GoogleMaps] ⚠️ Script tag already exists, attaching listeners to existing tag",
-      );
-      existing.addEventListener("load", () => {
-        console.info("[GoogleMaps] ✓ Script loaded from existing tag");
-        resolve();
-      });
+      existing.addEventListener("load", () => resolve());
       existing.addEventListener("error", () => {
-        console.error("[GoogleMaps] ❌ Existing script tag error event fired");
         reject(new Error("Failed to load Google Maps"));
       });
       return;
@@ -127,27 +103,14 @@ export function loadGoogleMaps(libraries = "places,marker"): Promise<void> {
     s.async = true;
     s.defer = true;
     s.dataset.itineraya = "gmaps";
-    s.onload = () => {
-      console.info(
-        "[GoogleMaps] ✅ Script loaded successfully | window.google?.maps:",
-        !!window.google?.maps,
-      );
-      if (!window.google?.maps) {
-        console.warn(
-          "[GoogleMaps] ⚠️ Script loaded but window.google.maps is undefined — check for auth failures",
-        );
-      }
-      resolve();
-    };
+    s.onload = () => resolve();
     s.onerror = () => {
-      console.error(
-        "[GoogleMaps] ❌ Script load failed (network error or invalid key) | src:",
-        s.src,
-      );
+      // Sin la URL: lleva la API key en la query y acabaría en cualquier
+      // recolector de logs del navegador.
+      console.error("[GoogleMaps] Script load failed (network error or invalid key).");
       markAuthFailed();
       reject(new Error("Failed to load Google Maps"));
     };
-    console.info("[GoogleMaps] 📝 Appending script tag to document.head...");
     document.head.appendChild(s);
   });
   return window.__itineraya_gmap_loaded__;

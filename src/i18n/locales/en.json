@@ -583,6 +583,8 @@
     "errorBack": "Back",
     "notFound": "Trip not found",
     "somethingWrong": "Something went wrong",
+    "generationTimeout": "Generation is taking longer than usual and was stopped. Tap \"Try again\" — your trip is still saved and you haven't been charged.",
+    "emptyItinerary": "This trip was saved without an itinerary. Tap \"Try again\" to generate it.",
     "loadingTag": "Crafting your itinerary",
     "loadingDestFallback": "Your next trip",
     "loadingStage1": "Studying the neighborhoods of {{destination}}…",

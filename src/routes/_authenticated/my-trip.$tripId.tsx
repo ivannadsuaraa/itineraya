@@ -332,9 +332,23 @@ function ItineraryPage() {
         }
 
         if (!cancelled) setGenerating(true);
-        const result = await generate({ data: { tripId, language: i18n.language } });
+        // Techo duro por si la generación nunca resuelve (timeout de la función
+        // serverless, corte de red en mitad de la petición): sin esto el
+        // usuario se quedaba en la pantalla de carga indefinidamente, sin
+        // error y sin salida. 150 s es muy holgado — una generación real de 14
+        // días ronda los 20-40 s — así que solo salta cuando algo va mal.
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const result = await Promise.race([
+          generate({ data: { tripId, language: i18n.language } }),
+          new Promise<never>((_, rejectTimeout) => {
+            timeoutId = setTimeout(
+              () => rejectTimeout(new Error(t("trip.generationTimeout"))),
+              150_000,
+            );
+          }),
+        ]).finally(() => clearTimeout(timeoutId));
         if (cancelled) return;
-        if (!result) throw new Error("Itinerary generation failed");
+        if (!result) throw new Error(t("trip.somethingWrong"));
         setTrip({
           id: tripId,
           destination: data.destination,
@@ -423,8 +437,40 @@ function ItineraryPage() {
     );
   }
 
-  if (!trip?.itinerary) return null;
-  const itin = trip.itinerary;
+  // Nunca `return null` aquí: dejaba una pantalla en blanco sin salida si el
+  // viaje existe pero su itinerario está vacío o corrupto en la DB (JSON sin
+  // `days`). Se trata como un error normal, con reintento y vuelta al panel.
+  const itin = trip?.itinerary;
+  if (!itin || !Array.isArray(itin.days) || itin.days.length === 0) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-slate-50 p-6">
+        <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-100">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+            <MapIcon className="h-6 w-6" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-slate-900">{t("trip.errorTitle")}</h1>
+          <p className="mt-2 text-sm text-slate-500">{t("trip.emptyItinerary")}</p>
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <button
+              onClick={() => {
+                setError(null);
+                setRetryKey((k) => k + 1);
+              }}
+              className="rounded-full bg-sky-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-sky-800"
+            >
+              {t("trip.errorRetry")}
+            </button>
+            <button
+              onClick={() => navigate({ to: "/dashboard" })}
+              className="rounded-full bg-slate-100 px-6 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+            >
+              {t("trip.errorBack")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PageTransition className="min-h-dvh bg-slate-50" personality="focus">

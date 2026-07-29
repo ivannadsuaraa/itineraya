@@ -119,12 +119,8 @@ export function DestinationAutocomplete({
   }, []);
 
   useEffect(() => {
-    console.info("[DestinationAutocomplete] Mounting: attempting to load Google Maps...");
-    loadGoogleMaps().catch((err) => {
-      console.warn(
-        "[DestinationAutocomplete] Google Maps load failed, falling back to Nominatim:",
-        err.message,
-      );
+    loadGoogleMaps().catch(() => {
+      // Nominatim cubre el autocompletado sin Google — no es un error de usuario.
       setUsingFallback(true);
     });
   }, []);

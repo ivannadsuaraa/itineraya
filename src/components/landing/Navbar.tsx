@@ -41,7 +41,9 @@ export function Navbar() {
   const navLinks = [
     { label: t("nav.explore"), href: "/explore" },
     { label: t("nav.howItWorks"), href: "#how-it-works" },
-    { label: t("nav.features"), href: "#features" },
+    // #product, no #features: la sección con id="features" (FeaturesSection)
+    // no se renderiza en la landing — el enlace no hacía absolutamente nada.
+    { label: t("nav.features"), href: "#product" },
     { label: t("nav.pricing"), href: "/pricing" },
   ];
 
