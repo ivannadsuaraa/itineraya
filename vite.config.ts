@@ -81,6 +81,18 @@ export default defineConfig(async ({ command }) => {
     plugins.push(
       nitro({
         preset,
+        // Techo de ejecución de la función de servidor (60 s). La generación de
+        // itinerarios con Claude puede pasarse del default de Vercel en viajes
+        // largos, y al cortarse la petición el usuario veía un fallo genérico.
+        //
+        // Va AQUÍ y no en vercel.json a propósito: este proyecto emite Build
+        // Output API v3 (`outputDirectory: ".vercel/output"`), así que Vercel
+        // lee la config de cada función de su `.vc-config.json`, que Nitro
+        // genera a partir de `vercel.functions`. La clave `functions` de
+        // vercel.json solo la aplica Vercel cuando es él quien compila las
+        // funciones desde el código fuente — con BOA v3 no se lee, y encima
+        // suele romper el deploy por no casar con ningún fichero fuente.
+        vercel: { functions: { maxDuration: 60 } },
         modules: [
           (nitroInstance: Nitro) => {
             nitroInstance.hooks.hook("rollup:before", (_nitro, rollupConfig) => {
