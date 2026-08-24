@@ -9,6 +9,44 @@ export function fallbackImage(query: string): string {
   return `https://loremflickr.com/1200/800/${q}?lock=${lock}`;
 }
 
+// ── Identidad del destino ──────────────────────────────────────────────────
+// El autocompletado devuelve normalmente solo el nombre principal
+// ("Benicàssim"), pero un usuario puede escribir "Benicàssim, Castellón" a
+// mano: para buscar fotos nos quedamos con el nombre propio del sitio.
+export function destinationName(destination: string): string {
+  return destination.split(",")[0].replace(/\s+/g, " ").trim().slice(0, 60);
+}
+
+// Unsplash indexa mayoritariamente en ASCII: "Benicàssim" aparece etiquetado
+// como "benicassim". Comparamos siempre sobre la forma plegada.
+export function foldForMatch(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+/**
+ * Fallback determinista por destino (espejo servidor de `destinationFallback`
+ * en SmartImage.tsx). Solo etiqueta con el nombre del destino: meter en la
+ * query palabras como "travel landscape" hacía que loremflickr devolviera
+ * paisajes genéricos sin ninguna relación con el sitio.
+ */
+export function destinationFallbackImage(
+  destination: string,
+  w = 1600,
+  h = 900,
+  variant = "",
+): string {
+  const name = destinationName(destination) || "travel";
+  const tags = [foldForMatch(name), variant ? foldForMatch(destinationName(variant)) : "", "travel"]
+    .filter(Boolean)
+    .join(",");
+  const seed = `${name}|${variant}`;
+  const lock = Math.abs([...seed].reduce((h2, c) => (h2 * 31 + c.charCodeAt(0)) | 0, 0)) % 1000;
+  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(tags)}?lock=${lock}`;
+}
+
 // Dimensiona la imagen en el CDN de Unsplash: fit=crop respeta el encuadre,
 // auto=format sirve WebP/AVIF cuando el navegador lo soporta y q=80 equilibra
 // peso y calidad. Partimos de urls.raw (sin parámetros de tamaño previos).
@@ -17,29 +55,202 @@ export function sizeUnsplashUrl(rawUrl: string, w: number, h: number): string {
   return `${rawUrl}${sep}w=${w}&h=${h}&fit=crop&auto=format&q=80`;
 }
 
-export async function unsplashImage(query: string, w = 1600, h = 900): Promise<string | null> {
-  const key = process.env.UNSPLASH_KEY;
-  if (!key) return fallbackImage(query);
+type UnsplashPhoto = {
+  urls?: { raw?: string; regular?: string };
+  description?: string | null;
+  alt_description?: string | null;
+  tags?: Array<{ title?: string | null }> | null;
+  user?: { location?: string | null } | null;
+};
+
+async function searchUnsplash(
+  query: string,
+  key: string,
+  perPage: number,
+): Promise<UnsplashPhoto[]> {
   try {
     const res = await fetch(
-      `https://api.unsplash.com/search/photos?per_page=1&orientation=landscape&query=${encodeURIComponent(query)}`,
+      `https://api.unsplash.com/search/photos?per_page=${perPage}&orientation=landscape&content_filter=high&query=${encodeURIComponent(query)}`,
       { headers: { Authorization: `Client-ID ${key}` } },
     );
     if (!res.ok) {
       // 403 = cuota agotada (key demo: 50 req/hora). Queda registrado para
       // que el problema sea visible en los logs de Vercel, no silencioso.
-      console.warn(`[unsplash] ${res.status} for "${query}" — falling back to loremflickr`);
-      return fallbackImage(query);
+      console.warn(`[unsplash] ${res.status} for "${query}"`);
+      return [];
     }
-    const data = (await res.json()) as {
-      results?: Array<{ urls?: { raw?: string; regular?: string } }>;
-    };
-    const first = data.results?.[0]?.urls;
-    if (first?.raw) return sizeUnsplashUrl(first.raw, w, h);
-    return first?.regular ?? fallbackImage(query);
-  } catch {
-    return fallbackImage(query);
+    const data = (await res.json()) as { results?: UnsplashPhoto[] };
+    return data.results ?? [];
+  } catch (e) {
+    console.warn(`[unsplash] request failed for "${query}"`, e);
+    return [];
   }
+}
+
+function photoRawUrl(p: UnsplashPhoto): string | null {
+  return p.urls?.raw ?? p.urls?.regular ?? null;
+}
+
+/**
+ * ¿La foto habla realmente de este destino? Unsplash puntúa por relevancia y
+ * hace OR de los términos: buscar "Benicàssim travel" devuelve, tras las pocas
+ * fotos del pueblo, fotos de stock genéricas que solo casan con "travel". Este
+ * filtro se queda con las que mencionan el destino en su texto o etiquetas.
+ */
+function mentionsDestination(p: UnsplashPhoto, foldedName: string, tokens: string[]): boolean {
+  const haystack = foldForMatch(
+    [
+      p.alt_description ?? "",
+      p.description ?? "",
+      p.user?.location ?? "",
+      ...(p.tags ?? []).map((t) => t?.title ?? ""),
+    ].join(" | "),
+  );
+  if (!haystack.trim()) return false;
+  if (haystack.includes(foldedName)) return true;
+  // Destinos de varias palabras ("San Sebastián", "New York"): basta con que
+  // aparezcan todos los términos significativos, aunque no sean contiguos.
+  return tokens.length > 0 && tokens.every((t) => haystack.includes(t));
+}
+
+/**
+ * Devuelve hasta `limit` URLs *raw* de Unsplash que son verificablemente del
+ * destino, ya deduplicadas y en orden de relevancia. Vacío si no hay key,
+ * si Unsplash falla o si nada casa con el destino — en ese caso quien llama
+ * usa `destinationFallbackImage`.
+ *
+ * Una sola llamada a Unsplash en el caso normal (dos si la primera no da
+ * ninguna foto verificada), en vez de una por imagen: la key demo son 50
+ * peticiones/hora para toda la app.
+ */
+export async function destinationPhotoPool(destination: string, limit = 8): Promise<string[]> {
+  const key = process.env.UNSPLASH_KEY;
+  const name = destinationName(destination);
+  if (!key || name.length < 2) return [];
+
+  const folded = foldForMatch(name);
+  const tokens = folded.split(/[^\p{L}\p{N}]+/u).filter((t) => t.length >= 3);
+
+  // 1º el nombre exacto + "travel": acota a fotografía de viaje y descarta
+  //    homónimos (marcas, apellidos, festivales). 2º el nombre a secas, por si
+  //    el destino tiene tan poca cobertura que el calificador lo desplaza.
+  const queries = [`${name} travel`, name];
+  let firstResults: UnsplashPhoto[] = [];
+
+  for (const query of queries) {
+    const results = await searchUnsplash(query, key, 30);
+    if (results.length === 0) continue;
+    if (firstResults.length === 0) firstResults = results;
+    const verified = results.filter((p) => mentionsDestination(p, folded, tokens));
+    const urls = [...new Set(verified.map(photoRawUrl).filter((u): u is string => !!u))];
+    if (urls.length > 0) {
+      console.log(`[unsplash] "${query}" → ${urls.length} verified photos of ${name}`);
+      return urls.slice(0, limit);
+    }
+  }
+
+  // Nada verificado: los primeros resultados de la búsqueda por nombre siguen
+  // siendo mejor apuesta que una foto aleatoria, pero lo dejamos en el log.
+  const loose = [...new Set(firstResults.map(photoRawUrl).filter((u): u is string => !!u))];
+  console.warn(
+    `[unsplash] no photo verifiably of "${name}" — falling back to ${loose.length > 0 ? "unverified top results" : "loremflickr"}`,
+  );
+  return loose.slice(0, limit);
+}
+
+export async function unsplashImage(query: string, w = 1600, h = 900): Promise<string | null> {
+  const key = process.env.UNSPLASH_KEY;
+  if (!key) return fallbackImage(query);
+  const results = await searchUnsplash(query, key, 1);
+  const first = results[0]?.urls;
+  if (first?.raw) return sizeUnsplashUrl(first.raw, w, h);
+  return first?.regular ?? fallbackImage(query);
+}
+
+// Destinos de interior conocidos: sirven para prohibir explícitamente playa,
+// mar y actividades costeras en el prompt. Compartido entre la generación
+// autenticada y la demo pública.
+const INLAND_DESTINATION_NAMES = [
+  "madrid",
+  "toledo",
+  "granada",
+  "sevilla",
+  "córdoba",
+  "salamanca",
+  "valladolid",
+  "zaragoza",
+  "pamplona",
+  "burgos",
+  "segovia",
+  "ávila",
+  "mérida",
+  "cáceres",
+  "león",
+  "santiago",
+  "london",
+  "paris",
+  "prague",
+  "vienna",
+  "budapest",
+  "berlin",
+  "munich",
+  "milan",
+  "rome",
+  "florence",
+  "venice",
+  "siena",
+  "verona",
+  "bologna",
+  "turin",
+  "dublin",
+  "edinburgh",
+  "york",
+  "oxford",
+  "cambridge",
+  "bath",
+  "moscow",
+  "kyiv",
+  "warsaw",
+  "krakow",
+  "bucharest",
+  "sofia",
+  "belgrade",
+  "luxembourg",
+  "brussels",
+  "amsterdam",
+  "copenhagen",
+  "stockholm",
+  "oslo",
+  "helsinki",
+  "reykjavik",
+  "innsbruck",
+  "salzburg",
+  "zurich",
+  "geneva",
+  "luxor",
+  "cairo",
+  "jaipur",
+  "agra",
+  "delhi",
+  "kathmandu",
+  "mexico city",
+  "guadalajara",
+  "quito",
+  "bogotá",
+  "cusco",
+  "la paz",
+  "lima",
+  "santiago de chile",
+  "buenos aires",
+  "asunción",
+];
+
+// Se pliegan los acentos en ambos lados: la lista trae "córdoba"/"asunción" y
+// el destino puede llegar escrito de cualquier forma.
+const INLAND_DESTINATIONS = new Set(INLAND_DESTINATION_NAMES.map((n) => foldForMatch(n)));
+
+export function isInlandDestination(destination: string): boolean {
+  return INLAND_DESTINATIONS.has(foldForMatch(destinationName(destination)).trim());
 }
 
 // JSON schema enforced server-side via structured outputs (output_config.format).
