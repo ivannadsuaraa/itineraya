@@ -1,7 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { unsplashImage, itinerarySchema, extractJson } from "@/lib/itinerary-shared";
+import {
+  unsplashImage,
+  itinerarySchema,
+  extractJson,
+  isInlandDestination,
+} from "@/lib/itinerary-shared";
 import { geocodeAndPersistTrip } from "@/lib/geocode";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -346,81 +351,7 @@ export const generateItinerary = createServerFn({ method: "POST" })
         ? `- Accommodation: already booked (exact location unknown). Assume a central base. Never recommend other hotels; each day starts and ends at "your accommodation".`
         : `- Accommodation: not booked yet. You may include a brief hotel check-in on day 1.`;
 
-    const inlandSet = new Set([
-      "madrid",
-      "toledo",
-      "granada",
-      "sevilla",
-      "córdoba",
-      "salamanca",
-      "valladolid",
-      "zaragoza",
-      "pamplona",
-      "burgos",
-      "segovia",
-      "ávila",
-      "mérida",
-      "cáceres",
-      "león",
-      "santiago",
-      "london",
-      "paris",
-      "prague",
-      "vienna",
-      "budapest",
-      "berlin",
-      "munich",
-      "milan",
-      "rome",
-      "florence",
-      "venice",
-      "siena",
-      "verona",
-      "bologna",
-      "turin",
-      "dublin",
-      "edinburgh",
-      "york",
-      "oxford",
-      "cambridge",
-      "bath",
-      "moscow",
-      "kyiv",
-      "warsaw",
-      "krakow",
-      "bucharest",
-      "sofia",
-      "belgrade",
-      "luxembourg",
-      "brussels",
-      "amsterdam",
-      "copenhagen",
-      "stockholm",
-      "oslo",
-      "helsinki",
-      "reykjavik",
-      "innsbruck",
-      "salzburg",
-      "zurich",
-      "geneva",
-      "luxor",
-      "cairo",
-      "jaipur",
-      "agra",
-      "delhi",
-      "kathmandu",
-      "mexico city",
-      "guadalajara",
-      "quito",
-      "bogotá",
-      "cusco",
-      "la paz",
-      "lima",
-      "santiago de chile",
-      "buenos aires",
-      "asunción",
-    ]);
-    const isKnownInland = inlandSet.has(trip.destination.toLowerCase().trim());
+    const isKnownInland = isInlandDestination(trip.destination);
 
     const weekdayName = trip.start_date
       ? new Date(trip.start_date).toLocaleDateString("en-US", { weekday: "long" })
