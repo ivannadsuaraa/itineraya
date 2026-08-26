@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { verifyItineraryPlaces } from "@/lib/place-verification";
+import type { ParsedItinerary } from "@/lib/itinerary-shared";
 import { z } from "zod";
 
 // No cap existed before this audit — being plan-gated (Viajero/Explorador)
@@ -187,6 +189,11 @@ ${JSON.stringify(current)}
 Petición del usuario:
 "${data.instruction}"
 
+REGLA CERO — SOLO LUGARES REALES Y VERIFICABLES (manda sobre todas las demás):
+Antes de escribir cualquier "place", aplica esta prueba: si el viajero escribiera ese nombre exacto en Google Maps en ${trip.destination} ahora mismo, ¿caería el pin sobre ese local? Si la respuesta no es un sí rotundo, NO escribas ese nombre.
+Prohibido: inventarte el nombre de un restaurante, bar, museo, hotel o tienda; fabricar uno que suene auténtico pegando una palabra genérica a un toque local ("Trattoria da Nonna", "Bar Manolo", "Casa del Mar", "Museo del Vino") si ese local concreto no existe de verdad en ${trip.destination}; traer a este destino un local real de otra ciudad; darle a un pueblo barrios, museos o líneas de metro que no tiene; dar horarios, precios o normas de entrada como hechos ciertos (di siempre que son lo habitual y que conviene confirmarlo).
+Cuando no estés seguro, usa el RECURSO en vez de adivinar: nombra un sitio real e inconfundible (una calle, plaza, paseo, mercado, barrio, parque o playa) más el tipo de local que buscar allí, y pon en "place" el nombre real de ese sitio. Ej: título "Comida en Trastevere", place "Trastevere, Roma", descripción "una trattoria de las callejuelas al norte de Piazza Santa Maria". Donde más se cuela lo inventado es en restaurantes, bares y tiendas pequeñas: ahí tira del recurso sin complejos. Antes de responder, relee cada "place" nuevo y sustituye por el recurso cualquiera que no puedas garantizar.
+
 REGLAS OBLIGATORIAS:
 1. IDIOMA: 100% español peninsular. Prohibido: Breakfast, Lunch, Dinner, Visit, Walk, towards, Morning, Afternoon, Evening. Usa SIEMPRE: Desayuno, Comida, Cena, Visita, Paseo, dirección, Mañana, Tarde, Noche. Nombres propios de lugares se quedan en su idioma original.
 
@@ -196,9 +203,9 @@ REGLAS OBLIGATORIAS:
 
 4. HORARIOS: Museo 1.5-2h, comida 1-1.5h, sightseeing 45-60 min. 15-30 min de margen. Formato 24h HH:MM.
 
-5. ENLACES (url): Para "restaurant" o "hotel", incluye "url" con enlace DIRECTO al establecimiento concreto (web oficial, Google Maps del local, TheFork, Booking). NUNCA páginas principales.
+5. ENLACES (url): construye una búsqueda de Google Maps: https://www.google.com/maps/search/?api=1&query=NOMBRE+DEL+SITIO+CIUDAD (espacios como +). Si has usado el recurso de la REGLA CERO, enlaza el sitio real que hayas nombrado. Solo pon una web oficial si estás completamente seguro de la URL exacta. Nunca inventes URLs: si dudas, omite "url".
 
-6. EVENTOS LOCALES: Si hay festivales/festivos/eventos conocidos en las fechas, inclúyelos como actividad.
+6. EVENTOS LOCALES: incluye un festival, feria o festivo solo si es un evento recurrente conocido que estés seguro de que se celebra en ${trip.destination} en esas fechas. Nunca inventes eventos ni sus fechas.
 
 7. MANTÉN image_url e image_query existentes para días no modificados.
 
@@ -289,6 +296,19 @@ REQUISITOS:
       const old = current.days.find((od) => od.day === d.day);
       return { ...d, image_url: d.image_url ?? old?.image_url ?? null };
     });
+
+    // El modelo devuelve el itinerario entero reescrito, así que las marcas de
+    // verificación del original se pierden aunque el día no haya cambiado. Sin
+    // esto, editar un viaje borraría silenciosamente todos los sellos de
+    // "verificado" — y un sello que desaparece daña más la confianza que uno
+    // que nunca estuvo. Volvemos a cruzar contra Places (no-op sin key).
+    const verificationSummary = await verifyItineraryPlaces(
+      itineraryOnly as unknown as ParsedItinerary,
+      trip.destination,
+    );
+    if (verificationSummary) {
+      (itineraryOnly as unknown as ParsedItinerary).verification_summary = verificationSummary;
+    }
 
     const { error: updateErr } = await supabase
       .from("trips")

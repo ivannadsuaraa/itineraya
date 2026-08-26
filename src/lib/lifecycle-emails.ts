@@ -283,7 +283,7 @@ const EMAILS: Record<LifecycleEmailKey, Record<LifecycleLang, Builder>> = {
         `¡Ya casi, ${esc(p.name)}!`,
         [
           `El ${esc(p.startDate ?? "próximo día")} empieza tu viaje a <strong>${esc(p.destination ?? "tu destino")}</strong>. Repaso rápido:`,
-          "☐ Tu itinerario está al día — ¿algún cambio de última hora? El asistente lo ajusta en segundos.<br/>☐ Descarga las postales de cada día para llevarlas offline.<br/>☐ Comparte el enlace con quienes viajan contigo.<br/>☐ Si el tiempo cambia, el copiloto te replantea el día sobre la marcha.",
+          "☐ Tu itinerario está al día — ¿algún cambio de última hora? El asistente lo ajusta en segundos.<br/>☐ Descarga las postales de cada día para llevarlas offline.<br/>☐ Comparte el enlace con quienes viajan contigo.",
         ],
         "Repasar mi itinerario",
         p.tripUrl ?? `${p.siteUrl}/dashboard`,
@@ -295,7 +295,7 @@ const EMAILS: Record<LifecycleEmailKey, Record<LifecycleLang, Builder>> = {
         `Almost there, ${esc(p.name)}!`,
         [
           `Your trip to <strong>${esc(p.destination ?? "your destination")}</strong> starts on ${esc(p.startDate ?? "soon")}. Quick run-through:`,
-          "☐ Your itinerary is up to date — any last-minute change? The assistant adjusts it in seconds.<br/>☐ Download each day's postcard to carry offline.<br/>☐ Share the link with everyone traveling with you.<br/>☐ If the weather turns, the copilot replans your day on the go.",
+          "☐ Your itinerary is up to date — any last-minute change? The assistant adjusts it in seconds.<br/>☐ Download each day's postcard to carry offline.<br/>☐ Share the link with everyone traveling with you.",
         ],
         "Review my itinerary",
         p.tripUrl ?? `${p.siteUrl}/dashboard`,

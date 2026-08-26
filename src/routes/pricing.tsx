@@ -310,8 +310,8 @@ function TripPassCard({ onSelect }: { onSelect: () => void }) {
 /* ─── Comparison table ─── */
 
 // labelKey → i18n; los valores string también son claves para poder traducirse.
-// La fila del copiloto refleja lo que el código hace de verdad: disponible en
-// free con el límite diario de chat, ilimitado en los planes de pago.
+// La tabla lista solo lo que el producto hace hoy: una fila que promete algo
+// que el usuario no puede abrir cuesta más confianza de lo que suma.
 const FEATURES: Array<{
   labelKey: string;
   free: boolean | string;
@@ -331,12 +331,6 @@ const FEATURES: Array<{
   { labelKey: "pricing.cmp.assistant", free: false, viajero: true, explorador: true },
   { labelKey: "pricing.cmp.tripmates", free: false, viajero: true, explorador: true },
   { labelKey: "pricing.cmp.postcards", free: false, viajero: true, explorador: true },
-  {
-    labelKey: "pricing.cmp.copilot",
-    free: "pricing.cmp.copilotFree",
-    viajero: true,
-    explorador: true,
-  },
   { labelKey: "pricing.cmp.pdf", free: false, viajero: false, explorador: true },
   { labelKey: "pricing.cmp.support", free: false, viajero: false, explorador: true },
 ];

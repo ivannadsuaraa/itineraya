@@ -1,0 +1,192 @@
+{
+  "_meta": {
+    "escenario": "scripts/scenarios/roma-primera-vez.json",
+    "prompt": "scripts/output/roma-primera-vez.prompt.txt (17.585 caracteres, generado por buildItineraryPrompt)",
+    "generado_por": "Claude Opus 5 ejecutando el prompt de producción dentro de la sesión de desarrollo",
+    "AVISO": "NO es una salida de claude-haiku-4-5 vía API: este contenedor no tiene ANTHROPIC_API_KEY, así que no se pudo ejecutar la ruta real de producción. Para reproducirlo con el modelo de producción: node --experimental-strip-types --import ./scripts/register-alias.mjs scripts/generate-test-itinerary.ts scripts/scenarios/roma-primera-vez.json",
+    "verificacion": "manual, vía búsqueda web; ver QUALITY_OVERHAUL_REPORT.md"
+  },
+  "summary": "Tres días a pie por el centro de Roma en octubre, cuando el calor ya ha aflojado y se puede caminar todo el día sin sufrir. Empezáis por el Roma de las plazas, seguís por la ciudad antigua entera y cerráis en el Vaticano, con las comidas puestas donde de verdad caéis a esa hora.",
+  "days": [
+    {
+      "day": 1,
+      "title": "El Roma de las plazas",
+      "subtitle": "Llegáis a mediodía y os coméis el centro histórico andando, terminando en el Tíber al atardecer.",
+      "image_query": "pantheon rome piazza",
+      "activities": [
+        {
+          "time": "12:30",
+          "emoji": "🍝",
+          "title": "Comida en Armando al Pantheon",
+          "place": "Armando al Pantheon",
+          "description": "A dos pasos del Panteón, en Salita de' Crescenzi 31. La misma familia desde 1961 y una carta romana corta que no ha cambiado de idea: gricia, amatriciana, coda alla vaccinara.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=Armando+al+Pantheon+Roma",
+          "tip": "Es diminuto y se llena: reservad con semanas de antelación. Pedid los rigatoni alla gricia — es su plato, más que la carbonara. Los domingos cierra."
+        },
+        {
+          "time": "14:15",
+          "emoji": "🏛️",
+          "title": "El Panteón",
+          "place": "Pantheon",
+          "description": "🚶 2 min a pie. Entráis por el pórtico y el óculo os cae encima: 43 metros de cúpula de hormigón romano que sigue siendo la mayor sin armar del mundo.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Pantheon+Roma",
+          "tip": "Al salir, cruzad a Sant'Eustachio Il Caffè (Piazza Sant'Eustachio 82) y pedid el gran caffè: viene ya azucarado, así que si lo queréis sin azúcar hay que decir «senza zucchero» al pagar."
+        },
+        {
+          "time": "15:30",
+          "emoji": "🖼️",
+          "title": "San Luigi dei Francesi",
+          "place": "Chiesa di San Luigi dei Francesi",
+          "description": "🚶 4 min a pie. Tres Caravaggios sobre San Mateo en la última capilla de la izquierda, gratis, en una iglesia por la que pasa la gente sin entrar.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=San+Luigi+dei+Francesi+Roma",
+          "tip": "Suele cerrar a mediodía y reabrir a media tarde, así que confirmad el horario del día antes de plantaros. Llevad monedas de 1 € para el foco de la capilla: sin luz los cuadros se ven negros."
+        },
+        {
+          "time": "16:45",
+          "emoji": "⛲",
+          "title": "Piazza Navona",
+          "place": "Piazza Navona",
+          "description": "🚶 3 min a pie. La plaza conserva la forma exacta del estadio de Domiciano que hay debajo — por eso es alargada y con las esquinas redondeadas.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Piazza+Navona+Roma"
+        },
+        {
+          "time": "18:15",
+          "emoji": "🌅",
+          "title": "Ponte Sant'Angelo al atardecer",
+          "place": "Ponte Sant'Angelo",
+          "description": "🚶 8 min a pie (600 m). Los ángeles de Bernini a contraluz, el castillo enfrente y la cúpula de San Pedro al fondo del río. Es el momento en el que os creéis que estáis en Roma.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Ponte+Sant%27Angelo+Roma",
+          "tip": "Colocaos en el lado río abajo, mirando hacia el Vaticano: el sol se pone justo detrás de la cúpula y desde el otro lado la tenéis a la espalda."
+        },
+        {
+          "time": "20:15",
+          "emoji": "🍷",
+          "title": "Cena en Roscioli",
+          "place": "Roscioli Salumeria con Cucina",
+          "description": "🚶 12 min a pie (900 m) bordeando Campo de' Fiori. Charcutería con mesas al fondo, entre jamones colgados y estanterías de vino, en Via dei Giubbonari 21.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=Roscioli+Salumeria+con+Cucina+Roma",
+          "tip": "Reservad: sin mesa apartada no entráis. Si os sobra hueco al día siguiente, el horno de la misma familia (Antico Forno Roscioli, Via dei Chiavari 34) abre de lunes a sábado por la mañana y hace la pizza bianca para llevar."
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "title": "La Roma antigua y Monti",
+      "subtitle": "Un día entero de ciudad antigua que termina subiendo al barrio de al lado a cenar.",
+      "image_query": "roman forum rome",
+      "activities": [
+        {
+          "time": "09:00",
+          "emoji": "🏟️",
+          "title": "Coliseo",
+          "place": "Colosseo",
+          "description": "Primera franja del día, cuando todavía se ve el graderío sin cabezas delante. La entrada es con hora asignada y el mismo billete sirve para el Foro y el Palatino.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Colosseo+Roma",
+          "tip": "Comprad la entrada con antelación en la web oficial: son entradas con hora y en temporada se agotan con días de margen. Si aparecéis sin ella, la cola de taquilla os come la mañana entera."
+        },
+        {
+          "time": "11:15",
+          "emoji": "⛪",
+          "title": "Basílica de San Clemente",
+          "place": "Basilica di San Clemente",
+          "description": "🚶 5 min a pie (400 m). Tres edificios uno encima de otro: la basílica del siglo XII, debajo una del siglo IV y debajo un templo mitraico romano. Se baja de nivel en nivel.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Basilica+di+San+Clemente+Roma",
+          "tip": "Los niveles inferiores se pagan aparte y se compran allí mismo. Abajo hace bastante fresco y se oye correr agua: es un manantial que sigue pasando bajo el mitreo."
+        },
+        {
+          "time": "12:45",
+          "emoji": "🏛️",
+          "title": "Foro Romano y Palatino",
+          "place": "Foro Romano",
+          "description": "🚶 8 min a pie (600 m). Entráis con el billete del Coliseo y lo recorréis de este a oeste, subiendo al final al Palatino para ver el Foro entero desde arriba.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Foro+Romano+Roma",
+          "tip": "En el Foro no hay sombra: en octubre se agradece, pero llevad agua igual — las fuentes de hierro (los «nasoni») son potables y hay varias dentro del recinto."
+        },
+        {
+          "time": "15:00",
+          "emoji": "🍽️",
+          "title": "Comida en La Carbonara",
+          "place": "La Carbonara",
+          "description": "🚶 12 min a pie (900 m) subiendo a Monti por Via Cavour. Casa de barrio en Via Panisperna 214, abierta desde 1906, con las paredes escritas por los clientes.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=La+Carbonara+Via+Panisperna+Roma"
+        },
+        {
+          "time": "16:45",
+          "emoji": "🗿",
+          "title": "San Pietro in Vincoli",
+          "place": "Basilica di San Pietro in Vincoli",
+          "description": "🚶 5 min a pie (400 m). Aquí está el Moisés de Miguel Ángel, en la tumba de Julio II, sin cola y sin entrada. La mayoría de la gente que llena el Coliseo no sabe que está a cinco minutos.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=San+Pietro+in+Vincoli+Roma",
+          "tip": "Cierra a mediodía unas horas, así que a media tarde es apuesta segura. Fijaos en la rodilla izquierda del Moisés: el mármol está pulido de siglos de manos."
+        },
+        {
+          "time": "20:00",
+          "emoji": "🍷",
+          "title": "Cena en Ai Tre Scalini",
+          "place": "Ai Tre Scalini",
+          "description": "🚶 6 min a pie (450 m) bajando por Via Panisperna. Vinatería estrecha de Monti, con mesas fuera y la gente del barrio de pie en la puerta desde las siete.",
+          "category": "nightlife",
+          "url": "https://www.google.com/maps/search/?api=1&query=Ai+Tre+Scalini+Via+Panisperna+Roma",
+          "tip": "No suelen tomar reserva para grupos pequeños: id antes de las 20:00 y esperad con una copa, o dad una vuelta por Piazza della Madonna dei Monti, que está a dos calles y es donde se sienta el barrio."
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "title": "Vaticano y vuelta",
+      "subtitle": "Museos a primera hora, comida en Borgo y la basílica cuando se vacía, con tiempo de sobra antes del vuelo.",
+      "image_query": "st peters basilica vatican",
+      "activities": [
+        {
+          "time": "08:30",
+          "emoji": "🎨",
+          "title": "Museos Vaticanos y Capilla Sixtina",
+          "place": "Musei Vaticani",
+          "description": "Primera hora, con entrada reservada. Se recorre en un solo sentido y acaba en la Sixtina, así que calculad unas tres horas sin correr.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Musei+Vaticani+Roma",
+          "tip": "Los miércoles por la mañana el Papa da la audiencia en la plaza y la basílica cierra al público hasta cerca de las 12:30 — por eso hoy vais primero a los museos y dejáis San Pedro para después de comer. Hombros y rodillas cubiertos: el control de vestimenta está antes del detector y no negocian."
+        },
+        {
+          "time": "12:15",
+          "emoji": "🍕",
+          "title": "Comida en Borgo Pio",
+          "place": "Borgo Pio, Roma",
+          "description": "🚶 10 min a pie (700 m) bordeando la muralla vaticana. Calle peatonal de casas bajas entre los museos y la plaza: buscad una de las trattorie con la carta en italiano y mesas de verdad dentro, no las de fotos en la puerta.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=Borgo+Pio+Roma"
+        },
+        {
+          "time": "13:45",
+          "emoji": "⛪",
+          "title": "Basílica de San Pedro",
+          "place": "Basilica di San Pietro",
+          "description": "🚶 6 min a pie (450 m). A esta hora del miércoles la plaza ya se ha vaciado de la audiencia y se entra prácticamente de seguido.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Basilica+di+San+Pietro+Vaticano",
+          "tip": "La Piedad está nada más entrar a la derecha, detrás de un cristal: la mayoría pasa de largo mirando al fondo. Si subís a la cúpula, contad una hora larga más — y hoy tenéis vuelo, así que solo si vais holgados."
+        },
+        {
+          "time": "15:15",
+          "emoji": "✈️",
+          "title": "Vuelta y traslado",
+          "place": "Piazza San Pietro",
+          "description": "🚶 3 min a pie. Último café en la plaza y de vuelta al alojamiento a por las maletas: con salida a las 19:00 conviene estar saliendo hacia el aeropuerto sobre las 16:00.",
+          "category": "transport",
+          "url": "https://www.google.com/maps/search/?api=1&query=Piazza+San+Pietro+Vaticano"
+        }
+      ]
+    }
+  ]
+}

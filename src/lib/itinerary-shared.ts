@@ -312,6 +312,46 @@ export const itinerarySchema = {
   },
 } as const;
 
+// ── Verificación de lugares ────────────────────────────────────────────────
+// Estos tipos viven aquí, junto al resto de la forma del itinerario, para que
+// tanto el servidor (place-verification.ts) como la UI (my-trip) hablen del
+// mismo contrato sin importarse en círculo.
+
+export type VerificationStatus =
+  /** Google Places devolvió un sitio con nombre compatible y cerca del destino. */
+  | "verified"
+  /** Se buscó y no apareció nada que encajase — el nombre es sospechoso. */
+  | "not_found"
+  /** No se comprobó: sin key, error de red, tope de búsquedas o timeout.
+   *  Un itinerario generado antes de existir esta función no trae el campo,
+   *  que es exactamente lo mismo que "unchecked". */
+  | "unchecked";
+
+export type PlaceVerification = {
+  status: VerificationStatus;
+  /** ID estable de Google Places (solo si status === "verified"). */
+  place_id?: string;
+  /** Nombre tal y como lo devuelve Google, por si difiere del nuestro. */
+  matched_name?: string;
+  lat?: number;
+  lng?: number;
+};
+
+export type VerificationSummary = {
+  /** Lugares distintos que se llegaron a comprobar de verdad (Places contestó).
+   *  `verified + not_found === checked`. */
+  checked: number;
+  verified: number;
+  not_found: number;
+  /** Lugares distintos que no se pudieron comprobar: tope de búsquedas,
+   *  timeout, red o key rechazada. Quedan fuera de `checked` a propósito —
+   *  no saber no es lo mismo que no encontrar. Opcional: los itinerarios
+   *  verificados antes de existir este campo no lo traen. */
+  unchecked?: number;
+  /** ISO — permite saber si un itinerario se verificó y cuándo. */
+  checked_at: string;
+};
+
 export type ParsedActivity = {
   time: string;
   emoji?: string;
@@ -321,6 +361,9 @@ export type ParsedActivity = {
   category?: string;
   url?: string;
   tip?: string;
+  /** Lo añade verifyItineraryPlaces() después de parsear; nunca lo escribe el
+   *  modelo (el schema de structured outputs no lo incluye). */
+  verification?: PlaceVerification;
 };
 
 export type ParsedItinerary = {
@@ -333,6 +376,8 @@ export type ParsedItinerary = {
     image_url?: string | null;
     activities: ParsedActivity[];
   }>;
+  /** Resultado agregado del cruce con Google Places, si se hizo. */
+  verification_summary?: VerificationSummary;
 };
 
 export function extractJson<T>(raw: string): T {

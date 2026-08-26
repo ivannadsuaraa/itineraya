@@ -27,6 +27,8 @@ import {
   ShoppingBag,
   CheckCircle2,
   Circle,
+  BadgeCheck,
+  HelpCircle,
   StickyNote,
   CloudRain,
   Newspaper,
@@ -49,7 +51,6 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { isPaymentsConfigured } from "@/lib/stripe";
 import { TRIP_PASS_PRICE_ID } from "@/lib/trip-pass";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { ReadingProgress } from "@/components/ui/ReadingProgress";
 import { BoardingPass } from "@/components/airport/BoardingPass";
 import { RevealGroup, RevealItem } from "@/components/ui/ScrollReveal";
 import { geocodeDestination } from "@/lib/geocode";
@@ -62,6 +63,7 @@ import {
   type WeatherNow,
 } from "@/lib/weather";
 import { getDestinationNews, type NewsArticle } from "@/lib/news.functions";
+import type { PlaceVerification, VerificationSummary } from "@/lib/itinerary-shared";
 
 const TripMap = lazy(() =>
   import("@/components/trip/SmartTripMap").then((m) => ({ default: m.SmartTripMap })),
@@ -86,6 +88,10 @@ type Activity = {
   tip?: string;
   completed?: boolean;
   notes?: string;
+  /** Resultado del cruce con Google Places (src/lib/place-verification.ts).
+   *  Ausente en los itinerarios generados antes de que existiera, que es
+   *  indistinguible de "unchecked" — y así se trata en la UI. */
+  verification?: PlaceVerification;
 };
 
 function getCategoryIcon(category: ActivityCategory | undefined) {
@@ -142,6 +148,7 @@ type Day = {
 type Itinerary = {
   summary?: string;
   days: Day[];
+  verification_summary?: VerificationSummary;
 };
 
 function formatDateRange(start: string, end: string, lang: string): string {
@@ -174,6 +181,19 @@ function dayAccent(dayIdx: number): string {
 
 function googleMapsUrl(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+/**
+ * Enlace a Maps para una actividad. Con un place_id verificado usamos el enlace
+ * canónico: es el único que garantiza que el pin cae exactamente en ese local.
+ * Sin él caemos a una búsqueda por texto, que puede aterrizar en un homónimo —
+ * de ahí que la insignia de verificado importe.
+ */
+function activityMapsUrl(activity: Activity, destination: string): string {
+  const placeId = activity.verification?.place_id;
+  if (placeId)
+    return `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`;
+  return googleMapsUrl(`${activity.place || activity.title}, ${destination}`);
 }
 
 type BookingInfo = {
@@ -433,8 +453,6 @@ function ItineraryPage() {
 
   return (
     <PageTransition className="min-h-dvh bg-slate-50" personality="focus">
-      {/* Progress bar de lectura del itinerario */}
-      <ReadingProgress />
       {/* ── Sticky toolbar ── */}
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
@@ -549,68 +567,25 @@ function ItineraryPage() {
           />
         </div>
 
-        {/* Mapa prominente en móvil: en desktop vive fijo a la derecha, pero en
-            móvil quedaba escondido tras un botón del toolbar. El panel se
-            "despliega" (clip-path) al entrar en pantalla. */}
-        <motion.button
+        {/* Acceso al mapa en móvil (en desktop el panel vive fijo a la
+            derecha). Antes había aquí una ilustración con una ruta y cuatro
+            paradas inventadas: un mapa falso encima de un itinerario real. */}
+        <button
           type="button"
           onClick={() => setMapModalOpen(true)}
-          initial={reduceMotion ? undefined : { clipPath: "inset(0 0 100% 0 round 16px)" }}
-          whileInView={{ clipPath: "inset(0 0 0% 0 round 16px)" }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.7, ease: EASE_OUT }}
-          className="relative mb-5 block w-full overflow-hidden rounded-2xl text-left shadow-sm ring-1 ring-slate-200 transition hover:shadow-md lg:hidden"
+          className="mb-5 flex w-full items-center justify-between gap-2 rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-200 transition hover:shadow-md lg:hidden"
         >
-          <div className="relative h-28 bg-[#EAF4FB]">
-            <svg
-              viewBox="0 0 400 112"
-              className="absolute inset-0 h-full w-full"
-              aria-hidden="true"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0 30 H400 M0 66 H400 M0 96 H400 M80 0 V112 M190 0 V112 M300 0 V112"
-                stroke="#C9E4F5"
-                strokeWidth="2"
-                fill="none"
-              />
-              <path
-                d="M30 88 Q 110 62 160 50 T 280 62 T 375 22"
-                stroke="#1E6B9A"
-                strokeWidth="3"
-                strokeDasharray="7 5"
-                fill="none"
-                strokeLinecap="round"
-              />
-            </svg>
-            {[
-              { x: "6%", y: "72%", n: 1 },
-              { x: "39%", y: "38%", n: 2 },
-              { x: "69%", y: "50%", n: 3 },
-              { x: "92%", y: "14%", n: 4 },
-            ].map((p) => (
-              <span
-                key={p.n}
-                className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-sky-900 text-[10px] font-bold text-white ring-2 ring-white shadow"
-                style={{ left: p.x, top: p.y }}
-              >
-                {p.n}
-              </span>
-            ))}
+          <div>
+            <p className="text-sm font-bold text-slate-900">{t("trip.mapPreviewTitle")}</p>
+            <p className="text-xs text-slate-500">
+              {t("trip.mapPreviewSubtitle", { count: itin.days.length })}
+            </p>
           </div>
-          <div className="flex items-center justify-between gap-2 bg-white px-4 py-3">
-            <div>
-              <p className="text-sm font-bold text-slate-900">{t("trip.mapPreviewTitle")}</p>
-              <p className="text-xs text-slate-500">
-                {t("trip.mapPreviewSubtitle", { count: itin.days.length })}
-              </p>
-            </div>
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-900 px-3.5 py-2 text-xs font-bold text-white">
-              <MapIcon className="h-3.5 w-3.5" />
-              {t("trip.mapPreviewCta")}
-            </span>
-          </div>
-        </motion.button>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-900 px-3.5 py-2 text-xs font-bold text-white">
+            <MapIcon className="h-3.5 w-3.5" />
+            {t("trip.mapPreviewCta")}
+          </span>
+        </button>
 
         <div className="mb-5">
           <PublishToggle tripId={trip.id} />
@@ -685,6 +660,8 @@ function ItineraryPage() {
           <DestinationInfoPanel destination={trip.destination} />
           <BeforeYouGoNews destination={trip.destination} />
         </div>
+
+        <AiDisclaimer summary={itin.verification_summary} />
       </div>
 
       {/* Fullscreen map modal */}
@@ -1216,6 +1193,85 @@ function DayCard({
   );
 }
 
+/**
+ * Sello de verificación junto al nombre del sitio.
+ *
+ * Solo se muestra algo cuando de verdad hemos comprobado el lugar. Sin
+ * comprobar (o generado antes de que existiera la verificación) no pinta nada:
+ * un icono gris de "no verificado" en cada parada dice "no nos fiamos de esto"
+ * sobre un itinerario que puede ser perfectamente correcto, y ahí el ruido
+ * cuesta más confianza de la que aporta.
+ *
+ * "No encontrado" sí se muestra, en ámbar y no en rojo: significa que Google
+ * Places no devolvió nada que encajase, lo que hace el sitio sospechoso pero
+ * no imposible — bares pequeños y negocios recién abiertos faltan a menudo.
+ * Decimos exactamente eso, sin acusar al itinerario ni exculparlo.
+ */
+function VerificationBadge({ verification }: { verification?: PlaceVerification }) {
+  const { t } = useTranslation();
+  const status = verification?.status;
+
+  if (status === "verified") {
+    return (
+      <span
+        title={
+          verification?.matched_name
+            ? t("trip.verifiedTitleNamed", { name: verification.matched_name })
+            : t("trip.verifiedTitle")
+        }
+        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200/70"
+      >
+        <BadgeCheck className="h-3 w-3" />
+        {t("trip.verified")}
+      </span>
+    );
+  }
+
+  if (status === "not_found") {
+    return (
+      <span
+        title={t("trip.unverifiedTitle")}
+        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200/70"
+      >
+        <HelpCircle className="h-3 w-3" />
+        {t("trip.unverified")}
+      </span>
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Nota al pie del itinerario: quién lo escribió y qué se ha comprobado.
+ *
+ * Va al final y no en cabecera a propósito — es una aclaración honesta, no una
+ * advertencia que haya que leer antes de disfrutar el viaje. Cuando la
+ * verificación está activa añade las cifras reales; cuando no, dice solo lo que
+ * sabemos, sin insinuar comprobaciones que no se han hecho.
+ */
+function AiDisclaimer({ summary }: { summary?: VerificationSummary }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4">
+      <div className="flex items-start gap-3">
+        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+        <div className="text-xs leading-relaxed text-slate-500">
+          <p>{t("trip.aiNotice")}</p>
+          {summary && summary.checked > 0 && (
+            <p className="mt-1.5">
+              {t("trip.verificationSummary", {
+                verified: summary.verified,
+                checked: summary.checked,
+              })}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ActivityRow({
   activity,
   destination,
@@ -1232,7 +1288,6 @@ function ActivityRow({
   const { t } = useTranslation();
   const [showNotes, setShowNotes] = useState(false);
   const [noteDraft, setNoteDraft] = useState(activity.notes ?? "");
-  const placeQuery = `${activity.place || activity.title}, ${destination}`;
   const booking = bookingForCategory(
     activity.category,
     activity.place || activity.title,
@@ -1278,7 +1333,10 @@ function ActivityRow({
                 {activity.title}
               </p>
               {activity.place && (
-                <p className="mt-0.5 truncate text-xs text-slate-500">{activity.place}</p>
+                <div className="mt-0.5 flex min-w-0 items-center gap-1.5">
+                  <p className="truncate text-xs text-slate-500">{activity.place}</p>
+                  <VerificationBadge verification={activity.verification} />
+                </div>
               )}
             </div>
           </div>
@@ -1338,7 +1396,7 @@ function ActivityRow({
 
         <div className="mt-3 flex flex-wrap gap-2">
           <a
-            href={googleMapsUrl(placeQuery)}
+            href={activityMapsUrl(activity, destination)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-11 items-center gap-1 rounded-full bg-white px-2.5 text-[11px] font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"

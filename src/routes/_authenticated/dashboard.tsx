@@ -1,20 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-  useVelocity,
-  type MotionValue,
-} from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
 import {
   Plus,
   MapPin,
   Calendar,
-  Sparkles,
   Bookmark,
   Wand2,
   X,
@@ -22,42 +13,19 @@ import {
   Share2,
   ArrowRight,
   Lock,
-  CalendarDays,
   Trash2,
   Zap,
-  LayoutGrid,
-  Plane,
-  Gift,
-  Copy,
-  Check,
-  Globe2,
 } from "lucide-react";
-import { DepartureBoard } from "@/components/airport/DepartureBoard";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { format, differenceInCalendarDays, parseISO } from "date-fns";
 import { es, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareDialog } from "@/components/trip/ShareDialog";
-import {
-  getSeasonalInspirations,
-  fetchWeather,
-  weatherEmoji,
-  type Inspiration,
-} from "@/lib/dashboard-helpers";
-import { lazy, Suspense } from "react";
-import { geocodeAndPersistTrip, primeGeocodeCache } from "@/lib/geocode";
+import { fetchWeather, weatherEmoji } from "@/lib/dashboard-helpers";
+import { geocodeAndPersistTrip } from "@/lib/geocode";
 import { readDemoTrip, clearDemoTrip } from "@/lib/demo-trip";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
-import type { PolaroidMarker } from "@/components/ui/cobe-globe-polaroids";
-
-const GlobePolaroids = lazy(() =>
-  import("@/components/ui/cobe-globe-polaroids").then((m) => ({ default: m.GlobePolaroids })),
-);
-const TripsCalendar = lazy(() =>
-  import("@/components/ui/trips-calendar").then((m) => ({ default: m.TripsCalendar })),
-);
 import { PageTransition } from "@/components/ui/PageTransition";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -90,14 +58,6 @@ function dateLocale(lang: string) {
   return lang.toLowerCase().startsWith("en") ? enUS : es;
 }
 
-const UNSPLASH_FALLBACK = [
-  "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&h=400&fit=crop&auto=format&q=75",
-  "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&auto=format&q=75",
-  "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=400&fit=crop&auto=format&q=75",
-  "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=400&h=400&fit=crop&auto=format&q=75",
-  "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=400&fit=crop&auto=format&q=75",
-];
-
 // Carga de viajes tolerante a migraciones: si las columnas geo_lat/geo_lng
 // aún no existen en prod, la query con ellas falla entera y el dashboard se
 // quedaba vacío. Reintenta sin las columnas geo antes de rendirse.
@@ -126,21 +86,7 @@ function DashboardPage() {
   const [shareTrip, setShareTrip] = useState<Trip | null>(null);
   const [isFree, setIsFree] = useState(true);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
-  const [referralCount, setReferralCount] = useState(0);
-  const [referralCopied, setReferralCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"viajes" | "calendario">("viajes");
-  const [tripsView, setTripsView] = useState<"board" | "cards">("board");
   const reduceMotion = useReducedMotion();
-  const isMobile = useIsMobile();
-
-  // Inclinación sutil de las cards según la dirección del scroll: la
-  // velocidad de scroll (suavizada con muelle) se mapea a unos grados de
-  // rotateX. Al parar, vuelve a 0. Solo desktop y sin reduced-motion.
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-  const smoothVelocity = useSpring(scrollVelocity, { stiffness: 160, damping: 34, mass: 0.6 });
-  const cardTilt = useTransform(smoothVelocity, [-1400, 0, 1400], [3, 0, -3]);
-  const tiltOn = !reduceMotion && !isMobile;
 
   useEffect(() => {
     (async () => {
@@ -171,19 +117,17 @@ function DashboardPage() {
 
       const { data: profRaw } = await supabase
         .from("profiles")
-        .select("welcome_completed, plan, trial_ends_at, referral_count")
+        .select("welcome_completed, plan, trial_ends_at")
         .eq("id", u.user.id)
         .maybeSingle();
       const prof = profRaw as unknown as {
         welcome_completed?: boolean;
         plan?: string;
         trial_ends_at?: string | null;
-        referral_count?: number;
       } | null;
       const userPlan = prof?.plan ?? "free";
       const trialEndsAt = prof?.trial_ends_at ?? null;
       setIsFree(userPlan === "free");
-      setReferralCount(prof?.referral_count ?? 0);
       if (userPlan === "free" && trialEndsAt) {
         const msLeft = new Date(trialEndsAt).getTime() - Date.now();
         const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
@@ -256,12 +200,6 @@ function DashboardPage() {
     navigate({ to: "/onboarding", search: { prefill: encoded } });
   };
 
-  const planInspiration = (i: Inspiration) => {
-    const payload = { destination: `${i.destination}, ${i.country}` };
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-    navigate({ to: "/onboarding", search: { prefill: encoded } });
-  };
-
   const deleteTrip = async (id: string) => {
     if (!userId) return;
     const prev = trips ?? [];
@@ -271,15 +209,6 @@ function DashboardPage() {
       setTrips(prev);
       toast.error(t("dashboard.deleteFail"));
     }
-  };
-
-  const copyReferralLink = async () => {
-    if (!userId) return;
-    const url = `https://itineraya.com?ref=${userId}`;
-    await navigator.clipboard.writeText(url);
-    setReferralCopied(true);
-    toast.success(t("dashboard.referral.copied"));
-    setTimeout(() => setReferralCopied(false), 2000);
   };
 
   const removeSaved = async (id: string) => {
@@ -307,117 +236,15 @@ function DashboardPage() {
     [trips, upcoming],
   );
 
-  // Stats destacadas del Bento command center — todo derivado de datos reales.
-  const totalTrips = trips?.length ?? 0;
-  const countriesCount = useMemo(
-    () =>
-      new Set(
-        (trips ?? [])
-          .map((tr) => tr.destination.split(",").pop()?.trim().toLowerCase())
-          .filter((c): c is string => !!c),
-      ).size,
-    [trips],
-  );
-  const daysPlanned = useMemo(
-    () =>
-      (trips ?? []).reduce(
-        (sum, tr) =>
-          tr.start_date && tr.end_date
-            ? sum + differenceInCalendarDays(parseISO(tr.end_date), parseISO(tr.start_date)) + 1
-            : sum,
-        0,
-      ),
-    [trips],
-  );
-  const savedCount = saved?.length ?? 0;
-
   const locale = dateLocale(i18n.language);
-  const inspirations = useMemo(() => getSeasonalInspirations(), []);
-
-  const [globeMarkers, setGlobeMarkers] = useState<PolaroidMarker[] | undefined>(undefined);
-  const geocodeAbortRef = useRef(false);
-
-  // Cada viaje del usuario se convierte en un punto del globo en su posición
-  // real. Las coordenadas ya guardadas pintan al instante; las que faltan se
-  // geocodifican en segundo plano (cola secuencial de Nominatim) y el globo
-  // se va completando marcador a marcador.
-  useEffect(() => {
-    if (!trips || trips.length === 0) {
-      setGlobeMarkers(undefined);
-      return;
-    }
-    geocodeAbortRef.current = false;
-    const rotations = [-5, 4, -3, 6, -4, 3, -2, 5];
-
-    const toMarker = (trip: Trip, i: number, coords: [number, number]): PolaroidMarker => ({
-      id: trip.id,
-      location: coords,
-      image: trip.hero_image_url ?? UNSPLASH_FALLBACK[i % UNSPLASH_FALLBACK.length],
-      caption: trip.destination.split(",")[0],
-      rotate: rotations[i % rotations.length],
-    });
-
-    const resolved = new Map<string, PolaroidMarker>();
-    const publish = () => {
-      if (geocodeAbortRef.current) return;
-      // Mantiene el orden de la lista de viajes, no el orden de resolución
-      const ordered = trips
-        .map((tr) => resolved.get(tr.id))
-        .filter((m): m is PolaroidMarker => m !== undefined);
-      setGlobeMarkers(ordered.length > 0 ? ordered : undefined);
-    };
-
-    const pending: Trip[] = [];
-    trips.forEach((trip, i) => {
-      if (trip.geo_lat != null && trip.geo_lng != null) {
-        const coords: [number, number] = [trip.geo_lat, trip.geo_lng];
-        primeGeocodeCache(trip.destination, coords);
-        resolved.set(trip.id, toMarker(trip, i, coords));
-      } else {
-        pending.push(trip);
-      }
-    });
-    publish();
-
-    pending.forEach((trip) => {
-      const i = trips.indexOf(trip);
-      void geocodeAndPersistTrip(trip.id, trip.destination).then((coords) => {
-        if (!coords || geocodeAbortRef.current) return;
-        resolved.set(trip.id, toMarker(trip, i, coords));
-        publish();
-      });
-    });
-
-    return () => {
-      geocodeAbortRef.current = true;
-    };
-  }, [trips]);
-
-  const calendarTrips = useMemo(
-    () =>
-      (trips ?? [])
-        .filter((t) => t.start_date && t.end_date)
-        .map((t) => ({
-          id: t.id,
-          destination: t.destination,
-          start_date: t.start_date!,
-          end_date: t.end_date!,
-          hero_image_url: t.hero_image_url,
-        })),
-    [trips],
-  );
 
   return (
     <PageTransition className="min-h-dvh bg-slate-50">
-      {/* ── Bento command center ──
-          Banda oscura (navy) de tiles asimétricos: bienvenida + globo (medio,
-          alto) + próximo viaje, más una fila de stats destacadas. Paleta
-          limitada navy/sky-400/blanco/slate; rounded-3xl; sombras casi nulas. */}
+      {/* Cabecera: saludo + el único CTA que importa, y el próximo viaje. */}
       <section className="bg-slate-50 px-4 pt-6 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-3 sm:gap-4 lg:grid-cols-4">
-            {/* Bienvenida + CTA */}
-            <div className="flex min-h-[180px] flex-col justify-between rounded-3xl bg-[#0c1a2e] p-6 sm:p-8 lg:col-span-2">
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
+            <div className="flex min-h-[180px] flex-col justify-between rounded-3xl bg-[#0c1a2e] p-6 sm:p-8">
               <div>
                 <p className="text-sm font-semibold text-[#38bdf8]">
                   {t("dashboard.hello", { name })}
@@ -435,25 +262,7 @@ function DashboardPage() {
               </Link>
             </div>
 
-            {/* Globo — tile medio y alto (ocupa dos filas en desktop) */}
-            <div className="flex flex-col rounded-3xl bg-[#0c1a2e] p-5 sm:p-6 lg:col-span-2 lg:row-span-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#38bdf8]/80">
-                {t("dashboard.yourWorld")}
-              </p>
-              <div className="mx-auto flex w-full max-w-[280px] flex-1 items-center justify-center lg:max-w-[340px]">
-                {/* Solo los destinos reales del usuario. */}
-                <Suspense
-                  fallback={
-                    <div className="aspect-square w-full animate-pulse rounded-full bg-white/5" />
-                  }
-                >
-                  <GlobePolaroids markers={globeMarkers ?? []} className="w-full" speed={0.003} />
-                </Suspense>
-              </div>
-            </div>
-
-            {/* Próximo viaje (o prompt si no hay ninguno próximo) */}
-            <div className="lg:col-span-2">
+            <div>
               {upcoming && upcoming.start_date ? (
                 <NextTripHero trip={upcoming} locale={locale} />
               ) : (
@@ -474,14 +283,6 @@ function DashboardPage() {
                 </Link>
               )}
             </div>
-          </div>
-
-          {/* Stats destacadas */}
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-4 sm:grid-cols-4 sm:gap-4">
-            <StatTile icon={MapPin} value={totalTrips} label={t("dashboard.statTrips")} />
-            <StatTile icon={Globe2} value={countriesCount} label={t("dashboard.statCountries")} />
-            <StatTile icon={CalendarDays} value={daysPlanned} label={t("dashboard.statDays")} />
-            <StatTile icon={Bookmark} value={savedCount} label={t("dashboard.statSaved")} />
           </div>
         </div>
       </section>
@@ -509,334 +310,140 @@ function DashboardPage() {
         </div>
       )}
 
-      {/* ── Referral Banner ── */}
-      {isFree && referralCount < 3 && (
-        <div className="border-b border-sky-100 bg-gradient-to-r from-sky-50 to-[#EAF4FA] px-4 py-3.5">
-          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1E6B9A]/10">
-                <Gift className="h-4 w-4 text-[#1E6B9A]" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-sky-900">
-                  {t("dashboard.referral.title")}
-                </p>
-                <p className="text-xs text-sky-700">{t("dashboard.referral.subtitle")}</p>
-              </div>
-            </div>
-            <div className="flex w-full items-center gap-3 sm:w-auto">
-              <div className="flex flex-1 items-center gap-2 sm:w-40">
-                <div className="h-2 flex-1 overflow-hidden rounded-full bg-white ring-1 ring-sky-100">
-                  <div
-                    className="h-full rounded-full bg-[#1E6B9A] transition-all"
-                    style={{ width: `${Math.min(100, (referralCount / 3) * 100)}%` }}
-                  />
-                </div>
-                <span className="shrink-0 text-xs font-bold text-sky-800">
-                  {t("dashboard.referral.progress", { count: referralCount })}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={copyReferralLink}
-                className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-[#1E6B9A] px-3.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-95"
-              >
-                {referralCopied ? (
-                  <Check className="h-3.5 w-3.5" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-                {t("dashboard.referral.copyLink")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Content ── */}
       <div className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 md:pb-12 lg:px-8">
-        {/* Tab bar */}
-        <div className="mt-6 flex items-center gap-1 rounded-full bg-white p-1 shadow-sm ring-1 ring-slate-100 w-fit">
-          {(["viajes", "calendario"] as const).map((tab) => {
-            const Icon = tab === "viajes" ? MapPin : CalendarDays;
-            const label = tab === "viajes" ? t("dashboard.savedTrips") : t("dashboard.calendarTab");
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`flex h-11 items-center gap-1.5 rounded-full px-4 text-sm font-semibold transition-all ${
-                  activeTab === tab
-                    ? "bg-sky-900 text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
+        <section className="mt-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-lg font-bold text-slate-900">
+              {t("dashboard.savedTrips")}
+            </h2>
+            {trips && trips.length > 0 && (
+              <Link
+                to="/new-trip"
+                className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
               >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
-            );
-          })}
-        </div>
+                <Plus className="h-3.5 w-3.5" />
+                {t("dashboard.newTrip")}
+              </Link>
+            )}
+          </div>
 
-        {/* My trips tab */}
-        {activeTab === "viajes" && (
-          <>
-            <section className="mt-6">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-display text-lg font-bold text-slate-900">
-                  {t("dashboard.savedTrips")}
-                </h2>
-                <div className="flex items-center gap-2">
-                  {/* Toggle panel de salidas / tarjetas */}
-                  {trips && trips.length > 0 && (
-                    <div className="flex rounded-full bg-white p-0.5 shadow-sm ring-1 ring-slate-100">
-                      {(["board", "cards"] as const).map((v) => {
-                        const Icon = v === "board" ? Plane : LayoutGrid;
-                        return (
-                          <button
-                            key={v}
-                            type="button"
-                            onClick={() => setTripsView(v)}
-                            aria-pressed={tripsView === v}
-                            className={`flex h-11 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold transition ${
-                              tripsView === v
-                                ? "bg-sky-900 text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-800"
-                            }`}
-                          >
-                            <Icon className={`h-3 w-3 ${v === "board" ? "-rotate-45" : ""}`} />
-                            {v === "board"
-                              ? t("airport.board.viewBoard")
-                              : t("airport.board.viewCards")}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {trips && trips.length > 0 && (
-                    <Link
-                      to="/new-trip"
-                      className="inline-flex h-11 items-center gap-1.5 rounded-full bg-[#1E6B9A]/10 px-3.5 text-xs font-semibold text-[#1E6B9A] transition hover:bg-[#1E6B9A]/15"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      {t("dashboard.newTrip")}
-                    </Link>
-                  )}
-                </div>
-              </div>
-
-              {trips === null && (
-                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100"
-                    >
-                      <div className="aspect-[4/3] animate-pulse bg-slate-200" />
-                      <div className="space-y-2 p-4">
-                        <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
-                        <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {trips?.length === 0 && (
-                <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
-                  <div className="grid h-14 w-14 place-items-center rounded-full bg-sky-50 ring-1 ring-sky-100">
-                    <MapPin className="h-6 w-6 text-sky-500" />
+          {trips === null && (
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100"
+                >
+                  <div className="aspect-[4/3] animate-pulse bg-slate-200" />
+                  <div className="space-y-2 p-4">
+                    <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-200" />
+                    <div className="h-3 w-1/2 animate-pulse rounded-full bg-slate-200" />
                   </div>
-                  <p className="mt-4 font-semibold text-slate-800">{t("dashboard.empty")}</p>
-                  <Link
-                    to="/new-trip"
-                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-[0.97]"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {t("dashboard.newTrip")}
-                  </Link>
                 </div>
-              )}
+              ))}
+            </div>
+          )}
 
-              {/* Panel de salidas estilo aeropuerto: todos los viajes como
-                  filas de un tablón con letras que giran al cargar. */}
-              {tripsView === "board" && trips && trips.length > 0 && (
+          {trips?.length === 0 && (
+            <div className="mt-6 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center">
+              <div className="grid h-14 w-14 place-items-center rounded-full bg-sky-50 ring-1 ring-sky-100">
+                <MapPin className="h-6 w-6 text-sky-500" />
+              </div>
+              <p className="mt-4 font-semibold text-slate-800">{t("dashboard.empty")}</p>
+              <Link
+                to="/new-trip"
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E] active:scale-[0.97]"
+              >
+                <Plus className="h-4 w-4" />
+                {t("dashboard.newTrip")}
+              </Link>
+            </div>
+          )}
+
+          {otherTrips.length > 0 && (
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {otherTrips.map((trip, i) => (
                 <motion.div
+                  key={trip.id}
                   initial={reduceMotion ? false : { opacity: 0, y: 18 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-                  className="mt-5"
+                  transition={{
+                    duration: 0.45,
+                    ease: [0.23, 1, 0.32, 1],
+                    delay: Math.min(i * 0.055, 0.5),
+                  }}
                 >
-                  <DepartureBoard trips={trips} />
+                  <TripCard
+                    trip={trip}
+                    locale={locale}
+                    onShare={() => setShareTrip(trip)}
+                    onDelete={() => deleteTrip(trip.id)}
+                    isFree={isFree}
+                  />
                 </motion.div>
-              )}
+              ))}
+            </div>
+          )}
+        </section>
 
-              {tripsView === "cards" && otherTrips.length > 0 && (
+        {/* Saved inspirations */}
+        {saved && saved.length > 0 && (
+          <section className="mt-10">
+            <h2 className="flex items-center gap-2 font-display text-lg font-bold text-slate-900">
+              <Bookmark className="h-4.5 w-4.5 text-[#1E6B9A]" />
+              {t("dashboard.saved")}
+            </h2>
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {saved.map((s) => (
                 <div
-                  className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-                  style={{ perspective: 1100 }}
+                  key={s.id}
+                  className="group relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  {otherTrips.map((trip, i) => (
-                    <motion.div
-                      key={trip.id}
-                      style={tiltOn ? { rotateX: cardTilt as MotionValue<number> } : undefined}
-                      initial={reduceMotion ? false : { opacity: 0, y: 18, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{
-                        duration: 0.45,
-                        ease: [0.23, 1, 0.32, 1],
-                        delay: Math.min(i * 0.055, 0.5),
-                      }}
-                    >
-                      <TripCard
-                        trip={trip}
-                        locale={locale}
-                        onShare={() => setShareTrip(trip)}
-                        onDelete={() => deleteTrip(trip.id)}
-                        isFree={isFree}
-                      />
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {/* Saved inspirations */}
-            {saved && saved.length > 0 && (
-              <section className="mt-10">
-                <h2 className="flex items-center gap-2 font-display text-lg font-bold text-slate-900">
-                  <Bookmark className="h-4.5 w-4.5 text-[#1E6B9A]" />
-                  {t("dashboard.saved")}
-                </h2>
-                <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                  {saved.map((s) => (
-                    <div
-                      key={s.id}
-                      className="group relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                      <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
-                        <div className="relative aspect-[4/3] overflow-hidden">
-                          <SmartImage
-                            src={s.hero_image_url}
-                            fallbackSrc={destinationFallback(s.destination)}
-                            gradientClassName="bg-gradient-to-br from-sky-300 to-sky-600"
-                            alt={s.destination}
-                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-                          <div className="absolute bottom-3 left-4 right-4 text-white">
-                            <div className="font-display text-base font-bold drop-shadow">
-                              {s.destination}
-                            </div>
-                            {s.n_days && (
-                              <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
-                                <Calendar className="h-2.5 w-2.5" />
-                                {t("dashboard.nDays", { count: s.n_days })}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </Link>
-                      <div className="flex items-center gap-2 px-3 py-3">
-                        <button
-                          type="button"
-                          onClick={() => remixSaved(s)}
-                          className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
-                        >
-                          <Wand2 className="h-3 w-3" />
-                          {t("dashboard.savedRemix")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeSaved(s.id)}
-                          aria-label={t("dashboard.savedRemove")}
-                          className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Seasonal inspiration */}
-            <section className="mt-10">
-              <div>
-                <h2 className="font-display text-lg font-bold text-slate-900">
-                  {t("dashboard.inspirationTitle")}
-                </h2>
-                <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.inspirationSub")}</p>
-              </div>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {inspirations.map((insp) => (
-                  <div
-                    key={insp.destination}
-                    className="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
+                  <Link to="/trip/$slug" params={{ slug: s.slug }} className="block">
                     <div className="relative aspect-[4/3] overflow-hidden">
-                      <img
-                        src={insp.image}
-                        alt={insp.destination}
-                        loading="lazy"
+                      <SmartImage
+                        src={s.hero_image_url}
+                        fallbackSrc={destinationFallback(s.destination)}
+                        gradientClassName="bg-gradient-to-br from-sky-300 to-sky-600"
+                        alt={s.destination}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-800">
-                        {insp.tag}
-                      </span>
                       <div className="absolute bottom-3 left-4 right-4 text-white">
-                        <div className="font-display text-sm font-bold drop-shadow">
-                          {insp.destination}
+                        <div className="font-display text-base font-bold drop-shadow">
+                          {s.destination}
                         </div>
-                        <div className="text-[11px] opacity-80">{insp.country}</div>
+                        {s.n_days && (
+                          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/80">
+                            <Calendar className="h-2.5 w-2.5" />
+                            {t("dashboard.nDays", { count: s.n_days })}
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="p-3">
-                      <button
-                        type="button"
-                        onClick={() => planInspiration(insp)}
-                        className="inline-flex h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-bold text-white transition hover:bg-sky-800 active:scale-95"
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        {t("dashboard.plan")}
-                      </button>
-                    </div>
+                  </Link>
+                  <div className="flex items-center gap-2 px-3 py-3">
+                    <button
+                      type="button"
+                      onClick={() => remixSaved(s)}
+                      className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-sky-900 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-sky-800 active:scale-95"
+                    >
+                      <Wand2 className="h-3 w-3" />
+                      {t("dashboard.savedRemix")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSaved(s.id)}
+                      aria-label={t("dashboard.savedRemove")}
+                      className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
-
-        {/* Calendar tab */}
-        {activeTab === "calendario" && (
-          <section className="mt-6">
-            <div className="mb-5">
-              <h2 className="font-display text-lg font-bold text-slate-900">
-                {t("dashboard.calendarTitle")}
-              </h2>
-              <p className="mt-0.5 text-sm text-slate-500">{t("dashboard.calendarSub")}</p>
+                </div>
+              ))}
             </div>
-            <div className="max-w-lg">
-              <Suspense fallback={<div className="h-72 rounded-2xl bg-sky-50 animate-pulse" />}>
-                <TripsCalendar trips={calendarTrips} />
-              </Suspense>
-            </div>
-            {calendarTrips.length === 0 && trips !== null && (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-white py-10 text-center">
-                <CalendarDays className="mx-auto h-8 w-8 text-slate-300" />
-                <p className="mt-3 text-sm text-slate-500">{t("dashboard.calendarEmpty")}</p>
-                <Link
-                  to="/new-trip"
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#1E6B9A] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#15577E]"
-                >
-                  <Plus className="h-4 w-4" />
-                  {t("dashboard.newTrip")}
-                </Link>
-              </div>
-            )}
           </section>
         )}
       </div>
@@ -852,30 +459,6 @@ function DashboardPage() {
     </PageTransition>
   );
 }
-
-/* ─── Stat tile (Bento) ─── */
-
-function StatTile({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: typeof MapPin;
-  value: number;
-  label: string;
-}) {
-  return (
-    <div className="rounded-3xl bg-white p-4 ring-1 ring-slate-200/70 sm:p-5">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#38bdf8]/10 text-[#0ea5e9]">
-        <Icon className="h-4 w-4" />
-      </div>
-      <p className="mt-3 font-display text-3xl font-bold tabular-nums text-[#0c1a2e]">{value}</p>
-      <p className="mt-0.5 text-xs font-medium text-slate-500">{label}</p>
-    </div>
-  );
-}
-
-/* ─── Trip Card ─── */
 
 function TripCard({
   trip,

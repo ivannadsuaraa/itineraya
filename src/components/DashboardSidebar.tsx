@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Map, Home, User, PlusCircle, Compass, LogOut, Bookmark, Menu, X } from "lucide-react";
+import { Map, User, PlusCircle, Compass, LogOut, Menu, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -10,29 +10,27 @@ export type NavItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
+// Cuatro destinos: crear un itinerario, verlos, descubrir y la cuenta. El
+// resto (inicio, guardados) ya es alcanzable desde el logo y el dashboard.
 export const MOBILE_NAV_ITEMS: NavItem[] = [
-  { to: "/", labelKey: "sidebar.home", icon: Home },
-  { to: "/explore", labelKey: "sidebar.feed", icon: Compass },
   { to: "/new-trip", labelKey: "sidebar.createShort", icon: PlusCircle },
   { to: "/dashboard", labelKey: "sidebar.tripsShort", icon: Map },
-  { to: "/saved", labelKey: "sidebar.saved", icon: Bookmark },
+  { to: "/explore", labelKey: "sidebar.feed", icon: Compass },
   { to: "/profile", labelKey: "sidebar.profile", icon: User },
 ];
 
 function isActive(pathname: string, to: string) {
-  if (to === "/") return pathname === "/";
   if (to === "/dashboard") return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
   if (to === "/explore") return pathname.startsWith("/explore");
   if (to === "/profile") return pathname.startsWith("/profile");
-  if (to === "/saved") return pathname.startsWith("/saved");
   return pathname === to;
 }
 
 const LANDING_LINKS = [
-  { labelKey: "nav.explore",     href: "/explore" },
-  { labelKey: "nav.howItWorks",  href: "/#how-it-works" },
-  { labelKey: "nav.features",    href: "/#features" },
-  { labelKey: "nav.pricing",     href: "/pricing" },
+  { labelKey: "nav.explore", href: "/explore" },
+  { labelKey: "nav.howItWorks", href: "/#how-it-works" },
+  { labelKey: "nav.features", href: "/#features" },
+  { labelKey: "nav.pricing", href: "/pricing" },
 ] as const;
 
 export function DesktopTopNav() {
@@ -133,7 +131,7 @@ export function MobileBottomBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-100 bg-white/98 backdrop-blur-xl pb-[env(safe-area-inset-bottom)] shadow-[0_-1px_0_rgba(0,0,0,0.06),0_-4px_16px_rgba(0,0,0,0.04)]">
-      <ul className="grid grid-cols-6">
+      <ul className="grid grid-cols-4">
         {MOBILE_NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = isActive(pathname, item.to);

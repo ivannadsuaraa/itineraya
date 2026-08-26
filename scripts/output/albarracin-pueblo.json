@@ -1,0 +1,174 @@
+{
+  "_meta": {
+    "escenario": "scripts/scenarios/albarracin-pueblo.json",
+    "prompt": "scripts/output/albarracin-pueblo.prompt.txt (18.090 caracteres, generado por buildItineraryPrompt)",
+    "generado_por": "Claude Opus 5 ejecutando el prompt de producción dentro de la sesión de desarrollo",
+    "AVISO": "NO es una salida de claude-haiku-4-5 vía API: este contenedor no tiene ANTHROPIC_API_KEY, así que no se pudo ejecutar la ruta real de producción. Para reproducirlo con el modelo de producción: node --experimental-strip-types --import ./scripts/register-alias.mjs scripts/generate-test-itinerary.ts scripts/scenarios/albarracin-pueblo.json",
+    "verificacion": "manual, vía búsqueda web; ver QUALITY_OVERHAUL_REPORT.md"
+  },
+  "summary": "Tres días de octubre en Albarracín con los niños: el pueblo amurallado sin prisa, un día entero en los pinares de Rodeno buscando pinturas rupestres de hace miles de años, y una última mañana de juguetes antiguos y castillo antes de coger el coche.",
+  "days": [
+    {
+      "day": 1,
+      "title": "Dentro de la muralla",
+      "subtitle": "Llegáis a comer y dedicáis la tarde al casco, subiendo a la muralla cuando la luz se pone naranja.",
+      "image_query": "albarracin teruel village",
+      "activities": [
+        {
+          "time": "13:30",
+          "emoji": "🍲",
+          "title": "Comida en Rincón del Chorro",
+          "place": "Rincón del Chorro",
+          "description": "La misma familia desde 1980, cocina de la sierra: ternasco de Aragón, migas, sopas de ajo, borraja. Tienen opciones sin gluten, así que aquí no hay que negociar cada plato.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=Rincon+del+Chorro+Albarracin",
+          "tip": "Avisad de la celiaquía al reservar, no al sentaros: en un pueblo pequeño la cocina es chica y lo agradecen con horas de antelación. El ternasco es lo que hay que pedir aquí, no la carne de siempre."
+        },
+        {
+          "time": "15:30",
+          "emoji": "🏘️",
+          "title": "Plaza Mayor y casco antiguo",
+          "place": "Plaza Mayor, Albarracín",
+          "description": "🚶 5 min a pie desde el restaurante — el pueblo entero se cruza andando en un cuarto de hora. Casas rojizas colgadas de la roca, callejones en cuesta y balcones de madera que casi se tocan.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Plaza+Mayor+Albarracin",
+          "tip": "Buscad la Casa de la Julianeta, la más torcida del pueblo: a los niños les hace gracia porque no tiene una sola pared recta. Está señalizada desde la plaza."
+        },
+        {
+          "time": "17:00",
+          "emoji": "⛪",
+          "title": "Catedral del Salvador",
+          "place": "Catedral del Salvador, Albarracín",
+          "description": "🚶 4 min a pie cuesta arriba. Gótica tardía, levantada entre 1572 y 1600. Se entra con visita guiada y lo que hay que mirar es el techo y el retablo mayor de madera.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Catedral+del+Salvador+Albarracin",
+          "tip": "La visita es guiada y a horas fijas, y en temporada baja hay menos pases: confirmad el horario del día en la oficina de turismo del pueblo antes de contar con ella."
+        },
+        {
+          "time": "18:45",
+          "emoji": "🗼",
+          "title": "Subida a la Torre del Andador",
+          "place": "Torre del Andador, Albarracín",
+          "description": "🚶 12 min a pie por el sendero de la muralla. Es la torre más alta del recinto, del siglo X, y desde arriba se ve el pueblo entero metido en la curva del río.",
+          "category": "activity",
+          "url": "https://www.google.com/maps/search/?api=1&query=Torre+del+Andador+Albarracin",
+          "tip": "El camino es de tierra y en cuesta fuerte, con escalones desiguales: con niños de 8 y 11 se hace bien, pero calzado cerrado y sin prisa. Subid con luz de sobra, que al bajar no hay farolas."
+        },
+        {
+          "time": "20:45",
+          "emoji": "🍽️",
+          "title": "Cena junto a la Plaza Mayor",
+          "place": "Plaza Mayor, Albarracín",
+          "description": "🚶 10 min de bajada. En las calles que salen de la plaza están los pocos sitios donde cena el pueblo; a esta hora en octubre estaréis casi solos y con los niños se agradece.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=Plaza+Mayor+Albarracin",
+          "tip": "Fuera de verano muchas cocinas cierran pronto y algunas no abren entre semana: preguntad por la tarde qué abre esta noche antes de bajar con los niños ya con hambre."
+        }
+      ]
+    },
+    {
+      "day": 2,
+      "title": "Pinares de Rodeno",
+      "subtitle": "Día de coche y monte: arte rupestre de verdad entre pinos y roca roja.",
+      "image_query": "pinares rodeno albarracin",
+      "activities": [
+        {
+          "time": "10:00",
+          "emoji": "🌲",
+          "title": "Paisaje Protegido de Rodeno",
+          "place": "Paisaje Protegido de los Pinares de Rodeno",
+          "description": "🚗 15 min en coche desde Albarracín por la carretera de Bezas. Pino rodeno sobre arenisca roja erosionada en formas imposibles: para los niños es un parque de rocas gigante.",
+          "category": "activity",
+          "url": "https://www.google.com/maps/search/?api=1&query=Pinares+de+Rodeno+Albarracin",
+          "tip": "Se aparca en las áreas habilitadas junto a los inicios de sendero, no en el arcén: es espacio protegido y en fin de semana de octubre se llena a media mañana. Llegad antes de las 11:00 y tendréis sitio."
+        },
+        {
+          "time": "10:45",
+          "emoji": "🖐️",
+          "title": "Sendero del Prado del Navazo",
+          "place": "Prado del Navazo, Albarracín",
+          "description": "🚶 5 min a pie desde el aparcamiento. Cuatro kilómetros ida y vuelta, unos 100 m de desnivel y algo menos de una hora: fácil, pero con paradas en cada abrigo con pinturas.",
+          "category": "activity",
+          "url": "https://www.google.com/maps/search/?api=1&query=Prado+del+Navazo+Albarracin",
+          "tip": "Los abrigos están tras rejas y las figuras son pequeñas y descoloridas: contadles a los niños qué buscan antes de llegar (arqueros, toros, ciervos) o pasarán de largo. El Abrigo de la Cocinilla del Obispo y los Toros del Prado son los que mejor se distinguen."
+        },
+        {
+          "time": "13:30",
+          "emoji": "🧺",
+          "title": "Comida en el área recreativa",
+          "place": "Pinares de Rodeno, Albarracín",
+          "description": "🚶 10 min a pie de vuelta. Con celiaquía y en mitad del monte lo cómodo es picnic: compradlo por la mañana en el pueblo y coméis en las mesas del área recreativa, entre los pinos.",
+          "category": "other",
+          "url": "https://www.google.com/maps/search/?api=1&query=Pinares+de+Rodeno+Albarracin"
+        },
+        {
+          "time": "15:30",
+          "emoji": "🥾",
+          "title": "Sendero del Arrastradero",
+          "place": "Sendero del Arrastradero, Albarracín",
+          "description": "🚗 5 min en coche más 🚶 el paseo. Otro sendero corto del mismo espacio protegido, por el antiguo camino de sacar la madera; menos gente y las formaciones de roca más llamativas.",
+          "category": "activity",
+          "url": "https://www.google.com/maps/search/?api=1&query=Sendero+del+Arrastradero+Rodeno+Albarracin",
+          "tip": "Si a media tarde los niños ya han tenido bastante monte, saltáoslo sin remordimiento y volved al pueblo: el día ya ha dado lo que tenía que dar con las pinturas."
+        },
+        {
+          "time": "20:30",
+          "emoji": "🍖",
+          "title": "Cena en el pueblo",
+          "place": "Albarracín",
+          "description": "🚗 15 min de vuelta. Dejad el coche fuera de la muralla y cenad dentro, en una de las casas de comidas del casco.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=Albarracin+Teruel",
+          "tip": "El casco es peatonal y las calles son de un coche escaso: aparcad en las bolsas de fuera del recinto y entrad andando, que es lo que hace todo el mundo."
+        }
+      ]
+    },
+    {
+      "day": 3,
+      "title": "Juguetes y castillo",
+      "subtitle": "Una última mañana dentro del pueblo, sin madrugar, y comida antes de coger el coche.",
+      "image_query": "albarracin castle walls",
+      "activities": [
+        {
+          "time": "10:30",
+          "emoji": "🧸",
+          "title": "Museo del Juguete",
+          "place": "Museo del Juguete, Albarracín",
+          "description": "En la Casa del Arrabal, con la colección de juguetes antiguos de Eustaquio Castellano. Entrada sobre 3,50 € adultos y 2 € niños, aunque conviene confirmarlo allí.",
+          "category": "activity",
+          "url": "https://www.google.com/maps/search/?api=1&query=Museo+del+Juguete+Albarracin",
+          "tip": "Es la visita del viaje que mejor funciona con niños de 8 y 11, y es corta: media hora larga. Poned esta antes que el castillo, que es la que cuesta más de vender después de dos días de cuestas."
+        },
+        {
+          "time": "11:45",
+          "emoji": "🏰",
+          "title": "Castillo de Albarracín",
+          "place": "Castillo de Albarracín",
+          "description": "🚶 15 min a pie, los últimos por un sendero empinado. Fortaleza de origen musulmán sobre el espolón de roca que manda sobre el pueblo entero. Se visita con guía.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Castillo+de+Albarracin",
+          "tip": "Las visitas guiadas las organiza el museo del pueblo y salen a horas fijas con plazas limitadas: reservad al llegar el primer día, no la misma mañana."
+        },
+        {
+          "time": "13:45",
+          "emoji": "🍲",
+          "title": "Comida antes de salir",
+          "place": "Rincón del Chorro",
+          "description": "🚶 8 min a pie de bajada. Repetís sitio a propósito: es el que ya sabéis que resuelve el sin gluten sin sustos justo antes de tres horas de coche.",
+          "category": "restaurant",
+          "url": "https://www.google.com/maps/search/?api=1&query=Rincon+del+Chorro+Albarracin"
+        },
+        {
+          "time": "15:30",
+          "emoji": "🏞️",
+          "title": "Paseo por el Guadalaviar",
+          "place": "Río Guadalaviar, Albarracín",
+          "description": "🚶 6 min a pie. El río rodea el pueblo por abajo y desde la orilla se ve de golpe lo que habéis estado pisando: las casas colgadas sobre la roca y la muralla trepando por el monte.",
+          "category": "sight",
+          "url": "https://www.google.com/maps/search/?api=1&query=Rio+Guadalaviar+Albarracin",
+          "tip": "Es el mejor sitio del viaje para la foto del pueblo entero, y está a pie de coche: quince minutos aquí antes de arrancar valen más que subir otra vez a la muralla."
+        }
+      ]
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
+import type { PlaceVerification, VerificationSummary } from "@/lib/itinerary-shared";
 
 const SHARE_TOGGLE_DAILY_LIMIT = 30;
 // Misma forma que produce slugify()+randomSuffix() más abajo — nunca
@@ -144,6 +145,10 @@ export type PublicTripActivity = {
   description: string;
   category?: string;
   tip?: string;
+  /** Cruce con Google Places. Se comparte igual que en la vista del autor:
+   *  quien recibe un itinerario ajeno es justo quien más necesita saber qué
+   *  se ha comprobado y qué no. */
+  verification?: PlaceVerification;
 };
 export type PublicTripDay = {
   day: number;
@@ -160,6 +165,7 @@ export type PublicTrip = {
   start_date: string | null;
   end_date: string | null;
   slug: string;
+  verification_summary?: VerificationSummary;
 };
 
 // Hitos que disparan el email "tu itinerario está gustando" al autor.
@@ -272,7 +278,11 @@ export const getPublicTrip = createServerFn({ method: "GET" })
     const r = row as {
       destination: string;
       hero_image_url: string | null;
-      itinerary: { summary?: string; days?: PublicTripDay[] } | null;
+      itinerary: {
+        summary?: string;
+        days?: PublicTripDay[];
+        verification_summary?: VerificationSummary;
+      } | null;
       start_date: string | null;
       end_date: string | null;
       share_slug: string;
@@ -304,5 +314,6 @@ export const getPublicTrip = createServerFn({ method: "GET" })
       start_date: r.start_date,
       end_date: r.end_date,
       slug: r.share_slug,
+      verification_summary: r.itinerary?.verification_summary,
     };
   });

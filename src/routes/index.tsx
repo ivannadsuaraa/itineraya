@@ -4,7 +4,6 @@ import { HeroSection } from "@/components/landing/HeroSection";
 import { PopularDestinationsSection } from "@/components/landing/PopularDestinationsSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { ProductShowcaseSection } from "@/components/landing/ProductShowcaseSection";
-import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { FAQSection } from "@/components/landing/FAQSection";
 
@@ -13,7 +12,6 @@ import { Link } from "@tanstack/react-router";
 import { motion, useReducedMotion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
-import { StatsSection } from "@/components/landing/StatsSection";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileBottomBar, DesktopTopNav } from "@/components/DashboardSidebar";
@@ -83,10 +81,8 @@ function LandingPage() {
       <HeroSection />
 
       <ProductShowcaseSection />
-      <StatsSection />
       <PopularDestinationsSection />
       <HowItWorksSection />
-      <TestimonialsSection />
 
       {/* Final CTA */}
       <section className="relative overflow-hidden py-20 sm:py-28">

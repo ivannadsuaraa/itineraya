@@ -555,6 +555,15 @@
       "clear": "Limpar",
       "searching": "Buscando…",
       "helper": "Busque seu hotel ou clique no mapa para colocar o pin."
+    },
+    "transportTitle": "Como prefere se deslocar?",
+    "transportSubtitle": "Define a distância entre paradas e o transporte que sugerimos.",
+    "transport": {
+      "walking": "A pé",
+      "transit": "Transporte público",
+      "taxi": "Táxi / app",
+      "car": "Carro alugado",
+      "mixed": "Um pouco de tudo"
     }
   },
   "trip": {
@@ -663,7 +672,14 @@
     "limitPassDesc": "Pagamento único · desbloqueie este roteiro agora",
     "limitUpgradeFree": "Ou plano Viajero: 5 viagens/mês + assistente IA",
     "limitUpgradeViajero": "Atualizar para Explorador: viagens ilimitadas",
-    "limitRetry": "Já comprei — tentar de novo"
+    "limitRetry": "Já comprei — tentar de novo",
+    "verified": "Verificado",
+    "verifiedTitle": "Encontrado no Google Maps com este nome.",
+    "verifiedTitleNamed": "Encontrado no Google Maps como «{{name}}».",
+    "unverified": "Por confirmar",
+    "unverifiedTitle": "Não encontrámos este local no Google Maps com este nome. Pode existir na mesma (negócios pequenos e recém-abertos faltam muitas vezes), mas confirme antes de ir.",
+    "aiNotice": "Este itinerário foi gerado por IA a partir das suas respostas. Horários, preços e dias de encerramento mudam: confirme-os antes de ir, sobretudo se for preciso reservar.",
+    "verificationSummary": "Cruzámos os locais com o Google Maps: {{verified}} de {{checked}} confirmados."
   },
   "tripmates": {
     "tag": "Companheiros de viagem",

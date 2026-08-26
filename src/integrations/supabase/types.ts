@@ -408,6 +408,7 @@ export type Database = {
           share_slug: string | null
           start_date: string | null
           status: string
+          transport: string | null
           travel_mode: string
           trip_style: string | null
           trip_types: string[]
@@ -444,6 +445,7 @@ export type Database = {
           share_slug?: string | null
           start_date?: string | null
           status?: string
+          transport?: string | null
           travel_mode?: string
           trip_style?: string | null
           trip_types?: string[]
@@ -480,6 +482,7 @@ export type Database = {
           share_slug?: string | null
           start_date?: string | null
           status?: string
+          transport?: string | null
           travel_mode?: string
           trip_style?: string | null
           trip_types?: string[]
