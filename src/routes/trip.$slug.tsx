@@ -10,8 +10,11 @@ import {
   Bookmark,
   BookmarkCheck,
   Loader2,
+  BadgeCheck,
+  HelpCircle,
 } from "lucide-react";
-import { getPublicTrip, type PublicTripDay } from "@/lib/share.functions";
+import { getPublicTrip, type PublicTripDay, type PublicTripActivity } from "@/lib/share.functions";
+import type { PlaceVerification } from "@/lib/itinerary-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PaywallGate } from "@/components/trip/PaywallGate";
@@ -321,17 +324,46 @@ function PublicTripPage() {
             so the shared page sells the product instead of a stripped-down list. */}
         <div className="mt-8 space-y-6">
           {visibleDays.map((day, i) => (
-            <PublicDayCard key={day.day} day={day} date={dayDate(i)} />
+            <PublicDayCard
+              key={day.day}
+              day={day}
+              date={dayDate(i)}
+              destination={trip.destination}
+            />
           ))}
           {gatedDays.length > 0 && (
             <PaywallGate>
               <div className="space-y-6">
                 {gatedDays.map((day, i) => (
-                  <PublicDayCard key={day.day} day={day} date={dayDate(splitIdx + i)} />
+                  <PublicDayCard
+                    key={day.day}
+                    day={day}
+                    date={dayDate(splitIdx + i)}
+                    destination={trip.destination}
+                  />
                 ))}
               </div>
             </PaywallGate>
           )}
+        </div>
+
+        {/* Nota de honestidad: quien llega aquí no ha generado este itinerario
+            y no sabe cómo se hizo, así que se lo decimos antes del CTA. */}
+        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/70 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            <div className="text-xs leading-relaxed text-slate-500">
+              <p>{t("trip.aiNotice")}</p>
+              {trip.verification_summary && trip.verification_summary.checked > 0 && (
+                <p className="mt-1.5">
+                  {t("trip.verificationSummary", {
+                    verified: trip.verification_summary.verified,
+                    checked: trip.verification_summary.checked,
+                  })}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* CTA */}
@@ -385,7 +417,64 @@ function PublicTripPage() {
   );
 }
 
-function PublicDayCard({ day, date }: { day: PublicTripDay; date: string | null }) {
+/**
+ * Enlace a Maps para una parada compartida. Con place_id verificado usamos el
+ * enlace canónico (el pin cae exactamente ahí); si no, una búsqueda por texto.
+ */
+function placeMapsUrl(a: PublicTripActivity, destination: string): string {
+  const placeId = a.verification?.place_id;
+  if (placeId)
+    return `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`;
+  const q = encodeURIComponent(`${a.place || a.title}, ${destination}`);
+  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+}
+
+/** Igual que la insignia de la vista del autor: solo habla cuando hay algo
+ *  comprobado que decir. Sin verificación no pinta nada. */
+function PublicVerificationBadge({ verification }: { verification?: PlaceVerification }) {
+  const { t } = useTranslation();
+  const status = verification?.status;
+
+  if (status === "verified") {
+    return (
+      <span
+        title={
+          verification?.matched_name
+            ? t("trip.verifiedTitleNamed", { name: verification.matched_name })
+            : t("trip.verifiedTitle")
+        }
+        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200/70"
+      >
+        <BadgeCheck className="h-3 w-3" />
+        {t("trip.verified")}
+      </span>
+    );
+  }
+
+  if (status === "not_found") {
+    return (
+      <span
+        title={t("trip.unverifiedTitle")}
+        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200/70"
+      >
+        <HelpCircle className="h-3 w-3" />
+        {t("trip.unverified")}
+      </span>
+    );
+  }
+
+  return null;
+}
+
+function PublicDayCard({
+  day,
+  date,
+  destination,
+}: {
+  day: PublicTripDay;
+  date: string | null;
+  destination: string;
+}) {
   const { t } = useTranslation();
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-sky-100/70">
@@ -440,10 +529,21 @@ function PublicDayCard({ day, date }: { day: PublicTripDay; date: string | null 
                 <div className="min-w-0">
                   <p className="font-semibold leading-tight text-slate-900">{a.title}</p>
                   {a.place && (
-                    <p className="flex items-center gap-1 truncate text-xs text-slate-500">
-                      <MapPin className="h-3 w-3 shrink-0" />
-                      {a.place}
-                    </p>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
+                      {/* El nombre del sitio es el enlace: en un itinerario que
+                          te han compartido, poder abrir cada parada en Maps es
+                          lo que separa "un texto bonito" de algo utilizable. */}
+                      <a
+                        href={placeMapsUrl(a, destination)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex min-w-0 items-center gap-1 truncate text-xs text-slate-500 underline-offset-2 hover:text-sky-700 hover:underline"
+                      >
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{a.place}</span>
+                      </a>
+                      <PublicVerificationBadge verification={a.verification} />
+                    </div>
                   )}
                 </div>
               </div>

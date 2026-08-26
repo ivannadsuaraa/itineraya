@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { verifyItineraryPlaces } from "@/lib/place-verification";
+import type { ParsedItinerary } from "@/lib/itinerary-shared";
 import { z } from "zod";
 
 // No cap existed before this audit — being plan-gated (Viajero/Explorador)
@@ -294,6 +296,19 @@ REQUISITOS:
       const old = current.days.find((od) => od.day === d.day);
       return { ...d, image_url: d.image_url ?? old?.image_url ?? null };
     });
+
+    // El modelo devuelve el itinerario entero reescrito, así que las marcas de
+    // verificación del original se pierden aunque el día no haya cambiado. Sin
+    // esto, editar un viaje borraría silenciosamente todos los sellos de
+    // "verificado" — y un sello que desaparece daña más la confianza que uno
+    // que nunca estuvo. Volvemos a cruzar contra Places (no-op sin key).
+    const verificationSummary = await verifyItineraryPlaces(
+      itineraryOnly as unknown as ParsedItinerary,
+      trip.destination,
+    );
+    if (verificationSummary) {
+      (itineraryOnly as unknown as ParsedItinerary).verification_summary = verificationSummary;
+    }
 
     const { error: updateErr } = await supabase
       .from("trips")

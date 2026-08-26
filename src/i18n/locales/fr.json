@@ -672,7 +672,14 @@
     "limitPassDesc": "Paiement unique · débloquez cet itinéraire maintenant",
     "limitUpgradeFree": "Ou plan Viajero : 5 voyages/mois + assistant IA",
     "limitUpgradeViajero": "Passer à Explorador : voyages illimités",
-    "limitRetry": "Déjà acheté — réessayer"
+    "limitRetry": "Déjà acheté — réessayer",
+    "verified": "Vérifié",
+    "verifiedTitle": "Trouvé sur Google Maps sous ce nom.",
+    "verifiedTitleNamed": "Trouvé sur Google Maps sous le nom « {{name}} ».",
+    "unverified": "Non confirmé",
+    "unverifiedTitle": "Nous n'avons pas trouvé ce lieu sur Google Maps sous ce nom. Il peut exister malgré tout (les petits commerces et les ouvertures récentes y manquent souvent), mais vérifiez avant d'y aller.",
+    "aiNotice": "Cet itinéraire a été généré par une IA à partir de vos réponses. Horaires, prix et jours de fermeture changent : vérifiez-les avant de partir, surtout si une réservation est nécessaire.",
+    "verificationSummary": "Nous avons recoupé les lieux avec Google Maps : {{verified}} sur {{checked}} confirmés."
   },
   "tripmates": {
     "tag": "Compagnons de voyage",

@@ -672,7 +672,14 @@
     "limitPassDesc": "Pago único · desbloquea este itinerario ahora",
     "limitUpgradeFree": "O plan Viajero: 5 viajes/mes + asistente IA",
     "limitUpgradeViajero": "Actualizar a Explorador: viajes ilimitados",
-    "limitRetry": "Ya lo he comprado, reintentar"
+    "limitRetry": "Ya lo he comprado, reintentar",
+    "verified": "Verificado",
+    "verifiedTitle": "Encontrado en Google Maps con este nombre.",
+    "verifiedTitleNamed": "Encontrado en Google Maps como «{{name}}».",
+    "unverified": "Sin confirmar",
+    "unverifiedTitle": "No lo hemos encontrado en Google Maps con este nombre. Puede existir igualmente (los negocios pequeños y recién abiertos faltan a menudo), pero conviene comprobarlo antes de ir.",
+    "aiNotice": "Este itinerario lo ha generado una IA a partir de tus respuestas. Horarios, precios y días de cierre cambian: confírmalos antes de ir, sobre todo si algo requiere reserva.",
+    "verificationSummary": "Hemos cruzado los lugares con Google Maps: {{verified}} de {{checked}} confirmados."
   },
   "tripmates": {
     "tag": "Compañeros de viaje",

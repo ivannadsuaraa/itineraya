@@ -5,8 +5,10 @@ import {
   unsplashImage,
   itinerarySchema,
   extractJson,
-  isInlandDestination,
+  type ParsedItinerary,
 } from "@/lib/itinerary-shared";
+import { buildItineraryPrompt, SUPPORTED_ITIN_LANGS, type ItinLang } from "@/lib/itinerary-prompt";
+import { verifyItineraryPlaces } from "@/lib/place-verification";
 import { geocodeAndPersistTrip } from "@/lib/geocode";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -247,8 +249,6 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .eq("id", userId)
       .maybeSingle();
     // Prefer language passed from the client (current UI language) over stored profile.
-    type ItinLang = "es" | "en" | "fr" | "pt";
-    const SUPPORTED_ITIN_LANGS: readonly ItinLang[] = ["es", "en", "fr", "pt"];
     const clientLang = (data.language ?? "").toLowerCase().slice(0, 2);
     const profileLang = (profile?.language ?? "").toLowerCase().slice(0, 2);
     const lang: ItinLang = (SUPPORTED_ITIN_LANGS as readonly string[]).includes(clientLang)
@@ -277,265 +277,33 @@ export const generateItinerary = createServerFn({ method: "POST" })
             .join("; ")
         : "no previous trips";
 
-    const dayCount = (() => {
-      if (!trip.start_date || !trip.end_date) return 5;
-      const a = new Date(trip.start_date).getTime();
-      const b = new Date(trip.end_date).getTime();
-      const d = Math.max(1, Math.round((b - a) / 86400000) + 1);
-      return Math.min(d, 14);
-    })();
-
-    const budgetBlock = (() => {
-      const raw = (trip as { budget?: string | null }).budget;
-      const match = raw?.match(/^(\d+)-(\d+)$/);
-      if (!match) return "";
-      const lo = Number(match[1]);
-      const hi = Number(match[2]);
-      const mid = (lo + hi) / 2;
-      const tier =
-        mid < 300
-          ? "backpacker (hostels, public transport, street food)"
-          : mid < 800
-            ? "budget (basic hotels, mixed transport, local restaurants)"
-            : mid < 2000
-              ? "comfortable (3-star hotels, varied restaurants)"
-              : mid < 4000
-                ? "premium (4-star hotels, exclusive experiences)"
-                : mid < 7000
-                  ? "luxury (5-star hotels, private transfers, VIP experiences)"
-                  : "ultra-luxury (suites, exclusive experiences, no spending limit)";
-      const dailyLo = Math.round(lo / dayCount);
-      const dailyHi = Math.round(hi / dayCount);
-      return `- Budget: ${lo}€–${hi}€ total (~${dailyLo}€–${dailyHi}€/day). Spending style: ${tier}. Match accommodation, restaurants and activities to this level — never suggest options far above or below it.`;
-    })();
-
-    const monthName = (() => {
-      if (!trip.start_date) return "unspecified";
-      const d = new Date(trip.start_date);
-      const names = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-      return `${names[d.getMonth()]} (month ${d.getMonth() + 1})`;
-    })();
-
-    const arrivalTime = (trip as { arrival_time?: string | null }).arrival_time ?? null;
-    const departureTime = (trip as { departure_time?: string | null }).departure_time ?? null;
-
-    const arrivalLine = arrivalTime
-      ? `Day 1 arrival time: ${arrivalTime}. Do NOT schedule activities before this time on day 1. If arrival is late (after 20:00) plan only check-in and a light dinner nearby; if arrival is after 22:00 plan ONLY check-in / rest.`
-      : `Day 1 arrival: unknown — assume a normal morning start.`;
-    const departureLine = departureTime
-      ? `Last day (day ${dayCount}) departure time: ${departureTime}. Do NOT schedule activities after this time on the last day; leave at least 2-3h before departure for transfer to airport/station. If departure is early morning (before 10:00) plan ONLY transfer; if morning (before 13:00) keep it to breakfast + a single light activity.`
-      : `Last day departure: unknown — assume a normal evening end.`;
-
-    const tripTypes = (trip as { trip_types?: string[] | null }).trip_types ?? [];
-    const hasAccommodation = !!(trip as { has_accommodation?: boolean | null }).has_accommodation;
-    const hotelName = (trip as { hotel_name?: string | null }).hotel_name ?? null;
-    const hotelAddress = (trip as { hotel_address?: string | null }).hotel_address ?? null;
-    const hotelLatRaw = (trip as { hotel_lat?: number | string | null }).hotel_lat;
-    const hotelLngRaw = (trip as { hotel_lng?: number | string | null }).hotel_lng;
-    const hotelLat = hotelLatRaw != null ? Number(hotelLatRaw) : null;
-    const hotelLng = hotelLngRaw != null ? Number(hotelLngRaw) : null;
-    const hasHotelCoords =
-      hotelLat != null && hotelLng != null && !Number.isNaN(hotelLat) && !Number.isNaN(hotelLng);
-    const tripTypesLine =
-      tripTypes.length > 0 ? tripTypes.join(", ") : (trip.trip_style ?? "unspecified");
-
-    const accommodationBlock = hasHotelCoords
-      ? `- Accommodation (FIXED ANCHOR): "${hotelName ?? "hotel"}"${hotelAddress ? ` (${hotelAddress})` : ""}, coordinates ${hotelLat!.toFixed(5)},${hotelLng!.toFixed(5)}. Every activity must be within ~3 km of it. Each day starts and ends here. No activities in other cities; never recommend other hotels.`
-      : hasAccommodation
-        ? `- Accommodation: already booked (exact location unknown). Assume a central base. Never recommend other hotels; each day starts and ends at "your accommodation".`
-        : `- Accommodation: not booked yet. You may include a brief hotel check-in on day 1.`;
-
-    const isKnownInland = isInlandDestination(trip.destination);
-
-    const weekdayName = trip.start_date
-      ? new Date(trip.start_date).toLocaleDateString("en-US", { weekday: "long" })
-      : null;
-    const datesLine =
-      trip.start_date && trip.end_date
-        ? `${trip.start_date} to ${trip.end_date} (day 1 is a ${weekdayName})`
-        : "not specified";
-
-    const companion = (trip as { companion?: string | null }).companion ?? null;
-
-    // ── Personalización profunda (columnas opcionales; null si la migración
-    // trip_personalization aún no está aplicada) ──
-    const pace = (trip as { pace?: string | null }).pace ?? "balanced";
-    const firstVisit = (trip as { first_visit?: boolean | null }).first_visit;
-    const dietaryRaw = (trip as { dietary?: string | null }).dietary ?? null;
-
-    const paceMap: Record<string, string> = {
-      relaxed:
-        "RELAXED pace: 4-5 activities/day, first activity never before 10:00, long unhurried meals, at least one café/terrace break per day, evenings end early or with a calm plan.",
-      balanced:
-        "BALANCED pace: 5-6 activities/day, days start around 09:00-09:30, a good mix of sights and downtime.",
-      intense:
-        "INTENSE pace: 6-7 activities/day, early starts (08:30-09:00), full days — this traveler wants to squeeze every hour; still keep transitions realistic.",
-    };
-    const paceLine = paceMap[pace] ?? paceMap.balanced;
-
-    // Cómo se mueve el viajero por el destino. Cambia la geometría del día
-    // (cuánto pueden separarse dos paradas), qué líneas de transporte puede
-    // citar el modelo y qué avisos prácticos necesita (aparcamiento, cuestas).
-    const transportMode = (trip as { transport?: string | null }).transport ?? "mixed";
-    const transportMap: Record<string, string> = {
-      walking:
-        "ON FOOT — this traveler wants to walk. Build each day as one continuous walking line or loop: consecutive stops ≤1 km, the whole day within ~3 km. Only use transport for a leg that genuinely cannot be walked (over ~2.5 km, a steep climb, a site outside town) and say why. Flag stretches that are steep, cobbled or shadeless.",
-      transit:
-        "PUBLIC TRANSPORT — this traveler is happy on metro, tram and bus. Two stops may sit further apart as long as a direct connection takes under ~20 min. Name a line number or direction ONLY if you are certain that line exists in this destination and serves those stops; otherwise write the mode and the minutes without a number. Anything under 1 km is still walked.",
-      taxi: "TAXI / RIDE-HAILING — this traveler takes taxis or ride-hailing between zones. Give approximate ride times, never fares. Stops under ~800 m are still walked. Say where taxis are easy or hard to find, and where a real, named taxi rank or pick-up point exists.",
-      car: "RENTAL CAR — this traveler has a car. One or two days may centre on a real, named town, park or beach within ~60–90 min drive; give drive times between stops. Every driving stop must say where to park — a real, named car park when you are sure of one, otherwise the kind of parking to expect. Warn about restricted-traffic historic centres (ZTL/LEZ-style zones) where they exist, and assume the centre is walked once parked.",
-      mixed:
-        "MIXED — walk within a zone, use public transport or a short taxi between zones. Anything under 1.2 km is on foot. Name a transit line only when you are certain it exists and serves those stops.",
-    };
-    const transportLine = transportMap[transportMode] ?? transportMap.mixed;
-
-    const firstVisitLine =
-      firstVisit === false
-        ? "The traveler has BEEN HERE BEFORE: skip the obvious top-3 tourist clichés (or give them a fresh twist), and lean into neighborhoods, local life and lesser-known spots."
-        : "FIRST TIME in this destination: the iconic must-sees belong in the plan, ordered sensibly — but balance them with authentic local moments.";
-
-    const dietaryDescMap: Record<string, string> = {
-      vegetarian: "vegetarian",
-      vegan: "vegan",
-      glutenFree: "gluten-free (celiac)",
-      halal: "halal",
-      allergies: "food allergies (details in the AVOID notes)",
-    };
-    const dietaryLine = dietaryRaw
-      ? dietaryRaw
-          .split(",")
-          .map((d) => dietaryDescMap[d.trim()] ?? d.trim())
-          .join(", ")
-      : null;
-
-    const age = (profile as { age?: number | null } | null)?.age ?? null;
-    const travelerType =
-      (profile as { traveler_type?: string | null } | null)?.traveler_type ?? null;
-
-    const travelerProfileLine = [
-      age ? `${age} years old` : null,
-      travelerType ? `self-described as "${travelerType}"` : null,
-      companion ? `traveling ${companion}` : "solo traveler",
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-    const beachRule = isKnownInland
-      ? `${trip.destination} is an inland city — beach, sea or coastal activities (beach time, snorkeling, sea kayaking, swimming in the sea) are strictly forbidden.`
-      : `Only include beach or sea activities if ${trip.destination} genuinely has a coastline or nearby beach AND the season allows it. A beach is never the only activity of a day; combine it with nearby stops and avoid peak-heat hours (12:00–16:00) in summer.`;
-
-    const languageBlocks: Record<ItinLang, string> = {
-      es: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Spanish from Spain (peninsular). Meal naming: "Desayuno", "Comida" (the main midday meal — never "almuerzo" or "lunch") and "Cena". Meal activity titles must start with the meal word ("Comida en …", "Cena en …").`,
-      en: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in English. Meal naming: Breakfast, Lunch, Dinner, Snack. Meal activity titles must start with the meal word ("Lunch at …", "Dinner at …").`,
-      fr: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in French. Meal naming: "Petit-déjeuner", "Déjeuner", "Dîner". Meal activity titles must start with the meal word ("Déjeuner à …", "Dîner à …").`,
-      pt: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Portuguese. Meal naming: "Café da manhã", "Almoço", "Jantar". Meal activity titles must start with the meal word ("Almoço em …", "Jantar em …").`,
-    };
-    const languageBlock = languageBlocks[lang];
-
-    const transportExampleMap: Record<ItinLang, string> = {
-      es: `"🚶 8 min a pie" | "🚇 Metro L4 dirección X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Tren, 18 min" | "⛴️ Ferry, 20 min"`,
-      en: `"🚶 8 min walk" | "🚇 Metro Line 4 towards X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Train, 18 min" | "⛴️ Ferry, 20 min"`,
-      fr: `"🚶 8 min à pied" | "🚇 Métro L4 direction X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Train, 18 min" | "⛴️ Ferry, 20 min"`,
-      pt: `"🚶 8 min a pé" | "🚇 Metrô L4 sentido X, 12 min" | "🚌 Ônibus 24, 15 min" | "🚕 Táxi ~10 min" | "🚆 Trem, 18 min" | "⛴️ Balsa, 20 min"`,
-    };
-    const transportExamples = transportExampleMap[lang];
-
-    const avoidText = (trip as { avoid?: string | null }).avoid?.trim() ?? "";
-    const styleText = (trip.trip_style ?? "").trim();
-
-    const travelerBlock = [
-      `- Profile: ${travelerProfileLine}.`,
-      `- ${firstVisitLine}`,
-      `- ${paceLine}`,
-      `- Getting around: ${transportLine}`,
-      `- Interests: ${tripTypesLine}.${styleText ? ` In their own words: "${styleText.slice(0, 400)}".` : ""}`,
-      dietaryLine
-        ? `- Dietary requirements: ${dietaryLine}. EVERY restaurant and food stop must genuinely work for this — if unsure a venue fits, choose one that clearly does.`
-        : "",
-      avoidText
-        ? `- The traveler explicitly wants to AVOID: ${avoidText.slice(0, 500)}. Never schedule anything matching this.`
-        : "",
-      `- Previous trips (calibrate their travel experience; never repeat these destinations' style blindly): ${historyLine}.`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const logisticsBlock = [
-      `- Destination: ${trip.destination}`,
-      `- Dates: ${datesLine} — ${dayCount} days, month: ${monthName}`,
-      `- ${arrivalLine}`,
-      `- ${departureLine}`,
-      accommodationBlock,
-      budgetBlock,
-    ]
-      .filter(Boolean)
-      .join("\n");
-
-    const prompt = `You are planning a ${dayCount}-day trip to ${trip.destination} for one specific traveler. The goal: an itinerary so well-fitted, geographically coherent and locally informed that it reads like a knowledgeable friend who actually lives there wrote it — and every single place in it is one they could walk the traveler to tomorrow.
-
-THE TRAVELER
-${travelerBlock}
-
-TRIP LOGISTICS
-${logisticsBlock}
-
-OUTPUT LANGUAGE
-${languageBlock}
-Exception: "place" must always hold the venue's real name in its native language, spelled exactly as it appears on its sign or on Google Maps — never translated, never approximated. Real proper nouns (streets, monuments, venues) keep their original names inside the text too.
-
-═══ RULE ZERO — ONLY REAL, VERIFIABLE PLACES ═══
-This rule outranks everything else below. A day with 4 stops that all exist beats a day with 7 where 2 do not. If honouring this rule means a thinner day, write the thinner day.
-
-THE TEST — apply it to every single "place" before you write it: if the traveler typed this exact name into Google Maps in ${trip.destination} right now, would the pin land on this venue? Anything short of a confident yes means you may not write that name.
-
-Absolutely forbidden:
-- Inventing a venue name, or reconstructing one you only half-remember.
-- Manufacturing an authentic-sounding name by gluing a generic word to local flavour — "Trattoria da Nonna", "Bar Manolo", "Casa del Mar", "Café Central", "Museo del Vino" — unless that exact establishment genuinely exists in ${trip.destination}.
-- Moving a real venue from another city, region or country into this one, or reusing a name that is famous somewhere else.
-- Giving a town or village neighbourhoods, museums, metro lines, rooftop bars or landmarks it does not have. Calibrate to what ${trip.destination} really is: a capital has districts and dozens of museums; a small town has a handful of real landmarks, a church, a market, a promenade and a few well-known places to eat.
-- Presenting opening hours, prices, ticket rules or booking requirements as hard fact. Plan around what is typical and phrase it as typical ("suele abrir…", "normally closed on Mondays"), and tell them to confirm before going when it matters.
-
-THE FALLBACK — use it whenever you are not certain, instead of guessing. Name a real, unmistakable anchor (a street, square, promenade, market, neighbourhood, park or beach) plus the kind of place to look for there, and put the anchor's real name in "place". Example: title "Comida en Trastevere", place "Trastevere, Roma", description "una trattoria de las callejuelas al norte de Piazza Santa Maria — busca la carta escrita a mano y sin traducir". This reads as local knowledge, not as a hedge, and it is always better than a plausible name that does not exist.
-
-WHERE THIS BITES HARDEST — restaurants, bars, cafés and small shops are where invented names creep in; hidden gems are the second. Landmarks, museums, markets, parks, squares, beaches and stations are safer, so let them carry the backbone of each day and use the fallback freely for food and nightlife.
-
-BEFORE YOU FINISH — re-read every "place" you wrote and apply the test again. Replace with the fallback any name you cannot vouch for. Nobody will ever know how many names you replaced; they will absolutely notice one restaurant that does not exist.
-
-VOICE & TONE
-Write for THIS traveler. A young group of friends gets an energetic, casual voice that knows where the night goes; a family with kids gets practical reassurance (short walking legs, early dinners, plan-B for meltdowns); a couple gets atmosphere, views and unhurried evenings; an experienced solo traveler gets confident, no-fluff local detail. Descriptions must be concrete and checkable ("pide el lampredotto", "sube al atardecer, cuando la luz da de lleno en la fachada") — never filler like "disfruta del ambiente", "empápate de la cultura" or "un sitio con mucho encanto".
-
-RULES
-1. GEOGRAPHY — Each day focuses on ONE neighborhood/zone (or two adjacent ones), ordered as a logical line or loop with no backtracking. How far consecutive stops may sit apart is set by "Getting around" in THE TRAVELER — that block wins over any default distance. Meals stay inside the day's zone. Give each day a distinct zone so the trip progressively covers the destination.
-2. BEACH — ${beachRule}
-3. SCHEDULE — Chronological order with realistic durations: museum 1.5–2h, meal 1–1.5h, monument 45–60 min, café 20–30 min; 15–30 min of slack between stops. Work out the weekday of every itinerary day from the dates above and avoid venues on the day they are typically closed (many museums close Mondays; small shops close Sunday). Meal times follow the local dining customs of ${trip.destination}, not the traveler's home country. Day density and start time follow the traveler's pace.
-4. SEASON — It is ${monthName} in ${trip.destination}: plan around the real season. Typical weather (cold/rain → indoor priority; summer heat → outdoor mornings and evenings, indoor at midday), daylight hours (sunset changes what an "evening walk" means), high/low season (a book-ahead warning in peak months), and seasonal closures or specialities — dishes, markets, blooms — that only exist this month.
-5. TRANSPORT — Every activity except the first of each day must start its "description" with a transport line: mode + route + minutes from the previous stop, in the traveler's preferred mode wherever that mode makes sense. Format: ${transportExamples}. Only cite a line or route number when you are certain that network and line exist in ${trip.destination}; otherwise give mode and minutes only. In a small town assume feet, a local bus or a car.
-6. FOOD — Every restaurant must match BOTH the budget tier and the dietary requirements above, and obey RULE ZERO — when unsure, use the fallback. At every meal name 1–2 signature dishes worth ordering: the specific thing a local would tell a friend to get, ideally the real speciality of this region, never the cuisine in general.
-7. HIDDEN GEMS — Include 2–3 genuine non-obvious experiences across the trip: places locals love and most tourists miss (an uncrowded viewpoint, a market bar, a workshop, a lesser-known museum wing, a stretch of coast or trail). RULE ZERO applies here with full force — a real, slightly obvious spot beats an invented "secret" one.
-8. TIPS — Use the optional "tip" field on 1–2 activities per day for a specific, actionable insider tip: the best hour to avoid queues, what exactly to order, which entrance to use, where the best photo is. Never generic advice ("lleva calzado cómodo").
-9. LINKS — For "url" build a Google Maps search link: https://www.google.com/maps/search/?api=1&query=VENUE+NAME+CITY (spaces as +). When you used the fallback, link the anchor place instead. Use an official website only when you are completely certain of the exact URL. Never invent URLs; omit "url" when unsure.
-10. EVENTS — Include a local festival, fair or public holiday only if it is a well-known recurring event you are confident takes place in ${trip.destination} within the trip dates. Never invent events, dates or their URLs.
-11. VOLUME — Exactly ${dayCount} days. Activities per day follow the traveler's pace; always fewer on days constrained by arrival or departure.${hasAccommodation ? ' Never use the "hotel" category.' : ""}
-12. TRIP ARC — The trip must have a narrative shape, not ${dayCount} interchangeable days. Day 1 ends with an easy "first wow": a viewpoint, square or waterfront that makes the traveler feel they have truly arrived. Middle days alternate intensity (a packed day is followed by a gentler one). The final evening closes with a farewell moment that echoes the traveler's interests — the place they'll describe when someone asks "what was the best part?".
-
-FIELD GUIDE
-- summary: 2 sentences, second person, evocative and specific to THIS trip (destination + season + their interests) — it is the first thing they read when the itinerary appears.
-- title (day): short and evocative, anchored on the real name of the day's neighborhood or zone (e.g. "Trastevere al atardecer"), never "Day 3". subtitle: a one-sentence recap of the day's arc.
-- image_query: 2–3 English words for a photo of the day's area, always including the real place name (e.g. "montmartre paris street").
-- time: "HH:MM" 24h. emoji: exactly one emoji. title (activity): 3–6 words. place: the exact real name (or the real anchor, when using the fallback). description: 1–2 lines. tip: only when you have a genuinely useful insider tip.`;
+    const { prompt, dayCount } = buildItineraryPrompt({
+      destination: trip.destination,
+      startDate: trip.start_date,
+      endDate: trip.end_date,
+      arrivalTime: (trip as { arrival_time?: string | null }).arrival_time ?? null,
+      departureTime: (trip as { departure_time?: string | null }).departure_time ?? null,
+      companion: (trip as { companion?: string | null }).companion ?? null,
+      budget: (trip as { budget?: string | null }).budget ?? null,
+      tripStyle: trip.trip_style,
+      avoid: (trip as { avoid?: string | null }).avoid ?? null,
+      tripTypes: (trip as { trip_types?: string[] | null }).trip_types ?? null,
+      hasAccommodation: (trip as { has_accommodation?: boolean | null }).has_accommodation ?? null,
+      hotelName: (trip as { hotel_name?: string | null }).hotel_name ?? null,
+      hotelAddress: (trip as { hotel_address?: string | null }).hotel_address ?? null,
+      hotelLat: (trip as { hotel_lat?: number | string | null }).hotel_lat ?? null,
+      hotelLng: (trip as { hotel_lng?: number | string | null }).hotel_lng ?? null,
+      // Columnas opcionales: null si la migración trip_personalization (o la de
+      // transport) aún no está aplicada — buildItineraryPrompt tiene defaults.
+      pace: (trip as { pace?: string | null }).pace ?? null,
+      transport: (trip as { transport?: string | null }).transport ?? null,
+      firstVisit: (trip as { first_visit?: boolean | null }).first_visit ?? null,
+      dietary: (trip as { dietary?: string | null }).dietary ?? null,
+      age: (profile as { age?: number | null } | null)?.age ?? null,
+      travelerType: (profile as { traveler_type?: string | null } | null)?.traveler_type ?? null,
+      lang,
+      historyLine,
+    });
 
     let aiRes: Response | null = null;
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -614,6 +382,18 @@ FIELD GUIDE
       ),
     ]);
     parsed.days = parsed.days.map((d, i) => ({ ...d, image_url: dayImages[i] }));
+
+    // Cruce con Google Places: comprueba de verdad que los sitios existen y
+    // deja el resultado en cada actividad. Se salta solo si no hay
+    // GOOGLE_PLACES_KEY, y nunca puede tumbar la generación — un itinerario
+    // sin verificar sigue siendo un itinerario; uno que no llega, no.
+    const verificationSummary = await verifyItineraryPlaces(
+      parsed as unknown as ParsedItinerary,
+      trip.destination,
+    );
+    if (verificationSummary) {
+      (parsed as unknown as ParsedItinerary).verification_summary = verificationSummary;
+    }
 
     const { error: updateErr } = await supabase
       .from("trips")
