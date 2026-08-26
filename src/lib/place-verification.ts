@@ -161,6 +161,8 @@ function significantTokens(name: string): string[] {
     .filter((t) => t.length >= 2 && !GENERIC_TOKENS.has(t));
 }
 
+type MatchResult = { ok: boolean; reason: string };
+
 /**
  * ¿El sitio que devolvió Google es realmente el que pedimos?
  *
@@ -171,25 +173,42 @@ function significantTokens(name: string): string[] {
  * devuelve Google (o al revés, para "Museo del Prado" → "Museo Nacional del
  * Prado").
  */
-export function namesMatch(queried: string, returned: string): boolean {
+export function matchNames(queried: string, returned: string): MatchResult {
   const q = fold(queried);
   const r = fold(returned);
-  if (!q || !r) return false;
-  if (q === r) return true;
+  if (!q || !r) return { ok: false, reason: "nombre vacío" };
+  if (q === r) return { ok: true, reason: "exacto" };
   // Uno contiene al otro: "prado" ⊂ "museo nacional del prado".
-  if (q.includes(r) || r.includes(q)) return true;
+  if (q.includes(r) || r.includes(q)) return { ok: true, reason: "inclusión" };
 
   const qt = significantTokens(queried);
   const rt = significantTokens(returned);
-  if (qt.length === 0 || rt.length === 0) return false;
+  if (qt.length === 0 || rt.length === 0) {
+    return { ok: false, reason: "sin tokens significativos" };
+  }
 
   const rset = new Set(rt);
-  const overlap = qt.filter((t) => rset.has(t)).length;
-  // Dos tercios de los tokens que de verdad identifican el sitio. Con un solo
-  // token significativo exigimos el acierto pleno: "Sacromonte" contra
-  // "Sacromonte Abbey" pasa por la comprobación de inclusión de arriba, pero
-  // "Faro" contra "Bar Pepe" no debe colar por casualidad.
-  return overlap / qt.length >= 0.67;
+  const hits = qt.filter((t) => rset.has(t));
+  // Dos tercios EXACTOS de los tokens que de verdad identifican el sitio.
+  //
+  // Ojo con la aritmética: esto era `hits / qt.length >= 0.67`, y 2/3 en coma
+  // flotante es 0.6666…, que NO llega a 0.67. Es decir, el caso que el propio
+  // comentario decía aceptar —dos de cada tres tokens— se rechazaba siempre.
+  // Con enteros no hay epsilon que valga.
+  //
+  // Con un solo token significativo esto exige el acierto pleno, que es lo que
+  // queremos: "Sacromonte" contra "Sacromonte Abbey" ya pasó por la inclusión
+  // de arriba, pero "Faro" contra "Bar Pepe" no debe colar por casualidad.
+  const ok = hits.length * 3 >= qt.length * 2;
+  return {
+    ok,
+    reason: `${hits.length}/${qt.length} tokens${hits.length ? ` (${hits.join(", ")})` : ""}`,
+  };
+}
+
+/** Envoltorio booleano. */
+export function namesMatch(queried: string, returned: string): boolean {
+  return matchNames(queried, returned).ok;
 }
 
 function haversineKm(a: [number, number], b: [number, number]): number {
@@ -260,15 +279,28 @@ export function isPlaceVerificationEnabled(): boolean {
  */
 type Lookup = { ok: true; place: PlacesResult | null } | { ok: false; auth: boolean };
 
-async function searchText(
-  textQuery: string,
-  key: string,
-  bias: [number, number] | null,
-): Promise<Lookup> {
+type SearchOpts = {
+  bias?: [number, number] | null;
+  /** Idioma en el que pedimos que Google devuelva los nombres. Ver abajo: es
+   *  lo que decide si el filtro de nombres puede llegar a casar algo. */
+  lang?: string;
+};
+
+async function searchText(textQuery: string, key: string, opts: SearchOpts = {}): Promise<Lookup> {
+  const { bias = null, lang } = opts;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     const body: Record<string, unknown> = { textQuery, maxResultCount: 1 };
+    // ESTO es lo que hacía que no se verificara nada. Sin languageCode,
+    // Places API (New) responde por defecto en inglés, mientras que el
+    // itinerario está escrito en el idioma del viajero. Así que comparábamos
+    // "Coliseo" con "Colosseum", "Museos Vaticanos" con "Vatican Museums" y
+    // "Basílica de San Pedro" con "St. Peter's Basilica": ningún token en
+    // común, cero coincidencias, y todo el viaje marcado como no encontrado.
+    // Pidiendo los nombres en el idioma del itinerario, Google devuelve
+    // exactamente la forma que el modelo escribió.
+    if (lang) body.languageCode = lang;
     if (bias) {
       body.locationBias = {
         circle: {
@@ -354,6 +386,11 @@ function activityPlaceName(a: ParsedActivity): string | null {
 export async function verifyItineraryPlaces(
   itinerary: ParsedItinerary,
   destination: string,
+  /** Idioma en el que está escrito el itinerario. Google devuelve los nombres
+   *  en este idioma, que es la única forma de que casen con lo que escribió el
+   *  modelo. Omitirlo hace que Places responda en inglés y no verifique casi
+   *  nada — pásalo siempre que se sepa. */
+  lang?: string,
 ): Promise<VerificationSummary | null> {
   const key = resolvePlacesKey();
   if (!key) return null;
@@ -388,7 +425,7 @@ export async function verifyItineraryPlaces(
     // Geocodificamos el destino con la propia Places API (una búsqueda) para
     // sesgar el resto y poder medir distancias. Si falla, seguimos sin sesgo:
     // los nombres siguen incluyendo la ciudad, así que aún sirve de algo.
-    const destLookup = await searchText(destination, key, null);
+    const destLookup = await searchText(destination, key, { lang });
     if (!destLookup.ok && destLookup.auth) {
       // La primera llamada ya rebota: no hay nada que verificar y avisamos con
       // la causa más probable para que se arregle en vez de quedarse así.
@@ -401,10 +438,31 @@ export async function verifyItineraryPlaces(
       return null;
     }
     const destPlace = destLookup.ok ? destLookup.place : null;
-    const destCoords: [number, number] | null =
+    let destCoords: [number, number] | null =
       destPlace?.location?.latitude != null && destPlace.location.longitude != null
         ? [destPlace.location.latitude, destPlace.location.longitude]
         : null;
+
+    // El ancla manda sobre TODO el filtro de distancia, así que si Places nos
+    // devuelve otra cosa al buscar el destino (un negocio que se llama igual,
+    // un homónimo en otro país) cada lugar del viaje sale a miles de km y el
+    // itinerario entero se marca como no encontrado. Comprobamos que el ancla
+    // se parece al destino pedido y, si no, preferimos quedarnos sin filtro de
+    // distancia antes que rechazarlo todo: quien de verdad caza invenciones es
+    // el filtro de nombres; la distancia solo desempata homónimos.
+    const destName = destPlace?.displayName?.text ?? "";
+    if (destCoords && destName && !namesMatch(destination, destName)) {
+      console.warn(
+        `[places] ancla dudosa para "${destination}": Places devolvió "${destName}" ` +
+          `(${destPlace?.formattedAddress ?? "sin dirección"}). Se desactiva el filtro de distancia.`,
+      );
+      destCoords = null;
+    }
+    console.log(
+      `[places] destino "${destination}" → ${destName || "sin resultado"} ` +
+        `${destCoords ? `@ ${destCoords[0].toFixed(4)},${destCoords[1].toFixed(4)}` : "(sin ancla: filtro de distancia desactivado)"}` +
+        ` | idioma=${lang ?? "por defecto"}`,
+    );
 
     const toCheck = unique.slice(0, MAX_LOOKUPS_PER_ITINERARY);
     if (unique.length > toCheck.length) {
@@ -425,7 +483,7 @@ export async function verifyItineraryPlaces(
         return;
       }
 
-      const lookup = await searchText(`${name}, ${destination}`, key, destCoords);
+      const lookup = await searchText(`${name}, ${destination}`, key, { bias: destCoords, lang });
 
       // No pudimos preguntar: eso no es información sobre el lugar. Queda
       // "unchecked" y no cuenta como comprobado ni como no encontrado.
@@ -443,13 +501,32 @@ export async function verifyItineraryPlaces(
       const lat = result?.location?.latitude;
       const lng = result?.location?.longitude;
 
-      const nameOk = !!result && !!returnedName && namesMatch(name, returnedName);
-      const distanceOk =
-        !destCoords || lat == null || lng == null
-          ? true
-          : haversineKm(destCoords, [lat, lng]) <= MAX_DISTANCE_KM;
+      const match: MatchResult =
+        result && returnedName
+          ? matchNames(name, returnedName)
+          : { ok: false, reason: "sin resultados" };
+      const distanceKm =
+        destCoords && lat != null && lng != null ? haversineKm(destCoords, [lat, lng]) : null;
+      const distanceOk = distanceKm == null ? true : distanceKm <= MAX_DISTANCE_KM;
 
-      if (result?.id && nameOk && distanceOk) {
+      // Una línea por búsqueda con lo que Google devolvió y, si se descarta,
+      // por qué exactamente. Es lo que permite distinguir de un vistazo "el
+      // modelo se lo inventó" de "el filtro está mal calibrado", que desde
+      // fuera se ven igual.
+      const where = distanceKm == null ? "" : ` a ${distanceKm.toFixed(1)} km`;
+      const verdict = !result
+        ? "✗ sin resultados"
+        : !match.ok
+          ? `✗ nombre no casa [${match.reason}]`
+          : !distanceOk
+            ? `✗ demasiado lejos (tope ${MAX_DISTANCE_KM} km)`
+            : `✓ ${match.reason}`;
+      console.log(
+        `[places]   "${name}" → ${result ? `"${returnedName}"${where}` : "—"} ${verdict}` +
+          (result?.formattedAddress && !match.ok ? ` | ${result.formattedAddress}` : ""),
+      );
+
+      if (result?.id && match.ok && distanceOk) {
         verified++;
         const v: PlaceVerification = {
           status: "verified",

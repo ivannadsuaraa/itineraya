@@ -154,7 +154,7 @@ async function main() {
     );
   }
 
-  const summary = await verifyItineraryPlaces(itinerary, scenario.destination);
+  const summary = await verifyItineraryPlaces(itinerary, scenario.destination, scenario.lang);
   if (summary) {
     itinerary.verification_summary = summary;
     console.error(
