@@ -116,10 +116,7 @@ export const createTrip = createServerFn({ method: "POST" })
 
     let { data: trip, error } = await supabase
       .from("trips")
-      // as never: "transport" aún no está en los tipos generados de Supabase
-      // (ver supabase/migrations/20260825120000_trip_transport_mode.sql),
-      // mismo apaño que ya usan las columnas de personalización.
-      .insert({ ...basePayload, ...personalization, ...geo } as never)
+      .insert({ ...basePayload, ...personalization, ...geo })
       .select("id")
       .single();
 
@@ -384,8 +381,8 @@ export const generateItinerary = createServerFn({ method: "POST" })
     parsed.days = parsed.days.map((d, i) => ({ ...d, image_url: dayImages[i] }));
 
     // Cruce con Google Places: comprueba de verdad que los sitios existen y
-    // deja el resultado en cada actividad. Se salta solo si no hay
-    // GOOGLE_PLACES_KEY, y nunca puede tumbar la generación — un itinerario
+    // deja el resultado en cada actividad. Se salta solo si no hay ninguna key
+    // de Google configurada, y nunca puede tumbar la generación — un itinerario
     // sin verificar sigue siendo un itinerario; uno que no llega, no.
     const verificationSummary = await verifyItineraryPlaces(
       parsed as unknown as ParsedItinerary,

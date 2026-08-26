@@ -16,7 +16,9 @@
 //
 // Variables de entorno:
 //   ANTHROPIC_API_KEY  — obligatoria salvo con --prompt-only
-//   GOOGLE_PLACES_KEY  — opcional; si está, verifica los lugares generados
+//   GOOGLE_PLACES_KEY  — opcional; si está, verifica los lugares generados.
+//                        Sirve igual VITE_GOOGLE_MAPS_KEY (ver
+//                        resolvePlacesKey en src/lib/place-verification.ts).
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
@@ -156,10 +158,13 @@ async function main() {
   if (summary) {
     itinerary.verification_summary = summary;
     console.error(
-      `[harness] Places: ${summary.verified}/${summary.checked} verificados, ${summary.not_found} no encontrados`,
+      `[harness] Places: ${summary.verified}/${summary.checked} verificados, ` +
+        `${summary.not_found} no encontrados, ${summary.unchecked ?? 0} sin comprobar`,
     );
   } else {
-    console.error("[harness] verificación omitida (sin GOOGLE_PLACES_KEY o fallo de red)");
+    console.error(
+      "[harness] verificación omitida (sin key de Google, key rechazada o fallo de red)",
+    );
   }
 
   writeFileSync(`${stem}.json`, JSON.stringify(itinerary, null, 2));

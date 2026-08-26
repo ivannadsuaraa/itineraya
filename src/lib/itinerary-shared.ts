@@ -338,10 +338,16 @@ export type PlaceVerification = {
 };
 
 export type VerificationSummary = {
-  /** Lugares distintos comprobados. */
+  /** Lugares distintos que se llegaron a comprobar de verdad (Places contestó).
+   *  `verified + not_found === checked`. */
   checked: number;
   verified: number;
   not_found: number;
+  /** Lugares distintos que no se pudieron comprobar: tope de búsquedas,
+   *  timeout, red o key rechazada. Quedan fuera de `checked` a propósito —
+   *  no saber no es lo mismo que no encontrar. Opcional: los itinerarios
+   *  verificados antes de existir este campo no lo traen. */
+  unchecked?: number;
   /** ISO — permite saber si un itinerario se verificó y cuándo. */
   checked_at: string;
 };

@@ -196,12 +196,49 @@ Tres formas de bajarlo, por orden de relación valor/esfuerzo, ninguna implement
 
 ### 2.5 Activación
 
-```bash
-GOOGLE_PLACES_KEY=...   # server-side, SIN prefijo VITE_
-```
+`resolvePlacesKey()` coge la primera key que encuentre, por este orden:
 
-Requiere **Places API (New)** habilitada en el proyecto de Google Cloud. Sin la variable,
-todo el módulo se salta y la app se comporta exactamente como antes.
+| Orden | Variable | Notas |
+|---|---|---|
+| 1 | `GOOGLE_PLACES_KEY` | **La recomendada.** Key server-side dedicada: sin prefijo `VITE_` nunca llega al navegador, y sin restricción por referrer funciona desde las funciones de Vercel. |
+| 2 | `VITE_GOOGLE_MAPS_KEY` | La key de Maps que **ya está configurada** para el autocompletado y el mapa. Reutilizarla no requiere tocar nada. |
+| 3 | `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY` | Mismo fallback heredado que `google-maps-loader.ts`. |
+
+En Vercel todas las variables del panel están también en `process.env` dentro de las
+server functions, así que la 2 y la 3 se resuelven en tiempo de ejecución (verificado
+sobre el bundle compilado: las tres siguen siendo `process.env.X`, Vite no las inlinea).
+
+**El aviso que hay que leer antes de confiar en la opción 2.** `VITE_GOOGLE_MAPS_KEY` es
+una key de *navegador*, y lo normal es tenerla restringida por referrer HTTP — una
+restricción que una llamada desde el servidor no puede satisfacer nunca. Si está así,
+Google responde **403 REQUEST_DENIED** y la verificación no funciona. Cuando pasa:
+
+- se registra en los logs de Vercel el aviso `[places] key rejected by Google (401/403)`
+  con la causa probable y el arreglo;
+- un cortocircuito interno deja de hacer llamadas en cuanto ve el primer 403, en vez de
+  gastar 4 s de timeout por lugar;
+- **todo queda `unchecked`, nunca `not_found`**, y el resumen se devuelve como `null`, así
+  que la UI no pinta ni un solo sello. Una key mal configurada no puede hacer que el viaje
+  entero aparezca como "sin confirmar", que sería peor que no verificar nada.
+
+Así que hay dos caminos: o quitar la restricción por referrer de la key de Maps (la
+expone a uso ajeno, no recomendado), o crear en Google Cloud una key aparte restringida
+por IP —o sin restringir— y ponerla en `GOOGLE_PLACES_KEY`. La segunda es la buena.
+
+En cualquier caso requiere **Places API (New)** habilitada en el proyecto de Google Cloud.
+Sin ninguna de las tres variables, todo el módulo se salta y la app se comporta
+exactamente como antes.
+
+### 2.6 `checked` cuenta solo lo que de verdad se comprobó
+
+Un fallo de red y un "Google no lo encuentra" no son la misma información, y colapsarlos
+sería justo la clase de mentira que este módulo existe para evitar. Por eso la búsqueda
+distingue *"la API contestó"* de *"no pudimos preguntar"*:
+
+- `verified` + `not_found` = `checked` — lugares sobre los que Places sí se pronunció.
+- `unchecked` queda **fuera** de `checked`: tope de búsquedas, timeout, red o key
+  rechazada. Si no se llegó a comprobar nada, no se guarda resumen, para que el pie del
+  itinerario no diga "0 de 0 confirmados".
 
 ---
 
@@ -408,22 +445,71 @@ ambiente".
 
 ---
 
-## 6. Qué queda pendiente
+## 6. La migración `transport`, paso a paso
 
-1. **Ejecutar el harness con `ANTHROPIC_API_KEY`** contra `claude-haiku-4-5`. Es la medición
-   que falta: todo lo de arriba demuestra que el prompt pide lo correcto, no que Haiku lo
-   cumpla. Es el paso que más información daría por menos esfuerzo.
-2. **Decidir sobre Places** con la tarifa vigente delante (§2.4). Si el coste no sale,
-   filtrar por categoría es el recorte con mejor relación valor/esfuerzo.
-3. **Caché persistente de lugares** entre itinerarios, si Places se activa.
-4. **Migración `transport`** (`supabase/migrations/20260825120000_trip_transport_mode.sql`)
-   pendiente de aplicar en producción. Hasta entonces el código cae al fallback y el modo
-   de transporte es "mixto" para todo el mundo — es decir, el requisito 4 funciona pero con
-   la geometría genérica en vez de la del modo elegido.
+`supabase/migrations/20260825120000_trip_transport_mode.sql` **sigue sin aplicar en
+producción**, y no se pudo aplicar desde el contenedor de desarrollo: no hay credenciales
+de Supabase en el entorno y la política de red del proxy bloquea tanto
+`ximaionsoresfmykjdsa.supabase.co` como `api.supabase.com` (403 al CONNECT). Es un paso
+que hay que dar desde una máquina con acceso al proyecto.
+
+Lo que **sí** queda hecho por el lado del código, para que aplicarla sea lo único que
+falte:
+
+- `transport` añadido a los tipos generados de Supabase (`Row`, `Insert`, `Update`), lo que
+  permitió **quitar el casteo `as never`** del `insert` de `createTrip`: el payload entero
+  vuelve a estar tipado de verdad.
+- Comprobado que no hace falta tocar permisos. El `GRANT` a nivel de columna que
+  restringiría esto vive en `RLS_FIXES.sql`, que es un **borrador sin aplicar** ("NO
+  APLICADO TODAVÍA"), y aun si se aplicara solo limita `UPDATE`: `transport` únicamente se
+  escribe en el `INSERT` de `createTrip`.
+- Comprobado que **no choca con `travel_mode`**, que a pesar del nombre es el estado del
+  viaje (`'planning'`), no el medio de transporte.
+
+**Cómo aplicarla** — cualquiera de las dos:
+
+```bash
+# A) Con la CLI, desde una máquina con acceso al proyecto
+supabase link --project-ref ximaionsoresfmykjdsa
+supabase db push
+```
+
+```sql
+-- B) Pegando esto en el SQL editor de Supabase. Es idempotente:
+--    volver a ejecutarlo no hace nada.
+ALTER TABLE public.trips
+  ADD COLUMN IF NOT EXISTS transport TEXT;
+```
+
+Después conviene crear **un viaje de prueba** y confirmar en los logs de Vercel que ya no
+aparece `[createTrip] optional columns missing, retrying without them`. Ese aviso es
+exactamente la señal de que el fallback sigue activo.
+
+Hasta que se aplique, nada se rompe: el `insert` falla, el fallback reintenta sin las
+columnas opcionales y el viaje se crea igual — pero el modo de transporte se pierde y el
+requisito 4 funciona con la geometría genérica en vez de la del modo elegido.
 
 ---
 
-## 7. Ficheros
+## 7. Qué queda pendiente
+
+1. **Aplicar la migración `transport`** (§6). Es el único paso bloqueado por falta de
+   acceso, y el que desbloquea la geometría por modo de transporte.
+2. **Ejecutar el harness con `ANTHROPIC_API_KEY`** contra `claude-haiku-4-5`. Es la medición
+   que falta: todo lo de arriba demuestra que el prompt pide lo correcto, no que Haiku lo
+   cumpla. Es el paso que más información daría por menos esfuerzo.
+3. **Confirmar que la key de Google vale desde el servidor** (§2.5). La verificación ya
+   coge sola `VITE_GOOGLE_MAPS_KEY`, pero si esa key está restringida por referrer HTTP
+   —lo normal en una key de navegador— Google la rechazará con 403 y todo quedará
+   `unchecked`. Se ve en los logs de Vercel al primer viaje generado. El arreglo es una key
+   server-side en `GOOGLE_PLACES_KEY`.
+4. **Decidir sobre el coste de Places** con la tarifa vigente delante (§2.4). Si no sale,
+   filtrar por categoría es el recorte con mejor relación valor/esfuerzo.
+5. **Caché persistente de lugares** entre itinerarios, si Places se queda activo.
+
+---
+
+## 8. Ficheros
 
 **Nuevos**
 
@@ -437,9 +523,11 @@ ambiente".
 
 **Modificados**
 
-- `src/lib/itinerary.functions.ts` — usa el constructor extraído; verifica antes de guardar
+- `src/lib/itinerary.functions.ts` — usa el constructor extraído; verifica antes de guardar;
+  `insert` de `createTrip` sin el casteo `as never`
 - `src/lib/itinerary-edit.functions.ts` — vuelve a verificar tras editar
-- `src/lib/itinerary-shared.ts` — tipos de verificación
+- `src/lib/itinerary-shared.ts` — tipos de verificación, con `unchecked` en el resumen
+- `src/integrations/supabase/types.ts` — columna `transport` en `Row`/`Insert`/`Update`
 - `src/lib/share.functions.ts` — la verificación viaja al itinerario público
 - `src/routes/_authenticated/my-trip.$tripId.tsx` — sellos, enlaces por `place_id`, nota de IA
 - `src/routes/trip.$slug.tsx` — lo mismo en la página compartida

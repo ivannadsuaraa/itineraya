@@ -20,9 +20,9 @@
 //  3. Coste acotado y visible. Cada búsqueda se paga, así que se deduplica,
 //     se cachea y hay un tope duro de búsquedas por itinerario.
 //
-// Activación: variable de entorno GOOGLE_PLACES_KEY (server-side; sin prefijo
-// VITE_ para que nunca llegue al navegador). Sin ella todo esto se salta.
-// Requiere "Places API (New)" habilitada en el proyecto de Google Cloud.
+// Activación: cualquiera de las keys de resolvePlacesKey() más abajo. Sin
+// ninguna, todo esto se salta. Requiere "Places API (New)" habilitada en el
+// proyecto de Google Cloud.
 
 import type {
   ParsedItinerary,
@@ -211,15 +211,60 @@ type PlacesResult = {
   formattedAddress?: string;
 };
 
-export function isPlaceVerificationEnabled(): boolean {
-  return !!process.env.GOOGLE_PLACES_KEY;
+/**
+ * Key con la que hablar con Places, por orden de preferencia:
+ *
+ *  1. `GOOGLE_PLACES_KEY` — key server-side dedicada. La preferida: sin
+ *     prefijo VITE_ nunca llega al navegador, y al no estar restringida por
+ *     referrer funciona desde las funciones de Vercel.
+ *  2. `VITE_GOOGLE_MAPS_KEY` — la key de Maps que ya usa el front para el
+ *     autocompletado y el mapa del viaje. En Vercel todas las variables del
+ *     panel están también en `process.env` dentro de las server functions, así
+ *     que se puede reutilizar sin configurar nada nuevo.
+ *  3. `VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY` — mismo fallback
+ *     heredado que google-maps-loader.ts, para entornos sin migrar.
+ *
+ * OJO con 2 y 3: son keys de navegador y lo normal es tenerlas restringidas
+ * por referrer HTTP, restricción que una llamada desde el servidor no puede
+ * satisfacer — Google responde 403 REQUEST_DENIED. Si pasa eso lo verás en los
+ * logs con el aviso de abajo, y la solución es o bien añadir una key
+ * server-side en `GOOGLE_PLACES_KEY` (restringida por IP o sin restringir),
+ * o bien quitar la restricción por referrer de la key de Maps. Mientras tanto
+ * los lugares quedan "unchecked", nunca "not_found": una key mal configurada
+ * no puede hacer que el viaje entero se pinte como no confirmado.
+ */
+function resolvePlacesKey(): string | undefined {
+  return (
+    process.env.GOOGLE_PLACES_KEY ||
+    process.env.VITE_GOOGLE_MAPS_KEY ||
+    process.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ||
+    undefined
+  );
 }
+
+export function isPlaceVerificationEnabled(): boolean {
+  return !!resolvePlacesKey();
+}
+
+/**
+ * Resultado de una búsqueda, distinguiendo dos cosas que NO son lo mismo:
+ *
+ *  - `ok: true` — Places contestó. `place` es el mejor resultado, o null si de
+ *    verdad no hay ninguno. Esto sí es señal sobre el lugar.
+ *  - `ok: false` — no pudimos preguntar (red, timeout, key rechazada, cuota).
+ *    Esto no dice nada sobre el lugar y debe acabar en "unchecked".
+ *
+ * Colapsar ambos casos en null haría que una key mal configurada marcase todo
+ * el itinerario como "no encontrado", que es justo la mentira que este módulo
+ * existe para evitar.
+ */
+type Lookup = { ok: true; place: PlacesResult | null } | { ok: false; auth: boolean };
 
 async function searchText(
   textQuery: string,
   key: string,
   bias: [number, number] | null,
-): Promise<PlacesResult | null> {
+): Promise<Lookup> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
@@ -243,17 +288,19 @@ async function searchText(
       signal: controller.signal,
     });
     if (!res.ok) {
-      // 403 suele ser "Places API (New) no habilitada" y 429 cuota agotada:
-      // ambos son problemas de configuración que deben verse en los logs de
-      // Vercel en vez de degradar en silencio a "sin verificar" para siempre.
+      // 401/403 = key rechazada (restringida por referrer, o Places API (New)
+      // sin habilitar); 429 = cuota agotada. Todos son problemas de
+      // configuración que deben verse en los logs de Vercel en vez de
+      // degradar en silencio.
+      const auth = res.status === 401 || res.status === 403;
       console.warn(`[places] ${res.status} for "${textQuery}"`);
-      return null;
+      return { ok: false, auth };
     }
     const data = (await res.json()) as { places?: PlacesResult[] };
-    return data.places?.[0] ?? null;
+    return { ok: true, place: data.places?.[0] ?? null };
   } catch {
     // Aborto por timeout o fallo de red: quien llama lo traduce a "unchecked".
-    return null;
+    return { ok: false, auth: false };
   } finally {
     clearTimeout(timer);
   }
@@ -308,10 +355,14 @@ export async function verifyItineraryPlaces(
   itinerary: ParsedItinerary,
   destination: string,
 ): Promise<VerificationSummary | null> {
-  const key = process.env.GOOGLE_PLACES_KEY;
+  const key = resolvePlacesKey();
   if (!key) return null;
 
   const deadline = Date.now() + TOTAL_BUDGET_MS;
+  // Se levanta en cuanto Google rechaza la key. A partir de ahí no tiene
+  // sentido gastar 4 s de timeout por lugar para recibir el mismo 403: el
+  // resto queda "unchecked" de inmediato.
+  let keyRejected = false;
 
   try {
     const activities = itinerary.days.flatMap((d) => d.activities ?? []);
@@ -337,10 +388,22 @@ export async function verifyItineraryPlaces(
     // Geocodificamos el destino con la propia Places API (una búsqueda) para
     // sesgar el resto y poder medir distancias. Si falla, seguimos sin sesgo:
     // los nombres siguen incluyendo la ciudad, así que aún sirve de algo.
-    const destResult = await searchText(destination, key, null);
+    const destLookup = await searchText(destination, key, null);
+    if (!destLookup.ok && destLookup.auth) {
+      // La primera llamada ya rebota: no hay nada que verificar y avisamos con
+      // la causa más probable para que se arregle en vez de quedarse así.
+      console.warn(
+        "[places] key rejected by Google (401/403). Si estás usando la key de " +
+          "Maps del front, lo normal es que esté restringida por referrer HTTP y " +
+          "no valga desde el servidor: define GOOGLE_PLACES_KEY con una key " +
+          "server-side, o quita esa restricción. Itinerario sin verificar.",
+      );
+      return null;
+    }
+    const destPlace = destLookup.ok ? destLookup.place : null;
     const destCoords: [number, number] | null =
-      destResult?.location?.latitude != null && destResult.location.longitude != null
-        ? [destResult.location.latitude, destResult.location.longitude]
+      destPlace?.location?.latitude != null && destPlace.location.longitude != null
+        ? [destPlace.location.latitude, destPlace.location.longitude]
         : null;
 
     const toCheck = unique.slice(0, MAX_LOOKUPS_PER_ITINERARY);
@@ -353,14 +416,27 @@ export async function verifyItineraryPlaces(
     let verified = 0;
     let notFound = 0;
     let checked = 0;
+    let unchecked = 0;
 
     await mapWithConcurrency(toCheck, CONCURRENCY, async ({ name, acts }) => {
-      if (Date.now() > deadline) {
+      if (keyRejected || Date.now() > deadline) {
+        unchecked++;
         for (const a of acts) a.verification = { status: "unchecked" };
         return;
       }
 
-      const result = await searchText(`${name}, ${destination}`, key, destCoords);
+      const lookup = await searchText(`${name}, ${destination}`, key, destCoords);
+
+      // No pudimos preguntar: eso no es información sobre el lugar. Queda
+      // "unchecked" y no cuenta como comprobado ni como no encontrado.
+      if (!lookup.ok) {
+        if (lookup.auth) keyRejected = true;
+        unchecked++;
+        for (const a of acts) a.verification = { status: "unchecked" };
+        return;
+      }
+
+      const result = lookup.place;
       checked++;
 
       const returnedName = result?.displayName?.text ?? "";
@@ -395,15 +471,27 @@ export async function verifyItineraryPlaces(
     // Lo que no entró en el tope queda explícitamente "unchecked": la UI debe
     // poder distinguir "no lo encontramos" de "no lo miramos".
     for (const { acts } of unique.slice(MAX_LOOKUPS_PER_ITINERARY)) {
+      unchecked++;
       for (const a of acts) a.verification = { status: "unchecked" };
     }
 
-    console.log(`[places] ${destination}: ${verified}/${checked} verified, ${notFound} not found`);
+    // Si no llegamos a comprobar nada, no hay resumen que enseñar: devolver
+    // checked: 0 haría que la UI dijese "0 de 0 verificados", que suena peor
+    // que no decir nada.
+    if (checked === 0) {
+      console.warn(`[places] ${destination}: no lookups completed, leaving itinerary unverified`);
+      return null;
+    }
+
+    console.log(
+      `[places] ${destination}: ${verified}/${checked} verified, ${notFound} not found, ${unchecked} unchecked`,
+    );
 
     return {
       checked,
       verified,
       not_found: notFound,
+      unchecked,
       checked_at: new Date().toISOString(),
     };
   } catch (e) {
