@@ -387,6 +387,7 @@ export const generateItinerary = createServerFn({ method: "POST" })
     const verificationSummary = await verifyItineraryPlaces(
       parsed as unknown as ParsedItinerary,
       trip.destination,
+      lang,
     );
     if (verificationSummary) {
       (parsed as unknown as ParsedItinerary).verification_summary = verificationSummary;

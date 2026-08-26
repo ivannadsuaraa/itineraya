@@ -49,10 +49,13 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Plan gate
+    // Plan gate. Traemos también el idioma: la re-verificación de Places de
+    // más abajo lo necesita para pedirle a Google los nombres en el idioma del
+    // itinerario. Sin él Google responde en inglés, no casaría casi nada y una
+    // simple edición borraría los sellos que la generación sí consiguió.
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, language")
       .eq("id", userId)
       .maybeSingle();
     const plan = (profile as { plan?: string } | null)?.plan ?? "free";
@@ -302,9 +305,15 @@ REQUISITOS:
     // esto, editar un viaje borraría silenciosamente todos los sellos de
     // "verificado" — y un sello que desaparece daña más la confianza que uno
     // que nunca estuvo. Volvemos a cruzar contra Places (no-op sin key).
+    const editLang = ((profile as { language?: string } | null)?.language ?? "")
+      .toLowerCase()
+      .slice(0, 2);
     const verificationSummary = await verifyItineraryPlaces(
       itineraryOnly as unknown as ParsedItinerary,
       trip.destination,
+      // El prompt de edición de arriba es español fijo, así que ese es el
+      // idioma real del itinerario cuando el perfil no dice otra cosa.
+      editLang || "es",
     );
     if (verificationSummary) {
       (itineraryOnly as unknown as ParsedItinerary).verification_summary = verificationSummary;
