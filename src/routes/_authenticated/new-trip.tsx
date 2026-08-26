@@ -178,14 +178,12 @@ function NewTripPage() {
         )}
         <div className="-mt-8 grid gap-5 sm:grid-cols-2">
           <ModeCard
-            emoji="✅"
             icon={<MapPin className="h-7 w-7" />}
             title={t("newTrip.knowTitle")}
             description={t("newTrip.knowDesc")}
             onClick={() => handlePick("/onboarding")}
           />
           <ModeCard
-            emoji="🌍"
             icon={<Compass className="h-7 w-7" />}
             title={t("newTrip.inspireTitle")}
             description={t("newTrip.inspireDesc")}
@@ -277,14 +275,12 @@ function NewTripPage() {
 }
 
 function ModeCard({
-  emoji,
   icon,
   title,
   description,
   onClick,
   highlight,
 }: {
-  emoji: string;
   icon: React.ReactNode;
   title: string;
   description: string;
@@ -311,10 +307,9 @@ function ModeCard({
         {icon}
       </div>
       <div>
-        <div className="text-3xl">{emoji}</div>
         <h3
           className={
-            "mt-1 font-display text-xl font-bold " + (highlight ? "text-white" : "text-slate-900")
+            "font-display text-xl font-bold " + (highlight ? "text-white" : "text-slate-900")
           }
         >
           {title}

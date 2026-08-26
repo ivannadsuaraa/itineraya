@@ -555,6 +555,15 @@
       "clear": "Clear",
       "searching": "Searching…",
       "helper": "Search your hotel or click the map to drop the pin."
+    },
+    "transportTitle": "How do you prefer to get around?",
+    "transportSubtitle": "Sets how far apart stops can be and the transport we suggest.",
+    "transport": {
+      "walking": "On foot",
+      "transit": "Public transport",
+      "taxi": "Taxi / rideshare",
+      "car": "Rental car",
+      "mixed": "A bit of everything"
     }
   },
   "trip": {

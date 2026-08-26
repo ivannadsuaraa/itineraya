@@ -49,7 +49,6 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 import { isPaymentsConfigured } from "@/lib/stripe";
 import { TRIP_PASS_PRICE_ID } from "@/lib/trip-pass";
 import { PageTransition } from "@/components/ui/PageTransition";
-import { ReadingProgress } from "@/components/ui/ReadingProgress";
 import { BoardingPass } from "@/components/airport/BoardingPass";
 import { RevealGroup, RevealItem } from "@/components/ui/ScrollReveal";
 import { geocodeDestination } from "@/lib/geocode";
@@ -433,8 +432,6 @@ function ItineraryPage() {
 
   return (
     <PageTransition className="min-h-dvh bg-slate-50" personality="focus">
-      {/* Progress bar de lectura del itinerario */}
-      <ReadingProgress />
       {/* ── Sticky toolbar ── */}
       <div className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
@@ -549,68 +546,25 @@ function ItineraryPage() {
           />
         </div>
 
-        {/* Mapa prominente en móvil: en desktop vive fijo a la derecha, pero en
-            móvil quedaba escondido tras un botón del toolbar. El panel se
-            "despliega" (clip-path) al entrar en pantalla. */}
-        <motion.button
+        {/* Acceso al mapa en móvil (en desktop el panel vive fijo a la
+            derecha). Antes había aquí una ilustración con una ruta y cuatro
+            paradas inventadas: un mapa falso encima de un itinerario real. */}
+        <button
           type="button"
           onClick={() => setMapModalOpen(true)}
-          initial={reduceMotion ? undefined : { clipPath: "inset(0 0 100% 0 round 16px)" }}
-          whileInView={{ clipPath: "inset(0 0 0% 0 round 16px)" }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.7, ease: EASE_OUT }}
-          className="relative mb-5 block w-full overflow-hidden rounded-2xl text-left shadow-sm ring-1 ring-slate-200 transition hover:shadow-md lg:hidden"
+          className="mb-5 flex w-full items-center justify-between gap-2 rounded-2xl bg-white px-4 py-3.5 text-left shadow-sm ring-1 ring-slate-200 transition hover:shadow-md lg:hidden"
         >
-          <div className="relative h-28 bg-[#EAF4FB]">
-            <svg
-              viewBox="0 0 400 112"
-              className="absolute inset-0 h-full w-full"
-              aria-hidden="true"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0 30 H400 M0 66 H400 M0 96 H400 M80 0 V112 M190 0 V112 M300 0 V112"
-                stroke="#C9E4F5"
-                strokeWidth="2"
-                fill="none"
-              />
-              <path
-                d="M30 88 Q 110 62 160 50 T 280 62 T 375 22"
-                stroke="#1E6B9A"
-                strokeWidth="3"
-                strokeDasharray="7 5"
-                fill="none"
-                strokeLinecap="round"
-              />
-            </svg>
-            {[
-              { x: "6%", y: "72%", n: 1 },
-              { x: "39%", y: "38%", n: 2 },
-              { x: "69%", y: "50%", n: 3 },
-              { x: "92%", y: "14%", n: 4 },
-            ].map((p) => (
-              <span
-                key={p.n}
-                className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-sky-900 text-[10px] font-bold text-white ring-2 ring-white shadow"
-                style={{ left: p.x, top: p.y }}
-              >
-                {p.n}
-              </span>
-            ))}
+          <div>
+            <p className="text-sm font-bold text-slate-900">{t("trip.mapPreviewTitle")}</p>
+            <p className="text-xs text-slate-500">
+              {t("trip.mapPreviewSubtitle", { count: itin.days.length })}
+            </p>
           </div>
-          <div className="flex items-center justify-between gap-2 bg-white px-4 py-3">
-            <div>
-              <p className="text-sm font-bold text-slate-900">{t("trip.mapPreviewTitle")}</p>
-              <p className="text-xs text-slate-500">
-                {t("trip.mapPreviewSubtitle", { count: itin.days.length })}
-              </p>
-            </div>
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-900 px-3.5 py-2 text-xs font-bold text-white">
-              <MapIcon className="h-3.5 w-3.5" />
-              {t("trip.mapPreviewCta")}
-            </span>
-          </div>
-        </motion.button>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-900 px-3.5 py-2 text-xs font-bold text-white">
+            <MapIcon className="h-3.5 w-3.5" />
+            {t("trip.mapPreviewCta")}
+          </span>
+        </button>
 
         <div className="mb-5">
           <PublishToggle tripId={trip.id} />

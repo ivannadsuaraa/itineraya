@@ -117,39 +117,57 @@ export const generateDemoItinerary = createServerFn({ method: "POST" })
       ? `${data.destination} is an inland destination — beach, sea and coastal activities are strictly forbidden.`
       : `Include beach or sea time only if ${data.destination} genuinely has a coastline or a nearby beach, and name the specific real beach. A beach is never the only activity of a day.`;
 
-    const prompt = `You are planning a ${data.nDays}-day trip to ${data.destination} for ${companionMap[data.companion]}. This is their FIRST impression of this product: the itinerary must read as if a knowledgeable friend who actually lives in ${data.destination} planned it — geographically coherent, time-realistic, and built exclusively on places that really exist.
+    const prompt = `You are planning a ${data.nDays}-day trip to ${data.destination} for ${companionMap[data.companion]}. This is their FIRST impression of this product: the itinerary must read as if a knowledgeable friend who actually lives in ${data.destination} wrote it — geographically coherent, time-realistic, and built exclusively on places that really exist.
 
 THE TRAVELER
 - Profile: ${companionMap[data.companion]}, first time in ${data.destination}.
 - Interests: ${interests}.
 - Pace: balanced — 5-6 activities/day, days start around 09:00-09:30.
+- Getting around: mixed — walk within a zone, public transport or a short taxi between zones; anything under 1.2 km is on foot. Name a transit line only when you are certain it exists in ${data.destination} and serves those stops.
 
 OUTPUT LANGUAGE
 ${languageBlock}
 Exception: "place" must always hold the venue's real name in its local language, written exactly as it appears on its sign or on Google Maps — never translated, never approximated.
 
+═══ RULE ZERO — ONLY REAL, VERIFIABLE PLACES ═══
+This rule outranks everything else below. A day with 4 stops that all exist beats a day with 6 where 2 do not. If honouring this rule means a thinner day, write the thinner day.
+
+THE TEST — apply it to every single "place" before you write it: if the traveler typed this exact name into Google Maps in ${data.destination} right now, would the pin land on this venue? Anything short of a confident yes means you may not write that name.
+
+Absolutely forbidden:
+- Inventing a venue name, or reconstructing one you only half-remember.
+- Manufacturing an authentic-sounding name by gluing a generic word to local flavour — "Trattoria da Nonna", "Bar Manolo", "Casa del Mar", "Café Central", "Museo del Vino" — unless that exact establishment genuinely exists in ${data.destination}.
+- Moving a real venue from another city, region or country into this one, or reusing a name that is famous somewhere else.
+- Giving a town or village neighbourhoods, museums, metro lines, rooftop bars or landmarks it does not have. Calibrate to what ${data.destination} really is: a big city has districts, a metro and dozens of museums; a town or village has a handful of real landmarks, a promenade, a church, a market, some beaches or trails and a few well-known places to eat.
+- Presenting opening hours, prices or ticket rules as hard fact. Plan around what is typical and phrase it as typical.
+
+THE FALLBACK — use it whenever you are not certain, instead of guessing. Name a real, unmistakable anchor (a street, square, promenade, market, neighbourhood, park or beach) plus the kind of place to look for there, and put the anchor's real name in "place". Example: title "Comida en el paseo marítimo", place "Paseo Marítimo, ${data.destination}", description "una arrocería de las de toda la vida — busca la que tenga la paellera a la vista". This reads as local knowledge, not as a hedge, and it is always better than a plausible name that does not exist.
+
+WHERE THIS BITES HARDEST — restaurants, bars, cafés and small shops are where invented names creep in; hidden gems are the second. Landmarks, museums, markets, parks, squares, beaches and stations are safer, so let them carry the backbone of each day and use the fallback freely for food and nightlife.
+
+BEFORE YOU FINISH — re-read every "place" you wrote and apply the test again. Replace with the fallback any name you cannot vouch for.
+
 VOICE & TONE
 Write for THIS traveler: a group of friends gets an energetic voice that knows where the night goes; a family gets practical reassurance (short walking legs, early dinners); a couple gets atmosphere and unhurried evenings; a solo traveler gets confident, no-fluff local detail. Every description must be concrete and checkable ("pide el arroz a banda", "sube al atardecer, cuando la luz da de lleno en la fachada") — never filler like "disfruta del ambiente", "empápate de la cultura local" or "un lugar con mucho encanto".
 
 RULES
-1. REAL PLACES — the rule that matters most. Every "place" must be a real, currently open venue in or around ${data.destination} that you could point at on a map. Before writing each stop ask yourself: would this exact name come up on Google Maps in ${data.destination}? If it is not a clear yes, do NOT write it — replace it with something you are sure of (a real street, square, promenade, beach, market or park) plus the type of venue, e.g. "arrocería en el paseo marítimo". Never invent names for restaurants, bars, hotels, museums or shops; never manufacture a plausible-sounding one by gluing a local word onto "Museo/Casa/Bar de…"; never move a real venue from another city into this one. A day with 4 real stops is far better than a day with 6 where 2 do not exist.
-2. SCALE — Calibrate to what ${data.destination} really is. A big city has neighbourhoods, a metro and dozens of museums; a town or village has a handful of real landmarks, a promenade, a church, a market, some beaches or trails and a few well-known places to eat — do not hand it invented neighbourhoods, invented museums or a transit network it does not have. If you genuinely lack real material for ${data.nDays} full days, spend one day on a real, named nearby town, natural park or beach within ~40 km and say how to get there.
-3. GEOGRAPHY — Each day focuses on ONE zone (or two adjacent ones), ordered as a logical walking line or loop: consecutive stops ≤1.2 km apart or directly connected by transit, and the whole day within ~3 km unless transit links the points in under 15 min. Meals stay inside the day's zone. Never cross the destination and come back the same day. Give each day a distinct zone so the trip covers the destination without backtracking.
-4. BEACH — ${beachRule}
-5. SCHEDULE — Chronological order with realistic durations (museum 1.5–2h, meal 1–1.5h, monument 45–60 min, café 20–30 min) and 15–30 min of slack between stops. Respect typical opening hours and closing days (many small museums and shops close Sunday afternoon or Monday). Meal times follow the local dining customs of ${data.destination}.
-6. TRANSPORT — Every activity except the first of each day starts its "description" with a transport line (mode + route + minutes from the previous stop), e.g. "🚶 8 min a pie" | "🚇 Metro L4, 12 min" | "🚌 Bus 24, 15 min". Only name a line or route number if that network genuinely exists in ${data.destination} — in a small town everything is on foot, by local bus or by car. Under 1.2 km is always on foot, never a taxi.
-7. FOOD — At every meal name 1–2 signature dishes worth ordering: the specific thing a local would tell a friend to get, and where possible the real speciality of this destination's region, not the cuisine in general.
-8. HIDDEN GEMS — Include at least 2 genuine non-obvious experiences locals love and most tourists miss (a viewpoint without crowds, a market bar, a workshop, a stretch of coast or trail). They must be real and fit the traveler's interests.
-9. TIPS — Use the optional "tip" field on 1–2 activities per day for a specific, actionable insider tip (best hour to avoid queues, what exactly to order, which entrance to use, where the best photo is). Never generic advice like "lleva calzado cómodo".
-10. LINKS — For "url" build a Google Maps link: https://www.google.com/maps/search/?api=1&query=VENUE+NAME+CITY (spaces as +). Never invent URLs; omit "url" when unsure of the venue.
-11. EVENTS — Mention a festival, fair or public holiday only if it is a well-known recurring event you are confident really takes place in ${data.destination}. Never invent events or their dates.
-12. VOLUME & ARC — Exactly ${data.nDays} days, 5–6 activities each. Day 1 ends with an easy "first wow" (a viewpoint, square or waterfront that makes them feel they have arrived); the final evening closes with a memorable farewell moment.
+1. SCALE — If you genuinely lack real material for ${data.nDays} full days, spend one day on a real, named nearby town, natural park or beach within ~40 km and say how to get there. Never pad with invented stops.
+2. GEOGRAPHY — Each day focuses on ONE zone (or two adjacent ones), ordered as a logical walking line or loop: consecutive stops ≤1.2 km apart or directly connected by transit, and the whole day within ~3 km unless transit links the points in under 15 min. Meals stay inside the day's zone. Never cross the destination and come back the same day. Give each day a distinct zone so the trip covers the destination without backtracking.
+3. BEACH — ${beachRule}
+4. SCHEDULE — Chronological order with realistic durations (museum 1.5–2h, meal 1–1.5h, monument 45–60 min, café 20–30 min) and 15–30 min of slack between stops. Respect typical opening hours and closing days (many small museums and shops close Sunday afternoon or Monday). Meal times follow the local dining customs of ${data.destination}.
+5. TRANSPORT — Every activity except the first of each day starts its "description" with a transport line (mode + route + minutes from the previous stop), e.g. "🚶 8 min a pie" | "🚇 Metro L4, 12 min" | "🚌 Bus 24, 15 min". Only name a line or route number if that network genuinely exists in ${data.destination} — in a small town everything is on foot, by local bus or by car. Under 1.2 km is always on foot, never a taxi.
+6. FOOD — At every meal name 1–2 signature dishes worth ordering: the specific thing a local would tell a friend to get, and where possible the real speciality of this destination's region, not the cuisine in general. RULE ZERO applies — when unsure of the venue, use the fallback.
+7. HIDDEN GEMS — Include at least 2 genuine non-obvious experiences locals love and most tourists miss (a viewpoint without crowds, a market bar, a workshop, a stretch of coast or trail). RULE ZERO applies here with full force — a real, slightly obvious spot beats an invented "secret" one.
+8. TIPS — Use the optional "tip" field on 1–2 activities per day for a specific, actionable insider tip (best hour to avoid queues, what exactly to order, which entrance to use, where the best photo is). Never generic advice like "lleva calzado cómodo".
+9. LINKS — For "url" build a Google Maps search link: https://www.google.com/maps/search/?api=1&query=VENUE+NAME+CITY (spaces as +). When you used the fallback, link the anchor place instead. Never invent URLs; omit "url" when unsure of the venue.
+10. EVENTS — Mention a festival, fair or public holiday only if it is a well-known recurring event you are confident really takes place in ${data.destination}. Never invent events or their dates.
+11. VOLUME & ARC — Exactly ${data.nDays} days, 5–6 activities each. Day 1 ends with an easy "first wow" (a viewpoint, square or waterfront that makes them feel they have arrived); the final evening closes with a memorable farewell moment.
 
 FIELD GUIDE
 - summary: 2 sentences, second person, evocative and specific to THIS trip (destination + their interests) — the first thing they read.
 - title (day): short and evocative, anchored on the real name of the day's zone, neighbourhood or landmark (e.g. "Voramar y el paseo de las villas"), never "Día 2". subtitle: one sentence recapping the day's arc.
 - image_query: 2–3 English words for a photo of the day's area, always including the real place name (e.g. "benicassim beach promenade").
-- time: "HH:MM" 24h. emoji: exactly one emoji. title (activity): 3–6 words. description: 1–2 lines. place: the exact real name. tip: only when genuinely useful.`;
+- time: "HH:MM" 24h. emoji: exactly one emoji. title (activity): 3–6 words. description: 1–2 lines. place: the exact real name (or the real anchor, when using the fallback). tip: only when genuinely useful.`;
 
     const t0 = Date.now();
     console.log(`[demo] generation start — ${data.destination}, ${data.nDays} days, ip ${ip}`);

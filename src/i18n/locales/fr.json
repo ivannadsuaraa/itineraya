@@ -555,6 +555,15 @@
       "clear": "Effacer",
       "searching": "Recherche…",
       "helper": "Recherchez votre hôtel ou cliquez sur la carte pour placer l'épingle."
+    },
+    "transportTitle": "Comment préférez-vous vous déplacer ?",
+    "transportSubtitle": "Détermine la distance entre les étapes et les transports proposés.",
+    "transport": {
+      "walking": "À pied",
+      "transit": "Transports en commun",
+      "taxi": "Taxi / VTC",
+      "car": "Voiture de location",
+      "mixed": "Un peu de tout"
     }
   },
   "trip": {

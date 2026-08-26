@@ -555,6 +555,15 @@
       "clear": "Limpar",
       "searching": "Buscando…",
       "helper": "Busque seu hotel ou clique no mapa para colocar o pin."
+    },
+    "transportTitle": "Como prefere se deslocar?",
+    "transportSubtitle": "Define a distância entre paradas e o transporte que sugerimos.",
+    "transport": {
+      "walking": "A pé",
+      "transit": "Transporte público",
+      "taxi": "Táxi / app",
+      "car": "Carro alugado",
+      "mixed": "Um pouco de tudo"
     }
   },
   "trip": {

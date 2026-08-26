@@ -5,17 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { EASE_OUT } from "@/lib/motion";
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  Loader2,
-  Sparkles,
-  Info,
-  MapPin,
-  CalendarDays,
-  Plane,
-} from "lucide-react";
-import { TakeoffOverlay } from "@/components/airport/TakeoffOverlay";
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, Info, MapPin, CalendarDays } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { differenceInCalendarDays, format } from "date-fns";
 import { es as esLocale, enUS } from "date-fns/locale";
@@ -44,6 +34,7 @@ type FormData = {
   departureTime: string;
   companion: string;
   pace: string;
+  transport: string;
   firstVisit: boolean;
   budgetRange: [number, number];
   tripStyle: string;
@@ -187,8 +178,6 @@ function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [destError, setDestError] = useState(false);
   const destBoxRef = useRef<HTMLDivElement>(null);
-  // Al terminar el wizard: animación de despegue antes de la pantalla de carga.
-  const [takeoffTripId, setTakeoffTripId] = useState<string | null>(null);
   const [data, setData] = useState<FormData>(() => ({
     destination: prefill?.destination ?? "",
     dateRange: undefined,
@@ -196,6 +185,7 @@ function OnboardingPage() {
     departureTime: "",
     companion: "solo",
     pace: "balanced",
+    transport: "mixed",
     firstVisit: true,
     budgetRange: [800, 2000],
     tripStyle: prefill?.tripType ?? "",
@@ -224,10 +214,11 @@ function OnboardingPage() {
       : 0;
   const exceedsMaxDays = tripDayCount > MAX_TRIP_DAYS;
 
-  // 8 pasos: destino → fechas → compañía → ritmo → presupuesto → gustos
-  // → alojamiento → restricciones. Un concepto por pantalla. Solo destino y
-  // fechas son obligatorios; el resto ya trae valores por defecto razonables.
-  const totalSteps = 8;
+  // 6 pantallas, una por tema: destino → fechas → con quién y a qué ritmo
+  // → qué te gusta → presupuesto y cómo te mueves → alojamiento y
+  // restricciones. Solo destino y fechas son obligatorios; el resto ya trae
+  // valores por defecto razonables.
+  const totalSteps = 6;
   // El paso de destino nunca deshabilita "Siguiente": se valida al pulsar
   // dentro de next(), con error inline. En iOS el onChange del autocompletado
   // puede no dispararse (autofill/diccionario) dejando el estado vacío aunque
@@ -294,6 +285,7 @@ function OnboardingPage() {
           hotelLat: data.hotel?.lat ?? null,
           hotelLng: data.hotel?.lng ?? null,
           pace: data.pace as "relaxed" | "balanced" | "intense",
+          transport: data.transport as "walking" | "transit" | "taxi" | "car" | "mixed",
           firstVisit: data.firstVisit,
           dietary: data.dietary as never,
           geoLat: coords ? coords[0] : null,
@@ -304,10 +296,7 @@ function OnboardingPage() {
       // Si Nominatim no llegó a tiempo, geocodifica y persiste en segundo
       // plano — la navegación es SPA, así que la petición sigue viva.
       if (!coords) void geocodeAndPersistTrip(trip.id, data.destination.trim());
-      // Despegue: la pantalla simula la aceleración del avión antes de la
-      // pantalla de carga (TakeoffOverlay navega en onDone). Con
-      // reduced-motion el overlay llama a onDone inmediatamente.
-      setTakeoffTripId(trip.id);
+      navigate({ to: "/my-trip/$tripId", params: { tripId: trip.id } });
     } catch (error) {
       console.error("[onboarding] unexpected error", error);
       toast.error(error instanceof Error ? error.message : t("onboarding.saveFail"));
@@ -321,11 +310,6 @@ function OnboardingPage() {
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-gradient-to-br from-[#D6EAF8] via-white to-[#B8D4E8]">
-      {takeoffTripId && (
-        <TakeoffOverlay
-          onDone={() => navigate({ to: "/my-trip/$tripId", params: { tripId: takeoffTripId } })}
-        />
-      )}
       <div className="pointer-events-none absolute inset-0">
         <div
           className="absolute -top-32 -left-32 h-96 w-96 rounded-full opacity-50 blur-3xl"
@@ -364,16 +348,9 @@ function OnboardingPage() {
           </div>
         </div>
 
-        {/* "Tarjeta de embarque": el viaje va tomando forma según respondes.
-            Aparece en cuanto hay destino y acumula fechas y compañía. */}
+        {/* Resumen vivo: el viaje va tomando forma según respondes. */}
         {step > 0 && data.destination.trim().length > 1 && (
-          <div className="mb-6 flex items-center gap-3 overflow-hidden rounded-2xl bg-white/85 p-2.5 pr-4 shadow-lg ring-1 ring-white/60 backdrop-blur-xl">
-            <img
-              src={`https://loremflickr.com/240/240/${encodeURIComponent(data.destination.split(",")[0].trim() + ",travel")}`}
-              alt=""
-              aria-hidden
-              className="h-14 w-14 shrink-0 rounded-xl object-cover"
-            />
+          <div className="mb-6 flex items-center gap-3 overflow-hidden rounded-2xl bg-white/85 px-4 py-3 shadow-sm ring-1 ring-white/60 backdrop-blur-xl">
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-bold uppercase tracking-widest text-sky-500">
                 {t("onboarding.tripStripLabel")}
@@ -400,9 +377,6 @@ function OnboardingPage() {
                 )}
               </div>
             </div>
-            <span className="hidden text-2xl sm:block" aria-hidden>
-              ✈️
-            </span>
           </div>
         )}
 
@@ -434,22 +408,7 @@ function OnboardingPage() {
         >
           {step === 0 && (
             <StepShell title={t("onboarding.destTitle")} subtitle={t("onboarding.destSubtitle")}>
-              {/* Mostrador de check-in: marco punteado tipo tarjeta de
-                  embarque alrededor del buscador de destino. */}
-              <div
-                ref={destBoxRef}
-                className="rounded-2xl border border-dashed border-[#1E6B9A]/40 bg-white/60 p-4"
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="flex items-center gap-2 font-flight text-[10px] font-bold uppercase tracking-[0.28em] text-[#1E6B9A]">
-                    <Plane className="h-3.5 w-3.5 -rotate-45" />
-                    CHECK-IN
-                  </span>
-                  <span
-                    aria-hidden
-                    className="h-px w-24 bg-[repeating-linear-gradient(90deg,rgba(30,107,154,0.4)_0_8px,transparent_8px_16px)]"
-                  />
-                </div>
+              <div ref={destBoxRef}>
                 <DestinationAutocomplete
                   value={data.destination}
                   onChange={(destination) => {
@@ -505,31 +464,30 @@ function OnboardingPage() {
 
           {step === 2 && (
             <StepShell title={t("onboarding.compTitle")} subtitle={t("onboarding.compSubtitle")}>
-              {/* Códigos PAX estilo tarjeta de embarque en cada opción */}
               <OptionGrid
                 value={data.companion}
                 onChange={(companion) => setData((prevData) => ({ ...prevData, companion }))}
                 options={[
-                  ["solo", t("onboarding.compSolo"), "🧭", "1 PAX"],
-                  ["pareja", t("onboarding.compPair"), "💙", "2 PAX"],
-                  ["amigos", t("onboarding.compFriends"), "🎒", "3+ PAX"],
-                  ["familia", t("onboarding.compFamily"), "🏡", "FAMILY"],
+                  ["solo", t("onboarding.compSolo"), "🧭"],
+                  ["pareja", t("onboarding.compPair"), "💙"],
+                  ["amigos", t("onboarding.compFriends"), "🎒"],
+                  ["familia", t("onboarding.compFamily"), "🏡"],
                 ]}
               />
-            </StepShell>
-          )}
-
-          {step === 3 && (
-            <StepShell title={t("onboarding.paceTitle")} subtitle={t("onboarding.paceSubtitle")}>
-              <OptionGrid
-                value={data.pace}
-                onChange={(pace) => setData((prevData) => ({ ...prevData, pace }))}
-                options={[
-                  ["relaxed", t("onboarding.paceRelaxed"), "🌿"],
-                  ["balanced", t("onboarding.paceBalanced"), "⚖️"],
-                  ["intense", t("onboarding.paceIntense"), "⚡"],
-                ]}
-              />
+              <div>
+                <p className="mb-3 text-sm font-semibold text-sky-800">
+                  {t("onboarding.paceTitle")}
+                </p>
+                <OptionGrid
+                  value={data.pace}
+                  onChange={(pace) => setData((prevData) => ({ ...prevData, pace }))}
+                  options={[
+                    ["relaxed", t("onboarding.paceRelaxed"), "🌿"],
+                    ["balanced", t("onboarding.paceBalanced"), "⚖️"],
+                    ["intense", t("onboarding.paceIntense"), "⚡"],
+                  ]}
+                />
+              </div>
               <div>
                 <p className="mb-3 text-sm font-semibold text-sky-800">
                   {t("onboarding.firstVisitTitle", { destination: data.destination })}
@@ -549,19 +507,7 @@ function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 4 && (
-            <StepShell
-              title={t("onboarding.budgetTitle")}
-              subtitle={t("onboarding.budgetSubtitle")}
-            >
-              <BudgetRangeSlider
-                value={data.budgetRange}
-                onChange={(budgetRange) => setData((prevData) => ({ ...prevData, budgetRange }))}
-              />
-            </StepShell>
-          )}
-
-          {step === 5 && (
+          {step === 3 && (
             <StepShell title={t("onboarding.styleTitle")} subtitle={t("onboarding.styleSubtitle")}>
               <div>
                 <p className="mb-3 text-xs font-semibold text-sky-600">
@@ -612,7 +558,41 @@ function OnboardingPage() {
             </StepShell>
           )}
 
-          {step === 6 && (
+          {step === 4 && (
+            <StepShell
+              title={t("onboarding.budgetTitle")}
+              subtitle={t("onboarding.budgetSubtitle")}
+            >
+              <BudgetRangeSlider
+                value={data.budgetRange}
+                onChange={(budgetRange) => setData((prevData) => ({ ...prevData, budgetRange }))}
+              />
+              {/* Cómo se mueve el viajero: decide a qué distancia pueden estar
+                  dos paradas del mismo día y qué transporte cita el itinerario. */}
+              <div>
+                <p className="text-sm font-semibold text-sky-800">
+                  {t("onboarding.transportTitle")}
+                </p>
+                <p className="mb-3 text-xs font-medium text-sky-600">
+                  {t("onboarding.transportSubtitle")}
+                </p>
+                <OptionGrid
+                  compact
+                  value={data.transport}
+                  onChange={(transport) => setData((prevData) => ({ ...prevData, transport }))}
+                  options={[
+                    ["walking", t("onboarding.transport.walking"), "🚶"],
+                    ["transit", t("onboarding.transport.transit"), "🚇"],
+                    ["taxi", t("onboarding.transport.taxi"), "🚕"],
+                    ["car", t("onboarding.transport.car"), "🚗"],
+                    ["mixed", t("onboarding.transport.mixed"), "🔀"],
+                  ]}
+                />
+              </div>
+            </StepShell>
+          )}
+
+          {step === 5 && (
             <StepShell title={t("onboarding.accomTitle")} subtitle={t("onboarding.accomSubtitle")}>
               <OptionGrid
                 value={data.hasAccommodation ? "yes" : "no"}
@@ -629,19 +609,12 @@ function OnboardingPage() {
                 ]}
               />
               {data.hasAccommodation && (
-                <div className="mt-4">
-                  <HotelMapPicker
-                    destination={data.destination}
-                    value={data.hotel}
-                    onChange={(hotel) => setData((prevData) => ({ ...prevData, hotel }))}
-                  />
-                </div>
+                <HotelMapPicker
+                  destination={data.destination}
+                  value={data.hotel}
+                  onChange={(hotel) => setData((prevData) => ({ ...prevData, hotel }))}
+                />
               )}
-            </StepShell>
-          )}
-
-          {step === 7 && (
-            <StepShell title={t("onboarding.avoidTitle")} subtitle={t("onboarding.avoidSubtitle")}>
               <div>
                 <p className="mb-3 text-xs font-semibold text-sky-600">
                   {t("onboarding.dietaryTitle")}
@@ -674,21 +647,25 @@ function OnboardingPage() {
                   })}
                 </div>
               </div>
-              <textarea
-                value={data.avoid}
-                onChange={(event) =>
-                  setData((prevData) => ({ ...prevData, avoid: event.target.value }))
-                }
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    void finish();
+              <div>
+                <p className="mb-3 text-xs font-semibold text-sky-600">
+                  {t("onboarding.avoidTitle")}
+                </p>
+                <textarea
+                  value={data.avoid}
+                  onChange={(event) =>
+                    setData((prevData) => ({ ...prevData, avoid: event.target.value }))
                   }
-                }}
-                placeholder={t("onboarding.avoidPh")}
-                className="min-h-32 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
-                autoFocus
-              />
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      void finish();
+                    }
+                  }}
+                  placeholder={t("onboarding.avoidPh")}
+                  className="min-h-24 w-full rounded-2xl border border-sky-200 bg-white/80 p-4 text-base text-sky-900 outline-none transition focus:border-[#1E6B9A] focus:ring-4 focus:ring-sky-100 sm:text-sm"
+                />
+              </div>
             </StepShell>
           )}
         </motion.div>
@@ -782,7 +759,7 @@ function OptionGrid({
 }) {
   return (
     <div className={cn("grid gap-3", compact ? "grid-cols-2" : "sm:grid-cols-2")}>
-      {options.map(([id, label, icon, code]) => (
+      {options.map(([id, label, icon]) => (
         <button
           key={id}
           type="button"
@@ -795,16 +772,6 @@ function OptionGrid({
               : "border-sky-200 bg-white/70 text-sky-900 hover:border-sky-300 hover:bg-white hover:shadow-sm",
           )}
         >
-          {code && (
-            <span
-              className={cn(
-                "absolute right-3 top-3 rounded-md px-1.5 py-0.5 font-flight text-[9px] font-bold uppercase tracking-[0.18em]",
-                value === id ? "bg-white/20 text-white" : "bg-sky-100 text-sky-700",
-              )}
-            >
-              {code}
-            </span>
-          )}
           <span className={compact ? "text-xl" : "text-2xl"}>{icon}</span>
           <span className={cn("block text-sm font-bold", !compact && "mt-2.5")}>{label}</span>
         </button>
