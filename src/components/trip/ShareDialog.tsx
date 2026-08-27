@@ -36,7 +36,15 @@ interface Props {
   endDate?: string | null;
 }
 
-export function ShareDialog({ open, onClose, tripId, destination, days, startDate, endDate }: Props) {
+export function ShareDialog({
+  open,
+  onClose,
+  tripId,
+  destination,
+  days,
+  startDate,
+  endDate,
+}: Props) {
   const { t } = useTranslation();
   const enable = useServerFn(enableTripShare);
   const [loading, setLoading] = useState(false);
@@ -95,7 +103,12 @@ export function ShareDialog({ open, onClose, tripId, destination, days, startDat
   };
 
   return (
-    <Drawer.Root open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+    <Drawer.Root
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-md flex-col rounded-t-3xl bg-white outline-none">

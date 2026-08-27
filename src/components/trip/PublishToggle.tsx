@@ -51,8 +51,7 @@ export function PublishToggle({ tripId }: Props) {
     }
   };
 
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://itineraya.com";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://itineraya.com";
   // URL canónica única de compartir (/trip/…): antes ShareDialog y este toggle
   // repartían el tráfico entre /trip y /explore y dividían métricas y SEO.
   const url = slug ? `${origin}/trip/${slug}` : "";
@@ -94,9 +93,7 @@ export function PublishToggle({ tripId }: Props) {
             {isPublic ? <Globe2 className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
           </div>
           <div>
-            <h3 className="font-display text-base font-bold text-sky-900">
-              {t("publish.title")}
-            </h3>
+            <h3 className="font-display text-base font-bold text-sky-900">{t("publish.title")}</h3>
             <p className="mt-0.5 text-sm text-sky-600">{t("publish.subtitle")}</p>
           </div>
         </div>

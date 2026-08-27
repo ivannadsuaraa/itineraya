@@ -18,6 +18,12 @@ const EMAIL_SUBJECTS: Record<string, string> = {
   reauthentication: "Tu código de verificación",
 };
 
+// Cada plantilla declara sus propias props (SignupEmailProps,
+// InviteEmailProps, …) y se invocan con un objeto construido en
+// tiempo de ejecución a partir del payload del hook. Un tipo común no
+// existe: cualquier props concreto es incompatible con los demás por
+// contravarianza. Es el "casteo inevitable" que contempla CLAUDE.md.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
   signup: SignupEmail,
   invite: InviteEmail,
@@ -73,7 +79,12 @@ export const Route = createFileRoute("/email/email/auth/webhook")({
           return Response.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        let payload: any;
+        // El cuerpo lo envía el hook de autenticación de Supabase; se accede
+        // con comprobaciones (payload?.data?.action_type) más abajo.
+        let payload: {
+          data?: { action_type?: string; email?: string; [k: string]: unknown };
+          [k: string]: unknown;
+        };
         try {
           payload = JSON.parse(await request.text());
         } catch (error) {
@@ -84,8 +95,18 @@ export const Route = createFileRoute("/email/email/auth/webhook")({
         if (!payload?.data?.action_type) {
           return Response.json({ success: true, ignored: true });
         }
+        // Sin destinatario no hay nada que enviar. Antes `payload` era `any`,
+        // así que un payload sin `email` llegaba hasta Resend como
+        // `to: [undefined]`; el tipado lo ha sacado a la luz.
+        if (!payload.data.email) {
+          console.error("Auth email hook payload without recipient", {
+            actionType: payload.data.action_type,
+          });
+          return Response.json({ error: "Invalid payload" }, { status: 400 });
+        }
 
         const emailType: string = payload.data.action_type;
+        const recipient: string = payload.data.email;
         const EmailTemplate = EMAIL_TEMPLATES[emailType];
         if (!EmailTemplate) {
           console.error("Unknown email type", { emailType });
@@ -111,28 +132,28 @@ export const Route = createFileRoute("/email/email/auth/webhook")({
         try {
           const result = await resend.emails.send({
             from: FROM_ADDRESS,
-            to: [payload.data.email],
+            to: [recipient],
             subject: EMAIL_SUBJECTS[emailType] || "Notificación",
             html,
             text,
           });
-          if ((result as any).error) {
+          if (result.error) {
             console.error("Resend send error", {
               emailType,
-              email_redacted: redactEmail(payload.data.email),
-              error: (result as any).error,
+              email_redacted: redactEmail(recipient),
+              error: result.error,
             });
             return Response.json({ error: "Failed to send email" }, { status: 500 });
           }
           console.log("Auth email sent via Resend", {
             emailType,
-            email_redacted: redactEmail(payload.data.email),
+            email_redacted: redactEmail(recipient),
           });
           return Response.json({ success: true, sent: true });
         } catch (error) {
           console.error("Resend exception", {
             emailType,
-            email_redacted: redactEmail(payload.data.email),
+            email_redacted: redactEmail(recipient),
             error: error instanceof Error ? error.message : String(error),
           });
           return Response.json({ error: "Failed to send email" }, { status: 500 });

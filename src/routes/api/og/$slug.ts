@@ -56,11 +56,7 @@ function loadFonts(): Promise<FontSpec[]> {
 // hero_image_url = "http://169.254.169.254/..." hacía que el servidor
 // descargase esa URL desde dentro de su red y devolviera el contenido
 // incrustado en el PNG (SSRF).
-const ALLOWED_IMAGE_HOSTS = [
-  "images.unsplash.com",
-  "loremflickr.com",
-  "maps.gstatic.com",
-];
+const ALLOWED_IMAGE_HOSTS = ["images.unsplash.com", "loremflickr.com", "maps.gstatic.com"];
 const ALLOWED_IMAGE_HOST_SUFFIXES = [".supabase.co", ".googleapis.com"];
 
 function isAllowedImageUrl(raw: string): boolean {

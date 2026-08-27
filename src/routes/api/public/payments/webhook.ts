@@ -54,11 +54,17 @@ async function resolveUserId(
   return safeString((customer as Stripe.Customer).metadata?.userId);
 }
 
-async function upsertSubscriptionRow(env: StripeEnv, subscription: Stripe.Subscription, userId: string) {
+async function upsertSubscriptionRow(
+  env: StripeEnv,
+  subscription: Stripe.Subscription,
+  userId: string,
+) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const customerId =
-    typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id ?? null;
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : (subscription.customer?.id ?? null);
 
   const firstItem = subscription.items?.data?.[0];
   const price = firstItem?.price;
@@ -66,7 +72,8 @@ async function upsertSubscriptionRow(env: StripeEnv, subscription: Stripe.Subscr
     price?.lookup_key ??
     safeString((subscription.metadata as Record<string, string> | undefined)?.priceId) ??
     null;
-  const productId = typeof price?.product === "string" ? price.product : price?.product?.id ?? null;
+  const productId =
+    typeof price?.product === "string" ? price.product : (price?.product?.id ?? null);
 
   const periodStart = firstItem?.current_period_start
     ? new Date(firstItem.current_period_start * 1000).toISOString()
@@ -165,9 +172,12 @@ async function grantTripPass(env: StripeEnv, session: Stripe.Checkout.Session, u
     console.error("[payments/webhook] trip_pass_purchases insert failed", insertErr);
     throw new Error(`trip_pass_purchases insert failed: ${insertErr.message}`);
   }
-  const { error: incErr } = await supabaseAdmin.rpc("increment_bonus_trips" as never, {
-    p_user_id: userId,
-  } as never);
+  const { error: incErr } = await supabaseAdmin.rpc(
+    "increment_bonus_trips" as never,
+    {
+      p_user_id: userId,
+    } as never,
+  );
   if (incErr) {
     // La fila del ledger ya existe, así que un reintento chocaría con el índice
     // único y saldría por el `return` de arriba sin llegar a incrementar: el

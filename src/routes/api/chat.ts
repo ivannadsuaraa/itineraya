@@ -83,7 +83,9 @@ export const Route = createFileRoute("/api/chat")({
           .eq("id", userId)
           .maybeSingle();
         const plan = ((profileRow?.plan as string | undefined) ?? "free") as
-          "free" | "viajero" | "explorador";
+          | "free"
+          | "viajero"
+          | "explorador";
         const FREE_DAILY_LIMIT = 10;
         if (plan === "free") {
           // Mismo contador atómico y solo-service-role que el plan de pago. La

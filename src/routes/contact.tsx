@@ -10,7 +10,8 @@ export const Route = createFileRoute("/contact")({
       { title: "Contacto – Itineraya" },
       {
         name: "description",
-        content: "Contacta con el equipo de Itineraya para soporte, privacidad o consultas comerciales.",
+        content:
+          "Contacta con el equipo de Itineraya para soporte, privacidad o consultas comerciales.",
       },
       { property: "og:title", content: "Contacto – Itineraya" },
       { property: "og:description", content: "Estamos aquí para ayudarte." },
@@ -32,7 +33,10 @@ function ContactPage() {
           <BrandLogo linkTo="/" className="h-8 w-auto" />
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <Link to="/" className="inline-flex items-center gap-1 text-sm text-sky-700 hover:text-sky-900">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1 text-sm text-sky-700 hover:text-sky-900"
+            >
               <ArrowLeft className="h-4 w-4" />
               {isEs ? "Volver" : "Back"}
             </Link>
@@ -54,7 +58,9 @@ function ContactPage() {
           <ContactCard
             icon={<Mail className="h-5 w-5" />}
             title={isEs ? "Soporte general" : "General support"}
-            description={isEs ? "Dudas sobre la app, planes o cuenta." : "App, plans or account questions."}
+            description={
+              isEs ? "Dudas sobre la app, planes o cuenta." : "App, plans or account questions."
+            }
             email="hola@itineraya.com"
           />
           <ContactCard

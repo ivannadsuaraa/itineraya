@@ -75,7 +75,14 @@ export const Route = createFileRoute("/_authenticated/my-trip/$tripId")({
 });
 
 type ActivityCategory =
-  "hotel" | "restaurant" | "activity" | "transport" | "sight" | "nightlife" | "shopping" | "other";
+  | "hotel"
+  | "restaurant"
+  | "activity"
+  | "transport"
+  | "sight"
+  | "nightlife"
+  | "shopping"
+  | "other";
 
 type Activity = {
   time: string;
@@ -327,7 +334,9 @@ function ItineraryPage() {
         .maybeSingle();
       setPlan(
         ((profile as { plan?: string } | null)?.plan ?? "free") as
-          "free" | "viajero" | "explorador",
+          | "free"
+          | "viajero"
+          | "explorador",
       );
     })();
   }, []);
@@ -1324,8 +1333,7 @@ function ActivityRow({
   // detalle que hace desconfiar del resto del itinerario. "unchecked" se deja
   // como estaba: no haber comprobado no es haber descartado.
   const notAVenue = activity.verification?.status === "not_found";
-  const bookingLabel =
-    booking?.kind === "view" || notAVenue ? t("trip.viewVerb") : t("trip.book");
+  const bookingLabel = booking?.kind === "view" || notAVenue ? t("trip.viewVerb") : t("trip.book");
   const CatIcon = getCategoryIcon(activity.category);
   const catColor = getCategoryColor(activity.category);
 

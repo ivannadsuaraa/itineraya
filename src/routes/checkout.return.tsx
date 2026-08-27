@@ -21,7 +21,9 @@ function CheckoutReturn() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
             <CheckCircle2 className="h-9 w-9 text-emerald-600" />
           </div>
-          <h1 className="mt-5 font-display text-2xl font-bold text-sky-900">{t("checkoutReturn.title")}</h1>
+          <h1 className="mt-5 font-display text-2xl font-bold text-sky-900">
+            {t("checkoutReturn.title")}
+          </h1>
           <p className="mt-2 text-sm text-sky-700">{t("checkoutReturn.body")}</p>
           <Link
             to="/dashboard"

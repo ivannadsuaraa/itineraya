@@ -81,7 +81,12 @@ export function DateRangeField({
                 <span className="opacity-40">→</span>
                 <span>{endLabel}</span>
               </div>
-              <div className={cn("mt-1 truncate font-medium text-sky-900", !from && "text-sky-400 font-normal")}>
+              <div
+                className={cn(
+                  "mt-1 truncate font-medium text-sky-900",
+                  !from && "text-sky-400 font-normal",
+                )}
+              >
                 {summary}
               </div>
             </div>

@@ -1,658 +1,650 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
   public: {
     Tables: {
       chat_usage: {
         Row: {
-          message_count: number
-          usage_date: string
-          user_id: string
-        }
+          message_count: number;
+          usage_date: string;
+          user_id: string;
+        };
         Insert: {
-          message_count?: number
-          usage_date?: string
-          user_id: string
-        }
+          message_count?: number;
+          usage_date?: string;
+          user_id: string;
+        };
         Update: {
-          message_count?: number
-          usage_date?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          message_count?: number;
+          usage_date?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       email_send_log: {
         Row: {
-          created_at: string
-          error_message: string | null
-          id: string
-          message_id: string | null
-          metadata: Json | null
-          recipient_email: string
-          status: string
-          template_name: string
-        }
+          created_at: string;
+          error_message: string | null;
+          id: string;
+          message_id: string | null;
+          metadata: Json | null;
+          recipient_email: string;
+          status: string;
+          template_name: string;
+        };
         Insert: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          message_id?: string | null
-          metadata?: Json | null
-          recipient_email: string
-          status: string
-          template_name: string
-        }
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          message_id?: string | null;
+          metadata?: Json | null;
+          recipient_email: string;
+          status: string;
+          template_name: string;
+        };
         Update: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          message_id?: string | null
-          metadata?: Json | null
-          recipient_email?: string
-          status?: string
-          template_name?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          error_message?: string | null;
+          id?: string;
+          message_id?: string | null;
+          metadata?: Json | null;
+          recipient_email?: string;
+          status?: string;
+          template_name?: string;
+        };
+        Relationships: [];
+      };
       email_send_state: {
         Row: {
-          auth_email_ttl_minutes: number
-          batch_size: number
-          id: number
-          retry_after_until: string | null
-          send_delay_ms: number
-          transactional_email_ttl_minutes: number
-          updated_at: string
-        }
+          auth_email_ttl_minutes: number;
+          batch_size: number;
+          id: number;
+          retry_after_until: string | null;
+          send_delay_ms: number;
+          transactional_email_ttl_minutes: number;
+          updated_at: string;
+        };
         Insert: {
-          auth_email_ttl_minutes?: number
-          batch_size?: number
-          id?: number
-          retry_after_until?: string | null
-          send_delay_ms?: number
-          transactional_email_ttl_minutes?: number
-          updated_at?: string
-        }
+          auth_email_ttl_minutes?: number;
+          batch_size?: number;
+          id?: number;
+          retry_after_until?: string | null;
+          send_delay_ms?: number;
+          transactional_email_ttl_minutes?: number;
+          updated_at?: string;
+        };
         Update: {
-          auth_email_ttl_minutes?: number
-          batch_size?: number
-          id?: number
-          retry_after_until?: string | null
-          send_delay_ms?: number
-          transactional_email_ttl_minutes?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          auth_email_ttl_minutes?: number;
+          batch_size?: number;
+          id?: number;
+          retry_after_until?: string | null;
+          send_delay_ms?: number;
+          transactional_email_ttl_minutes?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       email_unsubscribe_tokens: {
         Row: {
-          created_at: string
-          email: string
-          id: string
-          token: string
-          used_at: string | null
-        }
+          created_at: string;
+          email: string;
+          id: string;
+          token: string;
+          used_at: string | null;
+        };
         Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          token: string
-          used_at?: string | null
-        }
+          created_at?: string;
+          email: string;
+          id?: string;
+          token: string;
+          used_at?: string | null;
+        };
         Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          token?: string
-          used_at?: string | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          email?: string;
+          id?: string;
+          token?: string;
+          used_at?: string | null;
+        };
+        Relationships: [];
+      };
       lifecycle_email_log: {
         Row: {
-          created_at: string
-          email_key: string
-          id: string
-          user_id: string
-        }
+          created_at: string;
+          email_key: string;
+          id: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          email_key: string
-          id?: string
-          user_id: string
-        }
+          created_at?: string;
+          email_key: string;
+          id?: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          email_key?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          email_key?: string;
+          id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
-          age: number | null
-          avatar_url: string | null
-          budget_range: string | null
-          created_at: string
-          full_name: string | null
-          id: string
-          language: string | null
-          plan: Database["public"]["Enums"]["subscription_plan"]
-          preferred_destinations: string[] | null
-          travel_style: string | null
-          traveler_type: string | null
-          trial_ends_at: string | null
-          updated_at: string
-          welcome_completed: boolean
-        }
+          age: number | null;
+          avatar_url: string | null;
+          budget_range: string | null;
+          created_at: string;
+          full_name: string | null;
+          id: string;
+          language: string | null;
+          plan: Database["public"]["Enums"]["subscription_plan"];
+          preferred_destinations: string[] | null;
+          travel_style: string | null;
+          traveler_type: string | null;
+          trial_ends_at: string | null;
+          updated_at: string;
+          welcome_completed: boolean;
+        };
         Insert: {
-          age?: number | null
-          avatar_url?: string | null
-          budget_range?: string | null
-          created_at?: string
-          full_name?: string | null
-          id: string
-          language?: string | null
-          plan?: Database["public"]["Enums"]["subscription_plan"]
-          preferred_destinations?: string[] | null
-          travel_style?: string | null
-          traveler_type?: string | null
-          trial_ends_at?: string | null
-          updated_at?: string
-          welcome_completed?: boolean
-        }
+          age?: number | null;
+          avatar_url?: string | null;
+          budget_range?: string | null;
+          created_at?: string;
+          full_name?: string | null;
+          id: string;
+          language?: string | null;
+          plan?: Database["public"]["Enums"]["subscription_plan"];
+          preferred_destinations?: string[] | null;
+          travel_style?: string | null;
+          traveler_type?: string | null;
+          trial_ends_at?: string | null;
+          updated_at?: string;
+          welcome_completed?: boolean;
+        };
         Update: {
-          age?: number | null
-          avatar_url?: string | null
-          budget_range?: string | null
-          created_at?: string
-          full_name?: string | null
-          id?: string
-          language?: string | null
-          plan?: Database["public"]["Enums"]["subscription_plan"]
-          preferred_destinations?: string[] | null
-          travel_style?: string | null
-          traveler_type?: string | null
-          trial_ends_at?: string | null
-          updated_at?: string
-          welcome_completed?: boolean
-        }
-        Relationships: []
-      }
+          age?: number | null;
+          avatar_url?: string | null;
+          budget_range?: string | null;
+          created_at?: string;
+          full_name?: string | null;
+          id?: string;
+          language?: string | null;
+          plan?: Database["public"]["Enums"]["subscription_plan"];
+          preferred_destinations?: string[] | null;
+          travel_style?: string | null;
+          traveler_type?: string | null;
+          trial_ends_at?: string | null;
+          updated_at?: string;
+          welcome_completed?: boolean;
+        };
+        Relationships: [];
+      };
       saved_inspirations: {
         Row: {
-          created_at: string
-          destination: string
-          hero_image_url: string | null
-          id: string
-          n_days: number | null
-          slug: string
-          summary: string | null
-          updated_at: string
-          user_id: string
-        }
+          created_at: string;
+          destination: string;
+          hero_image_url: string | null;
+          id: string;
+          n_days: number | null;
+          slug: string;
+          summary: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          destination: string
-          hero_image_url?: string | null
-          id?: string
-          n_days?: number | null
-          slug: string
-          summary?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          created_at?: string;
+          destination: string;
+          hero_image_url?: string | null;
+          id?: string;
+          n_days?: number | null;
+          slug: string;
+          summary?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          destination?: string
-          hero_image_url?: string | null
-          id?: string
-          n_days?: number | null
-          slug?: string
-          summary?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          destination?: string;
+          hero_image_url?: string | null;
+          id?: string;
+          n_days?: number | null;
+          slug?: string;
+          summary?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
-          cancel_at_period_end: boolean
-          canceled_at: string | null
-          created_at: string
-          current_period_end: string | null
-          current_period_start: string | null
-          environment: string
-          id: string
-          price_id: string | null
-          product_id: string | null
-          status: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          updated_at: string
-          user_id: string
-        }
+          cancel_at_period_end: boolean;
+          canceled_at: string | null;
+          created_at: string;
+          current_period_end: string | null;
+          current_period_start: string | null;
+          environment: string;
+          id: string;
+          price_id: string | null;
+          product_id: string | null;
+          status: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          cancel_at_period_end?: boolean
-          canceled_at?: string | null
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          environment?: string
-          id?: string
-          price_id?: string | null
-          product_id?: string | null
-          status: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          cancel_at_period_end?: boolean;
+          canceled_at?: string | null;
+          created_at?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          environment?: string;
+          id?: string;
+          price_id?: string | null;
+          product_id?: string | null;
+          status: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          cancel_at_period_end?: boolean
-          canceled_at?: string | null
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          environment?: string
-          id?: string
-          price_id?: string | null
-          product_id?: string | null
-          status?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          cancel_at_period_end?: boolean;
+          canceled_at?: string | null;
+          created_at?: string;
+          current_period_end?: string | null;
+          current_period_start?: string | null;
+          environment?: string;
+          id?: string;
+          price_id?: string | null;
+          product_id?: string | null;
+          status?: string;
+          stripe_customer_id?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       suppressed_emails: {
         Row: {
-          created_at: string
-          email: string
-          id: string
-          metadata: Json | null
-          reason: string
-        }
+          created_at: string;
+          email: string;
+          id: string;
+          metadata: Json | null;
+          reason: string;
+        };
         Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          metadata?: Json | null
-          reason: string
-        }
+          created_at?: string;
+          email: string;
+          id?: string;
+          metadata?: Json | null;
+          reason: string;
+        };
         Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          metadata?: Json | null
-          reason?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          email?: string;
+          id?: string;
+          metadata?: Json | null;
+          reason?: string;
+        };
+        Relationships: [];
+      };
       trip_invites: {
         Row: {
-          accepted_at: string | null
-          accepted_user_id: string | null
-          created_at: string
-          email: string
-          id: string
-          invited_by: string
-          status: string
-          token: string
-          trip_id: string
-        }
+          accepted_at: string | null;
+          accepted_user_id: string | null;
+          created_at: string;
+          email: string;
+          id: string;
+          invited_by: string;
+          status: string;
+          token: string;
+          trip_id: string;
+        };
         Insert: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          invited_by: string
-          status?: string
-          token: string
-          trip_id: string
-        }
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          created_at?: string;
+          email: string;
+          id?: string;
+          invited_by: string;
+          status?: string;
+          token: string;
+          trip_id: string;
+        };
         Update: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          invited_by?: string
-          status?: string
-          token?: string
-          trip_id?: string
-        }
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          invited_by?: string;
+          status?: string;
+          token?: string;
+          trip_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "trip_invites_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
+            foreignKeyName: "trip_invites_trip_id_fkey";
+            columns: ["trip_id"];
+            isOneToOne: false;
+            referencedRelation: "trips";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       trip_members: {
         Row: {
-          created_at: string
-          id: string
-          role: string
-          trip_id: string
-          user_id: string
-        }
+          created_at: string;
+          id: string;
+          role: string;
+          trip_id: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          role?: string
-          trip_id: string
-          user_id: string
-        }
+          created_at?: string;
+          id?: string;
+          role?: string;
+          trip_id: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          role?: string
-          trip_id?: string
-          user_id?: string
-        }
+          created_at?: string;
+          id?: string;
+          role?: string;
+          trip_id?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "trip_members_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
+            foreignKeyName: "trip_members_trip_id_fkey";
+            columns: ["trip_id"];
+            isOneToOne: false;
+            referencedRelation: "trips";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       trips: {
         Row: {
-          arrival_time: string | null
-          avoid: string | null
-          budget: string | null
-          companion: string | null
-          created_at: string
-          departure_time: string | null
-          destination: string
-          dietary: string | null
-          end_date: string | null
-          first_visit: boolean | null
-          geo_lat: number | null
-          geo_lng: number | null
-          has_accommodation: boolean
-          hero_image_url: string | null
-          hotel_address: string | null
-          hotel_lat: number | null
-          hotel_lng: number | null
-          hotel_name: string | null
-          id: string
-          is_public: boolean
-          itinerary: Json | null
-          pace: string | null
-          published_at: string | null
-          rating_count: number
-          rating_sum: number
-          share_slug: string | null
-          start_date: string | null
-          status: string
-          transport: string | null
-          travel_mode: string
-          trip_style: string | null
-          trip_types: string[]
-          updated_at: string
-          user_id: string
-          view_count: number
-        }
+          arrival_time: string | null;
+          avoid: string | null;
+          budget: string | null;
+          companion: string | null;
+          created_at: string;
+          departure_time: string | null;
+          destination: string;
+          dietary: string | null;
+          end_date: string | null;
+          first_visit: boolean | null;
+          geo_lat: number | null;
+          geo_lng: number | null;
+          has_accommodation: boolean;
+          hero_image_url: string | null;
+          hotel_address: string | null;
+          hotel_lat: number | null;
+          hotel_lng: number | null;
+          hotel_name: string | null;
+          id: string;
+          is_public: boolean;
+          itinerary: Json | null;
+          pace: string | null;
+          published_at: string | null;
+          rating_count: number;
+          rating_sum: number;
+          share_slug: string | null;
+          start_date: string | null;
+          status: string;
+          transport: string | null;
+          travel_mode: string;
+          trip_style: string | null;
+          trip_types: string[];
+          updated_at: string;
+          user_id: string;
+          view_count: number;
+        };
         Insert: {
-          arrival_time?: string | null
-          avoid?: string | null
-          budget?: string | null
-          companion?: string | null
-          created_at?: string
-          departure_time?: string | null
-          destination: string
-          dietary?: string | null
-          end_date?: string | null
-          first_visit?: boolean | null
-          geo_lat?: number | null
-          geo_lng?: number | null
-          has_accommodation?: boolean
-          hero_image_url?: string | null
-          hotel_address?: string | null
-          hotel_lat?: number | null
-          hotel_lng?: number | null
-          hotel_name?: string | null
-          id?: string
-          is_public?: boolean
-          itinerary?: Json | null
-          pace?: string | null
-          published_at?: string | null
-          rating_count?: number
-          rating_sum?: number
-          share_slug?: string | null
-          start_date?: string | null
-          status?: string
-          transport?: string | null
-          travel_mode?: string
-          trip_style?: string | null
-          trip_types?: string[]
-          updated_at?: string
-          user_id: string
-          view_count?: number
-        }
+          arrival_time?: string | null;
+          avoid?: string | null;
+          budget?: string | null;
+          companion?: string | null;
+          created_at?: string;
+          departure_time?: string | null;
+          destination: string;
+          dietary?: string | null;
+          end_date?: string | null;
+          first_visit?: boolean | null;
+          geo_lat?: number | null;
+          geo_lng?: number | null;
+          has_accommodation?: boolean;
+          hero_image_url?: string | null;
+          hotel_address?: string | null;
+          hotel_lat?: number | null;
+          hotel_lng?: number | null;
+          hotel_name?: string | null;
+          id?: string;
+          is_public?: boolean;
+          itinerary?: Json | null;
+          pace?: string | null;
+          published_at?: string | null;
+          rating_count?: number;
+          rating_sum?: number;
+          share_slug?: string | null;
+          start_date?: string | null;
+          status?: string;
+          transport?: string | null;
+          travel_mode?: string;
+          trip_style?: string | null;
+          trip_types?: string[];
+          updated_at?: string;
+          user_id: string;
+          view_count?: number;
+        };
         Update: {
-          arrival_time?: string | null
-          avoid?: string | null
-          budget?: string | null
-          companion?: string | null
-          created_at?: string
-          departure_time?: string | null
-          destination?: string
-          dietary?: string | null
-          end_date?: string | null
-          first_visit?: boolean | null
-          geo_lat?: number | null
-          geo_lng?: number | null
-          has_accommodation?: boolean
-          hero_image_url?: string | null
-          hotel_address?: string | null
-          hotel_lat?: number | null
-          hotel_lng?: number | null
-          hotel_name?: string | null
-          id?: string
-          is_public?: boolean
-          itinerary?: Json | null
-          pace?: string | null
-          published_at?: string | null
-          rating_count?: number
-          rating_sum?: number
-          share_slug?: string | null
-          start_date?: string | null
-          status?: string
-          transport?: string | null
-          travel_mode?: string
-          trip_style?: string | null
-          trip_types?: string[]
-          updated_at?: string
-          user_id?: string
-          view_count?: number
-        }
-        Relationships: []
-      }
-    }
+          arrival_time?: string | null;
+          avoid?: string | null;
+          budget?: string | null;
+          companion?: string | null;
+          created_at?: string;
+          departure_time?: string | null;
+          destination?: string;
+          dietary?: string | null;
+          end_date?: string | null;
+          first_visit?: boolean | null;
+          geo_lat?: number | null;
+          geo_lng?: number | null;
+          has_accommodation?: boolean;
+          hero_image_url?: string | null;
+          hotel_address?: string | null;
+          hotel_lat?: number | null;
+          hotel_lng?: number | null;
+          hotel_name?: string | null;
+          id?: string;
+          is_public?: boolean;
+          itinerary?: Json | null;
+          pace?: string | null;
+          published_at?: string | null;
+          rating_count?: number;
+          rating_sum?: number;
+          share_slug?: string | null;
+          start_date?: string | null;
+          status?: string;
+          transport?: string | null;
+          travel_mode?: string;
+          trip_style?: string | null;
+          trip_types?: string[];
+          updated_at?: string;
+          user_id?: string;
+          view_count?: number;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      check_email_exists: { Args: { check_email: string }; Returns: boolean }
+      check_email_exists: { Args: { check_email: string }; Returns: boolean };
       delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
+        Args: { message_id: number; queue_name: string };
+        Returns: boolean;
+      };
       enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
+        Args: { payload: Json; queue_name: string };
+        Returns: number;
+      };
       has_active_subscription: {
-        Args: { _environment: string; _user_id: string }
-        Returns: boolean
-      }
+        Args: { _environment: string; _user_id: string };
+        Returns: boolean;
+      };
       move_to_dlq: {
         Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
+          dlq_name: string;
+          message_id: number;
+          payload: Json;
+          source_queue: string;
+        };
+        Returns: number;
+      };
       read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
+        Args: { batch_size: number; queue_name: string; vt: number };
         Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
-    }
+          message: Json;
+          msg_id: number;
+          read_ct: number;
+        }[];
+      };
+    };
     Enums: {
-      subscription_plan: "free" | "viajero" | "explorador"
-    }
+      subscription_plan: "free" | "viajero" | "explorador";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
@@ -660,4 +652,4 @@ export const Constants = {
       subscription_plan: ["free", "viajero", "explorador"],
     },
   },
-} as const
+} as const;
