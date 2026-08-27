@@ -124,7 +124,12 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
       "November",
       "December",
     ];
-    return `${names[d.getMonth()]} (month ${d.getMonth() + 1})`;
+    // getUTC*, no getMonth(): `new Date("2026-07-01")` se parsea como
+    // medianoche UTC, y leerlo con los getters locales adelanta o atrasa un
+    // día según la zona del runtime. En Vercel (UTC) coincidían, así que el
+    // fallo estaba latente; con cualquier zona de offset negativo el prompt
+    // anunciaría el mes y el día de la semana equivocados.
+    return `${names[d.getUTCMonth()]} (month ${d.getUTCMonth() + 1})`;
   })();
 
   const arrivalTime = input.arrivalTime;
@@ -159,7 +164,10 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
   const isKnownInland = isInlandDestination(input.destination);
 
   const weekdayName = input.startDate
-    ? new Date(input.startDate).toLocaleDateString("en-US", { weekday: "long" })
+    ? new Date(input.startDate).toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      })
     : null;
   const datesLine =
     input.startDate && input.endDate

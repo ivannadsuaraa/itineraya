@@ -388,7 +388,19 @@ function ItineraryPage() {
         }, 1600);
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : t("trip.somethingWrong"));
+        // El mensaje crudo del servidor está siempre en español y a veces trae
+        // el cuerpo del error de la API ("Error Claude 500: …"). Se guarda en
+        // consola y se muestra una cadena traducida. LIMIT_REACHED se sigue
+        // pasando entero porque más abajo abre el paywall.
+        const raw = err instanceof Error ? err.message : String(err);
+        console.error("[trip] generation failed", raw);
+        setError(
+          raw.includes("LIMIT_REACHED")
+            ? raw
+            : raw.includes("NOT_FOUND")
+              ? t("trip.notFound")
+              : t("trip.somethingWrong"),
+        );
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -1239,6 +1251,9 @@ function VerificationBadge({ verification }: { verification?: PlaceVerification 
     );
   }
 
+  // "unchecked" (o un itinerario anterior a la verificación) no lleva
+  // distintivo: no sabemos nada de ese sitio, y un hueco es más honesto que
+  // insinuar que se comprobó. El recuento del pie sí lo declara.
   return null;
 }
 
@@ -1264,6 +1279,14 @@ function AiDisclaimer({ summary }: { summary?: VerificationSummary }) {
                 verified: summary.verified,
                 checked: summary.checked,
               })}
+              {/* Los "unchecked" (sin key de Places, timeout, tope de
+                  búsquedas o cuota agotada) quedaban fuera del recuento y sin
+                  distintivo propio, así que un itinerario a medio comprobar se
+                  leía igual que uno comprobado entero. Decirlo es más honesto
+                  que callarlo. */}
+              {summary.unchecked != null && summary.unchecked > 0 && (
+                <> {t("trip.verificationUnchecked", { n: summary.unchecked })}</>
+              )}
             </p>
           )}
         </div>
@@ -1294,7 +1317,15 @@ function ActivityRow({
     destination,
     activity.url,
   );
-  const bookingLabel = booking?.kind === "view" ? t("trip.viewVerb") : t("trip.book");
+  // "Reservar" solo cuando hay algo reservable de verdad. Cuando Places buscó
+  // el sitio y no encontró nada (status "not_found") lo más probable es que
+  // "place" sea el recurso de la REGLA CERO —un barrio, una plaza, un
+  // mercado— y prometer una reserva sobre un barrio es exactamente el tipo de
+  // detalle que hace desconfiar del resto del itinerario. "unchecked" se deja
+  // como estaba: no haber comprobado no es haber descartado.
+  const notAVenue = activity.verification?.status === "not_found";
+  const bookingLabel =
+    booking?.kind === "view" || notAVenue ? t("trip.viewVerb") : t("trip.book");
   const CatIcon = getCategoryIcon(activity.category);
   const catColor = getCategoryColor(activity.category);
 

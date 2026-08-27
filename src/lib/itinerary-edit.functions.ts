@@ -90,7 +90,9 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
 
     const plan = (profile as { plan?: string } | null)?.plan ?? "free";
     if (plan === "free") {
-      throw new Error("Esta función está disponible en los planes Viajero y Explorador.");
+      throw new Error(
+        "PLAN_REQUIRED: Esta función está disponible en los planes Viajero y Explorador.",
+      );
     }
 
     const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
@@ -116,7 +118,7 @@ export const editItineraryWithAssistant = createServerFn({ method: "POST" })
       .eq("id", data.tripId)
       .eq("user_id", userId)
       .maybeSingle();
-    if (error || !trip || !trip.itinerary) throw new Error("Viaje no encontrado");
+    if (error || !trip || !trip.itinerary) throw new Error("NOT_FOUND: Viaje no encontrado");
 
     const key = process.env.ANTHROPIC_API_KEY;
     if (!key) throw new Error("Missing ANTHROPIC_API_KEY");
@@ -328,10 +330,14 @@ REQUISITOS:
       (itineraryOnly as unknown as ParsedItinerary).verification_summary = verificationSummary;
     }
 
-    const { error: updateErr } = await supabase
+    // service_role por el mismo motivo que en generateItinerary: `status` ya no
+    // está en el GRANT por columnas de `authenticated`. La propiedad se
+    // comprobó al leer el viaje; el .eq("user_id") la reexige.
+    const { error: updateErr } = await supabaseAdmin
       .from("trips")
       .update({ itinerary: itineraryOnly, status: "ready" })
-      .eq("id", data.tripId);
+      .eq("id", data.tripId)
+      .eq("user_id", userId);
     if (updateErr) throw updateErr;
 
     return {

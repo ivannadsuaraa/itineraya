@@ -65,7 +65,15 @@ export function AssistantEditPanel({
       onItineraryUpdated(res.itinerary);
       toast.success(t("assistant.panelUpdated"));
     } catch (err) {
-      const msg = err instanceof Error ? err.message : t("assistant.panelSomethingWrong");
+      // Igual que en la ficha del viaje: nunca se pinta el texto del servidor,
+      // que va siempre en español.
+      const raw = err instanceof Error ? err.message : String(err);
+      console.error("[assistant] edit failed", raw);
+      const msg = raw.includes("PLAN_REQUIRED")
+        ? t("assistant.panelPlanRequired")
+        : raw.includes("LIMIT_REACHED")
+          ? t("assistant.panelLimitReached")
+          : t("assistant.panelSomethingWrong");
       setMessages((m) => [
         ...m,
         { id: crypto.randomUUID(), role: "assistant", text: t("assistant.panelOops", { msg }) },

@@ -187,7 +187,10 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .eq("id", data.tripId)
       .eq("user_id", userId)
       .maybeSingle();
-    if (error || !trip) throw new Error("Viaje no encontrado");
+    // Prefijo estable: la ficha del viaje traduce el mensaje a partir de él.
+    // Sin código, el texto del servidor —siempre en español— se pintaba tal
+    // cual a usuarios en inglés, francés o portugués.
+    if (error || !trip) throw new Error("NOT_FOUND: Viaje no encontrado");
     // Plan-based itinerary limit
     // select("*") + cast: bonus_trips isn't in the generated Supabase types yet
     // (see supabase/migrations/20260707130000_trip_pass_and_referral_rewards.sql),
@@ -231,7 +234,35 @@ export const generateItinerary = createServerFn({ method: "POST" })
 
       const { count } = await countQuery;
 
-      if ((count ?? 0) >= planLimit) {
+      // Segundo recuento, sobre `generation_ledger`: la cuenta de arriba mira
+      // filas de `trips`, y el usuario puede borrar sus viajes (el dashboard
+      // tiene el botón), así que borrar devolvía una generación. El ledger es
+      // monótono y el cliente no lo puede tocar.
+      //
+      // Se toma el MÁXIMO de los dos para no regalar generaciones al
+      // desplegar: el ledger empieza vacío, así que los usuarios actuales
+      // siguen contando por sus viajes hasta que el ledger los alcanza.
+      let ledgerQuery = supabaseAdmin
+        .from("generation_ledger" as never)
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (plan === "viajero") {
+        const now = new Date();
+        const startOfMonth = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+        ).toISOString();
+        ledgerQuery = ledgerQuery.gte("created_at", startOfMonth);
+      }
+      const { count: ledgerCount, error: ledgerErr } = await ledgerQuery;
+      if (ledgerErr) {
+        // La tabla puede no existir todavía si la migración no está aplicada:
+        // no se bloquea la generación por eso, se sigue con la cuenta antigua.
+        console.warn("[itinerary] generation_ledger unavailable", ledgerErr);
+      }
+
+      const used = Math.max(count ?? 0, ledgerCount ?? 0);
+
+      if (used >= planLimit) {
         const msg =
           plan === "free"
             ? `LIMIT_REACHED: Has alcanzado el límite de ${planLimit} itinerarios en el plan gratuito. Compra un Pase de Viaje por 4,99€ para desbloquear uno más sin suscripción, o actualiza al plan Viajero para itinerarios ilimitados cada mes.`
@@ -326,48 +357,51 @@ export const generateItinerary = createServerFn({ method: "POST" })
       historyLine,
     });
 
-    let aiRes: Response | null = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const t0 = Date.now();
-      console.log(
-        `[itinerary] API call start (attempt ${attempt}) — ${dayCount} days, prompt ~${prompt.length} chars`,
-      );
-      aiRes = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": key,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5",
-          max_tokens: 16000,
-          system:
-            "You are an expert travel planner. You create geographically coherent, time-realistic itineraries built around real venues, and you respond with a single JSON object that follows the provided schema exactly.",
-          output_config: { format: { type: "json_schema", schema: itinerarySchema } },
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-      console.log(`[itinerary] API call end — ${Date.now() - t0}ms — status ${aiRes.status}`);
-      if (aiRes.status !== 429) break;
-      if (attempt < 3) await new Promise((r) => setTimeout(r, 5000 * attempt));
-    }
-    if (!aiRes) throw new Error("Error al conectar con la IA.");
+    const callModel = async (): Promise<string> => {
+      let aiRes: Response | null = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const t0 = Date.now();
+        console.log(
+          `[itinerary] API call start (attempt ${attempt}) — ${dayCount} days, prompt ~${prompt.length} chars`,
+        );
+        aiRes = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": key,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "claude-haiku-4-5",
+            max_tokens: 16000,
+            system:
+              "You are an expert travel planner. You create geographically coherent, time-realistic itineraries built around real venues, and you respond with a single JSON object that follows the provided schema exactly.",
+            output_config: { format: { type: "json_schema", schema: itinerarySchema } },
+            messages: [{ role: "user", content: prompt }],
+          }),
+        });
+        console.log(`[itinerary] API call end — ${Date.now() - t0}ms — status ${aiRes.status}`);
+        if (aiRes.status !== 429) break;
+        if (attempt < 3) await new Promise((r) => setTimeout(r, 5000 * attempt));
+      }
+      if (!aiRes) throw new Error("Error al conectar con la IA.");
 
-    if (!aiRes.ok) {
-      const text = await aiRes.text();
-      if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
-      throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
-    }
+      if (!aiRes.ok) {
+        const text = await aiRes.text();
+        if (aiRes.status === 429) throw new Error("Demasiadas peticiones. Espera un momento.");
+        throw new Error(`Error Claude ${aiRes.status}: ${text.slice(0, 200)}`);
+      }
 
-    const aiJson = (await aiRes.json()) as {
-      content?: Array<{ text?: string }>;
-      stop_reason?: string;
+      const aiJson = (await aiRes.json()) as {
+        content?: Array<{ text?: string }>;
+        stop_reason?: string;
+      };
+      if (aiJson.stop_reason === "max_tokens")
+        throw new Error("La respuesta del modelo se truncó. Vuelve a intentarlo.");
+      const content = aiJson.content?.[0]?.text ?? "";
+      if (!content) throw new Error("Respuesta vacía del modelo");
+      return content;
     };
-    if (aiJson.stop_reason === "max_tokens")
-      throw new Error("La respuesta del modelo se truncó. Vuelve a intentarlo.");
-    const content = aiJson.content?.[0]?.text ?? "";
-    if (!content) throw new Error("Respuesta vacía del modelo");
 
     type ParsedActivity = {
       time: string;
@@ -388,11 +422,52 @@ export const generateItinerary = createServerFn({ method: "POST" })
         activities: ParsedActivity[];
       }>;
     };
-    const parsed: ParsedItin = extractJson<ParsedItin>(content);
+    // La generación usa structured outputs, así que el JSON debería parsear a
+    // la primera. Si hace falta pasar por la red de seguridad de extractJson,
+    // algo ha ido mal y conviene que se vea en los logs: su rama de
+    // recuperación por truncamiento puede devolver un itinerario a medias que
+    // parsea bien y se guardaría como "ready" sin que nadie lo note.
+    const parseItinerary = (raw: string): ParsedItin => {
+      try {
+        return JSON.parse(raw) as ParsedItin;
+      } catch (e) {
+        console.error(
+          "[itinerary] structured output did not parse — falling back to extractJson repair",
+          e,
+        );
+        return extractJson<ParsedItin>(raw);
+      }
+    };
+
+    let parsed: ParsedItin = parseItinerary(await callModel());
+
+    // Un itinerario con menos días de los pedidos es un fallo silencioso caro:
+    // la ficha del viaje calcula la fecha de cada día como start_date + índice,
+    // así que faltando un día TODOS los siguientes quedan con la fecha, el día
+    // de la semana y el clima equivocados, mientras la cabecera sigue
+    // anunciando el rango completo. Antes solo se dejaba un console.warn.
+    if (parsed.days && parsed.days.length > 0 && parsed.days.length !== dayCount) {
+      console.warn(
+        `[itinerary] expected ${dayCount} days, model returned ${parsed.days.length} — retrying once`,
+      );
+      try {
+        const retry = parseItinerary(await callModel());
+        if (retry.days?.length === dayCount) {
+          parsed = retry;
+        } else if ((retry.days?.length ?? 0) > parsed.days.length) {
+          parsed = retry;
+        }
+      } catch (e) {
+        console.error("[itinerary] day-count retry failed, keeping first response", e);
+      }
+    }
+
     if (!parsed.days || parsed.days.length === 0)
       throw new Error("El modelo no devolvió ningún día de itinerario. Vuelve a intentarlo.");
     if (parsed.days.length !== dayCount)
-      console.warn(`[itinerary] expected ${dayCount} days, model returned ${parsed.days.length}`);
+      console.error(
+        `[itinerary] persisting ${parsed.days.length} days for a ${dayCount}-day trip after retry`,
+      );
 
     // Un único pool de fotos verificadas del destino para la cabecera y los
     // días, igual que en la demo pública (demo.functions.ts). Antes cada
@@ -433,11 +508,30 @@ export const generateItinerary = createServerFn({ method: "POST" })
       (parsed as unknown as ParsedItinerary).verification_summary = verificationSummary;
     }
 
-    const { error: updateErr } = await supabase
+    // Escritura con service_role: `status` y `hero_image_url` salen del GRANT
+    // por columnas de `authenticated` (ver la migración
+    // 20260827095000_restrict_trips_update_columns), porque eran la vía para
+    // esquivar el contador de plan (status → "draft") y para apuntar la
+    // tarjeta OG a una URL interna (hero_image_url). La propiedad del viaje ya
+    // se comprobó arriba; el .eq("user_id") la vuelve a exigir aquí.
+    const { error: updateErr } = await supabaseAdmin
       .from("trips")
       .update({ itinerary: parsed, hero_image_url: hero, status: "ready" })
-      .eq("id", data.tripId);
+      .eq("id", data.tripId)
+      .eq("user_id", userId);
     if (updateErr) throw updateErr;
+
+    // Queda constancia de la generación aunque el viaje se borre después.
+    // Se apunta solo cuando el itinerario ya está guardado, para no consumir
+    // cupo por una generación que falló.
+    if (planLimit !== null) {
+      const { error: ledgerInsErr } = await supabaseAdmin
+        .from("generation_ledger" as never)
+        .insert({ user_id: userId, trip_id: data.tripId } as never);
+      if (ledgerInsErr) {
+        console.error("[itinerary] could not record generation in ledger", ledgerInsErr);
+      }
+    }
 
     // Coordenadas para centrar el mapa. Solo si createTrip no las guardó ya
     // (el geocode del cliente no llegó a tiempo). Antes esto llamaba a

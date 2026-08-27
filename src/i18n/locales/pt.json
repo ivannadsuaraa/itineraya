@@ -679,7 +679,8 @@
     "unverified": "Por confirmar",
     "unverifiedTitle": "Não encontrámos este local no Google Maps com este nome. Pode existir na mesma (negócios pequenos e recém-abertos faltam muitas vezes), mas confirme antes de ir.",
     "aiNotice": "Este itinerário foi gerado por IA a partir das suas respostas. Horários, preços e dias de encerramento mudam: confirme-os antes de ir, sobretudo se for preciso reservar.",
-    "verificationSummary": "Cruzámos os locais com o Google Maps: {{verified}} de {{checked}} confirmados."
+    "verificationSummary": "Cruzámos os locais com o Google Maps: {{verified}} de {{checked}} confirmados.",
+    "verificationUnchecked": "{{n}} não puderam ser verificados."
   },
   "tripmates": {
     "tag": "Companheiros de viagem",
@@ -781,7 +782,9 @@
     "sugg1": "O que você recomenda para a primeira noite?",
     "sugg2": "Deixe o dia 2 mais barato",
     "sugg3": "Onde como bem perto do meu roteiro?",
-    "sugg4": "O que levar na mala para esta viagem?"
+    "sugg4": "O que levar na mala para esta viagem?",
+    "panelPlanRequired": "Esta funcionalidade está disponível nos planos Viajero e Explorador.",
+    "panelLimitReached": "Atingiste o teu limite de edições por hoje. Tenta de novo amanhã."
   },
   "newTrip": {
     "back": "Voltar",

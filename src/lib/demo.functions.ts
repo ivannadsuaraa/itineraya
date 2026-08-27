@@ -22,6 +22,7 @@ import {
   type ParsedItinerary,
 } from "@/lib/itinerary-shared";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const DemoInput = z.object({
   destination: z.string().min(2).max(80),
@@ -81,6 +82,68 @@ async function checkRateLimit(ip: string): Promise<boolean> {
   }
   return !!ipOk;
 }
+
+// Reclamar el viaje demo (generado sin cuenta y guardado en localStorage) al
+// registrarse. Antes esto era un INSERT directo a `trips` desde el navegador
+// con `status: "ready"`: destino, resumen, títulos, descripciones y
+// hero_image_url llegaban tal cual desde localStorage, sin validar longitudes
+// ni forma, y el viaje se podía publicar después en el feed público. La misma
+// razón por la que createTrip dejó de ser un INSERT desde el cliente.
+const ClaimActivity = z.object({
+  time: z.string().max(10),
+  emoji: z.string().max(8).optional(),
+  title: z.string().max(160),
+  place: z.string().max(200).optional(),
+  description: z.string().max(1200),
+  category: z.string().max(20).optional(),
+  url: z.string().max(500).optional(),
+  tip: z.string().max(600).optional(),
+});
+
+const ClaimDemoInput = z.object({
+  destination: z.string().trim().min(2).max(120),
+  companion: z.string().trim().max(40).nullable(),
+  tripTypes: z.array(z.string().max(20)).max(15),
+  heroImageUrl: z.string().url().max(600).nullable(),
+  itinerary: z.object({
+    summary: z.string().max(1200).optional(),
+    days: z
+      .array(
+        z.object({
+          day: z.number().int().min(1).max(30),
+          title: z.string().max(160),
+          subtitle: z.string().max(400).optional(),
+          image_url: z.string().max(600).nullable().optional(),
+          activities: z.array(ClaimActivity).max(20),
+        }),
+      )
+      .min(1)
+      .max(14),
+  }),
+});
+
+export const claimDemoTrip = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ClaimDemoInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: trip, error } = await supabase
+      .from("trips")
+      .insert({
+        user_id: userId,
+        destination: data.destination,
+        companion: data.companion,
+        trip_types: data.tripTypes,
+        itinerary: data.itinerary,
+        hero_image_url: data.heroImageUrl,
+        status: "ready",
+      } as never)
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    if (!trip) throw new Error("No se pudo guardar el viaje");
+    return { id: (trip as { id: string }).id };
+  });
 
 export const generateDemoItinerary = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => DemoInput.parse(d))
