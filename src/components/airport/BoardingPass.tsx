@@ -377,6 +377,14 @@ export function BoardingPass({
                   {klass.label}
                 </span>
               </div>
+
+              {/* El número de vuelo, la puerta y el asiento son inventados a
+                  partir del id del viaje (src/lib/flight.ts), y el pase se
+                  puede descargar y compartir como imagen. El aviso va DENTRO
+                  de passRef para que también salga en ese PNG. */}
+              <p className="mt-3 font-flight text-[9px] uppercase leading-tight tracking-[0.14em] text-sky-300/50">
+                {t("airport.notARealPass")}
+              </p>
             </div>
 
             {/* ── Perforación dentada ── */}

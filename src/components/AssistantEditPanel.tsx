@@ -21,7 +21,7 @@ export function AssistantEditPanel({
   destination: string;
   onItineraryUpdated: (itinerary: unknown) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const edit = useServerFn(editItineraryWithAssistant);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,7 +55,9 @@ export function AssistantEditPanel({
     setMessages((m) => [...m, userMsg]);
     setBusy(true);
     try {
-      const res = await edit({ data: { tripId, instruction: text } });
+      const res = await edit({
+        data: { tripId, instruction: text, language: i18n.language.slice(0, 2) },
+      });
       setMessages((m) => [
         ...m,
         { id: crypto.randomUUID(), role: "assistant", text: res.change_summary },

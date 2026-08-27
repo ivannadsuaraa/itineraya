@@ -129,7 +129,7 @@ function ChatSurface({
   setTripId: (id: string | null) => void;
   activeTrip: Trip | null;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -209,18 +209,23 @@ function ChatSurface({
     [activeTrip, t],
   );
 
+  const chatLanguage = i18n.language.slice(0, 2);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: () => ({ tripContext }),
+        // El idioma viaja en cada petición: sin él el system prompt de
+        // /api/chat contestaba siempre en español, también a los usuarios
+        // que tienen la app en inglés, francés o portugués.
+        body: () => ({ tripContext, language: chatLanguage }),
         headers: async (): Promise<Record<string, string>> => {
           const { data } = await supabase.auth.getSession();
           const token = data.session?.access_token;
           return token ? { Authorization: `Bearer ${token}` } : {};
         },
       }),
-    [tripContext],
+    [tripContext, chatLanguage],
   );
 
   const { messages, sendMessage, status } = useChat({

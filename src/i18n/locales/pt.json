@@ -453,13 +453,13 @@
     "destPh": "Ex. Japão, Lisboa, Patagônia…",
     "datesTitle": "Quando você vai viajar?",
     "datesSubtitle": "Escolha as datas de início e fim.",
-    "dateStart": "DEPARTURE",
-    "dateEnd": "RETURN",
+    "dateStart": "IDA",
+    "dateEnd": "VOLTA",
     "datePick": "Escolher data",
     "arrivalTime": "Horário de chegada",
     "departureTime": "Horário de retorno",
     "timeHint": "Opcional · ajuda a ajustar o primeiro e o último dia",
-    "maxDaysWarning": "O máximo é de 20 dias para garantir a melhor experiência",
+    "maxDaysWarning": "O máximo é de {{max}} dias para garantir a melhor experiência",
     "compTitle": "Com quem você vai viajar?",
     "compSubtitle": "Vamos adaptar o plano ao grupo.",
     "compSolo": "Sozinho",
@@ -998,7 +998,8 @@
     "timezoneLabel": "Fuso horário",
     "timezoneSame": "Mesmo horário que a Espanha",
     "timezoneAhead": "{{hours}}h à frente da Espanha",
-    "timezoneBehind": "{{hours}}h atrás da Espanha"
+    "timezoneBehind": "{{hours}}h atrás da Espanha",
+    "notARealPass": "Cartão decorativo · não é um cartão de embarque real"
   },
   "weather": {
     "Clear": "Céu limpo",

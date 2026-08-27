@@ -101,10 +101,17 @@ async function upsertSubscriptionRow(env: StripeEnv, subscription: Stripe.Subscr
     .eq("environment", env)
     .maybeSingle();
 
-  if (existing?.id) {
-    await supabaseAdmin.from("subscriptions").update(row).eq("id", existing.id);
-  } else {
-    await supabaseAdmin.from("subscriptions").insert(row);
+  // Cualquier fallo de escritura tiene que propagar: el handler lo convierte en
+  // un 500 y Stripe reintenta (hasta 3 días). Antes se descartaba el resultado
+  // y se contestaba 200, así que un corte de Supabase durante el webhook dejaba
+  // al cliente pagando con `plan = "free"` para siempre, sin ninguna señal. La
+  // escritura es idempotente (índice único stripe_subscription_id+environment),
+  // así que reintentar es seguro.
+  const writeErr = existing?.id
+    ? (await supabaseAdmin.from("subscriptions").update(row).eq("id", existing.id)).error
+    : (await supabaseAdmin.from("subscriptions").insert(row)).error;
+  if (writeErr) {
+    throw new Error(`subscriptions write failed: ${writeErr.message}`);
   }
 
   // Sync profiles.plan — the source of truth for every server-side gate
@@ -123,11 +130,15 @@ async function upsertSubscriptionRow(env: StripeEnv, subscription: Stripe.Subscr
     .update({ plan: newPlan })
     .eq("id", userId);
   if (planErr) {
+    // Mismo motivo: profiles.plan es la fuente de verdad de todos los gates de
+    // servidor, así que si no se sincroniza el cliente no tiene el producto que
+    // ha pagado. Propagar → 500 → Stripe reintenta.
     console.error("[payments/webhook] failed to sync profiles.plan", {
       userId,
       newPlan,
       error: planErr.message,
     });
+    throw new Error(`profiles.plan sync failed: ${planErr.message}`);
   }
 }
 
@@ -148,17 +159,27 @@ async function grantTripPass(env: StripeEnv, session: Stripe.Checkout.Session, u
     environment: env,
   } as never);
   if (insertErr) {
-    // Unique violation = already processed this session; anything else is logged.
-    if (insertErr.code !== "23505") {
-      console.error("[payments/webhook] trip_pass_purchases insert failed", insertErr);
-    }
-    return;
+    // Unique violation = ya se procesó esta sesión: no hay nada que hacer.
+    if (insertErr.code === "23505") return;
+    // Cualquier otro error sí tiene que reintentarse: el cliente ha pagado.
+    console.error("[payments/webhook] trip_pass_purchases insert failed", insertErr);
+    throw new Error(`trip_pass_purchases insert failed: ${insertErr.message}`);
   }
   const { error: incErr } = await supabaseAdmin.rpc("increment_bonus_trips" as never, {
     p_user_id: userId,
   } as never);
   if (incErr) {
+    // La fila del ledger ya existe, así que un reintento chocaría con el índice
+    // único y saldría por el `return` de arriba sin llegar a incrementar: el
+    // pase pagado se perdería para siempre. Se retira la fila y se propaga,
+    // para que el reintento de Stripe repita la operación completa.
     console.error("[payments/webhook] increment_bonus_trips failed", { userId, error: incErr });
+    await supabaseAdmin
+      .from("trip_pass_purchases" as never)
+      .delete()
+      .eq("stripe_checkout_session_id", session.id)
+      .eq("environment", env);
+    throw new Error(`increment_bonus_trips failed: ${incErr.message}`);
   }
 }
 

@@ -20,6 +20,24 @@ export type ItinLang = "es" | "en" | "fr" | "pt";
 
 export const SUPPORTED_ITIN_LANGS: readonly ItinLang[] = ["es", "en", "fr", "pt"];
 
+/** Días máximos que puede cubrir un itinerario. Atado a `max_tokens: 16000`
+ *  en la llamada al modelo: por encima de esto la respuesta se trunca. El
+ *  formulario (onboarding.tsx) y la validación de createTrip usan el mismo
+ *  tope, para que nadie pueda crear un viaje más largo del que se genera. */
+export const MAX_ITINERARY_DAYS = 14;
+
+/** Regla de idioma de salida, por idioma soportado. Vive fuera de
+ *  `buildItineraryPrompt` porque la edición de itinerarios
+ *  (src/lib/itinerary-edit.functions.ts) tiene que aplicar exactamente la
+ *  misma regla: su prompt fijaba el español, así que editar un itinerario en
+ *  inglés lo reescribía entero en español. */
+export const ITIN_LANGUAGE_BLOCKS: Record<ItinLang, string> = {
+  es: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Spanish from Spain (peninsular). Meal naming: "Desayuno", "Comida" (the main midday meal — never "almuerzo" or "lunch") and "Cena". Meal activity titles must start with the meal word ("Comida en …", "Cena en …").`,
+  en: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in English. Meal naming: Breakfast, Lunch, Dinner, Snack. Meal activity titles must start with the meal word ("Lunch at …", "Dinner at …").`,
+  fr: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in French. Meal naming: "Petit-déjeuner", "Déjeuner", "Dîner". Meal activity titles must start with the meal word ("Déjeuner à …", "Dîner à …").`,
+  pt: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Portuguese. Meal naming: "Café da manhã", "Almoço", "Jantar". Meal activity titles must start with the meal word ("Almoço em …", "Jantar em …").`,
+};
+
 /** Todo lo que el prompt necesita saber, ya extraído de la fila de `trips` y
  *  del perfil del usuario. Nada aquí toca la base de datos. */
 export type ItineraryPromptInput = {
@@ -62,7 +80,7 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
     const a = new Date(input.startDate).getTime();
     const b = new Date(input.endDate).getTime();
     const d = Math.max(1, Math.round((b - a) / 86400000) + 1);
-    return Math.min(d, 14);
+    return Math.min(d, MAX_ITINERARY_DAYS);
   })();
 
   const budgetBlock = (() => {
@@ -276,13 +294,7 @@ export function buildItineraryPrompt(input: ItineraryPromptInput): {
     ? `${input.destination} is an inland city — beach, sea or coastal activities (beach time, snorkeling, sea kayaking, swimming in the sea) are strictly forbidden.`
     : `Only include beach or sea activities if ${input.destination} genuinely has a coastline or nearby beach AND the season allows it. A beach is never the only activity of a day; combine it with nearby stops and avoid peak-heat hours (12:00–16:00) in summer.`;
 
-  const languageBlocks: Record<ItinLang, string> = {
-    es: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Spanish from Spain (peninsular). Meal naming: "Desayuno", "Comida" (the main midday meal — never "almuerzo" or "lunch") and "Cena". Meal activity titles must start with the meal word ("Comida en …", "Cena en …").`,
-    en: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in English. Meal naming: Breakfast, Lunch, Dinner, Snack. Meal activity titles must start with the meal word ("Lunch at …", "Dinner at …").`,
-    fr: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in French. Meal naming: "Petit-déjeuner", "Déjeuner", "Dîner". Meal activity titles must start with the meal word ("Déjeuner à …", "Dîner à …").`,
-    pt: `All user-visible text (summary, day titles, subtitles, activity titles, descriptions, transport lines) must be written in Portuguese. Meal naming: "Café da manhã", "Almoço", "Jantar". Meal activity titles must start with the meal word ("Almoço em …", "Jantar em …").`,
-  };
-  const languageBlock = languageBlocks[input.lang];
+  const languageBlock = ITIN_LANGUAGE_BLOCKS[input.lang];
 
   const transportExampleMap: Record<ItinLang, string> = {
     es: `"🚶 8 min a pie" | "🚇 Metro L4 dirección X, 12 min" | "🚌 Bus 24, 15 min" | "🚕 Taxi ~10 min" | "🚆 Tren, 18 min" | "⛴️ Ferry, 20 min"`,

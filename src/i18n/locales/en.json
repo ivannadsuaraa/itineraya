@@ -459,7 +459,7 @@
     "arrivalTime": "Arrival time",
     "departureTime": "Departure time",
     "timeHint": "Optional · helps tune the first and last day",
-    "maxDaysWarning": "The maximum is 20 days to ensure the best experience",
+    "maxDaysWarning": "The maximum is {{max}} days to ensure the best experience",
     "compTitle": "Who are you going with?",
     "compSubtitle": "We'll tailor the plan to your group.",
     "compSolo": "Solo",
@@ -996,7 +996,8 @@
     "timezoneLabel": "Timezone",
     "timezoneSame": "Same time as Spain",
     "timezoneAhead": "{{hours}}h ahead of Spain",
-    "timezoneBehind": "{{hours}}h behind Spain"
+    "timezoneBehind": "{{hours}}h behind Spain",
+    "notARealPass": "Decorative pass · not a real boarding pass"
   },
   "weather": {
     "Clear": "Clear",

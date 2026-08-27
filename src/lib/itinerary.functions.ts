@@ -2,14 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import {
-  unsplashImage,
+  destinationPhotoPool,
+  destinationFallbackImage,
+  sizeUnsplashUrl,
   itinerarySchema,
   extractJson,
   type ParsedItinerary,
 } from "@/lib/itinerary-shared";
-import { buildItineraryPrompt, SUPPORTED_ITIN_LANGS, type ItinLang } from "@/lib/itinerary-prompt";
+import {
+  buildItineraryPrompt,
+  MAX_ITINERARY_DAYS,
+  SUPPORTED_ITIN_LANGS,
+  type ItinLang,
+} from "@/lib/itinerary-prompt";
 import { verifyItineraryPlaces } from "@/lib/place-verification";
-import { geocodeAndPersistTrip } from "@/lib/geocode";
+import { geocodeDestination } from "@/lib/geocode";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const Input = z.object({
@@ -70,7 +77,24 @@ const CreateTripInput = z
   .refine((d) => !d.startDate || !d.endDate || d.startDate <= d.endDate, {
     message: "endDate must not be before startDate",
     path: ["endDate"],
-  });
+  })
+  // El generador recorta a MAX_ITINERARY_DAYS días. Sin esta comprobación un
+  // viaje más largo se guardaba con sus fechas completas y volvía con solo los
+  // primeros días, mientras la cabecera seguía anunciando el rango entero.
+  .refine(
+    (d) =>
+      !d.startDate ||
+      !d.endDate ||
+      Math.round(
+        (Date.parse(`${d.endDate}T00:00:00Z`) - Date.parse(`${d.startDate}T00:00:00Z`)) / 86400000,
+      ) +
+        1 <=
+        MAX_ITINERARY_DAYS,
+    {
+      message: `Trip length must not exceed ${MAX_ITINERARY_DAYS} days`,
+      path: ["endDate"],
+    },
+  );
 
 // Crea el viaje "pending" que luego rellena generateItinerary. Antes era un
 // INSERT directo a Supabase desde onboarding.tsx (sin límites de longitud,
@@ -370,15 +394,31 @@ export const generateItinerary = createServerFn({ method: "POST" })
     if (parsed.days.length !== dayCount)
       console.warn(`[itinerary] expected ${dayCount} days, model returned ${parsed.days.length}`);
 
-    // Hero + all day images in parallel. El hero llena un ancho completo
-    // (h-96 desktop); las imágenes de día usan tarjetas 16:7.
-    const [hero, ...dayImages] = await Promise.all([
-      unsplashImage(`${trip.destination} travel landscape`, 2000, 1000),
-      ...parsed.days.map((d) =>
-        unsplashImage(`${d.image_query || trip.destination} ${trip.destination}`, 1400, 620),
-      ),
-    ]);
-    parsed.days = parsed.days.map((d, i) => ({ ...d, image_url: dayImages[i] }));
+    // Un único pool de fotos verificadas del destino para la cabecera y los
+    // días, igual que en la demo pública (demo.functions.ts). Antes cada
+    // imagen era su propia búsqueda ("<destino> travel landscape",
+    // "<image_query> <destino>"): Unsplash hace OR de los términos, así que
+    // en destinos poco fotografiados los calificativos ganaban al topónimo y
+    // salía la playa de otro país en la cabecera. Además eran 1 + dayCount
+    // peticiones por itinerario (16 en un viaje de 14 días) contra una key
+    // con 50 peticiones/hora para toda la app: al agotarse, el usuario de
+    // pago acababa con fotos aleatorias de loremflickr.
+    const photos = await destinationPhotoPool(trip.destination, parsed.days.length + 1);
+
+    const hero =
+      photos.length > 0
+        ? sizeUnsplashUrl(photos[0], 2000, 1000)
+        : destinationFallbackImage(trip.destination, 2000, 1000);
+
+    parsed.days = parsed.days.map((d, i) => ({
+      ...d,
+      // Una foto distinta por día mientras haya; cuando el pool se agota,
+      // fallback etiquetado con el destino en vez de repetir la cabecera.
+      image_url:
+        i + 1 < photos.length
+          ? sizeUnsplashUrl(photos[i + 1], 1400, 620)
+          : destinationFallbackImage(trip.destination, 1400, 620, d.image_query || d.title),
+    }));
 
     // Cruce con Google Places: comprueba de verdad que los sitios existen y
     // deja el resultado en cada actividad. Se salta solo si no hay ninguna key
@@ -399,8 +439,27 @@ export const generateItinerary = createServerFn({ method: "POST" })
       .eq("id", data.tripId);
     if (updateErr) throw updateErr;
 
-    // Geocode destination and persist coordinates for map centering
-    void geocodeAndPersistTrip(data.tripId, trip.destination);
+    // Coordenadas para centrar el mapa. Solo si createTrip no las guardó ya
+    // (el geocode del cliente no llegó a tiempo). Antes esto llamaba a
+    // geocodeAndPersistTrip, que escribe con el cliente de navegador: en el
+    // servidor ese cliente no tiene sesión, así que el UPDATE salía como rol
+    // `anon` —sin permiso de escritura sobre trips— y fallaba siempre, con el
+    // error tragado en un console.warn. Además iba en `void`, así que en
+    // serverless la lambda podía congelarse antes de que resolviera.
+    const tripGeo = trip as { geo_lat?: number | null; geo_lng?: number | null };
+    if (tripGeo.geo_lat == null || tripGeo.geo_lng == null) {
+      const coords = await Promise.race([
+        geocodeDestination(trip.destination),
+        new Promise<null>((r) => setTimeout(() => r(null), 4000)),
+      ]);
+      if (coords) {
+        const { error: geoErr } = await supabase
+          .from("trips")
+          .update({ geo_lat: coords[0], geo_lng: coords[1] } as never)
+          .eq("id", data.tripId);
+        if (geoErr) console.warn("[itinerary] no se pudieron persistir las coordenadas", geoErr);
+      }
+    }
 
     return { itinerary: parsed, hero_image_url: hero };
   });

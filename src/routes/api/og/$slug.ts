@@ -49,9 +49,42 @@ function loadFonts(): Promise<FontSpec[]> {
   return fontsPromise;
 }
 
-async function fetchImageDataUri(url: string): Promise<string | null> {
+// Hosts de los que se acepta incrustar una imagen en la tarjeta OG. Es la
+// misma lista de imágenes que ya permite la CSP en vercel.json, y existe
+// porque `hero_image_url` sale de la fila de `trips`, que el propio usuario
+// puede reescribir vía REST: sin esta comprobación, publicar un viaje con
+// hero_image_url = "http://169.254.169.254/..." hacía que el servidor
+// descargase esa URL desde dentro de su red y devolviera el contenido
+// incrustado en el PNG (SSRF).
+const ALLOWED_IMAGE_HOSTS = [
+  "images.unsplash.com",
+  "loremflickr.com",
+  "maps.gstatic.com",
+];
+const ALLOWED_IMAGE_HOST_SUFFIXES = [".supabase.co", ".googleapis.com"];
+
+function isAllowedImageUrl(raw: string): boolean {
+  let u: URL;
   try {
-    const res = await fetch(url);
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:") return false;
+  const host = u.hostname.toLowerCase();
+  return (
+    ALLOWED_IMAGE_HOSTS.includes(host) ||
+    ALLOWED_IMAGE_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))
+  );
+}
+
+async function fetchImageDataUri(url: string): Promise<string | null> {
+  if (!isAllowedImageUrl(url)) {
+    console.warn("[og] blocked image host", url.slice(0, 120));
+    return null;
+  }
+  try {
+    const res = await fetch(url, { redirect: "error" });
     if (!res.ok) return null;
     const type = res.headers.get("content-type") ?? "image/jpeg";
     if (!type.startsWith("image/")) return null;
