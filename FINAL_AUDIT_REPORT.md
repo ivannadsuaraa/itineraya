@@ -202,7 +202,7 @@ The real defects were hardcoded language, not missing keys — Spanish-only chat
 **Senior Software Engineer — would you deploy this?**
 **Yes — and now I'd say it's the safest state this codebase has been in.** Two critical database defects fixed that a previous audit had recorded as closed; one critical quota bypass and both halves of the free-tier bypass closed; an SSRF closed at both ends; two ways of losing a customer's money fixed; the SEO surface restored; five silent failures made loud; lint green for the first time. Twenty security assertions pass against a real Postgres.
 
-Deploy it with eyes open, in this order: **migrations first, then code** — the code assumes `status` and `hero_image_url` are service-role-writable. Watch the Stripe webhook logs, which now return 500 where they used to lie with a 200; failures that were invisible will start appearing, which is the point. And note that `20260827094000` changes RLS on `trips` — if your production database is *not* in the recursive state, that migration is still a no-op-equivalent rewrite of the same rules, so it is safe either way.
+Deploy it with eyes open, in this order: **code first, then migrations.** The new code writes `status` and `hero_image_url` through `service_role`, so it works under both the old and the new grants — but the *currently deployed* code writes them through the user's session, and would start failing with `permission denied` the moment `20260827095000` lands. The new code also tolerates a missing `generation_ledger` (it warns and falls back to the old count), so nothing depends on the migrations having run. Watch the Stripe webhook logs, which now return 500 where they used to lie with a 200; failures that were invisible will start appearing, which is the point. And note that `20260827094000` changes RLS on `trips` — if your production database is *not* in the recursive state, that migration is still a no-op-equivalent rewrite of the same rules, so it is safe either way.
 
 ---
 
@@ -237,9 +237,16 @@ git merge --no-ff claude/itineraya-e2e-verification-u46j2n
 git push origin main
 ```
 
-**After merging — migrations BEFORE the code deploy:**
+**After merging — deploy the CODE FIRST, then the migrations.**
+
+This order matters and the reverse causes an outage:
+
+- The new code writes `status` and `hero_image_url` through `service_role`, so it is happy under the old *and* the new grants. It also tolerates `generation_ledger` not existing yet — it warns and falls back to the previous count.
+- The code that is deployed right now writes those two columns through the user's own session. `20260827095000` removes exactly those columns from the client grant, so applying it first would break itinerary generation for every user until the deploy lands.
 
 ```bash
+# 1. Deploy the code (Vercel picks up main)
+# 2. Only then:
 supabase db push
 ```
 
@@ -250,12 +257,12 @@ Five migrations, in order:
 | `20260827090000_revoke_chat_usage_client_grants` | Removes client write access to the chat quota table |
 | `20260827093000_reassert_security_hardening` | Re-asserts the three blocks that never applied (DB-1) |
 | `20260827094000_fix_trip_rls_recursion` | Breaks the `trips` ↔ `trip_members` policy cycle (DB-2) |
-| `20260827095000_restrict_trips_update_columns` | Column-scoped UPDATE on `trips` — **must precede the code deploy** |
+| `20260827095000_restrict_trips_update_columns` | Column-scoped UPDATE on `trips` — **must come AFTER the code deploy** (see below) |
 | `20260827100000_generation_ledger` | Monotonic generation counter, starts empty by design |
 
 Then:
 
-5. **Deploy the code**, and watch the Stripe webhook logs for 500s.
+5. **Watch the Stripe webhook logs** for 500s — they now surface failures that used to be invisible.
 6. **Sanity-check in production** that a user can still open a trip, save a note and publish a trip — that exercises the new column grants and the RLS rewrite together.
 7. **Run the quality bench against the real model** — the highest-value follow-up in this report:
    ```bash
