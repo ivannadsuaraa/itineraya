@@ -2,257 +2,232 @@
 
 **Branch:** `claude/itineraya-e2e-verification-u46j2n`
 **Date:** 2026-08-27
-**Scope:** end-to-end audit from four expert perspectives, plus fixes for every real, verifiable defect found.
+**Commits:** `1bfcba5` (first round of fixes) · `77b4155` (database + second round) · `38d6857` (formatting / lint)
 
 ---
 
-## 0. Read this first — what this audit could and could not do
+## 0. What this audit could and could not do
 
-Two hard constraints shaped everything below. Neither is a judgement about the product; both are facts about the environment this audit ran in.
+**No service credentials exist in this container.** No `ANTHROPIC_API_KEY`, Supabase, Stripe, Google, Unsplash or Resend key (verified by enumerating `process.env`). So **no account was created, no itinerary was generated through the real model, no payment was made, and no authenticated screen was ever rendered.** Findings about authenticated UI are derived from code, not from executing the flow.
 
-**No credentials exist in this container.** There is no `ANTHROPIC_API_KEY`, no Supabase URL/key, no Stripe key, no Google Maps/Places key, no Unsplash key, no Resend key (verified: `node -e` over `process.env` returned only `ANTHROPIC_BASE_URL`). That means **no account was created, no itinerary was generated through the real model, no payment was made, and no authenticated screen was ever rendered.** Every finding about the authenticated app is derived from reading code, migrations and schemas — not from executing the flow. Where a claim is an inference, it says so.
+**Three of the five subagents were killed mid-run by an account session limit.** Completed: the Travel Agency Professional and the Senior Software Engineer. Did not finish: the Real Traveler (no report), the UI/i18n reviewer (no report), the Local Resident (produced nothing). Where their lanes mattered I did the work directly and say so.
 
-**Three of the five subagents were killed mid-run by an account session limit.** Completed and reported: the Travel Agency Professional and the Senior Software Engineer. Did not finish: the Real Traveler (had captured page HTML and landing screenshots, no report), the UI/i18n reviewer (had written its analysis scripts, no report), and the Local Resident (produced nothing). Where their lanes mattered most I did the work directly and say so.
+**What was actually executed** — this is evidence, not inference:
 
-**What _was_ executed for real**, and is therefore evidence rather than inference:
+| Check | Tool | Result |
+|---|---|---|
+| Typecheck | `npx tsc --noEmit` | clean, before and after every change |
+| Lint | `npm run lint` | **1 328 problems → 0 errors** (18 pre-existing react-refresh warnings) |
+| Production build | `npm run build` | passes |
+| **All 36 migrations replayed on real Postgres 16** | local cluster + Supabase-compatible shim | **28 applied / 7 failed → 33 / 6** (remaining 6 are `pg_net` email stubs unavailable here) |
+| **20 security assertions as `anon` / `authenticated` / `service_role`** | `psql`, SET ROLE + JWT claim | all 20 pass — see §2 |
+| Real browser, 375 px + 1440 px, 6 public routes | Playwright + Chromium | 0 JS errors, 0 horizontal overflow |
+| Overlay/tap blocking | `document.elementFromPoint()` on every visible control | see UX-1 |
+| Inland-destination logic | executed over 33 real inputs | see Q-1 |
+| Prompt timezone behaviour | built the real prompt under UTC, UTC−7, UTC+14 | see E-11 |
+| Production prompt builder | `generate-test-itinerary.ts --prompt-only` | byte-for-byte diff before/after |
+| i18n key parity | script over 4 locales + every static `t()` in `src/` | at parity — §5 |
+| Client bundle secret scan | grep built `.output/public/` | 0 hits for `service_role`, `sk_live_`, `sk_test_`, API keys, `node:crypto` |
 
-| Check                                           | Tool                                                               | Result                                       |
-| ----------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
-| Typecheck                                       | `npx tsc --noEmit`                                                 | clean, before and after every change         |
-| Production build                                | `npm run build`                                                    | passes                                       |
-| Public pages render (SSR)                       | `curl` × 11 routes                                                 | all 200 (`/auth` 307 → `/auth?mode=login`)   |
-| Real browser, 375 px + 1440 px, 6 public routes | Playwright + Chromium                                              | 0 JS errors, 0 horizontal overflow           |
-| Overlay/tap blocking                            | `document.elementFromPoint()` on every visible control             | see finding UX-1                             |
-| Inland-destination logic                        | executed `isInlandDestination` over 33 real inputs                 | see finding Q-1                              |
-| Production prompt builder                       | `scripts/generate-test-itinerary.ts --prompt-only`                 | byte-for-byte prompt diffed before/after fix |
-| i18n key parity                                 | script over all 4 locale files + every static `t()` call in `src/` | see §5                                       |
+**The single most valuable decision in this audit was standing up a real Postgres and replaying the migrations.** It found two defects that no amount of code reading would have surfaced — and one of them invalidates a fix a previous audit recorded as closed.
 
 ---
 
-## 1. Findings per agent
+## 1. Findings
 
-Severity: **BLOCKER** (ship-stopping) · **HIGH** · **MEDIUM** · **LOW**.
-Status: **FIXED** (in this branch) · **REPORTED** (deliberately not fixed — reason given) · **NOT VERIFIED**.
+Status: **FIXED** · **REPORTED** (not fixed — reason given) · **NOT VERIFIED**.
+
+### Database — found by replaying migrations (my own work; no agent covered this)
+
+| # | Sev | Finding | Status |
+|---|---|---|---|
+| DB-1 | **CRITICAL** | **The security-hardening migration cannot be applied.** `20260704090000` lists `travel_mode` in a `GRANT UPDATE (…) ON public.profiles`, but `travel_mode` is a column of `trips`, not `profiles` (confirmed against the generated schema types). Postgres rejects the whole GRANT, and the statement immediately before it is `REVOKE UPDATE ON public.profiles FROM authenticated`. So **everything after that line never runs**: the plan-escalation fix, the `trip_members` self-insertion fix, and the anon column scoping on published trips. Whichever way it was applied, the intended end state was never reached — either the file rolled back entirely, or `authenticated` was left with *no* write access to profiles at all. A previous audit recorded all three of those as "closed". | **FIXED** — historical file corrected + a new idempotent migration re-asserts all three blocks, safe from any starting state |
+| DB-2 | **CRITICAL** | **Infinite recursion in the RLS policies.** `trips."members can view trip"` reads `trip_members`; `trip_members."members can view own membership rows"` reads `trips`. Replaying the migrations in order and querying as `authenticated`, **SELECT, UPDATE and DELETE on `trips` all fail** with `infinite recursion detected in policy` — only INSERT survives, because it doesn't read the row. On this migration set the dashboard, the trip page and saving a note do not work for anybody. Nothing later in the migration history fixes it. | **FIXED** — cycle broken with two `SECURITY DEFINER` helpers; access rules unchanged, verified by test |
+
+> **Caveat, stated plainly:** I cannot read production, so I cannot tell you which state your live database is in. What is proven is that the committed migration set does not produce a working, hardened schema. Both fixes are idempotent and converge any starting state.
 
 ### AGENT 1 — Travel Agency Professional (completed)
 
-> Verdict, verbatim: _"No. The prose quality is genuinely good — better than most agency copy I have read — but a sellable itinerary is an operational document, and this one has no traveller headcount, no per-person price, no end times, no booking references, no emergency information, and no printable version."_
+> Verdict, verbatim: *"No. The prose quality is genuinely good — better than most agency copy I have read — but a sellable itinerary is an operational document."*
 
-| #         | Sev         | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Status                                                                                                                                                             |
-| --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A1-1      | BLOCKER     | **The quality bench has never actually been run.** `scripts/output/roma-primera-vez.json` and `albarracin-pueblo.json` are presented as production samples but each carries a `_meta.AVISO` stating they were written by a large model inside a dev session, not by `claude-haiku-4-5` via the API. **I verified this myself** — the notice is in both files. Every quality claim about this product currently rests on output from a much larger model than the one that runs in production. | REPORTED — needs an API key; cannot be done here                                                                                                                   |
-| A1-2      | BLOCKER     | **No traveller headcount anywhere.** `companion` is a 4-value enum; there is no adults/children count, so the budget tier ladder (`itinerary-prompt.ts`) divides a total by days only. A family of four on 5 200 €/10 days is classified "luxury (5-star hotels, private transfers)".                                                                                                                                                                                                         | REPORTED — a schema + DB + UI feature, explicitly out of the "no new features" scope                                                                               |
-| A1-3      | BLOCKER     | **Fake boarding pass presented as real.** `src/lib/flight.ts` invents a flight number, gate and seat from the trip UUID, and assigns cabin class from the _subscription tier_. It renders above every itinerary, labelled "Tarjeta de embarque / Vuelo / Puerta / Asiento", and is downloadable as a PNG with no disclaimer. **Verified in code.**                                                                                                                                            | **PARTIALLY FIXED** — disclaimer added inside the downloadable card (see §2). Removing the flight/gate/seat entirely is a product call I did not make unilaterally |
-| A1-4      | BLOCKER     | **The assistant edit destroys traveller data and throws away all personalisation.** The edit prompt was hardcoded Spanish, received only 6 trip fields, rewrote the whole itinerary at `max_tokens: 8192` (half of generation), and merged back only `image_url` — so every note the traveller typed and every stop they ticked off was wiped. **All four parts verified in code.**                                                                                                           | **FIXED** (4 separate fixes, §2)                                                                                                                                   |
-| A1-5      | BLOCKER     | **The fixed-hotel anchor rule is arithmetically unsatisfiable.** "Every activity must be within ~3 km" of the hotel, while the same prompt says the icons are non-negotiable and every day needs a different zone. From a real Lisbon anchor, Belém is 12.5 km and Alfama 6.9 km. The model must break one rule and nothing says which.                                                                                                                                                       | REPORTED — prompt redesign; needs a real generation run to validate                                                                                                |
-| A1-6      | MAJOR       | **The inland/beach guard was dead for the main market** (English-only city list).                                                                                                                                                                                                                                                                                                                                                                                                             | **FIXED** — see Q-1 below                                                                                                                                          |
-| A1-7      | MAJOR       | No end times or durations in the schema — an activity has a start time and nothing else.                                                                                                                                                                                                                                                                                                                                                                                                      | REPORTED (schema change)                                                                                                                                           |
-| A1-8      | MAJOR       | A day carries no date; a short model response is only a `console.warn`, silently mis-dating every subsequent day.                                                                                                                                                                                                                                                                                                                                                                             | REPORTED (schema change) — the related 14-day truncation **is** fixed, see E-5                                                                                     |
-| A1-9      | MAJOR       | Contradictory instructions inside one prompt with no precedence (luxury tier vs "never recommend other hotels" vs the transport profile; repeat-visitor "neighbourhoods" vs the VILLAGE scale tier).                                                                                                                                                                                                                                                                                          | REPORTED                                                                                                                                                           |
-| A1-10     | MAJOR       | Arrival/departure logic quietly sells empty days: "10 días" delivering 8 usable ones.                                                                                                                                                                                                                                                                                                                                                                                                         | REPORTED                                                                                                                                                           |
-| A1-11..15 | MAJOR→MINOR | No cost data anywhere; `unchecked` verification renders identically to verified; affiliate "Reservar" links generated for fallback anchors that are not bookable; `extractJson` repair can persist a half-empty itinerary as `ready`.                                                                                                                                                                                                                                                         | REPORTED                                                                                                                                                           |
-
-Agent 1 also produced two simulated itineraries (Lisbon 10-day anchored family; Morella 3-day repeat visitor by car) against the **real** production prompts emitted by the harness, and critiqued them. Both are explicitly labelled simulations, not API output.
+| # | Sev | Finding | Status |
+|---|---|---|---|
+| A1-1 | BLOCKER | **The quality bench has never been run.** `scripts/output/*.json` are presented as production samples but each carries a `_meta.AVISO` saying they were written by a large model in a dev session, not by `claude-haiku-4-5` via the API. **I verified this.** Every quality claim rests on output from a different model. | REPORTED — needs an API key |
+| A1-2 | BLOCKER | No traveller headcount anywhere; the budget tier divides a total by days only, so a family of four on 5 200 €/10 days is classed "luxury". | REPORTED — schema + DB + UI feature |
+| A1-3 | BLOCKER | Fake boarding pass: flight number, gate and seat invented from the trip UUID, cabin class from the *subscription tier*, downloadable as a PNG with no disclaimer. | **PARTIALLY FIXED** — disclaimer now inside the downloadable card, in 4 languages. Deleting the airline vocabulary is a product call |
+| A1-4 | BLOCKER | The assistant edit destroyed traveller data and all personalisation (4 distinct defects). | **FIXED** (all 4) |
+| A1-5 | BLOCKER | The 3 km hotel-anchor rule is arithmetically unsatisfiable against "the icons are non-negotiable". | REPORTED — prompt redesign, needs a real generation run to validate |
+| A1-6 | MAJOR | Inland/beach guard dead for the main market. | **FIXED** (Q-1) |
+| A1-7 | MAJOR | No end times or durations in the schema. | REPORTED — schema change |
+| A1-8 | MAJOR | A short model response silently mis-dates every following day; only a `console.warn`. | **FIXED** — retries once, then logs as an error |
+| A1-9 | MAJOR | Contradictory prompt rules with no precedence. | REPORTED |
+| A1-10 | MAJOR | Arrival/departure logic sells empty days ("10 días" delivering 8). | REPORTED |
+| A1-11 | MAJOR | No cost data anywhere. | REPORTED — schema change |
+| A1-12 | MAJOR | `unchecked` places were excluded from the verification count and had no badge, so a half-checked itinerary read like a fully checked one. | **FIXED** — the count now declares them |
+| A1-13 | MINOR | "Reservar" shown for fallback anchors that aren't bookable. | **FIXED** — "Ver" when Places looked and found nothing |
+| A1-14 | MINOR | `hotel` category unreachable in the common case; `transport` carries no operator data. | REPORTED — schema |
+| A1-15 | MINOR | `extractJson` repair could silently persist a half-empty itinerary as `ready`. | **FIXED** — parses strictly first, logs loudly if the repair path runs |
 
 ### AGENT 2 — Real Traveler (did not complete)
 
-Killed by the session limit before writing a report. It had captured SSR HTML for 15 routes and landing screenshots at mobile and desktop. **No traveler findings are claimed here.** The public-surface part of its lane was covered by the browser testing I ran directly (§UX below); the authenticated journey — signup, generation wait, editing, sharing — was **not** walked by anyone and remains the largest untested area of this audit.
+No report. **No traveler findings are claimed here.** The public surface was covered by the browser testing I ran directly; the authenticated journey — signup, generation wait, trip page, editing, sharing — was walked by nobody and is the largest untested area of this audit.
 
-### AGENT 3 — Local Resident (did not complete)
+### AGENT 3 — Local Resident (did not complete; I took over the data-accuracy lane)
 
-Produced nothing. I took over the highest-value part of its lane myself: fact-checking the hardcoded destination data.
+| # | Sev | Finding | Status |
+|---|---|---|---|
+| Q-1 | HIGH | **The beach guard was off for most of the Spanish-speaking market and factually wrong for nine cities.** Executed over 33 inputs: **"Roma", "Praga", "Florencia", "Londres", "Viena", "Cracovia", "Bruselas", "Ginebra" all returned *coastal*** — the list was English-only. Separately, nine cities with their own beach (Copenhague, Estocolmo, Oslo, Helsinki, Reikiavik, Dublín, Edimburgo, Venecia/Lido, Lima/Costa Verde) were being told the sea was "strictly forbidden". | **FIXED** — exonyms in 4 languages, 9 coastal cities removed |
+| Q-2 | MEDIUM | The list was duplicated verbatim in the edit path. | **FIXED** — single source of truth |
+| Q-3 | LOW | Small inland towns aren't on the list and fall through to the cautious branch. | REPORTED — acceptable by design |
+| Q-4 | LOW | `"santiago"` and `"la paz"` are ambiguous (Compostela/Chile/Cuba; Bolivia/Baja California). | REPORTED — documented in the code |
 
-| #   | Sev    | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Status                                                    |
-| --- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| Q-1 | HIGH   | **The inland/beach guard was silently disabled for most of the Spanish-speaking market, and factually wrong for nine cities.** `INLAND_DESTINATION_NAMES` was an English-only list matched exactly against the first comma-segment of the destination. I executed `isInlandDestination` over 33 real inputs: **"Roma" → coastal, "Praga" → coastal, "Florencia" → coastal, "Londres" → coastal, "Viena" → coastal, "Cracovia" → coastal, "Bruselas" → coastal, "Ginebra" → coastal.** Spanish users type exactly those. Separately, nine cities on the list genuinely have their own beach and were being told the sea is "strictly forbidden": Copenhague, Estocolmo, Oslo, Helsinki, Reikiavik, Dublín, Edimburgo, Venecia (Lido) and Lima (Costa Verde). | **FIXED**                                                 |
-| Q-2 | MEDIUM | The same list was duplicated verbatim in `itinerary-edit.functions.ts`, so any correction to one copy would leave the other behind. (They were identical at audit time — verified by diffing both sets.)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | **FIXED** — the edit path now calls `isInlandDestination` |
-| Q-3 | LOW    | Small inland towns (Albarracín, Morella) are not on the list and fall through to the cautious branch, which asks the model to judge. Acceptable, but it means the hard guard only protects listed cities.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | REPORTED                                                  |
-| Q-4 | LOW    | `"santiago"` is ambiguous (Compostela / de Chile / de Cuba — the last is coastal) and `"la paz"` likewise (Bolivia inland, Baja California coastal). Disambiguation belongs upstream in the autocomplete.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | REPORTED — documented in a code comment                   |
-
-**Not done:** per-venue fact-checking of the two sample itineraries against real local knowledge. Since those samples are not production-model output (A1-1), fact-checking them would grade the wrong model. This needs redoing against real API output.
+**Not done:** per-venue fact-checking of the sample itineraries. Since those aren't production-model output (A1-1), checking them would grade the wrong model.
 
 ### AGENT 4 — Senior Software Engineer (completed)
 
-| #    | Sev      | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Status                                                                                      |
-| ---- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
-| E-1  | CRITICAL | **A free user could reset their own AI-chat quota to zero from the browser console.** `chat_usage` carries `GRANT SELECT, INSERT, UPDATE ... TO authenticated` with an RLS policy whose only condition is "it's your row" — and `message_count` on that row _is_ the quota. `/api/chat` read it through the service role and trusted it. `update({message_count: 0})` from devtools made the 10/day free limit unbounded. **Verified in the migration** (`20260621091437_…sql:8-11`) and in `chat.ts`. | **FIXED** (code + migration)                                                                |
-| E-2  | HIGH     | **The "free = 2 itineraries for life" cap is bypassable** — the cap counts `trips` rows with `status='ready'`, and `authenticated` holds an unrestricted UPDATE/DELETE grant on `trips`. Delete a trip from the dashboard's own button and generate another, forever; or `PATCH` `status` to `"draft"` to keep it and still drop out of the count. Only `DAILY_GENERATE_LIMIT = 20` still binds.                                                                                                       | REPORTED — see §3 for why I did not change this                                             |
-| E-3  | HIGH     | **The Stripe webhook returned 200 when the database write failed**, so a paying customer could be silently left on `plan = "free"` with no retry and no signal. Signature verification itself is correct; idempotency (unique indexes) is already in place, so retries are safe.                                                                                                                                                                                                                       | **FIXED**                                                                                   |
-| E-3b | HIGH     | **A paid Trip Pass could be permanently lost.** `grantTripPass` inserted the ledger row first; if `increment_bonus_trips` then failed, the retry hit the unique violation and returned early — the customer paid €4.99 and never got the pass.                                                                                                                                                                                                                                                         | **FIXED**                                                                                   |
-| E-4  | MEDIUM   | **SSRF in `/api/og/$slug`.** `hero_image_url` is user-writable via the `trips` UPDATE grant; the OG renderer fetched it server-side with no host check, so `http://169.254.169.254/…` was fetched from inside the deployment's network and embedded in the returned PNG.                                                                                                                                                                                                                               | **FIXED** (host allow-list + no redirects + https-only). The unmetered-CPU half is REPORTED |
-| E-5  | MEDIUM   | **Trips longer than 14 days were silently truncated.** The client allowed 20 days and said so; the generator caps at 14; the trip header still showed the full range while the itinerary stopped short. **Verified in code** — I had independently found the same mismatch.                                                                                                                                                                                                                            | **FIXED**                                                                                   |
-| E-6  | MEDIUM   | **`sitemap.xml` contained zero trip URLs.** It selected `updated_at`, which is not in the anon column grant, so PostgREST rejected the whole query and the error was swallowed by `return []`. Every published itinerary — the organic-acquisition surface — was missing from the sitemap, silently.                                                                                                                                                                                                   | **FIXED**                                                                                   |
-| E-7  | MEDIUM   | Free-plan chat counter was a read-then-write race; message _size_ was uncapped (`z.unknown()` × 60).                                                                                                                                                                                                                                                                                                                                                                                                   | **FIXED** (both)                                                                            |
-| E-8  | MEDIUM   | **Trip coordinates were never saved for AI-generated trips.** `geocodeAndPersistTrip` imports the _browser_ Supabase client; called from inside a server function it runs as `anon`, which has no UPDATE grant on `trips`. The failure was swallowed into `console.warn`, and the call was `void`ed so nothing awaited it.                                                                                                                                                                             | **FIXED**                                                                                   |
-| E-9  | LOW      | `RLS_FIXES.sql` is still un-applied, so a trip owner can forge their own public view/rating counters via a direct PATCH.                                                                                                                                                                                                                                                                                                                                                                               | REPORTED                                                                                    |
-| E-10 | LOW      | Checkout `returnUrl` accepts any origin; `priceId` is not allow-listed. Self-limited (needs the victim's own token).                                                                                                                                                                                                                                                                                                                                                                                   | REPORTED — I wrote the fix, then **reverted it**: see §3                                    |
-| E-11 | LOW      | `new Date("YYYY-MM-DD")` is UTC but `.getMonth()` / `toLocaleDateString` are local. Latent on Vercel (UTC); would shift every prompt's month and weekday by a day on a negative-offset runtime.                                                                                                                                                                                                                                                                                                        | REPORTED                                                                                    |
-| E-12 | LOW      | `void writeCache(...)` — the news cache write was never awaited, so on serverless it may never land and every call burns NewsAPI quota (100/day for the whole app).                                                                                                                                                                                                                                                                                                                                    | **FIXED**                                                                                   |
-| E-13 | LOW      | The demo-trip claim inserts arbitrary client-supplied itinerary JSON as a `ready` trip. Not an XSS vector (verified), but a public-feed spam path.                                                                                                                                                                                                                                                                                                                                                     | REPORTED                                                                                    |
+| # | Sev | Finding | Status |
+|---|---|---|---|
+| E-1 | CRITICAL | A free user could reset their own chat quota to zero from the browser console — `chat_usage` had write grants to `authenticated` and RLS that only checks row ownership, and `message_count` *is* the quota. | **FIXED** — free path moved to the atomic service-role RPC; migration revokes the grants. Verified: `authenticated` write now denied |
+| E-2 | HIGH | The "free = 2 for life" cap was bypassable two ways: delete a trip from the dashboard's own button, or `PATCH status` to `"draft"` to keep it and drop out of the count. | **FIXED** — `status` removed from the client column grant, and a monotonic `generation_ledger` the client cannot touch. Verified: user deletes both trips → trips count 0, ledger still 2 |
+| E-3 | HIGH | The Stripe webhook returned 200 when the DB write failed, silently leaving a paying customer on `plan="free"` with no retry. | **FIXED** — all writes propagate → 500 → Stripe retries |
+| E-3b | HIGH | A paid Trip Pass could be lost forever if the bonus increment failed after the ledger insert. | **FIXED** — ledger row removed so the retry completes |
+| E-4 | MEDIUM | SSRF in `/api/og/$slug` via user-writable `hero_image_url`. | **FIXED** at both ends — host allow-list, https-only, redirects refused; and `hero_image_url` removed from the client column grant. Verified |
+| E-5 | MEDIUM | Trips over 14 days silently truncated. | **FIXED** |
+| E-6 | MEDIUM | `sitemap.xml` contained zero trip URLs — it selected `updated_at`, outside the anon column grant, and swallowed the error. | **FIXED** — and **proven**: as `anon`, the old query returns `permission denied`, the fixed one returns rows |
+| E-7 | MEDIUM | Free chat counter was a read-then-write race; message size uncapped. | **FIXED** (both) |
+| E-8 | MEDIUM | Trip coordinates never saved — server code called the *browser* Supabase client, running as `anon` with no UPDATE grant, failure swallowed. | **FIXED** |
+| E-9 | LOW | A trip owner could forge their own public view/rating counters via a direct PATCH. | **FIXED** — column-scoped UPDATE grant. Verified: forging `rating_sum`/`view_count` denied |
+| E-10 | LOW | Checkout `returnUrl` accepts any origin. Self-limited: an attacker needs the victim's own token, so they can only redirect themselves. | REPORTED — see §3 |
+| E-11 | LOW | `new Date("YYYY-MM-DD")` is UTC but read with local getters. | **FIXED** — and **proven**: under `America/Los_Angeles` a 1 July trip was announced as *June, Tuesday*; now July/Wednesday in every zone |
+| E-12 | LOW | News cache write not awaited. | **FIXED** |
+| E-13 | LOW | The demo-trip claim inserted unvalidated client JSON as a `ready` trip. | **FIXED** — now a Zod-validated server function |
+| — | MEDIUM | `listPublicTrips` was the only cost-bearing public endpoint with no rate limit. | **FIXED** — 300/day per IP, fail-open |
 
-Agent 4 also produced a full auth table for all 20 `createServerFn` definitions. **Its conclusion: every server function that touches user-owned data is behind `requireSupabaseAuth`, and no server path passes user input into a service-role query in a way that bypasses an ownership check.** The four unauthenticated ones are deliberately public and read only `is_public = true` rows. The one gap: `listPublicTrips` has no rate limit at all.
+Agent 4's auth table for all 20 `createServerFn` definitions found **every server function touching user data is behind `requireSupabaseAuth`**, and no server path passes user input into a service-role query bypassing an ownership check.
 
-### UX / browser testing (run directly, not by an agent)
+### UX / browser (run directly)
 
-| #    | Sev    | Finding                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Status                                                                               |
-| ---- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| UX-1 | MEDIUM | **The cookie banner physically blocks primary CTAs on a first visit.** Proven causally with `document.elementFromPoint()`: with no consent stored, "Empieza gratis" (`/pricing` @375), "Elegir plan" (`/pricing` @1440) and "Crear mi viaje" (`/explore` @1440) all return the banner as the hit target. With consent pre-set, **zero** blocked controls on every page tested. The banner occupies the bottom 166 px (mobile) / 138 px (desktop) — any control that lands in that band receives the tap. | REPORTED — I built a fix, measured it, found it ineffective, and reverted it. See §3 |
-| UX-2 | LOW    | `<html lang="es">` is hardcoded in `__root.tsx` and the SSR pass always renders Spanish; the client then detects the browser language and switches. An English visitor sees a Spanish first paint that flips. Confirmed in a real browser (`lang` was `en` under an en-US UA while SSR had sent `es`).                                                                                                                                                                                                   | REPORTED — a correct fix needs `Accept-Language` handling in SSR                     |
-| UX-3 | LOW    | 6–10 controls per page have a touch target under 44 px; 1–2 per page have no accessible name.                                                                                                                                                                                                                                                                                                                                                                                                            | REPORTED                                                                             |
-| UX-4 | LOW    | `npm run lint` fails with **1 328 problems — 1 298 of them `prettier/prettier`** on the repo's own config, with the exact prettier version the lockfile pins. Also `swipe.js` at the repo root is unreferenced dead code that fails to parse.                                                                                                                                                                                                                                                            | REPORTED — reformatting 1 298 issues would bury this branch's real diff              |
-
-**Not blocking, verified clean:** no horizontal overflow at 375 px on any public page; no uncaught JS errors on any public page; all images carry `alt`. (Unsplash and Google Fonts requests fail in this sandbox because of the egress proxy — that is the container, not the product.)
-
----
-
-## 2. What was fixed, with evidence
-
-Every change below typechecks (`npx tsc --noEmit`, clean) and builds (`npm run build`, passes).
-
-**1. Itinerary images: paying users were getting worse photos than the free demo.** _(found directly, not by an agent)_
-`generateItinerary` made `1 + dayCount` separate Unsplash searches (16 for a 14-day trip) against a key with 50 requests/hour for the whole app, with no relevance filter. The public demo had already been fixed for exactly this — its own code comment says the old approach put "the beach of another country" in the header — but the authenticated path was never updated. Now both use `destinationPhotoPool`: one or two calls, photos verified to actually mention the destination, and a destination-tagged fallback.
-→ `src/lib/itinerary.functions.ts`
-
-**2. Trips longer than 14 days no longer silently lose days.** The client cap was 20 (`MAX_TRIP_DAYS`) and the copy said "el máximo es de 20 días"; the generator caps at 14. Now there is one shared `MAX_ITINERARY_DAYS = 14` in `itinerary-prompt.ts`, the client uses it, the warning interpolates it so it cannot drift again in four languages, and `CreateTripInput` rejects a longer span server-side.
-→ `itinerary-prompt.ts`, `itinerary.functions.ts`, `onboarding.tsx`, 4 locale files
-
-**3. The assistant no longer answers every user in Spanish.** `/api/chat`'s planning prompt hardcoded _"Responde en español"_, and the client never sent a language, so English, French and Portuguese users got Spanish replies. The UI language now travels with each request and the system prompt (and the date formatting) follow it.
-→ `assistant.tsx`, `api/chat.ts`
-
-**4. Editing an itinerary no longer translates it to Spanish.** The edit prompt's rule 1 was _"IDIOMA: 100% español peninsular. Prohibido: Breakfast, Lunch, Dinner…"_ — one edit rewrote an English itinerary entirely into Spanish. The output-language rules are now a single exported constant shared by generation and editing.
-→ `itinerary-prompt.ts` (`ITIN_LANGUAGE_BLOCKS`), `itinerary-edit.functions.ts`, `AssistantEditPanel.tsx`
-
-**5. Editing a trip of more than about a week no longer always fails.** The edit asks the model to re-emit the _entire_ itinerary but capped `max_tokens` at 8192, half what generation needs for 14 days — so long trips hit "La respuesta del modelo se truncó" every time, burning one of the 40 daily edits per attempt. Now 16000, matching generation.
-→ `itinerary-edit.functions.ts`
-
-**6. Editing no longer wipes the traveller's own notes and checked-off stops.** Those live in the same `trips.itinerary` JSON (`updateActivity`), and the edit merged back only `image_url`. Now `notes` and `completed` are carried across by day + title + place, so an untouched stop keeps what the traveller wrote and a genuinely changed stop starts clean.
-→ `itinerary-edit.functions.ts`
-
-**7. Editing no longer discards the traveller's profile.** The edit saw only destination, dates, companion, budget and style — so one edit could turn a celiac, walking-only, hotel-anchored, relaxed-pace itinerary into a generic one. Pace, transport, interests, dietary needs, avoid list, accommodation anchor, first-visit and arrival/departure times are now in the edit prompt, marked as non-negotiable. Reads use `select("*")` like generation, so a missing migration cannot break the query.
-→ `itinerary-edit.functions.ts`
-
-**8. The beach guard works for the languages the app ships in, and no longer lies about nine coastal cities.** Exonyms added across es/en/fr/pt; Copenhagen, Stockholm, Oslo, Helsinki, Reykjavik, Dublin, Edinburgh, Venice and Lima removed from the inland list.
-**Evidence — the production prompt, regenerated by the real harness, one-line diff:**
-
-```
--2. BEACH — Only include beach or sea activities if Roma genuinely has a coastline …
-+2. BEACH — Roma is an inland city — beach, sea or coastal activities … are strictly forbidden.
-```
-
-→ `itinerary-shared.ts`, `itinerary-edit.functions.ts`, `scripts/output/roma-primera-vez.prompt.txt`
-
-**9. The free chat quota can no longer be reset by the user.** `/api/chat`'s free branch now uses the same atomic, service-role-only `check_and_increment_rate_limit` RPC the paid branch already used. That removes both the client-writable counter and the read-then-write race in one change, and needs no database deploy to take effect. A migration additionally revokes the client grants and drops the policy on `chat_usage`.
-→ `api/chat.ts`, `supabase/migrations/20260827090000_revoke_chat_usage_client_grants.sql`
-
-**10. A chat request can no longer carry unbounded text.** 200 000-character budget on the serialised messages, checked before the model call.
-→ `api/chat.ts`
-
-**11. Stripe failures now retry instead of being silently swallowed.** All three subscription writes propagate, so the handler's existing catch returns 500 and Stripe retries for up to three days; the writes are idempotent, so that is safe. For Trip Pass, if the bonus increment fails after the ledger insert, the ledger row is removed so the retry can complete the whole operation instead of short-circuiting on the unique index.
-→ `api/public/payments/webhook.ts`
-
-**12. SSRF closed on the OG image endpoint.** `hero_image_url` is now validated against the same image hosts the CSP already allows, https-only, redirects refused.
-→ `api/og/$slug.ts`
-
-**13. The sitemap contains published trips again.** Dropped the ungranted `updated_at` column; the query error is logged instead of silently returning an empty list.
-→ `routes/sitemap[.]xml.ts`
-
-**14. Trip coordinates are actually saved.** The server path now geocodes only when `createTrip` did not already store coordinates, persists with the authenticated client from the request context, and is awaited with a 4-second cap instead of being fired and forgotten after the response.
-→ `itinerary.functions.ts`
-
-**15. The news cache write is awaited**, so it cannot be lost to a frozen serverless instance.
-→ `news.functions.ts`
-
-**16. The boarding pass says it is not a boarding pass.** A line inside the card — and therefore inside the downloadable PNG — now reads "Pase decorativo · no es una tarjeta de embarque real", in all four languages.
-→ `airport/BoardingPass.tsx`, 4 locale files
-
-**17. English removed from the Spanish UI.** `onboarding.dateStart` / `dateEnd` were the literal strings `"DEPARTURE"` / `"RETURN"` in **all four** locale files, including Spanish. Now localised.
-→ 4 locale files
+| # | Sev | Finding | Status |
+|---|---|---|---|
+| UX-1 | MEDIUM | The cookie banner covers the bottom 166 px (mobile) / 138 px (desktop); controls landing there receive the tap. Proven with `elementFromPoint`: "Empieza gratis", "Elegir plan", "Crear mi viaje" all blocked with no consent stored; **zero** blocked with consent set. | REPORTED — I built a fix, measured it, it didn't work; see §3 |
+| UX-2 | LOW | SSR renders Spanish with `<html lang="es">`; the client then switches to the browser language, so a non-Spanish visitor sees a flash. | REPORTED — see §3 for the concrete blocker |
+| UX-3 | LOW | 6–10 controls per page under 44 px; 1–2 per page with no accessible name. | REPORTED |
+| UX-4 | LOW | `npm run lint` failed with 1 328 problems. | **FIXED** — 0 errors |
+| — | — | Spanish-only server errors rendered raw to users, including API error bodies. | **FIXED** — stable codes + translated UI strings |
 
 ---
 
-## 3. What was not fixed, and why
+## 2. The database test suite
 
-**Three changes I made and then deliberately reverted.** Reporting them because a reverted fix is still information:
+Twenty assertions, run as the real Postgres roles against a clean database with all migrations applied. Every one passes:
 
-- **Cookie-banner overlay (UX-1).** I added body padding equal to the banner height while it is visible. It applied correctly (measured: `paddingBottom: 178px`) and **changed nothing** — re-running the `elementFromPoint` probe gave byte-identical blocking. Padding at the end of the document cannot move a CTA that sits mid-page under a fixed bottom banner. Leaving an ineffective change in production code is worse than none, so I reverted it. A real fix is a smaller banner or a different placement — a design decision.
-- **Checkout `returnUrl` allow-list (E-10).** Enforcing `startsWith(SITE_URL)` would break checkout on any preview deployment where `SITE_URL` points at production — and I cannot test checkout at all here. The finding is self-limited (an attacker needs the victim's own bearer token, so they can only redirect themselves). Not worth an untestable availability risk. The patch is one line if you want it: reject when `SITE_URL` is set and `returnUrl` does not start with it.
-- **Nothing else was reverted.**
+| # | Assertion | Result |
+|---|---|---|
+| 1–3 | Owner can SELECT / UPDATE own trip, and read `trip_members` | pass — *all three failed with recursion before DB-2* |
+| 4 | Stranger sees 0 rows of someone else's trip | pass |
+| 5 | Stranger cannot self-insert into `trip_members` | denied by RLS |
+| 6 | Stranger cannot escalate their own `plan` | permission denied |
+| 7 | Stranger *can* still update allowed profile columns | pass (no regression) |
+| 8 | `authenticated` cannot write `chat_usage` | permission denied |
+| 9 | `anon` cannot read `user_id` / `hotel_address` of a published trip | permission denied |
+| 10 | `anon` *can* read the granted public columns | pass |
+| 11 | Old sitemap query as `anon` | permission denied — **proves E-6** |
+| 12 | Fixed sitemap query as `anon` | pass |
+| 13 | Owner invites a member; the member can see the trip | pass (tripmates still works) |
+| A–C | Owner can update `itinerary`, `is_public`/`share_slug`/`published_at`, `geo_lat`/`geo_lng` | pass |
+| D | `status` → `"draft"` (quota dodge) | permission denied |
+| E | `hero_image_url` → `169.254.169.254` (SSRF) | permission denied |
+| F | Forge `rating_sum` / `view_count` | permission denied |
+| G | `service_role` can still write `status` + `hero_image_url` | pass (server path intact) |
 
-**Deliberately out of scope** (the brief said not to add features or abstractions beyond what the task requires):
+Plus, outside SQL: deleting both trips leaves `trips_count = 0` but `ledger_count = 2`, and `authenticated` can neither read nor delete the ledger.
 
-- Traveller headcount, per-person pricing, per-day cost estimates, `duration_min` / `end_time`, per-day `date`, emergency/embassy/insurance blocks, a printable PDF (A1-2, A1-7, A1-8, A1-11, and the "five I would refuse to launch without"). These are schema + DB + UI features, not defects.
-- Removing the fake flight number, gate and seat (A1-3). That is a deliberate brand device with a whole `src/components/airport/` family behind it. I made it honest rather than deleting it; deleting it is your call.
+---
 
-**Deliberately not changed because I cannot test the consequence:**
+## 3. What is still not fixed, and why
 
-- **The free-plan quota bypass (E-2).** The fix is real — stop counting mutable `trips` rows, increment a service-role-only ledger at the moment the AI call is authorised. But it changes monetisation accounting for every existing user: done wrong it either hands out free generations or locks out paying ones, and I have no database to verify against. This needs your decision on the migration semantics (does everyone's lifetime count restart?) before anyone writes it.
-- **Column-scoped grants on `trips` (E-2, E-4, E-9).** Restricting `status` / `hero_image_url` / the rating counters requires revoking the table-wide UPDATE and re-granting an explicit column list. Several server functions write `trips` through the _user's_ client, so they are subject to the same grant — an incomplete column list silently breaks sharing, publishing or ratings. Not safe to write blind. `RLS_FIXES.sql` in the repo root is the right starting point; it needs the extra columns from E-2 and E-4 added.
-- **Google Places key reuse.** `place-verification.ts` falls back to `VITE_GOOGLE_MAPS_KEY`, and a `VITE_` value is also shipped to the browser — so the billed Places API can be called on your account by anyone who lifts it from the bundle. The fix is a server-only `GOOGLE_PLACES_KEY` and dropping both `VITE_` fallbacks, but doing that blind would silently disable place verification if that is the only key you have set. Change it together with the env var.
-- **1 298 prettier violations (UX-4).** Running `npm run format` is a one-command fix, but it would rewrite most of the repo and bury this branch's diff. Do it as its own commit. I confirmed the five files I touched were already unformatted before I touched them, so this branch adds no new violations.
+**Three changes I made, measured, and reverted** — a reverted fix is still information:
+
+- **Cookie-banner overlay (UX-1).** I reserved the banner's height as body padding. It applied (measured `paddingBottom: 178px`) and changed *nothing* — `elementFromPoint` returned byte-identical results, because document-end padding cannot move a mid-page CTA out from under a fixed bottom banner. Reverted. A real fix is a smaller banner or different placement — a design decision, and even halving its height would not clear the `/pricing` CTA.
+- **Checkout `returnUrl` allow-list (E-10).** Enforcing `startsWith(SITE_URL)` breaks checkout on any preview deployment where `SITE_URL` points at production, and I cannot test checkout. The finding is self-limited. One line if you want it: reject when `SITE_URL` is set and `returnUrl` doesn't start with it.
+- **A `Record<string, never>` type for the email template maps.** The templates take genuinely different props, so no common type exists — this is the "casteo inevitable" your CLAUDE.md allows. Reverted to `any` with an `eslint-disable` and the reason written down. (Typing the *payload* did stick, and surfaced a real latent bug: a hook payload without `email` was reaching Resend as `to: [undefined]`. Now rejected with 400.)
+
+**SSR language (UX-2) — not attempted, with a concrete reason.** The correct fix needs per-request language detection, but `src/i18n/index.ts` is a module-level singleton: calling `changeLanguage` per request would race across concurrent SSR requests on the same server instance. Doing it properly requires `i18n.cloneInstance()` per request plus an `I18nextProvider` — an architectural change I cannot test on authenticated pages. The current design (render `es`, switch on the client) is a defensible choice, not an accident.
+
+**Deliberately out of scope** — features, not defects, and the brief said not to add them: traveller headcount, per-person pricing, per-day cost estimates, `duration_min`/`end_time`, per-day `date`, emergency/embassy/insurance blocks, a printable PDF. Also deleting the fake flight number/gate/seat, which is a deliberate brand device.
+
+**Still open, needs your decision:**
+
+- **Google Places key reuse.** `place-verification.ts` falls back to `VITE_GOOGLE_MAPS_KEY`, and a `VITE_` value ships to the browser — so the billed Places API can be called on your account by anyone who lifts it. The fix is a server-only `GOOGLE_PLACES_KEY` and dropping both `VITE_` fallbacks, but doing that blind would silently disable place verification if that is the only key you have set. Change it together with the env var.
+- **`graphify-out/` is committed** — tool cache, ~37 JSON files. Probably wants to be gitignored.
 
 **Not verified at all** — the honest gap list:
 
-1. Every authenticated screen. Signup, onboarding, the generation wait state, the trip page, editing, sharing, tripmates, referrals, the dashboard, profile — none was rendered.
-2. All ten of PART 2's critical paths except public pages and the 375 px mobile pass. Specifically: the activation funnel end-to-end, generation quality on three destinations, generation time under 30 s, auth flows (email/password, Google OAuth, reset, confirmation), Google Maps pins and the Leaflet fallback, Trip Pass checkout and subscription upgrade, webhook idempotency against real events, the share dialog and OG image rendering.
-3. Whether `supabase/migrations/` matches production. Findings E-1, E-2, E-6 and E-9 rest on replaying 34 migration files in order. A live `\dp public.chat_usage` and `\dp public.trips` would confirm them.
-4. Every exploit described. Not one PostgREST call, Stripe webhook or `/api/og` request was issued.
+1. Every authenticated screen. None was rendered.
+2. Most of PART 2's critical paths: the activation funnel end-to-end, generation quality on three destinations, generation time under 30 s, auth flows (email/password, Google OAuth, reset, confirmation), Google Maps pins and the Leaflet fallback, Trip Pass checkout and subscription upgrade, webhook idempotency against real Stripe events, the share dialog and OG image rendering.
+3. **Which state your production database is actually in** (DB-1, DB-2). The migration set is proven broken; production may differ.
+4. Every exploit described. Not one PostgREST call, Stripe webhook or `/api/og` request was issued against the real service — but the SQL-level equivalents *were* executed, which is what §2 is.
 5. The quality of anything the production model actually writes (A1-1).
 
 ---
 
-## 4. Cross-referenced findings (flagged by more than one perspective)
+## 4. Cross-referenced findings
 
-Both completed agents independently hit the same three areas, which is why they were fixed first:
-
-- **The assistant edit path** — Agent 1 called it a BLOCKER for destroying traveller data and personalisation; Agent 4 flagged the same function for its silent-failure pattern. Six separate defects, all fixed.
-- **The 14-day truncation** — Agent 4 (E-5) and my own reading found it independently; Agent 1 hit the same class from the itinerary side (A1-8, wrong dates on a short response). Fixed.
-- **The inland/beach list** — Agent 1 found it dead for Spanish input; the Local Resident lane (mine) found nine cities factually mis-classified on top. Fixed together.
+- **The assistant edit path** — Agent 1 (BLOCKER, data destruction) and Agent 4 (silent failures) hit it independently. Six defects, all fixed.
+- **The 14-day truncation** — Agent 4, Agent 1 (wrong dates on short responses) and my own reading, independently. Fixed.
+- **The inland list** — Agent 1 (dead for Spanish input) and the Local Resident lane (nine cities mis-classified). Fixed together.
+- **`trips` write permissions** — Agent 4 flagged three separate consequences (quota dodge, SSRF source, forged ratings) that turned out to share one root cause: a table-wide UPDATE grant. One migration closed all three.
 
 ---
 
-## 5. i18n status — better than expected
+## 5. i18n status
 
-Measured, not estimated: **es 922 keys, en 922, fr 924, pt 924.** Zero keys missing from any locale relative to Spanish; fr and pt carry two extra language labels. Of 586 static `t()` keys used in `src/`, the 8 that looked missing are all i18next plural forms (`_one` / `_other`) present in every locale — a false positive in my checker, confirmed by inspection.
+Measured: **es 922, en 922, fr 924, pt 924** keys. Zero missing relative to Spanish; fr/pt carry two extra language labels. Of 586 static `t()` keys, the 8 that looked missing are i18next plural forms present in every locale.
 
-The real i18n defects were not missing keys but **hardcoded language in server prompts and locale files**: the Spanish-only chat prompt (fixed), the Spanish-only edit prompt (fixed), `"DEPARTURE"`/`"RETURN"` sitting in all four locale files (fixed), and Spanish-only error strings thrown from server functions (`"Viaje no encontrado"`, `"Error Claude 500: …"`) which surface raw to the user in `my-trip.$tripId.tsx` — **reported, not fixed**: `LIMIT_REACHED` is handled and translated, but other server errors render verbatim. Route `<title>` tags are also hardcoded Spanish, which is a defensible SEO choice for the primary market and cannot be localised without SSR language detection (same root cause as UX-2).
+The real defects were hardcoded language, not missing keys — Spanish-only chat prompt, Spanish-only edit prompt, `"DEPARTURE"`/`"RETURN"` literals in all four locale files, and Spanish server errors rendered raw. **All fixed.** Route `<title>` tags remain hardcoded Spanish: a defensible SEO choice for the primary market, and unfixable without SSR language detection (UX-2).
 
 ---
 
 ## 6. Final verdict from each perspective
 
 **Travel Agency Professional — would you sell this today?**
-**No, and that has not changed.** The four defects fixed in the edit path were genuine blockers and they are gone, and the beach guard now works. But its own verdict stands on what remains: no headcount, no per-person price, no end times, no booking references, no emergency block, no printable version. The prose quality is genuinely strong — the problem is that a sellable itinerary is an operational document and this is still a very good inspiration document. And the most important thing it found is that **nobody has ever seen what the production model actually produces**: the committed samples are from a different, larger model. Fix that first — everything else is an opinion until then.
+**No, and that hasn't changed.** The four edit-path blockers are gone and the beach guard now works, but its verdict stands on what remains: no headcount, no per-person price, no end times, no booking references, no emergency block, no printable version. And the most important thing it found is that **nobody has ever seen what the production model actually produces**. Fix that first — everything else is opinion until then.
 
 **Real Traveler — would you use this for your next trip?**
-**Unknown, and I will not fake an answer.** That agent died before reporting, and no authenticated screen was rendered by anyone in this session. What I can say from the browser: the public pages render cleanly, there is no horizontal overflow at 375 px, and there are no JavaScript errors. What no one checked: signup, the wait while your itinerary generates, the trip page, editing, sharing.
+**Unknown, and I won't fake an answer.** That agent died before reporting and no authenticated screen was rendered by anyone. The public pages render cleanly, there's no overflow at 375 px, and no JS errors. Signup, the generation wait, the trip page, editing and sharing were checked by nobody.
 
-**Local Resident — is the content something a local would stand behind?**
-**Partly, and now more so than yesterday.** I verified and fixed the destination logic myself: "Roma" is now correctly inland (it was not), and nine genuinely coastal cities are no longer told the sea is forbidden. But the per-venue fact-check — does this restaurant exist, is that tip real local knowledge or dressed-up filler — was not done, and doing it against the committed samples would grade the wrong model. This is the single highest-value thing to run once you have an API key.
+**Local Resident — would you stand behind the content?**
+**More than yesterday.** "Roma" is now correctly inland — it was not — and nine genuinely coastal cities are no longer told the sea is forbidden. But the per-venue fact-check wasn't done, and doing it against the committed samples would grade the wrong model. This is the highest-value thing to run once you have an API key.
 
 **Senior Software Engineer — would you deploy this?**
-**Yes, this branch — it is strictly safer than what is live.** One critical quota bypass closed, an SSRF closed, two ways of losing a customer's money closed, the SEO surface restored, and four silent failures made loud. Typecheck and build both pass; public pages verified in a real browser at both breakpoints. But deploy it with eyes open: the free-tier paywall is still bypassable with the dashboard's own Delete button (E-2), `trips` still carries a table-wide UPDATE grant that lets an owner forge their own public ratings (E-9), and none of the payment or auth flows were exercised against a real Stripe or Supabase. **Apply the migration and watch the webhook logs** — it now returns 500 where it used to lie with a 200, so failures that were previously invisible will start showing up. That is the point, but you should be looking.
+**Yes — and now I'd say it's the safest state this codebase has been in.** Two critical database defects fixed that a previous audit had recorded as closed; one critical quota bypass and both halves of the free-tier bypass closed; an SSRF closed at both ends; two ways of losing a customer's money fixed; the SEO surface restored; five silent failures made loud; lint green for the first time. Twenty security assertions pass against a real Postgres.
+
+Deploy it with eyes open, in this order: **migrations first, then code** — the code assumes `status` and `hero_image_url` are service-role-writable. Watch the Stripe webhook logs, which now return 500 where they used to lie with a 200; failures that were invisible will start appearing, which is the point. And note that `20260827094000` changes RLS on `trips` — if your production database is *not* in the recursive state, that migration is still a no-op-equivalent rewrite of the same rules, so it is safe either way.
 
 ---
 
 ## 7. Merge instructions
 
-The branch is `claude/itineraya-e2e-verification-u46j2n`, pushed to origin. Nothing has been merged.
+Three commits on `claude/itineraya-e2e-verification-u46j2n`, pushed to origin. Nothing has been merged.
 
-**Before merging, review these three by eye** — they are the changes with the widest blast radius:
-
-- `src/lib/itinerary-edit.functions.ts` (largest diff: language, token cap, personalisation, notes merge, deduped inland list)
-- `src/routes/api/public/payments/webhook.ts` (it now returns 500 where it returned 200 — intended, but it changes Stripe's retry behaviour)
-- `src/lib/itinerary-shared.ts` (the destination list: check the nine removals match your product intent)
+**Review these by eye first** — widest blast radius:
+- `supabase/migrations/20260827094000_fix_trip_rls_recursion.sql` — changes RLS on `trips` and `trip_members`
+- `supabase/migrations/20260827095000_restrict_trips_update_columns.sql` — must land *before* the code deploy
+- `src/lib/itinerary-edit.functions.ts` — largest code diff
+- `src/routes/api/public/payments/webhook.ts` — now returns 500 where it returned 200
 
 ```bash
-# 1. Review the diff
+# 1. Review
 git fetch origin
 git checkout claude/itineraya-e2e-verification-u46j2n
-git diff origin/main...HEAD
+git diff origin/main...HEAD                      # everything
+git diff origin/main...HEAD -- supabase/         # just the migrations
+git log origin/main..HEAD --oneline              # 3 commits
 
-# 2. Verify locally (both pass here)
+# 2. Verify locally (all three pass here)
 npm ci                # or: bun install
 npx tsc --noEmit
+npm run lint
 npm run build
 
 # 3. Merge
@@ -262,16 +237,27 @@ git merge --no-ff claude/itineraya-e2e-verification-u46j2n
 git push origin main
 ```
 
-**After merging — required, in this order:**
+**After merging — migrations BEFORE the code deploy:**
 
 ```bash
-# 4. Apply the migration. Without it, chat_usage keeps its client grants.
-#    The code fix already works without it; this is defence in depth.
-supabase db push        # or run supabase/migrations/20260827090000_revoke_chat_usage_client_grants.sql
+supabase db push
 ```
 
-5. **Deploy**, then watch the Stripe webhook logs for 500s. Any that appear were previously silent data-loss.
-6. **Run the quality bench against the real model** — this is the highest-value follow-up in this report:
+Five migrations, in order:
+
+| Migration | What it does |
+|---|---|
+| `20260827090000_revoke_chat_usage_client_grants` | Removes client write access to the chat quota table |
+| `20260827093000_reassert_security_hardening` | Re-asserts the three blocks that never applied (DB-1) |
+| `20260827094000_fix_trip_rls_recursion` | Breaks the `trips` ↔ `trip_members` policy cycle (DB-2) |
+| `20260827095000_restrict_trips_update_columns` | Column-scoped UPDATE on `trips` — **must precede the code deploy** |
+| `20260827100000_generation_ledger` | Monotonic generation counter, starts empty by design |
+
+Then:
+
+5. **Deploy the code**, and watch the Stripe webhook logs for 500s.
+6. **Sanity-check in production** that a user can still open a trip, save a note and publish a trip — that exercises the new column grants and the RLS rewrite together.
+7. **Run the quality bench against the real model** — the highest-value follow-up in this report:
    ```bash
    ANTHROPIC_API_KEY=… GOOGLE_PLACES_KEY=… \
      node --experimental-strip-types --import ./scripts/register-alias.mjs \
@@ -279,4 +265,4 @@ supabase db push        # or run supabase/migrations/20260827090000_revoke_chat_
    ```
    Then have someone who knows Rome read every line of it.
 
-**Not included in this branch, by design:** `package-lock.json` (gitignored — this repo standardises on `bun.lock`; I used npm only because the pinned registry returned 403 in this container) and any prettier reformatting.
+**Not in this branch, by design:** `package-lock.json` (gitignored — the repo uses `bun.lock`; I used npm only because the pinned registry returned 403 here), prettier reformatting of the ~34 historical `.md` reports, and the `graphify-out/` tool cache.
