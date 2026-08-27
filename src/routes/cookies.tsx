@@ -39,8 +39,8 @@ function CookiesPage() {
           <h2>2. Tipos de cookies que utilizamos</h2>
           <ul>
             <li>
-              <strong>Necesarias:</strong> imprescindibles para el funcionamiento del sitio
-              (sesión, idioma, consentimiento). No requieren consentimiento.
+              <strong>Necesarias:</strong> imprescindibles para el funcionamiento del sitio (sesión,
+              idioma, consentimiento). No requieren consentimiento.
             </li>
             <li>
               <strong>Analíticas:</strong> nos permiten medir y entender cómo interactúan los
@@ -54,23 +54,23 @@ function CookiesPage() {
 
           <h2>3. Base legal</h2>
           <p>
-            De acuerdo con el RGPD y la LSSI, las cookies no necesarias requieren tu
-            consentimiento previo, expreso y revocable. Puedes aceptarlas, rechazarlas o
-            personalizar tu elección desde el banner de cookies.
+            De acuerdo con el RGPD y la LSSI, las cookies no necesarias requieren tu consentimiento
+            previo, expreso y revocable. Puedes aceptarlas, rechazarlas o personalizar tu elección
+            desde el banner de cookies.
           </p>
 
           <h2>4. Gestión de cookies</h2>
           <p>
-            Puedes cambiar tus preferencias en cualquier momento borrando los datos de tu
-            navegador para este sitio: al volver a entrar, el banner aparecerá de nuevo.
-            También puedes bloquear o eliminar cookies desde la configuración de tu navegador.
+            Puedes cambiar tus preferencias en cualquier momento borrando los datos de tu navegador
+            para este sitio: al volver a entrar, el banner aparecerá de nuevo. También puedes
+            bloquear o eliminar cookies desde la configuración de tu navegador.
           </p>
 
           <h2>5. Cookies de terceros</h2>
           <p>
-            Algunas funcionalidades pueden cargar recursos de terceros (mapas, fuentes,
-            proveedores de pago). Esos terceros pueden establecer sus propias cookies. Consulta
-            sus políticas para más información.
+            Algunas funcionalidades pueden cargar recursos de terceros (mapas, fuentes, proveedores
+            de pago). Esos terceros pueden establecer sus propias cookies. Consulta sus políticas
+            para más información.
           </p>
 
           <h2>6. Contacto</h2>

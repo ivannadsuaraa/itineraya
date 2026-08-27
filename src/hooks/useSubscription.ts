@@ -74,7 +74,12 @@ export function useSubscription() {
           .channel(`subs-${userId}`)
           .on(
             "postgres_changes",
-            { event: "*", schema: "public", table: "subscriptions", filter: `user_id=eq.${userId}` },
+            {
+              event: "*",
+              schema: "public",
+              table: "subscriptions",
+              filter: `user_id=eq.${userId}`,
+            },
             () => fetchLatest(userId),
           )
           .subscribe();

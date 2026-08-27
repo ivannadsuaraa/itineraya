@@ -13,6 +13,7 @@ import { z } from "zod";
 // prompt — esos si se acotan.
 const ChatRequestSchema = z.object({
   messages: z.array(z.unknown()).max(60),
+  language: z.enum(["es", "en", "fr", "pt"]).nullable().optional(),
   mode: z.enum(["planning", "in-trip"]).nullable().optional(),
   clientNow: z.string().max(50).nullable().optional(),
   tripContext: z
@@ -56,12 +57,22 @@ export const Route = createFileRoute("/api/chat")({
 
         // Parse and validate the body BEFORE consuming quota, so malformed
         // requests don't burn a free-plan message.
-        let messages: unknown[], tripContext, mode, clientNow;
+        let messages: unknown[], tripContext, mode, clientNow, language;
         try {
           const raw: unknown = await request.json();
-          ({ messages, tripContext, mode, clientNow } = ChatRequestSchema.parse(raw));
+          ({ messages, tripContext, mode, clientNow, language } = ChatRequestSchema.parse(raw));
         } catch {
           return new Response("Invalid request body", { status: 400 });
+        }
+
+        // El esquema acota el NÚMERO de mensajes (60) pero no su tamaño: cada
+        // uno es z.unknown(), así que una sola petición podía arrastrar cientos
+        // de miles de caracteres hasta Anthropic como tokens de entrada, y el
+        // cupo diario se cuenta por mensajes, no por tamaño. 200k caracteres
+        // son de sobra para cualquier conversación real.
+        const MAX_MESSAGES_CHARS = 200_000;
+        if (JSON.stringify(messages).length > MAX_MESSAGES_CHARS) {
+          return new Response("Conversation too large", { status: 413 });
         }
 
         // Enforce per-day message limit for the free plan.
@@ -72,29 +83,33 @@ export const Route = createFileRoute("/api/chat")({
           .eq("id", userId)
           .maybeSingle();
         const plan = ((profileRow?.plan as string | undefined) ?? "free") as
-          "free" | "viajero" | "explorador";
+          | "free"
+          | "viajero"
+          | "explorador";
         const FREE_DAILY_LIMIT = 10;
-        const today = new Date().toISOString().slice(0, 10);
         if (plan === "free") {
-          const { data: usageRow } = await supabaseAdmin
-            .from("chat_usage")
-            .select("message_count")
-            .eq("user_id", userId)
-            .eq("usage_date", today)
-            .maybeSingle();
-          const used = usageRow?.message_count ?? 0;
-          if (used >= FREE_DAILY_LIMIT) {
+          // Mismo contador atómico y solo-service-role que el plan de pago. La
+          // versión anterior leía y escribía `chat_usage`, una tabla con GRANT
+          // SELECT/INSERT/UPDATE a `authenticated` y RLS que solo comprueba
+          // "es tu fila": el propio usuario podía poner su message_count a 0
+          // desde el navegador y quedarse sin límite. Además el read-then-write
+          // permitía colar mensajes de más en paralelo.
+          const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+            "check_and_increment_rate_limit" as never,
+            { p_scope: "chat_message_free", p_key: userId, p_limit: FREE_DAILY_LIMIT } as never,
+          );
+          if (rlErr) {
+            console.error("[chat] free rate limit check failed", rlErr);
+            return new Response("No se pudo procesar la solicitud. Inténtalo de nuevo.", {
+              status: 500,
+            });
+          }
+          if (!allowed) {
             return new Response(
               `LIMIT_REACHED: Has alcanzado el límite diario de ${FREE_DAILY_LIMIT} mensajes del plan gratuito. Actualiza a Viajero o Explorador para mensajes ilimitados.`,
               { status: 429 },
             );
           }
-          await supabaseAdmin
-            .from("chat_usage")
-            .upsert(
-              { user_id: userId, usage_date: today, message_count: used + 1 },
-              { onConflict: "user_id,usage_date" },
-            );
         } else {
           // Viajero/Explorador have no product-facing daily cap ("mensajes
           // ilimitados" is the sales pitch), but "unlimited" must not mean
@@ -144,10 +159,20 @@ export const Route = createFileRoute("/api/chat")({
           .filter(Boolean)
           .join("\n");
 
+        // Idioma de la conversación: el que tiene el usuario en la app. Sin
+        // esto el asistente contestaba en español a todo el mundo.
+        const LANG_NAMES = {
+          es: { locale: "es-ES", name: "español" },
+          en: { locale: "en-US", name: "English" },
+          fr: { locale: "fr-FR", name: "français" },
+          pt: { locale: "pt-PT", name: "português" },
+        } as const;
+        const langInfo = LANG_NAMES[language ?? "es"] ?? LANG_NAMES.es;
+
         const nowIso = clientNow || new Date().toISOString();
         const nowReadable = (() => {
           try {
-            return new Date(nowIso).toLocaleString("es-ES", {
+            return new Date(nowIso).toLocaleString(langInfo.locale, {
               weekday: "long",
               hour: "2-digit",
               minute: "2-digit",
@@ -173,8 +198,8 @@ Tu misión: ayudarle EN VIVO durante el viaje. NO generes itinerarios largos de 
 - Sé conciso, práctico y específico (nombres reales, barrios reales). Usa markdown con listas cuando ayude.
 - Si pide un plan, hazlo solo para lo que queda del día u hoy + mañana como máximo.
 
-Responde en el idioma del usuario (por defecto español).`
-            : `Eres el asistente de viaje de Itineraya. Responde en español, con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
+Responde SIEMPRE en ${langInfo.name}, sea cual sea el idioma en el que esté escrito este prompt.`
+            : `Eres el asistente de viaje de Itineraya. Responde SIEMPRE en ${langInfo.name} (sea cual sea el idioma en el que esté escrito este prompt), con un tono cercano y entusiasta, y ofrece recomendaciones prácticas y concretas (lugares, comidas, transporte, consejos locales). Mantén respuestas claras y útiles, usando markdown cuando ayude.
 
 Contexto del viaje del usuario:
 ${contextLines || "Sin viaje seleccionado todavía."}`;

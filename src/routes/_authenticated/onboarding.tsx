@@ -207,7 +207,11 @@ function OnboardingPage() {
     }
   }, [step, data.destination]);
 
-  const MAX_TRIP_DAYS = 20;
+  // Tiene que coincidir con el tope real del generador: buildItineraryPrompt
+  // recorta a 14 días (Math.min(d, 14) en src/lib/itinerary-prompt.ts, atado a
+  // max_tokens: 16000). Con 20 aquí, un viaje de 15-20 días se creaba con sus
+  // fechas completas y volvía con solo 14 días, sin que nadie lo dijera.
+  const MAX_TRIP_DAYS = 14;
   const tripDayCount =
     data.dateRange?.from && data.dateRange?.to
       ? differenceInCalendarDays(data.dateRange.to, data.dateRange.from) + 1
@@ -441,7 +445,7 @@ function OnboardingPage() {
               {exceedsMaxDays && (
                 <div className="flex items-center gap-2.5 rounded-2xl border border-[#1E6B9A]/20 bg-[#1E6B9A]/8 px-4 py-3 text-sm font-medium text-[#1E6B9A]">
                   <Info className="h-4 w-4 shrink-0" />
-                  {t("onboarding.maxDaysWarning")}
+                  {t("onboarding.maxDaysWarning", { max: MAX_TRIP_DAYS })}
                 </div>
               )}
               <div className="grid gap-3 sm:grid-cols-2">

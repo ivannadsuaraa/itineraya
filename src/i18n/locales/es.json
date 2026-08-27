@@ -453,13 +453,13 @@
     "destPh": "Ej. Japón, Lisboa, Patagonia…",
     "datesTitle": "¿Cuándo viajas?",
     "datesSubtitle": "Elige las fechas de inicio y fin.",
-    "dateStart": "DEPARTURE",
-    "dateEnd": "RETURN",
+    "dateStart": "SALIDA",
+    "dateEnd": "VUELTA",
     "datePick": "Elegir fecha",
     "arrivalTime": "Hora de llegada",
     "departureTime": "Hora de vuelta",
     "timeHint": "Opcional · ayuda a ajustar el primer y último día",
-    "maxDaysWarning": "El máximo es de 20 días para asegurar la mejor experiencia",
+    "maxDaysWarning": "El máximo es de {{max}} días para asegurar la mejor experiencia",
     "compTitle": "¿Con quién vas?",
     "compSubtitle": "Adaptaremos el plan al grupo.",
     "compSolo": "Solo",
@@ -679,7 +679,8 @@
     "unverified": "Sin confirmar",
     "unverifiedTitle": "No lo hemos encontrado en Google Maps con este nombre. Puede existir igualmente (los negocios pequeños y recién abiertos faltan a menudo), pero conviene comprobarlo antes de ir.",
     "aiNotice": "Este itinerario lo ha generado una IA a partir de tus respuestas. Horarios, precios y días de cierre cambian: confírmalos antes de ir, sobre todo si algo requiere reserva.",
-    "verificationSummary": "Hemos cruzado los lugares con Google Maps: {{verified}} de {{checked}} confirmados."
+    "verificationSummary": "Hemos cruzado los lugares con Google Maps: {{verified}} de {{checked}} confirmados.",
+    "verificationUnchecked": "{{n}} no se pudieron comprobar."
   },
   "tripmates": {
     "tag": "Compañeros de viaje",
@@ -781,7 +782,9 @@
     "sugg1": "¿Qué me recomiendas para la primera noche?",
     "sugg2": "Hazme el día 2 más barato",
     "sugg3": "¿Dónde como bien cerca de mi ruta?",
-    "sugg4": "¿Qué meto en la maleta para este viaje?"
+    "sugg4": "¿Qué meto en la maleta para este viaje?",
+    "panelPlanRequired": "Esta función está disponible en los planes Viajero y Explorador.",
+    "panelLimitReached": "Has alcanzado tu límite de ediciones por hoy. Inténtalo mañana."
   },
   "newTrip": {
     "back": "Atrás",
@@ -996,7 +999,8 @@
     "timezoneLabel": "Huso horario",
     "timezoneSame": "Misma hora que España",
     "timezoneAhead": "{{hours}}h por delante de España",
-    "timezoneBehind": "{{hours}}h por detrás de España"
+    "timezoneBehind": "{{hours}}h por detrás de España",
+    "notARealPass": "Pase decorativo · no es una tarjeta de embarque real"
   },
   "weather": {
     "Clear": "Despejado",

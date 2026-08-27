@@ -34,7 +34,6 @@ export function FeaturesSection() {
           {features.map((feature) => (
             <div
               key={feature.title}
-
               className="rounded-2xl border border-sky-100 bg-white/70 p-6 backdrop-blur-sm transition-all hover:border-sky-200 hover:bg-white hover:shadow-lg hover:shadow-sky-900/5 sm:p-8"
             >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-100 text-sky-600">

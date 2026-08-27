@@ -103,7 +103,7 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
   const [pins, setPins] = useState<Pin[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [center, setCenter] = useState<Geo | null>(
-    geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : null
+    geo_lat && geo_lng ? { lat: geo_lat, lng: geo_lng } : null,
   );
   const cancelled = useRef(false);
 
@@ -132,10 +132,7 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
     }
 
     const collected: Pin[] = [];
-    const pushPin = (
-      g: Geo,
-      item: (typeof tasks)[number],
-    ) => {
+    const pushPin = (g: Geo, item: (typeof tasks)[number]) => {
       collected.push({
         geo: g,
         day: item.day,
@@ -199,7 +196,12 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
           // Try the most specific query first, fall back to title + destination
           const specific = `${item.activity.place || item.activity.title}, ${destination}`;
           let g = await geocode(specific);
-          if (!g && item.activity.place && item.activity.title && item.activity.place !== item.activity.title) {
+          if (
+            !g &&
+            item.activity.place &&
+            item.activity.title &&
+            item.activity.place !== item.activity.title
+          ) {
             g = await geocode(`${item.activity.title}, ${destination}`);
           }
           if (!g) {
@@ -282,7 +284,9 @@ export function TripMap({ destination, days, tripId, geo_lat, geo_lng }: Props) 
                     {p.activity.place && (
                       <div className="text-xs text-sky-700">{p.activity.place}</div>
                     )}
-                    <div className="mt-1 text-xs font-semibold text-[#1E6B9A]">{p.activity.time}</div>
+                    <div className="mt-1 text-xs font-semibold text-[#1E6B9A]">
+                      {p.activity.time}
+                    </div>
                     <div className="mt-1 text-xs text-sky-700">{p.activity.description}</div>
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${q}`}

@@ -13,7 +13,12 @@ function esc(s: string): string {
   );
 }
 
-function layout(opts: { title: string; paragraphs: string[]; ctaLabel: string; ctaUrl: string }): string {
+function layout(opts: {
+  title: string;
+  paragraphs: string[];
+  ctaLabel: string;
+  ctaUrl: string;
+}): string {
   const body = opts.paragraphs
     .map((p) => `<p style="color:#0c4a6e;font-size:14px;line-height:1.65;margin:0 0 14px">${p}</p>`)
     .join("");
@@ -104,7 +109,12 @@ export function renderReferralCompleteEmail(
     ];
     return {
       subject,
-      html: layout({ title: subject, paragraphs, ctaLabel: "Ir a mi cuenta", ctaUrl: dashboardUrl }),
+      html: layout({
+        title: subject,
+        paragraphs,
+        ctaLabel: "Ir a mi cuenta",
+        ctaUrl: dashboardUrl,
+      }),
       text: toText(paragraphs, "Ir a mi cuenta", dashboardUrl),
     };
   }
@@ -115,7 +125,12 @@ export function renderReferralCompleteEmail(
   ];
   return {
     subject,
-    html: layout({ title: subject, paragraphs, ctaLabel: "Go to my account", ctaUrl: dashboardUrl }),
+    html: layout({
+      title: subject,
+      paragraphs,
+      ctaLabel: "Go to my account",
+      ctaUrl: dashboardUrl,
+    }),
     text: toText(paragraphs, "Go to my account", dashboardUrl),
   };
 }

@@ -57,7 +57,12 @@ export function LanguageSwitcher({ variant = "light", compact = false }: Props) 
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 min-w-[180px] overflow-hidden rounded-2xl border border-sky-100 bg-white shadow-xl">
           {LANGUAGE_OPTIONS.map((opt) => (
-            <LanguageOption key={opt.code} opt={opt} selected={opt.code === current} onSelect={onSelect} />
+            <LanguageOption
+              key={opt.code}
+              opt={opt}
+              selected={opt.code === current}
+              onSelect={onSelect}
+            />
           ))}
         </div>
       )}

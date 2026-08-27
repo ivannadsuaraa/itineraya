@@ -4,9 +4,43 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
+import { getRequest } from "@tanstack/react-start/server";
+import { createHash } from "node:crypto";
 import type { PublicTrip, PublicTripDay } from "@/lib/share.functions";
 
 const PUBLISH_TOGGLE_DAILY_LIMIT = 30;
+// El feed público es el único endpoint con coste de base de datos que no
+// estaba medido: sin autenticación, `limit` hasta 100 y un `ilike '%…%'` sobre
+// `destination` que no usa índice. Un tope alto no molesta a nadie real y
+// acota el peor caso.
+const PUBLIC_FEED_IP_DAILY_LIMIT = 300;
+
+// Copias locales, como en demo.functions.ts: exportarlas desde
+// share.functions.ts arrastraba `node:crypto` al bundle del navegador (el
+// plugin de server functions solo puede podar lo que no forma parte de la
+// superficie pública del módulo), y el build fallaba.
+//
+// Nunca se guarda la IP en claro: solo un hash truncado como clave de cuota.
+function hashIp(ip: string): string {
+  return createHash("sha256").update(ip).digest("hex").slice(0, 32);
+}
+
+// La PRIMERA entrada de x-forwarded-for la elige el cliente, así que es
+// falsificable; Vercel añade la IP real verificada como ÚLTIMO salto y además
+// pone x-real-ip.
+function resolveClientIp(request: Request | null): string {
+  const xri = request?.headers.get("x-real-ip");
+  if (xri) return xri.trim();
+  const xff = request?.headers.get("x-forwarded-for");
+  if (xff) {
+    const parts = xff
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length > 0) return parts[parts.length - 1];
+  }
+  return "unknown";
+}
 const RATE_TRIP_DAILY_LIMIT = 20;
 
 // share_slug siempre tiene esta forma exacta: slugify(destino) + "-Ndias" +
@@ -149,6 +183,24 @@ const ListPublicTripsInput = z.object({
 export const listPublicTrips = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => ListPublicTripsInput.parse(d))
   .handler(async ({ data }): Promise<PublicFeedItem[]> => {
+    const ip = resolveClientIp(getRequest() ?? null);
+    const { data: allowed, error: rlErr } = await supabaseAdmin.rpc(
+      "check_and_increment_rate_limit" as never,
+      {
+        p_scope: "public_feed_ip",
+        p_key: hashIp(ip),
+        p_limit: PUBLIC_FEED_IP_DAILY_LIMIT,
+      } as never,
+    );
+    // Fail OPEN, igual que getPublicTrip: es una lectura pública de la que
+    // dependen visitantes reales y los rastreadores de redes sociales, y un
+    // limitador roto no puede tumbar /explore. Solo se corta cuando el tope
+    // se alcanza de verdad.
+    if (rlErr) console.error("[explore] public feed rate limit check failed", rlErr);
+    if (!rlErr && !allowed) {
+      throw new Error("Demasiadas peticiones. Inténtalo de nuevo más tarde.");
+    }
+
     const client = publicClient();
     let query = client
       .from("trips")

@@ -453,13 +453,13 @@
     "destPh": "Ex. Japon, Lisbonne, Patagonie…",
     "datesTitle": "Quand voyagez-vous ?",
     "datesSubtitle": "Choisissez les dates de début et de fin.",
-    "dateStart": "DEPARTURE",
-    "dateEnd": "RETURN",
+    "dateStart": "DÉPART",
+    "dateEnd": "RETOUR",
     "datePick": "Choisir une date",
     "arrivalTime": "Heure d'arrivée",
     "departureTime": "Heure de retour",
     "timeHint": "Optionnel · aide à ajuster le premier et le dernier jour",
-    "maxDaysWarning": "Le maximum est de 20 jours pour garantir la meilleure expérience",
+    "maxDaysWarning": "Le maximum est de {{max}} jours pour garantir la meilleure expérience",
     "compTitle": "Avec qui voyagez-vous ?",
     "compSubtitle": "Nous adapterons le plan au groupe.",
     "compSolo": "Seul",
@@ -679,7 +679,8 @@
     "unverified": "Non confirmé",
     "unverifiedTitle": "Nous n'avons pas trouvé ce lieu sur Google Maps sous ce nom. Il peut exister malgré tout (les petits commerces et les ouvertures récentes y manquent souvent), mais vérifiez avant d'y aller.",
     "aiNotice": "Cet itinéraire a été généré par une IA à partir de vos réponses. Horaires, prix et jours de fermeture changent : vérifiez-les avant de partir, surtout si une réservation est nécessaire.",
-    "verificationSummary": "Nous avons recoupé les lieux avec Google Maps : {{verified}} sur {{checked}} confirmés."
+    "verificationSummary": "Nous avons recoupé les lieux avec Google Maps : {{verified}} sur {{checked}} confirmés.",
+    "verificationUnchecked": "{{n}} n'ont pas pu être vérifiés."
   },
   "tripmates": {
     "tag": "Compagnons de voyage",
@@ -781,7 +782,9 @@
     "sugg1": "Que me recommandes-tu pour la première soirée ?",
     "sugg2": "Rends le jour 2 moins cher",
     "sugg3": "Où bien manger près de mon parcours ?",
-    "sugg4": "Que mettre dans ma valise pour ce voyage ?"
+    "sugg4": "Que mettre dans ma valise pour ce voyage ?",
+    "panelPlanRequired": "Cette fonctionnalité est disponible avec les forfaits Viajero et Explorador.",
+    "panelLimitReached": "Vous avez atteint votre limite de modifications pour aujourd'hui. Réessayez demain."
   },
   "newTrip": {
     "back": "Retour",
@@ -998,7 +1001,8 @@
     "timezoneLabel": "Fuseau horaire",
     "timezoneSame": "Même heure qu'en Espagne",
     "timezoneAhead": "{{hours}}h d'avance sur l'Espagne",
-    "timezoneBehind": "{{hours}}h de retard sur l'Espagne"
+    "timezoneBehind": "{{hours}}h de retard sur l'Espagne",
+    "notARealPass": "Carte décorative · ce n'est pas une vraie carte d'embarquement"
   },
   "weather": {
     "Clear": "Dégagé",

@@ -115,7 +115,11 @@ export const getDestinationNews = createServerFn({ method: "POST" })
       const fresh = await fetchFromNewsApi(key);
       if (fresh === null) return cached?.articles ?? [];
 
-      void writeCache(key, fresh);
+      // Awaited a propósito: en serverless la instancia puede congelarse al
+      // devolver la respuesta, así que un `void` aquí dejaba la caché sin
+      // escribir y cada visita volvía a gastar cuota de NewsAPI (100/día para
+      // toda la app) pese a existir una caché de 24 h.
+      await writeCache(key, fresh);
       return fresh;
     } catch (err) {
       console.warn("[news] fallo inesperado", err instanceof Error ? err.message : err);

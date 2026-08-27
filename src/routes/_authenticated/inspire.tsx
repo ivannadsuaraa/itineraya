@@ -78,9 +78,7 @@ function InspirePage() {
       mid: "medio",
       high: "sin-limite",
     };
-    const tripStyle = answers.tripType
-      .map((id) => t(`inspire.tripType.${id}`))
-      .join(", ");
+    const tripStyle = answers.tripType.map((id) => t(`inspire.tripType.${id}`)).join(", ");
 
     const prefill = {
       destination: `${d.name}, ${d.country}`,
@@ -151,7 +149,9 @@ function InspirePage() {
                 <motion.div
                   key={current.id}
                   custom={direction}
-                  initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction > 0 ? 44 : -44 }}
+                  initial={
+                    reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction > 0 ? 44 : -44 }
+                  }
                   animate={{ opacity: 1, x: 0 }}
                   exit={reduceMotion ? { opacity: 0 } : { opacity: 0, x: direction > 0 ? -44 : 44 }}
                   transition={{ duration: 0.3, ease: EASE_OUT }}
@@ -215,7 +215,12 @@ function InspirePage() {
               <p className="mt-1 text-sm text-sky-600">{t("inspire.resultsDesc")}</p>
             </div>
             {results.map((d, i) => (
-              <DestinationCard key={`${d.name}-${i}`} d={d} rank={i} onChoose={() => chooseDestination(d)} />
+              <DestinationCard
+                key={`${d.name}-${i}`}
+                d={d}
+                rank={i}
+                onChoose={() => chooseDestination(d)}
+              />
             ))}
           </div>
         )}
@@ -335,12 +340,7 @@ function DestinationCard({
   }, [d.country]);
 
   return (
-    <div
-      
-      
-      
-      className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60 backdrop-blur-xl"
-    >
+    <div className="overflow-hidden rounded-3xl bg-white/85 shadow-xl ring-1 ring-white/60 backdrop-blur-xl">
       <div className="relative h-40 sm:h-48">
         <img src={d.imageUrl} alt={d.name} loading="lazy" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
@@ -349,9 +349,7 @@ function DestinationCard({
         </div>
         <div className="absolute bottom-3 left-4 right-4 text-white">
           <div className="text-2xl">{medal}</div>
-          <div className="font-display text-2xl font-bold drop-shadow">
-            {d.name}
-          </div>
+          <div className="font-display text-2xl font-bold drop-shadow">{d.name}</div>
           <div className="text-sm opacity-90">
             {flag && <span className="mr-1">{flag}</span>}
             {d.country}

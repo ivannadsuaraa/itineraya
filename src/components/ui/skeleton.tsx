@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import React from 'react'; // Import React
+import React from "react"; // Import React
 
 // Generic Skeleton Component
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -7,7 +7,10 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
 }
 
 // Skeleton for Text (e.g., lines of text)
-export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({ lines = 3, className }) => {
+export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
+  lines = 3,
+  className,
+}) => {
   const numberOfLines = Math.min(lines, 5); // Limit to a reasonable number of lines
   return (
     <div className={cn("space-y-2", className)}>
@@ -21,7 +24,12 @@ export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
 // Skeleton for a Card (e.g., TripCard)
 export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) => {
   return (
-    <div className={cn("overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm", className)}>
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm",
+        className,
+      )}
+    >
       <Skeleton className="h-56 w-full rounded-none" />
       <div className="space-y-2.5 p-4">
         <Skeleton className="h-4 w-3/4 rounded-full" />
@@ -39,12 +47,12 @@ export const SkeletonCard: React.FC<{ className?: string }> = ({ className }) =>
 };
 
 // Skeleton for an Avatar (circular)
-export const SkeletonAvatar: React.FC<{ size?: number; className?: string }> = ({ size = 50, className }) => {
+export const SkeletonAvatar: React.FC<{ size?: number; className?: string }> = ({
+  size = 50,
+  className,
+}) => {
   return (
-    <Skeleton
-      className={cn("rounded-full", className)}
-      style={{ width: size, height: size }}
-    />
+    <Skeleton className={cn("rounded-full", className)} style={{ width: size, height: size }} />
   );
 };
 

@@ -14,8 +14,7 @@ export function StripeEmbeddedCheckout({ priceId, returnUrl, mode }: Props) {
       data: {
         priceId,
         returnUrl:
-          returnUrl ||
-          `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+          returnUrl || `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
         environment: getStripeEnvironment(),
         mode,
       },

@@ -92,11 +92,13 @@ function UpgradeGate({ onBack }: { onBack: () => void }) {
         >
           <ArrowLeft className="h-4 w-4" /> {t("assistant.back")}
         </button>
-        <div >
+        <div>
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#1E6B9A] shadow-lg shadow-[#1E6B9A]/30">
             <Lock className="h-7 w-7 text-white" />
           </div>
-          <h1 className="mt-6 font-display text-3xl font-bold text-sky-900">{t("assistant.upgradeTitle")}</h1>
+          <h1 className="mt-6 font-display text-3xl font-bold text-sky-900">
+            {t("assistant.upgradeTitle")}
+          </h1>
           <p className="mt-3 text-sky-700">
             {t("assistant.upgradeBodyPre")}
             <span className="font-semibold">{t("assistant.upgradeBodyViajero")}</span>
@@ -129,7 +131,7 @@ function ChatSurface({
   setTripId: (id: string | null) => void;
   activeTrip: Trip | null;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -209,18 +211,23 @@ function ChatSurface({
     [activeTrip, t],
   );
 
+  const chatLanguage = i18n.language.slice(0, 2);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: () => ({ tripContext }),
+        // El idioma viaja en cada petición: sin él el system prompt de
+        // /api/chat contestaba siempre en español, también a los usuarios
+        // que tienen la app en inglés, francés o portugués.
+        body: () => ({ tripContext, language: chatLanguage }),
         headers: async (): Promise<Record<string, string>> => {
           const { data } = await supabase.auth.getSession();
           const token = data.session?.access_token;
           return token ? { Authorization: `Bearer ${token}` } : {};
         },
       }),
-    [tripContext],
+    [tripContext, chatLanguage],
   );
 
   const { messages, sendMessage, status } = useChat({
@@ -267,7 +274,9 @@ function ChatSurface({
               <Compass className="h-5 w-5 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-display text-sm font-bold text-sky-900 sm:text-base">{t("assistant.headerTitle")}</h1>
+              <h1 className="truncate font-display text-sm font-bold text-sky-900 sm:text-base">
+                {t("assistant.headerTitle")}
+              </h1>
               <p className="truncate text-[11px] text-sky-600 sm:text-xs">
                 {activeTrip ? activeTrip.destination : t("assistant.noTripSelected")}
               </p>
@@ -330,7 +339,10 @@ function ChatSurface({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-xl">
+      <form
+        onSubmit={handleSubmit}
+        className="relative z-10 border-t border-white/40 bg-white/70 backdrop-blur-xl"
+      >
         <div className="mx-auto flex max-w-3xl items-end gap-2 px-4 py-3">
           <textarea
             value={input}
@@ -354,7 +366,11 @@ function ChatSurface({
             disabled={isLoading || !input.trim()}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#1E6B9A] text-white shadow-lg shadow-[#1E6B9A]/25 transition-all hover:bg-[#15577E] disabled:opacity-50"
           >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </button>
         </div>
       </form>
@@ -370,7 +386,9 @@ function MessageBubble({ message }: { message: UIMessage }) {
     <div className={`flex items-start gap-2 ${isUser ? "flex-row-reverse" : ""}`}>
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm ${
-          isUser ? "bg-sky-100 text-sky-700" : "bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white"
+          isUser
+            ? "bg-sky-100 text-sky-700"
+            : "bg-gradient-to-br from-[#1E6B9A] to-[#3B92C2] text-white"
         }`}
       >
         {isUser ? <Plane className="h-4 w-4 -rotate-45" /> : <Compass className="h-4 w-4" />}

@@ -56,9 +56,15 @@ GRANT UPDATE (
   welcome_completed,
   age,
   traveler_type,
-  travel_mode,
   trial_ends_at
 ) ON public.profiles TO authenticated;
+-- `travel_mode` estaba en esta lista por error: es una columna de `trips`, no
+-- de `profiles` (ver src/integrations/supabase/types.ts). Postgres rechaza el
+-- GRANT entero por columna inexistente, así que este fichero no se podía
+-- aplicar: todo lo que viene después —el arreglo de trip_members y el
+-- recorte de columnas para `anon`— se quedaba sin ejecutar. Ver la migración
+-- 20260827093000, que vuelve a afirmar los tres bloques de forma idempotente
+-- para las bases que ya pasaron por aquí a medias.
 
 -- ============================================================
 -- 3) CRITICAL: trip_members INSERT allowed `user_id = auth.uid()`

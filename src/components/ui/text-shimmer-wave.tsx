@@ -1,18 +1,18 @@
-import { motion, type Transition } from "framer-motion"
-import { cn } from "@/lib/utils"
+import { motion, type Transition } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 type TextShimmerWaveProps = {
-  children: string
-  className?: string
-  duration?: number
-  zDistance?: number
-  xDistance?: number
-  yDistance?: number
-  spread?: number
-  scaleDistance?: number
-  rotateYDistance?: number
-  transition?: Transition
-}
+  children: string;
+  className?: string;
+  duration?: number;
+  zDistance?: number;
+  xDistance?: number;
+  yDistance?: number;
+  spread?: number;
+  scaleDistance?: number;
+  rotateYDistance?: number;
+  transition?: Transition;
+};
 
 export function TextShimmerWave({
   children,
@@ -26,8 +26,8 @@ export function TextShimmerWave({
   rotateYDistance = 10,
   transition,
 }: TextShimmerWaveProps) {
-  const chars = children.split("")
-  const total = chars.length
+  const chars = children.split("");
+  const total = chars.length;
 
   return (
     <p
@@ -38,7 +38,7 @@ export function TextShimmerWave({
       style={{ color: "var(--base-color)" }}
     >
       {chars.map((char, i) => {
-        const delay = (i / total) * duration * (1 / spread)
+        const delay = (i / total) * duration * (1 / spread);
         return (
           <motion.span
             key={i}
@@ -63,8 +63,8 @@ export function TextShimmerWave({
           >
             {char}
           </motion.span>
-        )
+        );
       })}
     </p>
-  )
+  );
 }

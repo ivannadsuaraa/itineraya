@@ -43,19 +43,28 @@ async function fetchPublicTripUrls(): Promise<string[]> {
     });
     const { data, error } = await client
       .from("trips")
-      .select("share_slug, published_at, updated_at")
+      // Sin `updated_at`: la clave anónima solo tiene GRANT SELECT sobre una
+      // lista explícita de columnas (20260704090000_security_hardening…sql:90)
+      // y esa no está dentro, así que PostgREST rechazaba la consulta entera y
+      // el sitemap salía sin un solo viaje publicado — en silencio.
+      .select("share_slug, published_at")
       .eq("is_public", true)
       .not("share_slug", "is", null)
       .order("published_at", { ascending: false })
       .limit(5000);
-    if (error || !data) return [];
+    if (error || !data) {
+      // Antes esto era un `return []` mudo: el sitemap se servía vacío de
+      // viajes y nada lo delataba.
+      if (error) console.error("[sitemap] public trips query failed", error);
+      return [];
+    }
     return data
       .filter((r) => r.share_slug)
       .map((r) =>
         urlTag(`${SITE}/trip/${r.share_slug}`, {
           changefreq: "monthly",
           priority: "0.6",
-          lastmod: (r.published_at ?? r.updated_at ?? "").slice(0, 10) || undefined,
+          lastmod: (r.published_at ?? "").slice(0, 10) || undefined,
         }),
       );
   } catch {

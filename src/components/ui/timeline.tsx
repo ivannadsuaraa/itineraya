@@ -1,43 +1,43 @@
-import { useScroll, useTransform, motion } from "framer-motion"
-import React, { useEffect, useRef, useState } from "react"
+import { useScroll, useTransform, motion } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
 
 export interface TimelineEntry {
-  title: string
-  content: React.ReactNode
+  title: string;
+  content: React.ReactNode;
 }
 
 export function Timeline({ data }: { data: TimelineEntry[] }) {
-  const innerRef = useRef<HTMLDivElement>(null)
-  const [height, setHeight] = useState(0)
-  const [lineStart, setLineStart] = useState(0)
-  const [lineEnd, setLineEnd] = useState(1)
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState(0);
+  const [lineStart, setLineStart] = useState(0);
+  const [lineEnd, setLineEnd] = useState(1);
 
-  const { scrollY } = useScroll()
+  const { scrollY } = useScroll();
 
   useEffect(() => {
     function measure() {
-      if (!innerRef.current) return
-      const rect = innerRef.current.getBoundingClientRect()
-      const h = rect.height
-      const top = rect.top + window.scrollY
-      setHeight(h)
+      if (!innerRef.current) return;
+      const rect = innerRef.current.getBoundingClientRect();
+      const h = rect.height;
+      const top = rect.top + window.scrollY;
+      setHeight(h);
       // Start filling when top of timeline is 20% into viewport,
       // finish when bottom of timeline is 40% from top of viewport.
-      setLineStart(top - window.innerHeight * 0.8)
-      setLineEnd(top + h - window.innerHeight * 0.4)
+      setLineStart(top - window.innerHeight * 0.8);
+      setLineEnd(top + h - window.innerHeight * 0.4);
     }
-    measure()
+    measure();
     // Re-measure after a short delay (fonts, images may shift layout)
-    const t = setTimeout(measure, 400)
-    window.addEventListener("resize", measure)
+    const t = setTimeout(measure, 400);
+    window.addEventListener("resize", measure);
     return () => {
-      clearTimeout(t)
-      window.removeEventListener("resize", measure)
-    }
-  }, [data])
+      clearTimeout(t);
+      window.removeEventListener("resize", measure);
+    };
+  }, [data]);
 
-  const heightTransform = useTransform(scrollY, [lineStart, lineEnd], [0, height], { clamp: true })
-  const opacityTransform = useTransform(scrollY, [lineStart, lineStart + 80], [0, 1])
+  const heightTransform = useTransform(scrollY, [lineStart, lineEnd], [0, height], { clamp: true });
+  const opacityTransform = useTransform(scrollY, [lineStart, lineStart + 80], [0, 1]);
 
   return (
     <div className="w-full font-sans">
@@ -76,5 +76,5 @@ export function Timeline({ data }: { data: TimelineEntry[] }) {
         </div>
       </div>
     </div>
-  )
+  );
 }

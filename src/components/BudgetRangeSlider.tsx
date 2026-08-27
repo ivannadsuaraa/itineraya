@@ -10,7 +10,12 @@ type Props = {
 };
 
 export type BudgetTier =
-  "backpacker" | "economy" | "comfort" | "premium" | "luxury" | "ultraLuxury";
+  | "backpacker"
+  | "economy"
+  | "comfort"
+  | "premium"
+  | "luxury"
+  | "ultraLuxury";
 
 export function budgetTier(min: number, max: number): BudgetTier {
   const mid = (min + max) / 2;

@@ -51,7 +51,12 @@ function EmailConfirmedPage() {
 
       <div className="relative mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center px-6 py-12 text-center">
         <Link to="/" className="mb-8 inline-flex">
-          <img src={"/itineraya-logo.png"} alt="Itineraya" className="h-12 w-auto select-none" draggable={false} />
+          <img
+            src={"/itineraya-logo.png"}
+            alt="Itineraya"
+            className="h-12 w-auto select-none"
+            draggable={false}
+          />
         </Link>
 
         {checking ? (
@@ -63,7 +68,9 @@ function EmailConfirmedPage() {
             </div>
 
             <div>
-              <h1 className="font-display text-3xl font-bold text-sky-900">{t("emailConfirmed.title")}</h1>
+              <h1 className="font-display text-3xl font-bold text-sky-900">
+                {t("emailConfirmed.title")}
+              </h1>
               <p className="mt-3 text-sky-800/80">
                 {t("emailConfirmed.bodyPre")}
                 <strong>{t("emailConfirmed.bodyBrand")}</strong>

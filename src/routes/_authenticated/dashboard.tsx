@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 
 import {
   Plus,
@@ -25,6 +26,7 @@ import { ShareDialog } from "@/components/trip/ShareDialog";
 import { fetchWeather, weatherEmoji } from "@/lib/dashboard-helpers";
 import { geocodeAndPersistTrip } from "@/lib/geocode";
 import { readDemoTrip, clearDemoTrip } from "@/lib/demo-trip";
+import { claimDemoTrip } from "@/lib/demo.functions";
 import { SmartImage, destinationFallback } from "@/components/ui/SmartImage";
 import { PageTransition } from "@/components/ui/PageTransition";
 
@@ -87,6 +89,7 @@ function DashboardPage() {
   const [isFree, setIsFree] = useState(true);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const reduceMotion = useReducedMotion();
+  const runClaimDemoTrip = useServerFn(claimDemoTrip);
 
   useEffect(() => {
     (async () => {
@@ -139,25 +142,24 @@ function DashboardPage() {
       const demoTrip = readDemoTrip();
       let claimedTripId: string | null = null;
       if (demoTrip) {
-        const { data: claimed, error: claimErr } = await supabase
-          .from("trips")
-          .insert({
-            user_id: u.user.id,
-            destination: demoTrip.destination,
-            companion: demoTrip.companion,
-            trip_types: demoTrip.tripTypes,
-            itinerary: demoTrip.itinerary,
-            hero_image_url: demoTrip.hero_image_url,
-            status: "ready",
-          } as never)
-          .select("id")
-          .single();
-        if (!claimErr && claimed) {
+        // Pasa por un server function validado con Zod (claimDemoTrip) en vez
+        // de un INSERT directo: el contenido viene de localStorage y acababa
+        // en `trips` como viaje "ready" publicable, sin validar nada.
+        try {
+          const claimed = await runClaimDemoTrip({
+            data: {
+              destination: demoTrip.destination,
+              companion: demoTrip.companion ?? null,
+              tripTypes: demoTrip.tripTypes ?? [],
+              heroImageUrl: demoTrip.hero_image_url ?? null,
+              itinerary: demoTrip.itinerary,
+            },
+          });
           clearDemoTrip();
-          claimedTripId = (claimed as { id: string }).id;
+          claimedTripId = claimed.id;
           void geocodeAndPersistTrip(claimedTripId, demoTrip.destination);
           toast.success(t("demo.claimedToast", { destination: demoTrip.destination }));
-        } else if (claimErr) {
+        } catch (claimErr) {
           // No se borra la demo: se reintentará en la próxima visita.
           console.error("[dashboard] demo trip claim failed", claimErr);
         }
@@ -192,7 +194,7 @@ function DashboardPage() {
       }
       setSaved((savedData ?? []) as SavedInspo[]);
     })();
-  }, [navigate, t]);
+  }, [navigate, t, runClaimDemoTrip]);
 
   const remixSaved = (s: SavedInspo) => {
     const payload = { destination: s.destination, nDays: s.n_days ?? undefined };
